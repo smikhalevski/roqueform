@@ -1,0 +1,65 @@
+{
+  "name": "@smikhalevski/react-forms",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/index-cjs.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc && rollup --external react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "clean": "rimraf ./lib ./docs",
+    "test": "jest --detectOpenHandles --forceExit",
+    "docs": "typedoc ./src/main/index.ts",
+    "publish-docs": "[ -d ./docs ] && [[ ! $(git status --porcelain) ]] && branch=$(git rev-parse --abbrev-ref HEAD) && sha=$(git rev-parse --short HEAD) && t=$(mktemp -d) && cp -R ./docs/ $t && git checkout ghpages && ls -A | grep -wv .git | xargs rm -rf && cp -R $t/ . && git add . && git commit -m \"Updated docs ($sha)\" && git push && git checkout $branch",
+    "release-docs": "npm run clean && npm run docs && npm run publish-docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikhalevski/react-forms.git"
+  },
+  "keywords": [
+    "react",
+    "forms",
+    "pure"
+  ],
+  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smikhalevski/react-forms/issues"
+  },
+  "homepage": "https://github.com/smikhalevski/react-forms#readme",
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "diagnostics": {
+          "ignoreCodes": [
+            151001
+          ]
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^13.2.1",
+    "@types/jest": "^27.4.1",
+    "@types/react": "^17.0.38",
+    "jest": "^27.5.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.70.2",
+    "terser": "^5.12.1",
+    "ts-jest": "^27.1.4",
+    "typedoc": "^0.22.15",
+    "typescript": "^4.6.3"
+  },
+  "peerDependencies": {
+    "react": ">=16.14.0"
+  },
+  "dependencies": {
+    "react-hookers": "^5.0.1"
+  }
+}

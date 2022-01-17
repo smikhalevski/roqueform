@@ -1,0 +1,7 @@
+{
+  "name": "react-forms",
+  "includeVersion": true,
+  "out": "./docs",
+  "excludePrivate": true,
+  "excludeInternal": true
+}
