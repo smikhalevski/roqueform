@@ -4,11 +4,11 @@ describe('useFormObject', () => {
 
   test('', () => {
 
-    const formObject = useFormObject<{foo: number, bar: {baz: string}}>();
+    const formObject = useFormObject({foo: 123, bar: {baz: 'abc'}});
 
-    const formObject2 = useFormObject(formObject, 'foo');
+    const formObject2 = useFormObject(formObject, 'bar');
 
-    formObject2.setValue(123)
+    formObject2.setValue({baz: 'qwe'})
 
 
 

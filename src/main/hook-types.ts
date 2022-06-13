@@ -28,7 +28,7 @@ namespace Internal {
    */
   export type Key<O> =
     O extends Map<infer K, any> ? K :
-    O extends WeakMap<infer K, any> ? K :
+    // O extends WeakMap<infer K, any> ? K :
     O extends Array<any> ? number :
     O extends object ? keyof O :
     never;
@@ -39,7 +39,7 @@ namespace Internal {
   export type Path<O, P extends unknown[] = [], S = never> =
     O extends S ? P | [...P, ...unknown[]] :
     O extends Map<infer K, infer V> ? P | Path<V, [...P, K], S | O> :
-    O extends WeakMap<infer K, infer V> ? P | Path<V, [...P, K], S | O> :
+    // O extends WeakMap<infer K, infer V> ? P | Path<V, [...P, K], S | O> :
     O extends Array<infer V> ? P | Path<V, [...P, number], S | O> :
     O extends object ? P | { [K in keyof O]-?: Path<O[K], [...P, K], S | O> }[keyof O] :
     P;
@@ -49,7 +49,7 @@ namespace Internal {
    */
   export type ValueAtKey<O, K> =
     O extends Map<infer X, infer V> ? K extends X ? V | undefined : never :
-    O extends WeakMap<infer X, infer V> ? K extends X ? V | undefined : never :
+    // O extends WeakMap<infer X, infer V> ? K extends X ? V | undefined : never :
     O extends object ? K extends keyof O ? O[K] : never :
     O extends undefined | null ? undefined :
     never;
