@@ -3,13 +3,13 @@ import {callOrGet} from './utils';
 
 export interface Accessor<U, V> {
 
-  get(upstream: U): V;
+  get(upstreamValue: U): V;
 
-  set(upstream: U, value: V): U;
+  set(upstreamValue: U, value: V): U;
 }
 
 /**
- * The object holds the form value and the upstream.
+ * The form object that holds the value and the upstream.
  */
 export class FormObject<U, V = U> {
 

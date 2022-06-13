@@ -2,7 +2,6 @@ import {EffectCallback, useRef} from 'react';
 import {useEffectOnce, useRerender} from 'react-hookers';
 import {Accessor, FormObject} from './FormObject';
 import {Key, Narrowed, Path, ValueAtKey, ValueAtPath} from './hook-types';
-import {createPropertyAccessor} from './createPropertyAccessor';
 
 export function useFormObject<U>(upstream: FormObject<any, U>): FormObject<U, U>;
 
