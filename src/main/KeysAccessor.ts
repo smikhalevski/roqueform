@@ -1,4 +1,4 @@
-import {Accessor} from './FormObject';
+import {Accessor} from './index';
 
 export class KeysAccessor implements Accessor<any, any> {
 

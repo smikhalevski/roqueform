@@ -1,4 +1,4 @@
-import {Narrowed, ObjectPath, PropertyKey, ValueAtKey, ValueAtPath} from '../hook-types';
+import {Narrowed, ObjectPath, PropertyKey, ValueAtKey, ValueAtPath} from './hook-types';
 import {useEffectOnce, useRerender} from 'react-hookers';
 import {EffectCallback, useRef} from 'react';
 import {Accessor, Form, FormOptions} from './Form';

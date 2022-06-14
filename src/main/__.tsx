@@ -20,8 +20,8 @@ const form4 = useForm(form, {
 
 const a = (
     <Form
-        <{foo: string}>
-        // initialValue={{foo: 'abc'}}
+        // <{foo: string}>
+        initialValue={'abc'}
         // upstream={form}
         // accessor={['foo', 'bar']}
         // accessor={'foo'}
@@ -37,7 +37,7 @@ const a = (
       {(form) => (
           <input
               type="text"
-              value={form.value.foo}
+              value={form.value}
               onChange={(e) => form.setValue({foo: e.target.value})}
           />
       )}

@@ -1,5 +1,5 @@
 import {Accessor, Form, FormOptions} from './Form';
-import {callOrGet} from '../utils';
+import {callOrGet, die} from './utils';
 import {EventBus} from '@smikhalevski/event-bus';
 
 const FORM_CONTROLLER_SYMBOL = Symbol('controller');
@@ -22,6 +22,10 @@ export function createFormController(upstream: Form<unknown, unknown> | null, ac
 
   const upstreamController = isForm(upstream) ? upstream[FORM_CONTROLLER_SYMBOL] : null;
   const upstreamValue = upstreamController?.__value;
+
+  if (upstreamController?.__disposed) {
+    die('Cannot use ')
+  }
 
   const value = accessor !== null ? accessor.get(upstreamValue) : upstreamValue;
 
