@@ -1,7 +1,8 @@
-import React, {ReactElement, SetStateAction} from 'react';
-import {Key, Narrowed, Path, ValueAtKey, ValueAtPath} from '../hook-types';
+import React, {ReactElement, Ref, SetStateAction, useImperativeHandle} from 'react';
+import {Narrowed, ObjectPath, PropertyKey, ValueAtKey, ValueAtPath} from '../hook-types';
 import {useForm} from './useForm';
 import {useEffectOnce} from 'react-hookers';
+import {useEvent} from './useEvent';
 
 export interface Accessor<U, V> {
 
@@ -25,20 +26,60 @@ export interface Form<U, V> {
   subscribe(listener: (value: V) => void): () => void;
 }
 
-export function Form<U>(props: { upstream: Form<any, U>, accessor?: never, eager?: boolean, onChange?: (value: U) => void, children: (form: Form<U, U>) => ReactElement }): ReactElement;
+export interface FormOptions {
+  eager?: boolean;
+}
 
-export function Form<U, V>(props: { upstream: Form<any, U>, accessor: Accessor<U, V>, eager?: boolean, onChange?: (value: V) => void, children: (form: Form<U, V>) => ReactElement }): ReactElement;
+export function Form<V>(props: {
+  initialValue: V;
+  upstream?: never;
+  accessor?: never;
+  children: (form: Form<any, V>) => ReactElement;
+  onChange?: (value: V) => void;
+}): ReactElement;
 
-export function Form<U, V>(props: { upstream: Form<any, U> | undefined, accessor: Accessor<U | undefined, V>, eager?: boolean, onChange?: (value: V) => void, children: (form: Form<U | undefined, V>) => ReactElement }): ReactElement;
+export function Form<V = any>(props: {
+  initialValue?: V;
+  upstream?: never;
+  accessor?: never;
+  children: (form: Form<any, V | undefined>) => ReactElement;
+  onChange?: (value: V | undefined) => void;
+}): ReactElement;
 
-export function Form<U, K extends Key<U> & keyof any>(props: { upstream: Form<any, U>, accessor: Narrowed<K>, eager?: boolean, onChange?: (value: ValueAtKey<U, K>) => void, children: (form: Form<U, ValueAtKey<U, K>>) => ReactElement }): ReactElement;
+export function Form<U>(props: {
+  upstream: Form<any, U>;
+  accessor?: never;
+  children: (form: Form<U, U>) => ReactElement;
+  onChange?: (value: U) => void;
+}): ReactElement;
 
-export function Form<U, P extends Path<U> & unknown[]>(props: { upstream: Form<any, U>, accessor: Narrowed<P>, eager?: boolean, onChange?: (value: ValueAtPath<U, P>) => void, children: (form: Form<U, ValueAtPath<U, P>>) => ReactElement }): ReactElement;
+export function Form<U, K extends PropertyKey<U>>(props: {
+  upstream: Form<any, U>;
+  accessor: Narrowed<K>;
+  children: (form: Form<U, ValueAtKey<U, K>>) => ReactElement;
+  onChange?: (value: ValueAtKey<U, K>) => void;
+}): ReactElement;
+
+export function Form<U, P extends ObjectPath<U> & unknown[]>(props: {
+  upstream: Form<any, U>;
+  accessor: Narrowed<P>;
+  children: (form: Form<U, ValueAtPath<U, P>>) => ReactElement;
+  onChange?: (value: ValueAtPath<U, P>) => void;
+}): ReactElement;
+
+export function Form<U, V>(props: {
+  upstream: Form<any, U>;
+  accessor: Accessor<U, V>;
+  children: (form: Form<U, V>) => ReactElement;
+  onChange?: (value: V) => void;
+}): ReactElement;
 
 export function Form(props: any): ReactElement {
-  const form = useForm(props.upstream, props.accessor, props.eager);
+  const form = useForm(props.upstream, props.accessor, props);
 
-  useEffectOnce(() => form.subscribe(props.onChange));
+  const handleChange = useEvent(props.onChange);
+
+  useEffectOnce(() => form.subscribe(handleChange));
 
   return props.children(form);
 }

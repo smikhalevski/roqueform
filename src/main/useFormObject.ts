@@ -1,14 +1,14 @@
 import {EffectCallback, useRef} from 'react';
 import {useEffectOnce, useRerender} from 'react-hookers';
 import {Accessor, FormObject} from './FormObject';
-import {Key, Narrowed, Path, ValueAtKey, ValueAtPath} from './hook-types';
+import {PropertyKey, Narrowed, ObjectPath, ValueAtKey, ValueAtPath} from './hook-types';
 import {KeysAccessor} from './KeysAccessor';
 
 export function useFormObject<U>(upstream: FormObject<any, U>): FormObject<U, U>;
 
-export function useFormObject<U, K extends Key<U> & keyof any>(upstream: FormObject<any, U>, key: Narrowed<K>, transient?: boolean): FormObject<U, ValueAtKey<U, K>>;
+export function useFormObject<U, K extends PropertyKey<U> & keyof any>(upstream: FormObject<any, U>, key: Narrowed<K>, transient?: boolean): FormObject<U, ValueAtKey<U, K>>;
 
-export function useFormObject<U, P extends Path<U> & unknown[]>(upstream: FormObject<any, U>, path: Narrowed<P>, transient?: boolean): FormObject<U, ValueAtPath<U, P>>;
+export function useFormObject<U, P extends ObjectPath<U> & unknown[]>(upstream: FormObject<any, U>, path: Narrowed<P>, transient?: boolean): FormObject<U, ValueAtPath<U, P>>;
 
 export function useFormObject<U, V>(upstream: FormObject<any, U>, accessor: Accessor<U, V>, transient?: boolean): FormObject<U, V>;
 
