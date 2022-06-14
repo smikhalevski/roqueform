@@ -1,6 +1,7 @@
 import {EffectCallback} from 'react';
 import {Accessor, Form} from './Form';
 import {callOrGet, die} from '../utils';
+import {EventBus} from '@smikhalevski/event-bus';
 
 export interface FormManager<U, V> {
   __form: Form<U, V>;
@@ -9,8 +10,7 @@ export interface FormManager<U, V> {
   __touched: boolean;
   __eager: boolean;
   __accessor: Accessor<U | undefined, V> | null;
-  __listener: () => void;
-  __effect: EffectCallback;
+  __eventBus: EventBus<V>;
   __upstream: FormManager<any, U> | null;
   __downstream: FormManager<V, any>[] | null;
   __managerMap: FormManagerMap;
@@ -18,13 +18,15 @@ export interface FormManager<U, V> {
 
 export type FormManagerMap = WeakMap<Form<any, any>, FormManager<any, any>>;
 
-export function createFormManager<U, V>(managerMap: FormManagerMap, listener: () => void, upstream: Form<any, U> | null, accessor: Accessor<U | undefined, V> | null, eager: boolean): FormManager<U, V> {
+export function createFormManager<U, V>(managerMap: FormManagerMap, upstream: Form<any, U> | null, accessor: Accessor<U | undefined, V> | null, eager: boolean): FormManager<U, V> {
 
   const upstreamManager = upstream !== null ? managerMap.get(upstream) || die('Unmounted form cannot be used as an upstream') : null;
 
   const upstreamValue = upstreamManager?.__value;
 
   const value = accessor !== null ? accessor.get(upstreamValue) : upstreamValue;
+
+  const eventBus = new EventBus<V>();
 
   const __form: Form<U, V> = {
     upstream,
@@ -41,6 +43,9 @@ export function createFormManager<U, V>(managerMap: FormManagerMap, listener: ()
     pushToUpstream() {
       dispatchUpdate(manager, manager.__value, false);
     },
+    subscribe(listener) {
+      return eventBus.subscribe(listener);
+    },
   };
 
   const manager: FormManager<U, V> = {
@@ -50,10 +55,7 @@ export function createFormManager<U, V>(managerMap: FormManagerMap, listener: ()
     __touched: false,
     __eager: eager,
     __accessor: accessor,
-    __listener: listener,
-    __effect: () => () => {
-      disposeManager(manager);
-    },
+    __eventBus: eventBus,
     __upstream: upstreamManager,
     __downstream: null,
     __managerMap: managerMap,
@@ -77,7 +79,7 @@ export function applyUpdate(manager: FormManager<any, any>): void {
   __form.touched = manager.__touched;
 }
 
-function disposeManager(manager: FormManager<any, any>): void {
+export function disposeManager(manager: FormManager<any, any>): void {
   const {__form} = manager;
 
   manager.__upstream?.__downstream?.splice(manager.__upstream.__downstream.indexOf(manager));
@@ -136,6 +138,6 @@ function propagateUpdate(originator: FormManager<unknown, unknown>, manager: For
   }
 
   if (manager === originator || manager.__eager) {
-    manager.__listener();
+    manager.__eventBus.publish(value);
   }
 }

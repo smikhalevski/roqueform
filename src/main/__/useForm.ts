@@ -2,7 +2,7 @@ import {Key, Narrowed, Path, ValueAtKey, ValueAtPath} from '../hook-types';
 import {useEffectOnce, useRerender} from 'react-hookers';
 import {useRef} from 'react';
 import {Accessor, Form} from './Form';
-import {applyUpdate, createFormManager, FormManager, FormManagerMap} from './createFormManager';
+import {applyUpdate, createFormManager, disposeManager, FormManager, FormManagerMap} from './createFormManager';
 
 const managerMap: FormManagerMap = new WeakMap();
 
@@ -23,9 +23,15 @@ export function useForm<V>(initialValue?: V | (() => V)): Form<any, V | undefine
 export function useForm(upstream?: any, accessor?: any, eager = false): Form<any, any> {
 
   const rerender = useRerender();
-  const manager = useRef<FormManager<any, any>>().current ||= createFormManager(managerMap, rerender, upstream, accessor, eager);
+  const manager = useRef<FormManager<any, any>>().current ||= createFormManager(managerMap, upstream, accessor, eager);
 
-  useEffectOnce(manager.__effect);
+  useEffectOnce(() => {
+    const unsubscribe = manager.__eventBus.subscribe(rerender);
+    return () => {
+      unsubscribe();
+      disposeManager(manager);
+    };
+  });
 
   applyUpdate(manager);
 
