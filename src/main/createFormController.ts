@@ -1,5 +1,5 @@
 import {Accessor, Form, FormOptions} from './Form';
-import {callOrGet, die} from './utils';
+import {callOrGet, isObjectLike} from './utils';
 import {EventBus} from '@smikhalevski/event-bus';
 
 const FORM_CONTROLLER_SYMBOL = Symbol('controller');
@@ -13,25 +13,31 @@ export interface FormController {
   __eventBus: EventBus<unknown>;
   __upstream: FormController | null;
   __downstream: FormController[] | null;
-  __disposed: boolean;
+  __mounted: boolean;
 }
 
-export function createFormController(upstream: Form<unknown, unknown> | null, accessor: Accessor<unknown, unknown> | null, options: FormOptions = {}): FormController {
+export interface ControlledForm extends Form<unknown, unknown> {
+  [FORM_CONTROLLER_SYMBOL]: FormController;
+}
+
+export function createFormController(upstream: ControlledForm | null, accessor: Accessor<unknown, unknown> | null, options: FormOptions = {}): FormController {
 
   const {eager = false} = options;
 
-  const upstreamController = isForm(upstream) ? upstream[FORM_CONTROLLER_SYMBOL] : null;
+  const upstreamController = upstream !== null ? upstream[FORM_CONTROLLER_SYMBOL] : null;
   const upstreamValue = upstreamController?.__value;
 
-  if (upstreamController?.__disposed) {
-    die('Cannot use ')
+  if (process.env.NODE_ENV !== 'production') {
+    if (upstreamController !== null && !upstreamController.__mounted) {
+      console.error('The unmounted form is used as an upstream and won\'t receive updates.');
+    }
   }
 
   const value = accessor !== null ? accessor.get(upstreamValue) : upstreamValue;
 
   const eventBus = new EventBus<unknown>();
 
-  const __form: Form<unknown, unknown> = {
+  const form: Form<unknown, unknown> = {
     upstream,
     value,
     staged: false,
@@ -52,7 +58,7 @@ export function createFormController(upstream: Form<unknown, unknown> | null, ac
   };
 
   const controller: FormController = {
-    __form,
+    __form: form,
     __value: value,
     __staged: false,
     __eager: eager,
@@ -60,8 +66,11 @@ export function createFormController(upstream: Form<unknown, unknown> | null, ac
     __eventBus: eventBus,
     __upstream: upstreamController,
     __downstream: null,
-    __disposed: false,
+    __mounted: true,
   };
+
+  // Mark the form as controlled
+  Object.defineProperty(form, FORM_CONTROLLER_SYMBOL, {value: controller});
 
   // Connect controller to the upstream
   if (upstreamController !== null) {
@@ -69,38 +78,28 @@ export function createFormController(upstream: Form<unknown, unknown> | null, ac
     downstream.push(controller);
   }
 
-  // Make controller accessible from form
-  Object.defineProperty(__form, FORM_CONTROLLER_SYMBOL, {
-    get() {
-      return controller;
-    },
-  });
-
   return controller;
 }
 
-export function isForm(value: unknown): value is Form<unknown, unknown> & { [FORM_CONTROLLER_SYMBOL]: FormController } {
-  return value !== null && typeof value === 'object' && value.hasOwnProperty(FORM_CONTROLLER_SYMBOL);
+export function isControlledForm(value: unknown): value is ControlledForm {
+  return isObjectLike(value) && value.hasOwnProperty(FORM_CONTROLLER_SYMBOL);
 }
 
-export function disposeFormController(controller: FormController): void {
-
-  controller.__disposed = true;
+export function unmountFormController(controller: FormController): void {
+  controller.__mounted = false;
   controller.__upstream?.__downstream?.splice(controller.__upstream.__downstream.indexOf(controller));
-  controller.__downstream?.forEach(disposeFormController);
-
-  const {__form} = controller;
-  __form.upstream = controller.__upstream = controller.__downstream = null;
-  __form.setValue = __form.stageValue = __form.pushToUpstream = disposedCallback;
-}
-
-function disposedCallback(): void {
-  if (process.env.NODE_ENV !== 'production') {
-    console.error('Can\'t perform an update on an unmounted form. This is a no-op, but it indicates a memory leak in your application.');
-  }
+  controller.__downstream?.forEach(unmountFormController);
+  controller.__form.upstream = controller.__upstream = controller.__downstream = null;
 }
 
 function dispatchUpdate(controller: FormController, value: unknown, staged: boolean): void {
+  if (!controller.__mounted) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Can\'t perform an update on the unmounted form.');
+    }
+    return;
+  }
+
   controller.__form.staged = controller.__staged = staged;
   controller.__form.touched = true;
 
@@ -110,7 +109,7 @@ function dispatchUpdate(controller: FormController, value: unknown, staged: bool
 
   const originator = controller;
 
-  while (controller.__upstream !== null && !controller.__staged) {
+  while (controller.__upstream !== null && controller.__upstream.__mounted && !controller.__staged) {
     const {__accessor} = controller;
     controller = controller.__upstream;
     value = __accessor !== null ? __accessor.set(controller.__value, value) : value;
@@ -120,7 +119,6 @@ function dispatchUpdate(controller: FormController, value: unknown, staged: bool
 }
 
 function propagateUpdate(originator: FormController, controller: FormController, value: unknown): void {
-
   if (Object.is(value, controller.__value)) {
     return;
   }

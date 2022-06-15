@@ -2,7 +2,9 @@ import {Narrowed, ObjectPath, PropertyKey, ValueAtKey, ValueAtPath} from './hook
 import {useEffectOnce, useRerender} from 'react-hookers';
 import {EffectCallback, useRef} from 'react';
 import {Accessor, Form, FormOptions} from './Form';
-import {createFormController, disposeFormController, isForm} from './createFormController';
+import {createFormController, unmountFormController, FormController, isControlledForm} from './createFormController';
+import {KeysAccessor} from './KeysAccessor';
+import {isObjectLike} from './utils';
 
 export function useForm<V>(): Form<any, V | undefined>;
 
@@ -20,26 +22,33 @@ export function useForm<U, V>(upstream: Form<any, U>, accessor: Accessor<U, V>, 
 
 export function useForm<U, V>(upstream: Form<any, U> | null | undefined, accessor: Accessor<U | undefined, V>, options?: FormOptions): Form<U | undefined, V>;
 
-export function useForm(initialValueOrUpstream?: unknown, accessorLike?: unknown, options?: FormOptions) {
+export function useForm(upstreamLike?: unknown, accessorLike?: unknown, options?: FormOptions) {
 
   const rerender = useRerender();
-  const manager = useRef<ReturnType<typeof createFormManager>>().current ||= createFormManager(rerender, initialValueOrUpstream, accessorLike, options);
+  const manager = useRef<ReturnType<typeof createFormManager>>().current ||= createFormManager(rerender, upstreamLike, accessorLike, options);
 
   useEffectOnce(manager.__effect);
 
   return manager.__form;
 }
 
-function createFormManager(rerender: () => void, initialValueOrUpstream?: unknown, accessorLike?: unknown, options?: FormOptions) {
+function createFormManager(rerender: () => void, upstreamLike?: unknown, accessorLike?: unknown, options?: FormOptions) {
 
-  const controller = createFormController(isForm(initialValueOrUpstream) ? initialValueOrUpstream : null, accessorLike, options);
+  let controller: FormController;
+
+  if (isControlledForm(upstreamLike)) {
+    controller = createFormController(upstreamLike, toAccessor(accessorLike), options);
+  } else {
+    controller = createFormController(null, null, options);
+    controller.__value = upstreamLike;
+  }
 
   const __effect: EffectCallback = () => {
     const unsubscribe = controller.__eventBus.subscribe(rerender);
 
     return () => {
       unsubscribe();
-      disposeFormController(controller);
+      unmountFormController(controller);
     };
   };
 
@@ -47,4 +56,17 @@ function createFormManager(rerender: () => void, initialValueOrUpstream?: unknow
     __form: controller.__form,
     __effect,
   };
+}
+
+function toAccessor(accessorLike: unknown): Accessor<unknown, unknown> | null {
+  if (accessorLike === undefined) {
+    return null;
+  }
+  if (Array.isArray(accessorLike)) {
+    new KeysAccessor(accessorLike);
+  }
+  if (isObjectLike(accessorLike)) {
+    return accessorLike as Accessor<unknown, unknown>;
+  }
+  return new KeysAccessor([accessorLike]);
 }

@@ -1,14 +1,14 @@
-import {Accessor} from './index';
+import {Accessor} from './Form';
+import {isObjectLike} from './utils';
 
 export class KeysAccessor implements Accessor<any, any> {
 
-  constructor(private _keys: any[]) {
+  constructor(private __keys: any[]) {
   }
 
   get(upstreamValue: any): any {
-    for (const key of this._keys) {
-      if (upstreamValue === null || typeof upstreamValue !== 'object') {
-        // Not an object
+    for (const key of this.__keys) {
+      if (!isObjectLike(upstreamValue)) {
         return undefined;
       }
       upstreamValue = upstreamValue instanceof Map ? upstreamValue.get(key) : upstreamValue[key];
@@ -17,18 +17,18 @@ export class KeysAccessor implements Accessor<any, any> {
   }
 
   set(upstreamValue: any, value: any): any {
-    return cloneOrCreate(upstreamValue, this._keys, 0, value);
+    return cloneOrCreate(upstreamValue, this.__keys, 0, value);
   }
 }
 
-function cloneOrCreate(upstreamValue: any, keys: any[], keyIndex: number, value: any): any {
+function cloneOrCreate(upstreamValue: any, keys: any[], keyIndex: number, value: unknown): unknown {
   if (keyIndex === keys.length) {
     return value;
   }
 
   const key = keys[keyIndex];
 
-  if (upstreamValue === null || typeof upstreamValue !== 'object') {
+  if (!isObjectLike(upstreamValue)) {
     // Not an object
     upstreamValue = typeof key === 'number' ? [] : {};
     upstreamValue[key] = cloneOrCreate(undefined, keys, keyIndex + 1, value);
@@ -38,7 +38,7 @@ function cloneOrCreate(upstreamValue: any, keys: any[], keyIndex: number, value:
     upstreamValue = new (upstreamValue.constructor as MapConstructor)(upstreamValue).set(key, cloneOrCreate(upstreamValue.get(key), keys, keyIndex + 1, value));
 
   } else {
-    // Array or plain object
+    // An array or a plain object
     upstreamValue = Array.isArray(upstreamValue) ? upstreamValue.slice(0) : Object.assign({}, upstreamValue);
     upstreamValue[key] = cloneOrCreate(upstreamValue[key], keys, keyIndex + 1, value);
   }

@@ -3,6 +3,10 @@ import {Narrowed, ObjectPath, PropertyKey, ValueAtKey, ValueAtPath} from './hook
 import {useForm} from './useForm';
 import {useEffectOnce, useHandler} from 'react-hookers';
 
+export interface FormOptions {
+  eager?: boolean;
+}
+
 export interface Form<U, V> {
   upstream: Form<any, U> | null;
   value: V;
@@ -25,56 +29,22 @@ export interface Accessor<U, V> {
   set(upstreamValue: U, value: V): U;
 }
 
-export interface FormOptions {
-  eager?: boolean;
-}
-
-
-
-
-
-
-
-export function Form<V = any>(props: {
-  initialValue?: V | (() => V);
-  upstream?: never;
-  children: (form: Form<any, V | undefined>) => ReactElement;
-  onChange?: (value: V | undefined) => void;
-}): ReactElement;
-
-export function Form<V>(props: {
-  initialValue: V | (() => V);
-  children: (form: Form<any, V>) => ReactElement;
-  onChange?: (value: V) => void;
-}): ReactElement;
-
-export function Form<U>(props: {
-  upstream: Form<any, U>;
-  accessor?: never;
-  children: (form: Form<U, U>) => ReactElement;
-  onChange?: (value: U) => void;
-}): ReactElement;
-
-export function Form<U, K extends PropertyKey<U>>(props: {
-  upstream: Form<any, U>;
-  accessor: Narrowed<K>;
-  children: (form: Form<U, ValueAtKey<U, K>>) => ReactElement;
-  onChange?: (value: ValueAtKey<U, K>) => void;
-}): ReactElement;
-
-export function Form<U, P extends ObjectPath<U> & unknown[]>(props: {
-  upstream: Form<any, U>;
-  accessor: Narrowed<P>;
-  children: (form: Form<U, ValueAtPath<U, P>>) => ReactElement;
-  onChange?: (value: ValueAtPath<U, P>) => void;
-}): ReactElement;
-
-export function Form<U, V>(props: {
-  upstream: Form<any, U>;
-  accessor: Accessor<U, V>;
+export interface FormProps<U, V> extends FormOptions {
   children: (form: Form<U, V>) => ReactElement;
   onChange?: (value: V) => void;
-}): ReactElement;
+}
+
+export function Form<V>(props: FormProps<any, V> & { initialValue: V | (() => V) }): ReactElement;
+
+export function Form<V = any>(props: FormProps<any, V | undefined> & { initialValue?: V | (() => V) }): ReactElement;
+
+export function Form<U>(props: FormProps<U, U> & { upstream: Form<any, U> }): ReactElement;
+
+export function Form<U, K extends PropertyKey<U>>(props: FormProps<U, ValueAtKey<U, K>> & { upstream: Form<any, U>, accessor: Narrowed<K> }): ReactElement;
+
+export function Form<U, P extends ObjectPath<U> & unknown[]>(props: FormProps<U, ValueAtPath<U, P>> & { upstream: Form<any, U>, accessor: Narrowed<P> }): ReactElement;
+
+export function Form<U, V>(props: FormProps<U, V> & { upstream: Form<any, U>, accessor: Accessor<U, V> }): ReactElement;
 
 export function Form(props: any): ReactElement {
   const {initialValue} = props;

@@ -17,11 +17,14 @@ const form4 = useForm(form, {
   }
 });
 
+declare function rrr(): {foo: 'abc'} | undefined;
 
 const a = (
     <Form
+
         // <{foo: string}>
-        initialValue={'abc'}
+        // initialValue={rrr}
+        // initialValue={{foo: 'abc'}}
         // upstream={form}
         // accessor={['foo', 'bar']}
         // accessor={'foo'}
@@ -37,14 +40,9 @@ const a = (
       {(form) => (
           <input
               type="text"
-              value={form.value}
+              value={form.value.foo}
               onChange={(e) => form.setValue({foo: e.target.value})}
           />
       )}
     </Form>
 );
-
-
-// TODO useFormManager
-// TODO Form manager listener --> subscribe
-// TODO FormProps.onChange via useFormManager().subscribe

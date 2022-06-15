@@ -11,11 +11,11 @@ export type PropertyKey<O> =
 /**
  * A union of all possible paths inside a deeply nested object.
  */
-export type ObjectPath<O> = __ObjectPath<O>;
+export type ObjectPath<O> = InternalObjectPath<O>;
 
-export type ValueAtKey<O, K extends PropertyKey<O>> = __ValueAtKey<O, K>;
+export type ValueAtKey<O, K extends PropertyKey<O>> = InternalValueAtKey<O, K>;
 
-export type ValueAtPath<O, P extends ObjectPath<O>> = __ValueAtPath<O, P>;
+export type ValueAtPath<O, P extends ObjectPath<O>> = InternalValueAtPath<O, P>;
 
 /**
  * Prevents type widening on generic function parameters.
@@ -30,17 +30,17 @@ export type Narrowed<T> =
 /**
  * @internal
  */
-type __ObjectPath<O, P extends unknown[] = [], S = never> =
+type InternalObjectPath<O, P extends unknown[] = [], S = never> =
   O extends S ? P | [...P, ...unknown[]] :
-  O extends Map<infer K, infer V> ? P | __ObjectPath<V, [...P, K], S | O> :
-  O extends Array<infer V> ? P | __ObjectPath<V, [...P, number], S | O> :
-  O extends object ? P | { [K in keyof O]-?: __ObjectPath<O[K], [...P, K], S | O> }[keyof O] :
+  O extends Map<infer K, infer V> ? P | InternalObjectPath<V, [...P, K], S | O> :
+  O extends Array<infer V> ? P | InternalObjectPath<V, [...P, number], S | O> :
+  O extends object ? P | { [K in keyof O]-?: InternalObjectPath<O[K], [...P, K], S | O> }[keyof O] :
   P;
 
 /**
  * @internal
  */
-type __ValueAtKey<O, K> =
+type InternalValueAtKey<O, K> =
   O extends Map<infer X, infer V> ? K extends X ? V | undefined : never :
   O extends object ? K extends keyof O ? O[K] : never :
   O extends undefined | null ? undefined :
@@ -49,7 +49,7 @@ type __ValueAtKey<O, K> =
 /**
  * @internal
  */
-type __ValueAtPath<O, P extends unknown[]> =
+type InternalValueAtPath<O, P extends unknown[]> =
   P extends readonly [] ? O :
-  P extends readonly [infer K, ...infer P] ? __ValueAtPath<__ValueAtKey<O, K>, P extends __ObjectPath<__ValueAtKey<O, K>> ? P : never> :
+  P extends readonly [infer K, ...infer P] ? InternalValueAtPath<InternalValueAtKey<O, K>, P extends InternalObjectPath<InternalValueAtKey<O, K>> ? P : never> :
   never;
