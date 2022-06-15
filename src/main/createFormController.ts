@@ -5,7 +5,7 @@ import {EventBus} from '@smikhalevski/event-bus';
 const FORM_CONTROLLER_SYMBOL = Symbol('controller');
 
 export interface FormController {
-  __form: Form<unknown>;
+  __form: ControlledForm;
   __value: unknown;
   __staged: boolean;
   __accessor: Accessor<unknown, unknown> | null;
@@ -16,7 +16,7 @@ export interface FormController {
   __mounted: boolean;
 }
 
-export interface ControlledForm extends Form<unknown> {
+export interface ControlledForm extends Form<any> {
   [FORM_CONTROLLER_SYMBOL]: FormController;
 }
 
@@ -24,7 +24,7 @@ export function isControlledForm(value: any): value is ControlledForm {
   return value?.[FORM_CONTROLLER_SYMBOL]?.__form === value;
 }
 
-export function createFormController(rerender: () => void, parent: ControlledForm | null, accessor: Accessor<unknown, unknown> | null): FormController {
+export function createFormController(rerender: () => void, parent: ControlledForm | null, accessor: Accessor<any, any> | null): FormController {
 
   const parentController = parent !== null ? parent[FORM_CONTROLLER_SYMBOL] : null;
   const parentValue = parentController?.__value;
@@ -59,7 +59,7 @@ export function createFormController(rerender: () => void, parent: ControlledFor
   };
 
   const controller: FormController = {
-    __form: form,
+    __form: form as ControlledForm,
     __value: value,
     __staged: false,
     __accessor: accessor,
@@ -126,7 +126,7 @@ function propagateUpdate(controller: FormController, value: unknown): void {
         continue;
       }
       const {__accessor} = childController;
-      propagateUpdate(controller, __accessor !== null ? __accessor.get(value) : value);
+      propagateUpdate(childController, __accessor !== null ? __accessor.get(value) : value);
     }
   }
 
