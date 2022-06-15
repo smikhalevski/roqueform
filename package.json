@@ -61,6 +61,6 @@
   },
   "dependencies": {
     "@smikhalevski/event-bus": "^1.0.0",
-    "react-hookers": "^5.0.1"
+    "react-hookers": "^5.1.0"
   }
 }

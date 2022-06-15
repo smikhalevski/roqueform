@@ -31,7 +31,7 @@ export function Form<V>(props: {
 }): ReactElement<any, any>;
 
 export function Form<V = any>(props: {
-  parent?: never;
+  // parent?: never;
   initialValue?: V | (() => V);
   children: (form: Form<V | undefined>) => ReactElement<any, any>;
   onChange?: (value: V | undefined) => void;
