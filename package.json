@@ -1,5 +1,5 @@
 {
-  "name": "@smikhalevski/react-forms",
+  "name": "roqueform",
   "version": "1.0.0",
   "description": "",
   "main": "./lib/index-cjs.js",
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/smikhalevski/react-forms.git"
+    "url": "git+https://github.com/smikhalevski/roqueform.git"
   },
   "keywords": [
     "react",
@@ -29,9 +29,9 @@
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/smikhalevski/react-forms/issues"
+    "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/react-forms#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform#readme",
   "jest": {
     "preset": "ts-jest",
     "globals": {
