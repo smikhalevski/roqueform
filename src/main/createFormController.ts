@@ -1,44 +1,45 @@
-import {Accessor, Form, FormOptions} from './Form';
-import {callOrGet, isObjectLike} from './utils';
+import {Accessor, Form} from './Form';
+import {callOrGet} from './utils';
 import {EventBus} from '@smikhalevski/event-bus';
 
 const FORM_CONTROLLER_SYMBOL = Symbol('controller');
 
 export interface FormController {
-  __form: Form<unknown, unknown>;
+  __form: Form<unknown>;
   __value: unknown;
   __staged: boolean;
-  __eager: boolean;
   __accessor: Accessor<unknown, unknown> | null;
-  __eventBus: EventBus<unknown>;
-  __upstream: FormController | null;
-  __downstream: FormController[] | null;
+  __rerender: () => void;
+  __eventBus: EventBus<Form<unknown>>;
+  __parent: FormController | null;
+  __children: FormController[] | null;
   __mounted: boolean;
 }
 
-export interface ControlledForm extends Form<unknown, unknown> {
+export interface ControlledForm extends Form<unknown> {
   [FORM_CONTROLLER_SYMBOL]: FormController;
 }
 
-export function createFormController(upstream: ControlledForm | null, accessor: Accessor<unknown, unknown> | null, options: FormOptions = {}): FormController {
+export function isControlledForm(value: any): value is ControlledForm {
+  return value?.[FORM_CONTROLLER_SYMBOL]?.__form === value;
+}
 
-  const {eager = false} = options;
+export function createFormController(rerender: () => void, parent: ControlledForm | null, accessor: Accessor<unknown, unknown> | null): FormController {
 
-  const upstreamController = upstream !== null ? upstream[FORM_CONTROLLER_SYMBOL] : null;
-  const upstreamValue = upstreamController?.__value;
+  const parentController = parent !== null ? parent[FORM_CONTROLLER_SYMBOL] : null;
+  const parentValue = parentController?.__value;
 
   if (process.env.NODE_ENV !== 'production') {
-    if (upstreamController !== null && !upstreamController.__mounted) {
-      console.error('The unmounted form is used as an upstream and won\'t receive updates.');
+    if (parentController !== null && !parentController.__mounted) {
+      console.error('The unmounted form won\'t receive updates when used as a parent.');
     }
   }
 
-  const value = accessor !== null ? accessor.get(upstreamValue) : upstreamValue;
+  const value = accessor !== null ? accessor.get(parentValue) : parentValue;
 
-  const eventBus = new EventBus<unknown>();
+  const eventBus = new EventBus<Form<unknown>>();
 
-  const form: Form<unknown, unknown> = {
-    upstream,
+  const form: Form<unknown> = {
     value,
     staged: false,
     touched: false,
@@ -49,7 +50,7 @@ export function createFormController(upstream: ControlledForm | null, accessor: 
     stageValue(value) {
       dispatchUpdate(controller, callOrGet(value, controller.__value), true);
     },
-    pushToUpstream() {
+    commit() {
       dispatchUpdate(controller, controller.__value, false);
     },
     subscribe(listener) {
@@ -61,35 +62,29 @@ export function createFormController(upstream: ControlledForm | null, accessor: 
     __form: form,
     __value: value,
     __staged: false,
-    __eager: eager,
     __accessor: accessor,
     __eventBus: eventBus,
-    __upstream: upstreamController,
-    __downstream: null,
+    __parent: parentController,
+    __children: null,
     __mounted: true,
+    __rerender: rerender,
   };
 
-  // Mark the form as controlled
   Object.defineProperty(form, FORM_CONTROLLER_SYMBOL, {value: controller});
 
-  // Connect controller to the upstream
-  if (upstreamController !== null) {
-    const downstream = upstreamController.__downstream ||= [];
-    downstream.push(controller);
+  if (parentController !== null) {
+    const parentChildren = parentController.__children ||= [];
+    parentChildren.push(controller);
   }
 
   return controller;
 }
 
-export function isControlledForm(value: unknown): value is ControlledForm {
-  return isObjectLike(value) && value.hasOwnProperty(FORM_CONTROLLER_SYMBOL);
-}
-
 export function unmountFormController(controller: FormController): void {
   controller.__mounted = false;
-  controller.__upstream?.__downstream?.splice(controller.__upstream.__downstream.indexOf(controller));
-  controller.__downstream?.forEach(unmountFormController);
-  controller.__form.upstream = controller.__upstream = controller.__downstream = null;
+  controller.__parent?.__children?.splice(controller.__parent.__children.indexOf(controller));
+  controller.__children?.forEach(unmountFormController);
+  controller.__parent = controller.__children = null;
 }
 
 function dispatchUpdate(controller: FormController, value: unknown, staged: boolean): void {
@@ -107,35 +102,34 @@ function dispatchUpdate(controller: FormController, value: unknown, staged: bool
     return;
   }
 
-  const originator = controller;
+  let rootController = controller;
 
-  while (controller.__upstream !== null && controller.__upstream.__mounted && !controller.__staged) {
-    const {__accessor} = controller;
-    controller = controller.__upstream;
-    value = __accessor !== null ? __accessor.set(controller.__value, value) : value;
+  while (rootController.__parent !== null && rootController.__parent.__mounted && !rootController.__staged) {
+    const {__accessor} = rootController;
+    rootController = rootController.__parent;
+    value = __accessor !== null ? __accessor.set(rootController.__value, value) : value;
   }
 
-  propagateUpdate(originator, controller, value);
+  propagateUpdate(rootController, value);
+
+  controller.__rerender();
 }
 
-function propagateUpdate(originator: FormController, controller: FormController, value: unknown): void {
+function propagateUpdate(controller: FormController, value: unknown): void {
   if (Object.is(value, controller.__value)) {
     return;
   }
 
-  controller.__form.value = controller.__value = value;
-
-  if (controller.__downstream !== null) {
-    for (const downstreamController of controller.__downstream) {
-      if (downstreamController.__staged) {
+  if (controller.__children !== null) {
+    for (const childController of controller.__children) {
+      if (childController.__staged) {
         continue;
       }
-      const {__accessor} = downstreamController;
-      propagateUpdate(originator, controller, __accessor !== null ? __accessor.get(value) : value);
+      const {__accessor} = childController;
+      propagateUpdate(controller, __accessor !== null ? __accessor.get(value) : value);
     }
   }
 
-  if (controller === originator || controller.__eager) {
-    controller.__eventBus.publish(value);
-  }
+  controller.__form.value = controller.__value = value;
+  controller.__eventBus.publish(controller.__form);
 }
