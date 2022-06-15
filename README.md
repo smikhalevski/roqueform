@@ -1,4 +1,11 @@
-# Roqueform [![build](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push)](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml)
+# Roqueform&ensp;🧀&ensp;[![build](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push)](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml)
+
+The [1 kB](https://bundlephobia.com/result?p=roqueform) form state management library with strict typings that can
+handle hundreds of fields per form without breaking a sweat.
+
+```sh
+npm install --save-prod roqueform
+```
 
 # Motivation
 
