@@ -28,13 +28,13 @@ export interface Field<V = any, E = {}> {
   notify(): void;
 }
 
-export interface FieldProps<V, E> {
-  field: Field<V, E> & E;
-  children: ((field: Field<V, E> & E) => ReactNode) | ReactNode;
+export interface FieldProps<V, F extends Field<V>> {
+  field: F;
+  children: ((field: F) => ReactNode) | ReactNode;
   onChange?: (value: V) => void;
 }
 
-export function Field<V, E = {}>(props: FieldProps<V, E>): ReactElement {
+export function Field<V, F extends Field<V>>(props: FieldProps<V, F>): ReactElement {
   const {field} = props;
   const rerender = useRerender();
   const handleChange = useHandler(props.onChange);
