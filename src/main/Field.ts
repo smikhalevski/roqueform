@@ -9,7 +9,7 @@ export interface Accessor {
   set(obj: any, key: any, value: any): any;
 }
 
-export interface Field<T> {
+export interface Field<T = any> {
   value: T;
   transient: boolean;
 
@@ -21,7 +21,9 @@ export interface Field<T> {
 
   at<K extends keyof T>(key: K): Field<T[K]>;
 
-  subscribe(listener: (notifiedField: Field<any>) => void): () => void;
+  subscribe(listener: (targetField: Field) => void): () => void;
+
+  notify(): void;
 }
 
 export interface FieldProps<T> {
@@ -31,18 +33,31 @@ export interface FieldProps<T> {
 }
 
 export function Field<T>(props: FieldProps<T>): ReactElement<any, any> {
+
   const {field} = props;
   const rerender = useRerender();
   const handleChange = useHandler(props.onChange);
 
-  useEffect(() => field.subscribe((notifiedField) => {
-    if (field === notifiedField) {
-      rerender();
-    }
-    if (!field.transient) {
-      handleChange(field.value);
-    }
-  }), [field]);
+  useEffect(() => {
+
+    let prevValue: T | undefined;
+
+    return field.subscribe((targetField) => {
+
+      const {value} = field;
+
+      if (field === targetField) {
+        rerender();
+      }
+
+      if (field.transient || Object.is(value, prevValue)) {
+        return;
+      }
+
+      handleChange(value);
+      prevValue = value;
+    });
+  }, [field]);
 
   return callOrGet(props.children, field);
 }

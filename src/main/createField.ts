@@ -2,7 +2,7 @@ import {Accessor, Field} from './Field';
 import {EventBus} from '@smikhalevski/event-bus';
 import {callOrGet} from './utils';
 
-export function createField(accessor: Accessor, initialValue?: unknown): Field<any> {
+export function createField<T = any>(accessor: Accessor, initialValue?: T | (() => T)): Field<T> {
   const controller = createFieldController(accessor);
   const field = controller.__field;
 
@@ -14,17 +14,19 @@ export function createField(accessor: Accessor, initialValue?: unknown): Field<a
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field<unknown>;
+  __field: Field;
   __key: unknown;
   __value: unknown;
   __transient: boolean;
-  __eventBus: EventBus<Field<any>>;
+  __eventBus: EventBus<Field>;
   __accessor: Accessor;
 }
 
 function createFieldController(accessor: Accessor): FieldController {
 
-  const field: Field<unknown> = {
+  const eventBus = new EventBus<Field>();
+
+  const field: Field = {
     value: undefined,
     transient: false,
 
@@ -41,7 +43,10 @@ function createFieldController(accessor: Accessor): FieldController {
       return getOrCreateFieldController(controller, key).__field;
     },
     subscribe(listener) {
-      return controller.__eventBus.subscribe(listener);
+      return eventBus.subscribe(listener);
+    },
+    notify() {
+      eventBus.publish(field);
     },
   };
 
@@ -52,7 +57,7 @@ function createFieldController(accessor: Accessor): FieldController {
     __key: null,
     __value: undefined,
     __transient: false,
-    __eventBus: new EventBus(),
+    __eventBus: eventBus,
     __accessor: accessor,
   };
 
@@ -100,7 +105,7 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
   propagateValue(controller.__field, rootController, value);
 }
 
-function propagateValue(notifiedField: Field<unknown>, controller: FieldController, value: unknown): void {
+function propagateValue(targetField: Field, controller: FieldController, value: unknown): void {
   if (Object.is(value, controller.__value)) {
     return;
   }
@@ -113,11 +118,11 @@ function propagateValue(notifiedField: Field<unknown>, controller: FieldControll
       if (child.__transient) {
         continue;
       }
-      propagateValue(notifiedField, child, __accessor.get(value, child.__key));
+      propagateValue(targetField, child, __accessor.get(value, child.__key));
     }
   }
 
   controller.__field.value = controller.__value = value;
 
-  controller.__eventBus.publish(notifiedField);
+  controller.__eventBus.publish(targetField);
 }
