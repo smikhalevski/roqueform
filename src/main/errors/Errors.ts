@@ -1,7 +1,7 @@
-import {Field} from './Field';
+import {Field} from '../Field';
 import {EventBus} from '@smikhalevski/event-bus';
 
-export class FieldErrors<T> {
+export class Errors<T> {
 
   private _eventBus = new EventBus<Field>();
   private _errors = new Map<Field, T>();

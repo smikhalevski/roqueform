@@ -1,14 +1,14 @@
-import {Accessor, Field} from './Field';
+import {Accessor, Enhancer, Field} from './Field';
 import {EventBus} from '@smikhalevski/event-bus';
 import {callOrGet} from './utils';
 
-export function createField<T = any>(accessor: Accessor, initialValue?: T | (() => T)): Field<T> {
-  const controller = createFieldController(accessor);
+export function createField<V = any, E = {}>(accessor: Accessor, initialValue?: V | (() => V), enhancer?: Enhancer<E>): Field<V, E> & E {
+  const controller = createFieldController(accessor, enhancer);
   const field = controller.__field;
 
   controller.__value = field.value = initialValue;
 
-  return field;
+  return field as Field<V, E> & E;
 }
 
 interface FieldController {
@@ -20,9 +20,10 @@ interface FieldController {
   __transient: boolean;
   __eventBus: EventBus<Field>;
   __accessor: Accessor;
+  __enhancer: Enhancer<any> | undefined;
 }
 
-function createFieldController(accessor: Accessor): FieldController {
+function createFieldController(accessor: Accessor, enhancer: Enhancer<any> | undefined): FieldController {
 
   const eventBus = new EventBus<Field>();
 
@@ -59,7 +60,10 @@ function createFieldController(accessor: Accessor): FieldController {
     __transient: false,
     __eventBus: eventBus,
     __accessor: accessor,
+    __enhancer: enhancer,
   };
+
+  controller.__field = enhancer !== undefined ? enhancer(field) : field;
 
   return controller;
 }
@@ -75,7 +79,7 @@ function getOrCreateFieldController(parent: FieldController, key: unknown): Fiel
   }
 
   const {__accessor} = parent;
-  const controller = createFieldController(__accessor);
+  const controller = createFieldController(__accessor, parent.__enhancer);
   controller.__parent = parent;
   controller.__key = key;
   controller.__value = controller.__field.value = __accessor.get(parent.__value, key);
