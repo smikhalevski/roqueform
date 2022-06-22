@@ -1,4 +1,4 @@
-import {ReactElement, SetStateAction, useEffect} from 'react';
+import {createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect} from 'react';
 import {useHandler, useRerender} from 'react-hookers';
 import {callOrGet} from './utils';
 
@@ -28,11 +28,11 @@ export interface Field<T = any> {
 
 export interface FieldProps<T> {
   field: Field<T>;
-  children: ((field: Field<T>) => ReactElement<any, any>) | ReactElement<any, any>;
+  children: ((field: Field<T>) => ReactNode) | ReactNode;
   onChange?: (value: T) => void;
 }
 
-export function Field<T>(props: FieldProps<T>): ReactElement<any, any> {
+export function Field<T>(props: FieldProps<T>): ReactElement {
 
   const {field} = props;
   const rerender = useRerender();
@@ -59,5 +59,5 @@ export function Field<T>(props: FieldProps<T>): ReactElement<any, any> {
     });
   }, [field]);
 
-  return callOrGet(props.children, field);
+  return createElement(Fragment, null, callOrGet(props.children, field));
 }
