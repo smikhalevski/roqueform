@@ -1,6 +1,6 @@
-import {ReactElement, SetStateAction} from 'react';
-import {useEffectOnce, useHandler} from 'react-hookers';
-import {useField} from './useField';
+import {ReactElement, SetStateAction, useEffect} from 'react';
+import {useHandler, useRerender} from 'react-hookers';
+import {callOrGet} from './utils';
 
 export interface Accessor {
 
@@ -21,24 +21,28 @@ export interface Field<T> {
 
   at<K extends keyof T>(key: K): Field<T[K]>;
 
-  subscribe(listener: (originator: Field<any>) => void): () => void;
+  subscribe(listener: (notifiedField: Field<any>) => void): () => void;
 }
 
 export interface FieldProps<T> {
-  initialValue: T | (() => T) | Field<T>;
-  children: (field: Field<T>) => ReactElement<any, any>;
+  field: Field<T>;
+  children: ((field: Field<T>) => ReactElement<any, any>) | ReactElement<any, any>;
   onChange?: (value: T) => void;
 }
 
 export function Field<T>(props: FieldProps<T>): ReactElement<any, any> {
-  const field = useField(props.initialValue);
+  const {field} = props;
+  const rerender = useRerender();
   const handleChange = useHandler(props.onChange);
 
-  useEffectOnce(() => field.subscribe(() => {
+  useEffect(() => field.subscribe((notifiedField) => {
+    if (field === notifiedField) {
+      rerender();
+    }
     if (!field.transient) {
       handleChange(field.value);
     }
-  }));
+  }), [field]);
 
-  return props.children(field);
+  return callOrGet(props.children, field);
 }
