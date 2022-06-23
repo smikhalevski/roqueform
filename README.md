@@ -1,16 +1,29 @@
 # Roqueform&ensp;🧀&ensp;[![build](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push)](https://github.com/smikhalevski/Roqueform/actions/workflows/master.yml)
 
-Form state management library that can handle hundreds of fields without breaking a sweat.
+The form state management library that can handle hundreds of fields without breaking a sweat.
 
 - Extremely fast, re-renders only updated fields;
 - Laconic API with strict typings;
 - [Built-in extensibility mechanisms](#enhancers);
 - [Just 1 kB gzipped](https://bundlephobia.com/result?p=roqueform);
-- [Optional validation error management mechanism](#validation-errors).
+- [Custom validation support](#validation).
 
 ```sh
 npm install --save-prod roqueform
 ```
+
+- [Motivation](#motivation)
+- [Walkthrough](#walkthrough)
+    - [`useField`](#usefield)
+        - [Field value updates](#field-value-updates)
+        - [Transient updates](#transient-updates)
+        - [Field observability](#field-observability)
+    - [`Field`](#field)
+        - [Eager and lazy re-renders](#eager-and-lazy-re-renders)
+- [Enhancers](#enhancers)
+    - [Composing enhancers](#composing-enhancers)
+- [Validation](#validation)
+- [Accessors](#accessors)
 
 # Motivation
 
@@ -19,11 +32,11 @@ Here are the requirements I wanted the management solution to satisfy:
 - Everything should be strictly typed ut to the very field value setter, so the string value from the silly input would
   be set to the number-typed value in the form value object.
 
-- There should be no restrictions on how and when the input is submitted, because data submission is generally
+- There should be no restrictions on how and when the input is submitted because data submission is generally
   an application-specific process.
 
 - There are many approaches to validation, and a great number of awesome validation libraries. The form library must
-  be agnostic to where (client-side, server-side, or both), how (on field or on form level), and when (sync, or async)
+  be agnostic to where (client-side, server-side, or both), how (on field or form level), and when (sync, or async)
   the validation is handled.
 
 - Validation errors aren't standardized, so an arbitrary error object shape must be allowed and related typings must be
@@ -43,7 +56,7 @@ phase:
 - Input is submitted;
 - Errors received from the backend are displayed.
 
-Phases are non-intersecting, can happen in different order, or even in parallel as with async validation.
+Phases are non-intersecting, and can happen in a different order, or even in parallel as with async validation.
 
 Roqueform provides a robust API for the input state management and a flexible [Enhancers](#enhancers) to extend the
 functionality.
@@ -67,7 +80,7 @@ const field = useField({foo: 'bar'});
 // → Field<{ foo: string }, {}>
 ```
 
-You can derive new fields from the existing one using `at` method:
+You can derive new fields from the existing ones using `at` method:
 
 ```ts
 const fooField = field.at('foo');
@@ -106,10 +119,10 @@ field.dispatchValue({foo: 'qux'});
 field.value // → {foo: 'qux'}
 ```
 
-`useField` doesn't trigger re-render of the enclosing component. Have a look at
+`useField` doesn't trigger a re-render of the enclosing component. Navigate to
 [Field observability](#field-observability) section for more details.
 
-When parent field is updated using `dispatchValue`, all of affected derived fields also receive an update:
+When the parent field is updated using `dispatchValue`, all of the affected derived fields also receive an update:
 
 ```ts
 const field = useField({foo: 'bar'});
@@ -126,7 +139,7 @@ field.value    // → {foo: 'qux'}
 fooField.value // → 'qux'
 ```
 
-The same is valid for updating derived fields: when derived field is updated using `dispatchValue`, the update is
+The same is valid for updating derived fields: when the derived field is updated using `dispatchValue`, the update is
 propagated to the parent field.
 
 ```ts
@@ -149,8 +162,8 @@ fooField.dispatchValue((prevValue) => 'qux');
 
 ### Transient updates
 
-The field update can be done in a transient fashion, so the parent won't be notified. You can think about this as a
-commit in git: you first stage your changes with `git add` and then commit them with `git commit`.
+The field update can be done transiently, so the parent won't be notified. You can think about this as a commit in git:
+you first stage your changes with `git add` and then commit them with `git commit`.
 
 To achieve this behavior we're going to use `setValue`/`dispatch` instead of `dispatchValue` that we discussed in
 [Field value updates](#field-value-updates) section:
@@ -174,7 +187,7 @@ field.value    // → {foo: 'qux'}
 fooField.value // → 'qux'
 ```
 
-`setValue` can be called multiple times, but the most recent update would be propagated to parent only after
+`setValue` can be called multiple times, but the most recent update would be propagated to the parent only after
 `dispatch`/`dispatchValue` call.
 
 You can check that the field has a transient value using `transient` property:
@@ -205,7 +218,7 @@ field.subscribe((targetField) => {
 `targetField` is a field that initiated the update, so this can be `field` itself, any of its derived fields, or any of
 its ancestors (if `field` is also a derived field).
 
-You can use subscriptions to force re-render your component, but this is strongly discouraged since it make your code
+You can use subscriptions to force re-render your component, but this is strongly discouraged since it makes your code
 more imperative:
 
 ```ts
@@ -245,10 +258,10 @@ const App = () => {
 };
 ```
 
-Now, when user would update the input value, the `rootField` would be updated. The single argument passed to `children`
-render function is the field passed as a `field` prop to the `Field` component.
+Now, when a user would update the input value, the `rootField` would be updated. The single argument passed to
+`children` render function is the field passed as a `field` prop to the `Field` component.
 
-It is unlikely that you would use form with a single literal field. Most of the time multiple derived fields are
+It is unlikely that you would use a form with a single literal field. Most of the time multiple derived fields are
 required:
 
 ```tsx
@@ -283,21 +296,19 @@ const App = () => {
 };
 ```
 
-You may have noticed that even we didn't specify any types yet, but our fields are strictly typed. You can check this
-by replacing the value dispatched to `barField`. This would cause TypeScript to show an error that `barField` value
-must be of a number type.
+You may have noticed that even though we didn't specify any types yet, our fields are strictly typed. You can check this
+by replacing the value dispatched to `barField`:
 
 ```diff
 - barField.dispatchValue(event.target.valueAsNumber);
 + barField.dispatchValue(event.target.value);
 ```
 
-## Eager and lazy
+This would cause TypeScript to show an error that `barField` value must be of a number type.
 
-By default, `Form` component re-renders only when the provided field was updated directly, so updates from ancestors or
-derived fields would be ignored. This reflects to the lazy nature at the heart of Roqueform.
+### Eager and lazy re-renders
 
-Let's consider the form with two `Field` elementss. One of them renders the value of the root field and the other one
+Let's consider the form with two `Field` elements. One of them renders the value of the root field and the other one
 updates the derived field:
 
 ```tsx
@@ -324,24 +335,25 @@ const App = () => {
 };
 ```
 
-You might expect that both `Field` elements would rerender when `fooField` is updated. But the `Field` that renders the
-`rootField.value` won't update unless you add the `eagerlyUpdated` property.
+By default, `Form` component re-renders only when the provided field was updated directly, so updates from ancestors or
+derived fields would be ignored. Add the `eagerlyUpdated` property to force `Field` to re-render whenever its value was
+affected.
 
 ```diff
 - <Field field={rootField}>
 + <Field
-      field={rootField}
-      eagerlyUpdated={true}
-  >
++     field={rootField}
++     eagerlyUpdated={true}
++ >
     {(rootField) => JSON.stringify(rootField.value)}
   </Field>
 ```
 
-`eagerlyUpdated` forces `Field` to re-render whenever a `field` listener is notified.
+Now both fields are re-rendered when user edits the input text.
 
 # Enhancers
 
-Enhancers are very powerful mechanism that allows enriching fields with custom functionality.
+Enhancers are a very powerful mechanism that allows enriching fields with custom functionality.
 
 Let's enhance the field with the `ref` property that would hold the `RefObject`:
 
@@ -381,9 +393,84 @@ After the `Field` mounts we can use ref to imperatively scroll the input element
 rootField.at('bar').ref.current?.scrollIntoView();
 ```
 
+Roqueform is shipped with ref enhancer implementation:
+
+```ts
+import {useField, withRef} from 'roqueform';
+
+const rootField = useField({foo: 'bar'}, withRef<HTMLInputElement>());
+// → Field<{ foo: string }, WithRef<HTMLInputElement>> & WithRef<HTMLInputElement>
+```
+
+## Composing enhancers
+
+You may want to use multiple enhancers at the same time, but `useField` allows passing only one enhancer function. To
+combine multiple enhancers into one, use `compose` helper function:
+
+```ts
+import {compose, useField, withRef} from 'roqueform';
+
+const enhancer = compose(withRef(), anotherEnhancer);
+```
+
+# Validation
+
+Roqueform can be enhanced with an arbitrary validation mechanism. To showcase how validation can be implemented,
+Roqueform is shipped with the `withErrors` enhancer and `useErrors` hook:
+
+```ts
+import {ReactNode} from 'react';
+import {useErrors, useField, withErrors} from 'roqueform';
+
+const errors = useErrors<ReactNode>();
+
+const rootField = useField({foo: 'bar'}, withErrors(errors));
+```
+
+`errors` now holds the `Errors` object, which is an observable mapping from a `Field` to the associated error. In this
+example, errors are typed as `ReactNode` but you can use any type that suits your needs.
+
+To associate an error with the field you can update `errors`:
+
+```ts
+errors.set(rootField.at('foo'), 'Oh, snap!');
+```
+
+Or you can use the new field method introduced by the `withErrors` enhancer:
+
+```ts
+rootField.at('foo').setError('Oh, snap!');
+```
+
+`withErrors` also adds `invalid` and `error` fields to the `field` and its derived fields, to simplify error rendering:
+
+```tsx
+<Field field={rootField.at('foo')}>
+  {(fooField) => (
+      <>
+        <input
+            value={fooField.value}
+            onChange={(event) => {
+              fooField.dispatchValue(event.target.value);
+            }}
+            aria-invalid={field.invalid}
+        />
+        {field.error}
+      </>
+  )}
+</Field>
+```
 
 # Accessors
 
-# Error
+When you derive a new field or update a derived field, Roqueform uses an accessor to read and write a value to the
+parent field. You can alter the way field values are read and written by providing a custom implementation of `Accessor`
+interface to `AccessorContext`.
 
-# Validation errors
+```tsx
+import {objectAccessor, AccessorContext} from 'roqueform';
+
+<AccessorContext.Provider value={objectAccessor}>
+  {/* useField goes here */}
+</AccessorContext.Provider>
+```
