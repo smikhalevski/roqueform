@@ -91,14 +91,12 @@ function getOrCreateFieldController(accessor: Accessor, parent: FieldController 
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-
-  const prevValue = !controller.__transient || controller.__parent === null ? controller.__value : controller.__accessor.get(controller.__parent.__value, controller.__key);
+  if (Object.is(value, controller.__value) && controller.__transient === transient) {
+    return;
+  }
 
   controller.__field.transient = controller.__transient = transient;
 
-  if (Object.is(value, prevValue)) {
-    return;
-  }
   const {__accessor} = controller;
 
   let rootController = controller;

@@ -31,11 +31,12 @@ export interface Field<T = any, M = {}> {
 export interface FieldProps<F extends Field<T>, T> {
   field: F;
   children: ((field: F) => ReactNode) | ReactNode;
+  eagerlyUpdated?: boolean;
   onChange?: (value: T) => void;
 }
 
 export function Field<F extends Field<T>, T = any>(props: FieldProps<F, T>): ReactElement {
-  const {field} = props;
+  const {field, eagerlyUpdated} = props;
   const rerender = useRerender();
   const handleChange = useHandler(props.onChange);
 
@@ -46,7 +47,7 @@ export function Field<F extends Field<T>, T = any>(props: FieldProps<F, T>): Rea
     return field.subscribe((targetField) => {
       const {value} = field;
 
-      if (field === targetField) {
+      if (eagerlyUpdated || field === targetField) {
         rerender();
       }
       if (field.transient || Object.is(value, prevValue)) {
@@ -56,7 +57,7 @@ export function Field<F extends Field<T>, T = any>(props: FieldProps<F, T>): Rea
       prevValue = value;
       handleChange(value);
     });
-  }, [field]);
+  }, [field, eagerlyUpdated]);
 
   return createElement(Fragment, null, callOrGet(props.children, field));
 }
