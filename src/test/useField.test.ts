@@ -3,6 +3,12 @@ import {useField} from '../main';
 
 describe('useField', () => {
 
+  test('returns field with undefined initial value', () => {
+    const hook = renderHook(() => useField());
+
+    expect(hook.result.current.value).toBe(undefined);
+  });
+
   test('returns a filed with a literal initial value', () => {
     const hook = renderHook(() => useField(111));
 
