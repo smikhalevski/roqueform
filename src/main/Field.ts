@@ -41,12 +41,12 @@ export interface Accessor {
 export interface Field<T = any, M = {}> {
 
   /**
-   * The parent field from which this one was derived or `null` if the field is the root.
+   * The parent field from which this one was derived.
    */
   parent: Field<any, M> & M | null;
 
   /**
-   * The key in the parent value that corresponds to the value controlled by the field.
+   * The key in the parent value that corresponds to the value controlled by the field, or `null` if there's no parent.
    */
   key: any;
 

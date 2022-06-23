@@ -5,6 +5,8 @@ describe('createField', () => {
   test('creates a field without an initial value', () => {
     const field = createField(objectAccessor);
 
+    expect(field.parent).toBe(null);
+    expect(field.key).toBe(null);
     expect(field.value).toBe(undefined);
     expect(field.transient).toBe(false);
   });
@@ -16,9 +18,13 @@ describe('createField', () => {
   });
 
   test('returns a field at key', () => {
-    const field = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, {foo: 111});
 
-    expect(field.at('foo').value).toBe(111);
+    const field1 = field0.at('foo');
+
+    expect(field1.parent).toBe(field0);
+    expect(field1.key).toBe('foo');
+    expect(field1.value).toBe(111);
   });
 
   test('returns the same field for a key', () => {
