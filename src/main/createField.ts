@@ -10,7 +10,7 @@ import {callOrGet} from './utils';
  * @param enhancer Enhances the field with additional functionality.
  *
  * @template T The type of the value held by the field.
- * @template M The type of mixin added by enhancer.
+ * @template M The type of mixin added by the enhancer.
  */
 export function createField<T = any, M = {}>(accessor: Accessor, initialValue?: T, enhancer?: Enhancer<M>): Field<T, M> & M {
   return getOrCreateFieldController(accessor, null, null, initialValue, enhancer).__field as Field<T, M> & M;
