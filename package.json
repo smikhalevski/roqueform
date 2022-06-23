@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "tsc && npm run rollup && npm run terser",
-    "rollup": "rollup --external @smikhalevski/event-bus,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "rollup": "rollup --external @smikhalevski/event-bus,react,react-hookers --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
     "terser": "t=$(mktemp) && rm $t && for file in $(find ./lib -name '*.js'); do terser --name-cache $t --compress --mangle --mangle-props reserved=[__esModule],regex=/^__/ --output $file -- $file; done && rm $t || exit 1",
     "clean": "rimraf ./lib ./docs",
     "test": "jest --detectOpenHandles --forceExit",
@@ -48,9 +48,11 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.3.0",
+    "@testing-library/react-hooks": "^7.0.2",
     "@types/jest": "^28.1.1",
     "@types/react": "^17.0.39",
     "jest": "^28.1.1",
+    "react-test-renderer": "^17.0.2",
     "rimraf": "^3.0.2",
     "rollup": "^2.75.6",
     "terser": "^5.14.1",

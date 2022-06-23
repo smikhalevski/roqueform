@@ -2,13 +2,18 @@ import {Accessor, Enhancer, Field} from './Field';
 import {EventBus} from '@smikhalevski/event-bus';
 import {callOrGet} from './utils';
 
-export function createField<V = any, E = {}>(accessor: Accessor, initialValue?: V | (() => V), enhancer?: Enhancer<E>): Field<V, E> & E {
-  const controller = createFieldController(accessor, enhancer);
-  const field = controller.__field;
-
-  controller.__value = field.value = initialValue;
-
-  return field as Field<V, E> & E;
+/**
+ * Creates the new filed instance.
+ *
+ * @param accessor Resolves values for nested fields.
+ * @param initialValue The initial value assigned to the field.
+ * @param enhancer Enhances the field with additional functionality.
+ *
+ * @template T The type of the value held by the field.
+ * @template M The type of mixin added by enhancer.
+ */
+export function createField<T = any, M = {}>(accessor: Accessor, initialValue?: T, enhancer?: Enhancer<M>): Field<T, M> & M {
+  return getOrCreateFieldController(accessor, null, null, initialValue, enhancer).__field as Field<T, M> & M;
 }
 
 interface FieldController {
@@ -20,15 +25,26 @@ interface FieldController {
   __transient: boolean;
   __eventBus: EventBus<Field>;
   __accessor: Accessor;
-  __enhancer: Enhancer<any> | undefined;
 }
 
-function createFieldController(accessor: Accessor, enhancer: Enhancer<any> | undefined): FieldController {
+function getOrCreateFieldController(accessor: Accessor, parent: FieldController | null, key: unknown, initialValue: unknown, enhancer: Enhancer<{}> | undefined): FieldController {
+
+  if (parent !== null) {
+
+    if (parent.__children !== null) {
+      for (const child of parent.__children) {
+        if (Object.is(child.__key, key)) {
+          return child;
+        }
+      }
+    }
+    initialValue = accessor.get(parent.__value, key);
+  }
 
   const eventBus = new EventBus<Field>();
 
-  const field: Field = {
-    value: undefined,
+  let field: Field = {
+    value: initialValue,
     transient: false,
 
     dispatchValue(value) {
@@ -41,7 +57,7 @@ function createFieldController(accessor: Accessor, enhancer: Enhancer<any> | und
       applyValue(controller, controller.__value, false);
     },
     at(key) {
-      return getOrCreateFieldController(controller, key).__field;
+      return getOrCreateFieldController(accessor, controller, key, null, enhancer).__field;
     },
     subscribe(listener) {
       return eventBus.subscribe(listener);
@@ -52,68 +68,51 @@ function createFieldController(accessor: Accessor, enhancer: Enhancer<any> | und
   };
 
   const controller: FieldController = {
-    __parent: null,
+    __parent: parent,
     __children: null,
     __field: field,
-    __key: null,
-    __value: undefined,
+    __key: key,
+    __value: initialValue,
     __transient: false,
     __eventBus: eventBus,
     __accessor: accessor,
-    __enhancer: enhancer,
   };
 
-  controller.__field = enhancer !== undefined ? enhancer(field) : field;
-
-  return controller;
-}
-
-function getOrCreateFieldController(parent: FieldController, key: unknown): FieldController {
-
-  if (parent.__children !== null) {
-    for (const child of parent.__children) {
-      if (Object.is(child.__key, key)) {
-        return child;
-      }
-    }
+  if (parent !== null) {
+    const children = parent.__children ||= [];
+    children.push(controller);
   }
 
-  const {__accessor} = parent;
-  const controller = createFieldController(__accessor, parent.__enhancer);
-  controller.__parent = parent;
-  controller.__key = key;
-  controller.__value = controller.__field.value = __accessor.get(parent.__value, key);
-
-  const children = parent.__children ||= [];
-  children.push(controller);
+  if (typeof enhancer === 'function') {
+    field = controller.__field = enhancer(field) || field;
+  }
 
   return controller;
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
 
+  const prevValue = !controller.__transient || controller.__parent === null ? controller.__value : controller.__accessor.get(controller.__parent.__value, controller.__key);
+
   controller.__field.transient = controller.__transient = transient;
 
-  if (Object.is(value, controller.__value)) {
+  if (Object.is(value, prevValue)) {
     return;
   }
-
   const {__accessor} = controller;
 
   let rootController = controller;
 
   while (rootController.__parent !== null && !rootController.__transient) {
-    value = __accessor.set(rootController.__parent.__value, rootController.__key, value);
+    const {__key} = rootController;
+    rootController = rootController.__parent;
+    value = __accessor.set(rootController.__value, __key, value);
   }
 
   propagateValue(controller.__field, rootController, value);
 }
 
 function propagateValue(targetField: Field, controller: FieldController, value: unknown): void {
-  if (Object.is(value, controller.__value)) {
-    return;
-  }
-
   if (controller.__children !== null) {
 
     const {__accessor} = controller;
@@ -122,11 +121,15 @@ function propagateValue(targetField: Field, controller: FieldController, value: 
       if (child.__transient) {
         continue;
       }
-      propagateValue(targetField, child, __accessor.get(value, child.__key));
+
+      const childValue = __accessor.get(value, child.__key);
+      if (Object.is(child.__value, childValue)) {
+        continue;
+      }
+      propagateValue(targetField, child, childValue);
     }
   }
 
   controller.__field.value = controller.__value = value;
-
   controller.__eventBus.publish(targetField);
 }

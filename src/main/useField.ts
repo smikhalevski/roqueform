@@ -4,8 +4,8 @@ import {createField} from './createField';
 import {callOrGet} from './utils';
 import {Enhancer, Field} from './Field';
 
-export function useField<V, E = {}>(initialValue: V | (() => V), enhancer?: Enhancer<E>): Field<V, E> & E {
+export function useField<T, M = {}>(initialValue: T | (() => T), enhancer?: Enhancer<M>): Field<T, M> & M {
   const accessor = useContext(AccessorContext);
 
-  return useRef<Field<V, E> & E>().current ||= createField(accessor, callOrGet(initialValue), enhancer);
+  return useRef<Field<T, M> & M>().current ||= createField(accessor, callOrGet(initialValue), enhancer);
 }

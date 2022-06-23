@@ -1,210 +1,231 @@
-import {createFormController, unmountFormController} from '../main/createFormController';
+import {createField, objectAccessor} from '../main';
 
-describe('createFormController', () => {
+describe('createField', () => {
 
-  const rerenderMock = jest.fn();
+  test('creates a field without an initial value', () => {
+    const field = createField(objectAccessor);
 
-  beforeEach(() => {
-    rerenderMock.mockRestore();
+    expect(field.value).toBe(undefined);
+    expect(field.transient).toBe(false);
   });
 
-  test('creates a controller', () => {
-    const controller = createFormController(rerenderMock, null, null);
+  test('creates a field with the initial value', () => {
+    const field = createField(objectAccessor, 111);
 
-    expect(controller.__form.value).toBe(undefined);
-    expect(controller.__form.staged).toBe(false);
-    expect(controller.__form.touched).toBe(false);
-    expect(controller.__form.setValue).toBeInstanceOf(Function);
-    expect(controller.__form.stageValue).toBeInstanceOf(Function);
-    expect(controller.__form.commit).toBeInstanceOf(Function);
-    expect(controller.__form.subscribe).toBeInstanceOf(Function);
-    expect(controller.__value).toBe(undefined);
-    expect(controller.__staged).toBe(false);
-    expect(controller.__accessor).toBe(null);
-    expect(controller.__rerender).toBe(rerenderMock);
-    expect(controller.__eventBus).toBeInstanceOf(Object);
-    expect(controller.__parent).toBe(null);
-    expect(controller.__children).toBe(null);
-    expect(controller.__mounted).toBe(true);
+    expect(field.value).toBe(111);
   });
 
-  test('sets value to the controller', () => {
-    const controller = createFormController(rerenderMock, null, null);
+  test('returns a field at key', () => {
+    const field = createField(objectAccessor, {foo: 111});
 
-    controller.__form.setValue(123);
-
-    expect(controller.__value).toBe(123);
-    expect(controller.__staged).toBe(false);
-    expect(controller.__form.touched).toBe(true);
+    expect(field.at('foo').value).toBe(111);
   });
 
-  test('sets value to the controller via a callback', () => {
-    const controller = createFormController(rerenderMock, null, null);
+  test('returns the same field for a key', () => {
+    const field = createField(objectAccessor, {foo: 111});
 
-    controller.__form.setValue(() => 123);
-
-    expect(controller.__value).toBe(123);
-    expect(controller.__staged).toBe(false);
+    expect(field.at('foo')).toBe(field.at('foo'));
   });
 
-  test('provides the previous value to the set action', () => {
-    const setStateActionMock = jest.fn();
+  test('dispatches value to a root field', () => {
+    const field = createField(objectAccessor, 111);
 
-    const controller = createFormController(rerenderMock, null, null);
+    field.dispatchValue(222);
 
-    controller.__form.setValue(123);
-    controller.__form.setValue(setStateActionMock);
-
-    expect(setStateActionMock).toHaveBeenCalledTimes(1);
-    expect(setStateActionMock).toHaveBeenNthCalledWith(1, 123);
+    expect(field.value).toBe(222);
+    expect(field.transient).toBe(false);
   });
 
-  test('creates a controller with a parent', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
+  test('dispatches value to a nested field', () => {
+    const field0 = createField(objectAccessor, {foo: 111});
 
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, null);
+    const field1 = field0.at('foo');
 
-    expect(controller.__parent).toBe(parentController);
+    field1.dispatchValue(222);
+
+    expect(field0.value).toEqual({foo: 222});
+    expect(field0.transient).toBe(false);
+
+    expect(field1.value).toBe(222);
+    expect(field1.transient).toBe(false);
   });
 
-  test('creates a controller with a value derived from a parent', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
+  test('invokes subscriber during value dispatch', () => {
+    const listenerMock0 = jest.fn();
+    const listenerMock1 = jest.fn();
 
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, {
-      get: (parentValue) => parentValue?.aaa,
-      set: (parentValue, value) => ({...parentValue, aaa: value}),
-    });
+    const field0 = createField(objectAccessor, {foo: 111});
+    field0.subscribe(listenerMock0);
 
-    controller.__form.setValue(222);
+    const field1 = field0.at('foo');
+    field1.subscribe(listenerMock1);
 
-    expect(parentController.__value).toEqual({aaa: 222});
-    expect(parentController.__form.value).toEqual({aaa: 222});
-    expect(parentController.__form.touched).toBe(false);
-    expect(rerenderMock1).not.toHaveBeenCalled();
+    field1.dispatchValue(222);
 
-    expect(controller.__value).toBe(222);
-    expect(controller.__form.value).toBe(222);
-    expect(controller.__form.touched).toBe(true);
-    expect(rerenderMock2).toHaveBeenCalledTimes(1);
+    expect(listenerMock0).toHaveBeenCalledTimes(1);
+    expect(listenerMock1).toHaveBeenCalledTimes(1);
   });
 
-  test('propagates value to the parent controller', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
+  test('sets value to a root field', () => {
+    const field = createField(objectAccessor, 111);
 
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, null);
+    field.setValue(222);
 
-    controller.__form.setValue(123);
-
-    expect(parentController.__value).toBe(123);
-    expect(parentController.__form.value).toBe(123);
-    expect(parentController.__form.touched).toBe(false);
-    expect(rerenderMock1).not.toHaveBeenCalled();
-
-    expect(controller.__value).toBe(123);
-    expect(controller.__form.value).toBe(123);
-    expect(controller.__form.touched).toBe(true);
-    expect(rerenderMock2).toHaveBeenCalledTimes(1);
+    expect(field.value).toBe(222);
+    expect(field.transient).toBe(true);
   });
 
-  test('propagates value to the child controller', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
+  test('sets value to a nested field', () => {
+    const initialValue = {foo: 111};
 
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, null);
+    const field0 = createField(objectAccessor, initialValue);
 
-    parentController.__form.setValue(123);
+    const field1 = field0.at('foo');
 
-    expect(parentController.__value).toBe(123);
-    expect(parentController.__form.value).toBe(123);
-    expect(parentController.__form.touched).toBe(true);
-    expect(rerenderMock1).toHaveBeenCalledTimes(1);
+    field1.setValue(222);
 
-    expect(controller.__value).toBe(123);
-    expect(controller.__form.value).toBe(123);
-    expect(controller.__form.touched).toBe(false);
-    expect(rerenderMock2).not.toHaveBeenCalled();
+    expect(field0.value).toBe(initialValue);
+    expect(field0.transient).toBe(false);
+
+    expect(field1.value).toBe(222);
+    expect(field1.transient).toBe(true);
   });
 
-  test('staged changes are not propagated to the parent controller', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
+  test('dispatches the value after it was set to a nested field', () => {
+    const field0 = createField(objectAccessor, {foo: 111});
 
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, null);
+    const field1 = field0.at('foo');
 
-    controller.__form.stageValue(123);
+    field1.setValue(222);
+    field1.dispatch();
 
-    expect(parentController.__value).toBe(undefined);
-    expect(controller.__value).toBe(123);
-    expect(controller.__staged).toBe(true);
+    expect(field0.value).toEqual({foo: 222});
+    expect(field0.transient).toBe(false);
 
-    expect(rerenderMock1).toHaveBeenCalledTimes(0);
-    expect(rerenderMock2).toHaveBeenCalledTimes(1);
+    expect(field1.value).toBe(222);
+    expect(field1.transient).toBe(false);
   });
 
-  test('staged changes are propagated to children', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
+  test('invokes subscriber during value set', () => {
+    const listenerMock0 = jest.fn();
+    const listenerMock1 = jest.fn();
 
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, null);
+    const field0 = createField(objectAccessor, {foo: 111});
+    field0.subscribe(listenerMock0);
 
-    parentController.__form.stageValue(123);
+    const field1 = field0.at('foo');
+    field1.subscribe(listenerMock1);
 
-    expect(parentController.__value).toBe(123);
-    expect(parentController.__staged).toBe(true);
-    expect(controller.__value).toBe(123);
+    field1.setValue(222);
 
-    expect(rerenderMock1).toHaveBeenCalledTimes(1);
-    expect(rerenderMock2).toHaveBeenCalledTimes(0);
-  });
-});
-
-describe('unmountFormController', () => {
-
-  test('removes parent', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
-
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, null);
-
-    unmountFormController(controller);
-
-    expect(controller.__parent).toBe(null);
-    expect(controller.__children).toBe(null);
-
-    parentController.__form.setValue(123);
-
-    expect(controller.__value).toBe(undefined);
-    expect(rerenderMock1).toHaveBeenCalledTimes(1);
-    expect(rerenderMock2).toHaveBeenCalledTimes(0);
+    expect(listenerMock0).toHaveBeenCalledTimes(0);
+    expect(listenerMock1).toHaveBeenCalledTimes(1);
   });
 
-  test('unmounts children', () => {
-    const rerenderMock1 = jest.fn();
-    const rerenderMock2 = jest.fn();
+  test('propagates new value to the nested field', () => {
+    const listenerMock0 = jest.fn();
+    const listenerMock1 = jest.fn();
 
-    const parentController = createFormController(rerenderMock1, null, null);
-    const controller = createFormController(rerenderMock2, parentController.__form, null);
+    const field0 = createField(objectAccessor, {foo: 111});
+    field0.subscribe(listenerMock0);
 
-    unmountFormController(parentController);
+    const field1 = field0.at('foo');
+    field1.subscribe(listenerMock1);
 
-    expect(parentController.__parent).toBe(null);
-    expect(parentController.__children).toBe(null);
+    const nextValue = {foo: 333};
+    field0.dispatchValue(nextValue);
 
-    controller.__form.setValue(123);
+    expect(listenerMock0).toHaveBeenCalledTimes(1);
+    expect(listenerMock1).toHaveBeenCalledTimes(1);
 
-    expect(parentController.__value).toBe(undefined);
-    expect(controller.__value).toBe(undefined);
-    expect(rerenderMock1).toHaveBeenCalledTimes(0);
-    expect(rerenderMock2).toHaveBeenCalledTimes(0);
+    expect(field0.value).toBe(nextValue);
+    expect(field0.transient).toBe(false);
+
+    expect(field1.value).toBe(333);
+    expect(field1.transient).toBe(false);
   });
+
+  test('does not propagate new value to the transient nested field', () => {
+    const listenerMock0 = jest.fn();
+    const listenerMock1 = jest.fn();
+
+    const field0 = createField(objectAccessor, {foo: 111});
+    field0.subscribe(listenerMock0);
+
+    const field1 = field0.at('foo');
+    field1.subscribe(listenerMock1);
+
+    field1.setValue(222);
+    field0.dispatchValue({foo: 333});
+
+    expect(listenerMock0).toHaveBeenCalledTimes(1);
+    expect(listenerMock1).toHaveBeenCalledTimes(1);
+
+    expect(field1.value).toBe(222);
+    expect(field1.transient).toBe(true);
+  });
+
+  test('does not notify subscribers if value of the nested field did not change', () => {
+    const listenerMock0 = jest.fn();
+    const listenerMock1 = jest.fn();
+
+    const fooValue = {bar: 111};
+
+    const field0 = createField(objectAccessor, {foo: fooValue});
+    field0.subscribe(listenerMock0);
+
+    const field1 = field0.at('foo');
+    field1.subscribe(listenerMock1);
+
+    field0.dispatchValue({foo: fooValue});
+
+    expect(listenerMock0).toHaveBeenCalledTimes(1);
+    expect(listenerMock1).toHaveBeenCalledTimes(0);
+  });
+
+  test('notifies subscribers', () => {
+    const listenerMock = jest.fn();
+
+    const field = createField(objectAccessor);
+    field.subscribe(listenerMock);
+
+    field.notify();
+
+    expect(listenerMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('applies enhancer to the root field', () => {
+    let field0;
+    const enhancerMock = jest.fn((field) => field0 = Object.assign({}, field));
+
+    const field1 = createField(objectAccessor, 111, enhancerMock);
+
+    expect(field1).toBe(field0);
+
+    expect(enhancerMock).toHaveBeenCalledTimes(1);
+    expect(enhancerMock).toHaveBeenNthCalledWith(1, field1);
+  });
+
+  test('returns field if enhancer returns undefined', () => {
+    const enhancerMock = jest.fn();
+
+    const field = createField(objectAccessor, 111, enhancerMock);
+
+    expect(field.value).toBe(111);
+
+    expect(enhancerMock).toHaveBeenCalledTimes(1);
+    expect(enhancerMock).toHaveBeenNthCalledWith(1, field);
+  });
+
+  test('applies enhancer to the nested field', () => {
+    let field0;
+    const enhancerMock = jest.fn((field) => field0 = Object.assign({}, field));
+
+    const field = createField(objectAccessor, {foo: 111}, enhancerMock);
+
+    expect(field.at('foo')).toBe(field0);
+
+    expect(enhancerMock).toHaveBeenCalledTimes(2);
+  });
+
 });

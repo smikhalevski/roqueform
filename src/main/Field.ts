@@ -2,7 +2,7 @@ import {createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEff
 import {useHandler, useRerender} from 'react-hookers';
 import {callOrGet} from './utils';
 
-export type Enhancer<E1> = <T, E0>(field: Field<T, E0>) => Field<T, E0> & E1;
+export type Enhancer<M> = (field: Field) => Field & M;
 
 export interface Accessor {
 
@@ -11,52 +11,50 @@ export interface Accessor {
   set(obj: any, key: any, value: any): any;
 }
 
-export interface Field<V = any, E = {}> {
-  value: V;
+export interface Field<T = any, M = {}> {
+  value: T;
   transient: boolean;
 
-  dispatchValue(value: SetStateAction<V>): void;
+  dispatchValue(value: SetStateAction<T>): void;
 
-  setValue(value: SetStateAction<V>): void;
+  setValue(value: SetStateAction<T>): void;
 
   dispatch(): void;
 
-  at<K extends keyof V>(key: K): Field<V[K], E> & E;
+  at<K extends keyof T>(key: K): Field<T[K], M> & M;
 
-  subscribe(listener: (targetField: Field<any, E> & E) => void): () => void;
+  subscribe(listener: (targetField: Field<any, M> & M) => void): () => void;
 
   notify(): void;
 }
 
-export interface FieldProps<V, F extends Field<V>> {
+export interface FieldProps<T, F extends Field<T>> {
   field: F;
   children: ((field: F) => ReactNode) | ReactNode;
-  onChange?: (value: V) => void;
+  onChange?: (value: T) => void;
 }
 
-export function Field<V, F extends Field<V>>(props: FieldProps<V, F>): ReactElement {
+export function Field<T, F extends Field<T>>(props: FieldProps<T, F>): ReactElement {
   const {field} = props;
   const rerender = useRerender();
   const handleChange = useHandler(props.onChange);
 
   useEffect(() => {
 
-    let prevValue: V | undefined;
+    let prevValue: T | undefined;
 
     return field.subscribe((targetField) => {
-
       const {value} = field;
 
       if (field === targetField) {
         rerender();
       }
-
       if (field.transient || Object.is(value, prevValue)) {
         return;
       }
 
-      handleChange(value);
       prevValue = value;
+      handleChange(value);
     });
   }, [field]);
 
