@@ -36,7 +36,7 @@ describe('createField', () => {
     expect(field.transient).toBe(false);
   });
 
-  test('dispatches value to a nested field', () => {
+  test('dispatches value to a derived field', () => {
     const field0 = createField(objectAccessor, {foo: 111});
 
     const field1 = field0.at('foo');
@@ -75,7 +75,7 @@ describe('createField', () => {
     expect(field.transient).toBe(true);
   });
 
-  test('sets value to a nested field', () => {
+  test('sets value to a derived field', () => {
     const initialValue = {foo: 111};
 
     const field0 = createField(objectAccessor, initialValue);
@@ -91,7 +91,7 @@ describe('createField', () => {
     expect(field1.transient).toBe(true);
   });
 
-  test('dispatches the value after it was set to a nested field', () => {
+  test('dispatches the value after it was set to a derived field', () => {
     const field0 = createField(objectAccessor, {foo: 111});
 
     const field1 = field0.at('foo');
@@ -122,7 +122,7 @@ describe('createField', () => {
     expect(listenerMock1).toHaveBeenCalledTimes(1);
   });
 
-  test('propagates new value to the nested field', () => {
+  test('propagates new value to the derived field', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
@@ -145,7 +145,7 @@ describe('createField', () => {
     expect(field1.transient).toBe(false);
   });
 
-  test('does not propagate new value to the transient nested field', () => {
+  test('does not propagate new value to the transient derived field', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
@@ -165,7 +165,7 @@ describe('createField', () => {
     expect(field1.transient).toBe(true);
   });
 
-  test('does not notify subscribers if value of the nested field did not change', () => {
+  test('does not notify subscribers if value of the derived field did not change', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
@@ -217,7 +217,7 @@ describe('createField', () => {
     expect(enhancerMock).toHaveBeenNthCalledWith(1, field);
   });
 
-  test('applies enhancer to the nested field', () => {
+  test('applies enhancer to the derived field', () => {
     let field0;
     const enhancerMock = jest.fn((field) => field0 = Object.assign({}, field));
 

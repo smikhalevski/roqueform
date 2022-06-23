@@ -5,7 +5,7 @@ import {callOrGet} from './utils';
 /**
  * Creates the new filed instance.
  *
- * @param accessor Resolves values for nested fields.
+ * @param accessor Resolves values for derived fields.
  * @param initialValue The initial value assigned to the field.
  * @param enhancer Enhances the field with additional functionality.
  *
@@ -29,6 +29,8 @@ interface FieldController {
 
 function getOrCreateFieldController(accessor: Accessor, parent: FieldController | null, key: unknown, initialValue: unknown, enhancer: Enhancer<{}> | undefined): FieldController {
 
+  let parentField: Field | null = null;
+
   if (parent !== null) {
 
     if (parent.__children !== null) {
@@ -38,12 +40,15 @@ function getOrCreateFieldController(accessor: Accessor, parent: FieldController 
         }
       }
     }
+    parentField = parent.__field;
     initialValue = accessor.get(parent.__value, key);
   }
 
   const eventBus = new EventBus<Field>();
 
   let field: Field = {
+    parent: parentField,
+    key,
     value: initialValue,
     transient: false,
 

@@ -12,6 +12,8 @@ export interface Accessor {
 }
 
 export interface Field<T = any, M = {}> {
+  parent: Field<any, M> & M | null;
+  key: any;
   value: T;
   transient: boolean;
 
@@ -28,21 +30,21 @@ export interface Field<T = any, M = {}> {
   notify(): void;
 }
 
-export interface FieldProps<F extends Field<T>, T> {
+export interface FieldProps<F extends Field> {
   field: F;
   children: ((field: F) => ReactNode) | ReactNode;
   eagerlyUpdated?: boolean;
-  onChange?: (value: T) => void;
+  onChange?: (value: F['value']) => void;
 }
 
-export function Field<F extends Field<T>, T = any>(props: FieldProps<F, T>): ReactElement {
+export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   const {field, eagerlyUpdated} = props;
   const rerender = useRerender();
   const handleChange = useHandler(props.onChange);
 
   useEffect(() => {
 
-    let prevValue: T | undefined;
+    let prevValue: F['value'] | undefined;
 
     return field.subscribe((targetField) => {
       const {value} = field;
