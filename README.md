@@ -175,7 +175,7 @@ const fooField = field.at('foo');
 // Set the transient value, "git add"
 fooField.setValue('qux');
 
-// Notice that fooField was updated but field wasn't
+// 🟡 Notice that fooField was updated but field wasn't
 field.value    // → {foo: 'bar'}
 fooField.value // → 'qux'
 
@@ -377,7 +377,8 @@ itself.
 <Field field={rootField.at('bar')}>
   {(barField) => (
       <input
-          ref={barField.ref} // Notice the ref here
+          // 🟡 Notice the ref property
+          ref={barField.ref}
           value={barField.value}
           onChange={(event) => {
             barField.dispatchValue(event.target.value);
@@ -471,6 +472,6 @@ interface to `AccessorContext`.
 import {objectAccessor, AccessorContext} from 'roqueform';
 
 <AccessorContext.Provider value={objectAccessor}>
-  {/* useField goes here */}
+  {/* useField should go here */}
 </AccessorContext.Provider>
 ```
