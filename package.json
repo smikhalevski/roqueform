@@ -25,8 +25,10 @@
   },
   "keywords": [
     "react",
-    "forms",
-    "pure"
+    "form",
+    "field",
+    "enhance",
+    "validation"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
