@@ -2,6 +2,8 @@
 
 The form state management library that can handle hundreds of fields without breaking a sweat.
 
+[**Live Roqueform example at CodeSandbox**](https://codesandbox.io/embed/roqueform-example-2evfif)
+
 - Extremely fast, re-renders only updated fields;
 - Laconic API with strict typings;
 - [Built-in extensibility mechanisms](#enhancers);
@@ -58,7 +60,7 @@ phase:
 
 Phases are non-intersecting, and can happen in a different order, or even in parallel as with async validation.
 
-Roqueform provides a robust API for the input state management and a flexible [Enhancers](#enhancers) to extend the
+Roqueform provides a robust API for the input state management and a flexible [enhancers API](#enhancers) to extend the
 functionality.
 
 ## `useField`
@@ -443,7 +445,8 @@ Or you can use the new field method introduced by the `withErrors` enhancer:
 rootField.at('bar').setError('Oh, snap!');
 ```
 
-`withErrors` also adds `invalid` and `error` fields to the `field` and its derived fields, to simplify error rendering:
+`withErrors` also added `invalid` and `error` fields to the `rootField` and its derived fields, to simplify error
+rendering:
 
 ```tsx
 <Field field={rootField.at('bar')}>
@@ -454,6 +457,7 @@ rootField.at('bar').setError('Oh, snap!');
             onChange={(event) => {
               barField.dispatchValue(event.target.value);
             }}
+            // 🟡 Notice the invalid property 
             aria-invalid={barField.invalid}
         />
         {barField.error}
