@@ -1,17 +1,17 @@
 import {Errors} from './Errors';
-import {Enhancer} from '../Field';
+import {Enhancer, Field} from '../Field';
 
 export interface WithErrors<T = any> {
 
   /**
-   * An error associated with this field, or `undefined` if there's no error.
-   */
-  readonly error: T | undefined;
-
-  /**
    * `true` if the field has an error.
    */
-  readonly invalid: boolean;
+  invalid: boolean;
+
+  /**
+   * An error associated with this field, or `undefined` if there's no error.
+   */
+  error: T | undefined;
 
   /**
    * Associates the error with this field.
@@ -32,29 +32,34 @@ export interface WithErrors<T = any> {
  * @param errors The map that associates field and a validation error.
  */
 export function withErrors<T>(errors: Errors<T>): Enhancer<WithErrors<T>> {
-  return (field: any) => {
+  return (targetField) => {
 
-    errors.subscribe((targetField) => {
-      if (targetField === field) {
-        field.notify();
-      }
+    let prevInvalid = errors.has(targetField);
+
+    const field = Object.assign<Field, WithErrors<T>>(targetField, {
+
+      invalid: prevInvalid,
+      error: errors.get(targetField),
+
+      setError(error) {
+        errors.set(field, error);
+      },
+      clearError() {
+        errors.delete(field);
+      },
     });
 
-    field.setError = (error: T) => {
-      errors.set(field, error);
-    };
+    errors.subscribe(() => {
+      const invalid = errors.has(field);
 
-    field.clearError = () => {
-      errors.delete(field);
-    };
+      if (prevInvalid === invalid) {
+        return;
+      }
 
-    Object.defineProperties(field, {
-      error: {
-        get: () => errors.get(field),
-      },
-      invalid: {
-        get: () => errors.has(field),
-      },
+      field.invalid = prevInvalid = invalid;
+      field.error = errors.get(field);
+
+      field.notify();
     });
 
     return field;

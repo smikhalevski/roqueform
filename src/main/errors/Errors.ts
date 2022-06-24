@@ -3,41 +3,34 @@ import {EventBus} from '@smikhalevski/event-bus';
 
 export class Errors<T> {
 
-  private _eventBus = new EventBus<Field>();
-  private _errors = new Map<Field, T>();
+  private _eventBus = new EventBus();
+  private _map = new Map<Field, T>();
 
   has(field: Field): boolean {
-    return this._errors.has(field);
+    return this._map.has(field);
   }
 
   get(field: Field): T | undefined {
-    return this._errors.get(field);
+    return this._map.get(field);
   }
 
   set(field: Field, error: T): void {
-    this._errors.set(field, error);
-    field.notify();
-    this._eventBus.publish(field);
+    this._map.set(field, error);
+    this._eventBus.publish();
   }
 
   delete(field: Field): void {
-    if (this._errors.delete(field)) {
-      field.notify();
-      this._eventBus.publish(field);
+    if (this._map.delete(field)) {
+      this._eventBus.publish();
     }
   }
 
   clear(): void {
-    const fields = Array.from(this._errors.keys());
-    this._errors.clear();
-
-    for (const field of fields) {
-      field.notify();
-      this._eventBus.publish(field);
-    }
+    this._map.clear();
+    this._eventBus.publish();
   }
 
-  subscribe(listener: (field: Field) => void): () => void {
+  subscribe(listener: () => void): () => void {
     return this._eventBus.subscribe(listener);
   }
 }

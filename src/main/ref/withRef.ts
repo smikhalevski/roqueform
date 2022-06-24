@@ -1,4 +1,4 @@
-import {Enhancer} from '../Field';
+import {Enhancer, Field} from '../Field';
 import {createRef, RefObject} from 'react';
 
 export interface WithRef<T> {
@@ -6,5 +6,5 @@ export interface WithRef<T> {
 }
 
 export function withRef<T = any>(): Enhancer<WithRef<T>> {
-  return (field) => Object.assign(field, {ref: createRef<T>()});
+  return (field) => Object.assign<Field, WithRef<T>>(field, {ref: createRef()});
 }
