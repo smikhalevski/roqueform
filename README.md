@@ -266,7 +266,7 @@ required:
 
 ```tsx
 const App = () => {
-  const rootField = useField({foo: 'bar', baz: 123});
+  const rootField = useField({foo: 'bar', bar: 123});
 
   return <>
     <Field field={rootField.at('foo')}>
@@ -313,20 +313,20 @@ updates the derived field:
 
 ```tsx
 const App = () => {
-  const rootField = useField({foo: 'bar'});
+  const rootField = useField({bar: 'qux'});
 
   return <>
     <Field field={rootField}>
       {(rootField) => JSON.stringify(rootField.value)}
     </Field>
 
-    <Field field={rootField.at('foo')}>
-      {(fooField) => (
+    <Field field={rootField.at('bar')}>
+      {(barField) => (
           <input
               type="text"
-              value={fooField.value}
+              value={barField.value}
               onChange={(event) => {
-                fooField.dispatchValue(event.target.value);
+                barField.dispatchValue(event.target.value);
               }}
           />
       )}
@@ -362,11 +362,11 @@ import {createRef} from 'react';
 import {useField} from 'roqueform';
 
 const rootField = useField(
-    {foo: 'bar'},
+    {bar: 'qux'},
 
     (field) => Object.assign(field, {ref: createRef<HTMLInputElement>()})
 );
-// → Field<{ foo: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
+// → Field<{ bar: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
 ```
 
 The second argument of the `useField` hook is the enhancer function that accepts a field instance and enriches it with
@@ -398,8 +398,8 @@ Roqueform is shipped with ref enhancer implementation:
 ```ts
 import {useField, withRef} from 'roqueform';
 
-const rootField = useField({foo: 'bar'}, withRef<HTMLInputElement>());
-// → Field<{ foo: string }, WithRef<HTMLInputElement>> & WithRef<HTMLInputElement>
+const rootField = useField({bar: 'qux'}, withRef<HTMLInputElement>());
+// → Field<{ bar: string }, WithRef<HTMLInputElement>> & WithRef<HTMLInputElement>
 ```
 
 ## Composing enhancers
@@ -424,7 +424,7 @@ import {useErrors, useField, withErrors} from 'roqueform';
 
 const errors = useErrors<ReactNode>();
 
-const rootField = useField({foo: 'bar'}, withErrors(errors));
+const rootField = useField({bar: 'qux'}, withErrors(errors));
 ```
 
 `errors` now holds the `Errors` object, which is an observable mapping from a `Field` to the associated error. In this
@@ -433,29 +433,29 @@ example, errors are typed as `ReactNode` but you can use any type that suits you
 To associate an error with the field you can update `errors`:
 
 ```ts
-errors.set(rootField.at('foo'), 'Oh, snap!');
+errors.set(rootField.at('bar'), 'Oh, snap!');
 ```
 
 Or you can use the new field method introduced by the `withErrors` enhancer:
 
 ```ts
-rootField.at('foo').setError('Oh, snap!');
+rootField.at('bar').setError('Oh, snap!');
 ```
 
 `withErrors` also adds `invalid` and `error` fields to the `field` and its derived fields, to simplify error rendering:
 
 ```tsx
-<Field field={rootField.at('foo')}>
-  {(fooField) => (
+<Field field={rootField.at('bar')}>
+  {(barField) => (
       <>
         <input
-            value={fooField.value}
+            value={barField.value}
             onChange={(event) => {
-              fooField.dispatchValue(event.target.value);
+              barField.dispatchValue(event.target.value);
             }}
-            aria-invalid={field.invalid}
+            aria-invalid={barField.invalid}
         />
-        {field.error}
+        {barField.error}
       </>
   )}
 </Field>
