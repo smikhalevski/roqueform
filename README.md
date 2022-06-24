@@ -2,13 +2,13 @@
 
 The form state management library that can handle hundreds of fields without breaking a sweat.
 
-[**Live Roqueform example at CodeSandbox**](https://codesandbox.io/embed/roqueform-example-2evfif)
-
 - Extremely fast, re-renders only updated fields;
 - Laconic API with strict typings;
 - [Built-in extensibility mechanisms](#enhancers);
 - [Just 1 kB gzipped](https://bundlephobia.com/result?p=roqueform);
 - [Custom validation support](#validation).
+
+🔥&ensp;[**Live example at CodeSandbox**](https://codesandbox.io/embed/roqueform-example-2evfif)
 
 ```sh
 npm install --save-prod roqueform
