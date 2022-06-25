@@ -1,7 +1,6 @@
-import {callOrGet} from '../main/utils';
+import { callOrGet } from '../main/utils';
 
 describe('callOrGet', () => {
-
   test('returns non function value as is', () => {
     const obj = {};
 

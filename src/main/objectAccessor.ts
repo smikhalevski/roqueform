@@ -1,10 +1,9 @@
-import {Accessor} from './Field';
+import { Accessor } from './Field';
 
 /**
  * The accessor that reads and writes key-value pairs to object and arrays.
  */
 export const objectAccessor: Accessor = {
-
   get(obj, key) {
     return obj?.[key];
   },

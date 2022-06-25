@@ -1,8 +1,7 @@
-import {renderHook} from '@testing-library/react-hooks/native';
-import {Errors, useField, withErrors} from '../../main';
+import { renderHook } from '@testing-library/react-hooks/native';
+import { Errors, useField, withErrors } from '../../main';
 
 describe('withErrors', () => {
-
   test('notifies field and errors about the set error', () => {
     const listenerMock = jest.fn();
 

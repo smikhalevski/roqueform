@@ -1,6 +1,6 @@
-import {createContext} from 'react';
-import {Accessor} from './Field';
-import {objectAccessor} from './objectAccessor';
+import { createContext } from 'react';
+import { Accessor } from './Field';
+import { objectAccessor } from './objectAccessor';
 
 /**
  * The context that is used by {@link useField} to retrieve an accessor.

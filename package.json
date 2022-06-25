@@ -10,14 +10,15 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc && npm run rollup && npm run terser",
-    "rollup": "rollup --external @smikhalevski/event-bus,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "terser": "t=$(mktemp) && rm $t && for file in $(find ./lib -name '*.js'); do terser --name-cache $t --compress --mangle --mangle-props reserved=[__esModule],regex=/^__/ --output $file -- $file; done && rm $t || exit 1",
-    "clean": "rimraf ./lib ./docs",
-    "test": "jest --detectOpenHandles --forceExit",
-    "docs": "typedoc ./src/main/index.ts",
-    "publish-docs": "[ -d ./docs ] && [[ ! $(git status --porcelain) ]] && branch=$(git rev-parse --abbrev-ref HEAD) && sha=$(git rev-parse --short HEAD) && t=$(mktemp -d) && cp -R ./docs/ $t && git checkout ghpages && ls -A | grep -wv .git | xargs rm -rf && cp -R $t/ . && git add . && git commit -m \"Updated docs ($sha)\" && git push && git checkout $branch",
-    "release-docs": "npm run clean && npm run docs && npm run publish-docs"
+    "build": "tsc && npm run build:rollup && npm run build:terser",
+    "build:rollup": "rollup --external @smikhalevski/event-bus,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "build:terser": "t=$(mktemp) && rm $t && for file in $(find ./lib -name '*.js'); do terser --name-cache $t --mangle-props reserved=[__esModule],regex=/^__/ --output $file -- $file; done && rm $t || exit 1",
+    "prettier": "prettier --write './src/**/*.{ts,tsx}' --loglevel error",
+    "clean": "rimraf './lib' './docs'",
+    "test": "jest --testMatch '<rootDir>/src/**/*.test.{tsx,ts}' --detectOpenHandles --forceExit",
+    "docs:build": "typedoc './src/main/index.ts'",
+    "docs:push": "[ -d ./docs ] && [[ ! $(git status --porcelain) ]] && branch=$(git rev-parse --abbrev-ref HEAD) && sha=$(git rev-parse --short HEAD) && t=$(mktemp -d) && cp -R ./docs/ $t && git checkout ghpages && ls -A | grep -wv .git | xargs rm -rf && cp -R $t/ . && git add . && git commit -m \"Updated docs ($sha)\" && git push && git checkout $branch",
+    "docs:release": "npm run clean && npm run docs && npm run docs:push"
   },
   "repository": {
     "type": "git",
@@ -54,6 +55,7 @@
     "@types/jest": "^28.1.1",
     "@types/react": "^17.0.39",
     "jest": "^28.1.1",
+    "prettier": "^2.7.1",
     "react-test-renderer": "^17.0.2",
     "rimraf": "^3.0.2",
     "rollup": "^2.75.6",

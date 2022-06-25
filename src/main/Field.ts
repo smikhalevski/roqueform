@@ -1,5 +1,5 @@
-import {createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useRef, useState} from 'react';
-import {callOrGet} from './utils';
+import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useRef, useState } from 'react';
+import { callOrGet } from './utils';
 
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
@@ -12,7 +12,6 @@ export type Enhancer<M> = (field: Field) => Field & M;
  * The abstraction used by the {@link Field} to read and write values in controlled value.
  */
 export interface Accessor {
-
   /**
    * Returns the value that corresponds to `key` in `obj`.
    *
@@ -38,11 +37,10 @@ export interface Accessor {
  * @template M The type of mixin added by the enhancer.
  */
 export interface Field<T = any, M = {}> {
-
   /**
    * The parent field from which this one was derived.
    */
-  parent: Field<any, M> & M | null;
+  parent: (Field<any, M> & M) | null;
 
   /**
    * The key in the parent value that corresponds to the value controlled by the field, or `null` if there's no parent.
@@ -109,7 +107,6 @@ export interface Field<T = any, M = {}> {
  * @template F The type of the field.
  */
 export interface FieldProps<F extends Field> {
-
   /**
    * The field to subscribe to.
    */
@@ -143,7 +140,7 @@ export interface FieldProps<F extends Field> {
  * @template F The type of the field.
  */
 export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
-  const {field, eagerlyUpdated} = props;
+  const { field, eagerlyUpdated } = props;
 
   const [, setState] = useState();
   const handleChangeRef = useRef<FieldProps<F>['onChange']>();
@@ -151,11 +148,10 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   handleChangeRef.current = props.onChange;
 
   useEffect(() => {
-
     let prevValue: F['value'] | undefined;
 
-    return field.subscribe((targetField) => {
-      const {value} = field;
+    return field.subscribe(targetField => {
+      const { value } = field;
 
       if (eagerlyUpdated || field === targetField) {
         setState(value);

@@ -1,8 +1,7 @@
-import {Errors} from './Errors';
-import {Enhancer, Field} from '../Field';
+import { Errors } from './Errors';
+import { Enhancer, Field } from '../Field';
 
 export interface WithErrors<T = any> {
-
   /**
    * `true` if the field has an error.
    */
@@ -32,13 +31,11 @@ export interface WithErrors<T = any> {
  * @param errors The map that associates field and a validation error.
  */
 export function withErrors<T>(errors: Errors<T>): Enhancer<WithErrors<T>> {
-  return (targetField) => {
-
+  return targetField => {
     let invalid = errors.has(targetField);
     let error = errors.get(targetField);
 
     const field = Object.assign<Field, WithErrors<T>>(targetField, {
-
       invalid,
       error,
 
@@ -51,7 +48,6 @@ export function withErrors<T>(errors: Errors<T>): Enhancer<WithErrors<T>> {
     });
 
     errors.subscribe(() => {
-
       const nextInvalid = errors.has(field);
       const nextError = errors.get(field);
 
