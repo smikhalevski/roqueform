@@ -1,5 +1,4 @@
-import {createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect} from 'react';
-import {useHandler, useRerender} from 'react-hookers';
+import {createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useRef, useState} from 'react';
 import {callOrGet} from './utils';
 
 /**
@@ -146,8 +145,10 @@ export interface FieldProps<F extends Field> {
 export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   const {field, eagerlyUpdated} = props;
 
-  const rerender = useRerender();
-  const handleChange = useHandler(props.onChange);
+  const [, setState] = useState();
+  const handleChangeRef = useRef<FieldProps<F>['onChange']>();
+
+  handleChangeRef.current = props.onChange;
 
   useEffect(() => {
 
@@ -157,14 +158,14 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
       const {value} = field;
 
       if (eagerlyUpdated || field === targetField) {
-        rerender();
+        setState(value);
       }
       if (field.transient || Object.is(value, prevValue)) {
         return;
       }
 
       prevValue = value;
-      handleChange(value);
+      handleChangeRef.current?.(value);
     });
   }, [field, eagerlyUpdated]);
 

@@ -220,21 +220,6 @@ field.subscribe((targetField) => {
 `targetField` is a field that initiated the update, so this can be `field` itself, any of its derived fields, or any of
 its ancestors (if `field` is also a derived field).
 
-You can use subscriptions to force re-render your component, but this is strongly discouraged since it makes your code
-more imperative:
-
-```ts
-import {useEffect} from 'react';
-import {useRerender} from 'react-hookers';
-import {useField} from 'roqueform';
-
-const rerender = useRerender();
-
-const field = useField({foo: 'bar'});
-
-useEffect(() => field.subscribe(rerender), []);
-```
-
 ## `Field`
 
 The `Field` component subscribes to the given field instance and re-renders its children when the field is updated:
