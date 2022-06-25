@@ -8,7 +8,7 @@ The form state management library that can handle hundreds of fields without bre
 - [Just 1 kB gzipped](https://bundlephobia.com/result?p=roqueform);
 - [Custom validation support](#validation).
 
-🔥&ensp;[**Live example at CodeSandbox**](https://codesandbox.io/embed/roqueform-example-2evfif)
+🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-example-2evfif)
 
 ```sh
 npm install --save-prod roqueform
