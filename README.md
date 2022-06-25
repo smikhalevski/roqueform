@@ -8,6 +8,8 @@ The form state management library that can handle hundreds of fields without bre
 - [Just 1 kB gzipped](https://bundlephobia.com/result?p=roqueform);
 - [Custom validation support](#validation).
 
+🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-example-2evfif)
+
 ```sh
 npm install --save-prod roqueform
 ```
@@ -58,7 +60,7 @@ phase:
 
 Phases are non-intersecting, and can happen in a different order, or even in parallel as with async validation.
 
-Roqueform provides a robust API for the input state management and a flexible [Enhancers](#enhancers) to extend the
+Roqueform provides a robust API for the input state management and a flexible [enhancers API](#enhancers) to extend the
 functionality.
 
 ## `useField`
@@ -175,7 +177,7 @@ const fooField = field.at('foo');
 // Set the transient value, "git add"
 fooField.setValue('qux');
 
-// Notice that fooField was updated but field wasn't
+// 🟡 Notice that fooField was updated but field wasn't
 field.value    // → {foo: 'bar'}
 fooField.value // → 'qux'
 
@@ -217,21 +219,6 @@ field.subscribe((targetField) => {
 
 `targetField` is a field that initiated the update, so this can be `field` itself, any of its derived fields, or any of
 its ancestors (if `field` is also a derived field).
-
-You can use subscriptions to force re-render your component, but this is strongly discouraged since it makes your code
-more imperative:
-
-```ts
-import {useEffect} from 'react';
-import {useRerender} from 'react-hookers';
-import {useField} from 'roqueform';
-
-const rerender = useRerender();
-
-const field = useField({foo: 'bar'});
-
-useEffect(() => field.subscribe(rerender), []);
-```
 
 ## `Field`
 
@@ -377,7 +364,8 @@ itself.
 <Field field={rootField.at('bar')}>
   {(barField) => (
       <input
-          ref={barField.ref} // Notice the ref here
+          // 🟡 Notice the ref property
+          ref={barField.ref}
           value={barField.value}
           onChange={(event) => {
             barField.dispatchValue(event.target.value);
@@ -442,7 +430,8 @@ Or you can use the new field method introduced by the `withErrors` enhancer:
 rootField.at('bar').setError('Oh, snap!');
 ```
 
-`withErrors` also adds `invalid` and `error` fields to the `field` and its derived fields, to simplify error rendering:
+`withErrors` also added `invalid` and `error` fields to the `rootField` and its derived fields, to simplify error
+rendering:
 
 ```tsx
 <Field field={rootField.at('bar')}>
@@ -453,6 +442,7 @@ rootField.at('bar').setError('Oh, snap!');
             onChange={(event) => {
               barField.dispatchValue(event.target.value);
             }}
+            // 🟡 Notice the invalid property 
             aria-invalid={barField.invalid}
         />
         {barField.error}
@@ -471,6 +461,6 @@ interface to `AccessorContext`.
 import {objectAccessor, AccessorContext} from 'roqueform';
 
 <AccessorContext.Provider value={objectAccessor}>
-  {/* useField goes here */}
+  {/* useField should go here */}
 </AccessorContext.Provider>
 ```

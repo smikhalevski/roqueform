@@ -1,7 +1,6 @@
-import {createField, objectAccessor} from '../main';
+import { createField, objectAccessor } from '../main';
 
 describe('createField', () => {
-
   test('creates a field without an initial value', () => {
     const field = createField(objectAccessor);
 
@@ -18,7 +17,7 @@ describe('createField', () => {
   });
 
   test('returns a field at key', () => {
-    const field0 = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, { foo: 111 });
 
     const field1 = field0.at('foo');
 
@@ -28,7 +27,7 @@ describe('createField', () => {
   });
 
   test('returns the same field for a key', () => {
-    const field = createField(objectAccessor, {foo: 111});
+    const field = createField(objectAccessor, { foo: 111 });
 
     expect(field.at('foo')).toBe(field.at('foo'));
   });
@@ -43,13 +42,13 @@ describe('createField', () => {
   });
 
   test('dispatches value to a derived field', () => {
-    const field0 = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, { foo: 111 });
 
     const field1 = field0.at('foo');
 
     field1.dispatchValue(222);
 
-    expect(field0.value).toEqual({foo: 222});
+    expect(field0.value).toEqual({ foo: 222 });
     expect(field0.transient).toBe(false);
 
     expect(field1.value).toBe(222);
@@ -60,7 +59,7 @@ describe('createField', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
-    const field0 = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, { foo: 111 });
     field0.subscribe(listenerMock0);
 
     const field1 = field0.at('foo');
@@ -82,7 +81,7 @@ describe('createField', () => {
   });
 
   test('sets value to a derived field', () => {
-    const initialValue = {foo: 111};
+    const initialValue = { foo: 111 };
 
     const field0 = createField(objectAccessor, initialValue);
 
@@ -98,14 +97,14 @@ describe('createField', () => {
   });
 
   test('dispatches the value after it was set to a derived field', () => {
-    const field0 = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, { foo: 111 });
 
     const field1 = field0.at('foo');
 
     field1.setValue(222);
     field1.dispatch();
 
-    expect(field0.value).toEqual({foo: 222});
+    expect(field0.value).toEqual({ foo: 222 });
     expect(field0.transient).toBe(false);
 
     expect(field1.value).toBe(222);
@@ -116,7 +115,7 @@ describe('createField', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
-    const field0 = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, { foo: 111 });
     field0.subscribe(listenerMock0);
 
     const field1 = field0.at('foo');
@@ -132,13 +131,13 @@ describe('createField', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
-    const field0 = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, { foo: 111 });
     field0.subscribe(listenerMock0);
 
     const field1 = field0.at('foo');
     field1.subscribe(listenerMock1);
 
-    const nextValue = {foo: 333};
+    const nextValue = { foo: 333 };
     field0.dispatchValue(nextValue);
 
     expect(listenerMock0).toHaveBeenCalledTimes(1);
@@ -155,14 +154,14 @@ describe('createField', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
-    const field0 = createField(objectAccessor, {foo: 111});
+    const field0 = createField(objectAccessor, { foo: 111 });
     field0.subscribe(listenerMock0);
 
     const field1 = field0.at('foo');
     field1.subscribe(listenerMock1);
 
     field1.setValue(222);
-    field0.dispatchValue({foo: 333});
+    field0.dispatchValue({ foo: 333 });
 
     expect(listenerMock0).toHaveBeenCalledTimes(1);
     expect(listenerMock1).toHaveBeenCalledTimes(1);
@@ -175,15 +174,15 @@ describe('createField', () => {
     const listenerMock0 = jest.fn();
     const listenerMock1 = jest.fn();
 
-    const fooValue = {bar: 111};
+    const fooValue = { bar: 111 };
 
-    const field0 = createField(objectAccessor, {foo: fooValue});
+    const field0 = createField(objectAccessor, { foo: fooValue });
     field0.subscribe(listenerMock0);
 
     const field1 = field0.at('foo');
     field1.subscribe(listenerMock1);
 
-    field0.dispatchValue({foo: fooValue});
+    field0.dispatchValue({ foo: fooValue });
 
     expect(listenerMock0).toHaveBeenCalledTimes(1);
     expect(listenerMock1).toHaveBeenCalledTimes(0);
@@ -202,7 +201,7 @@ describe('createField', () => {
 
   test('applies enhancer to the root field', () => {
     let field0;
-    const enhancerMock = jest.fn((field) => field0 = Object.assign({}, field));
+    const enhancerMock = jest.fn(field => (field0 = Object.assign({}, field)));
 
     const field1 = createField(objectAccessor, 111, enhancerMock);
 
@@ -225,13 +224,12 @@ describe('createField', () => {
 
   test('applies enhancer to the derived field', () => {
     let field0;
-    const enhancerMock = jest.fn((field) => field0 = Object.assign({}, field));
+    const enhancerMock = jest.fn(field => (field0 = Object.assign({}, field)));
 
-    const field = createField(objectAccessor, {foo: 111}, enhancerMock);
+    const field = createField(objectAccessor, { foo: 111 }, enhancerMock);
 
     expect(field.at('foo')).toBe(field0);
 
     expect(enhancerMock).toHaveBeenCalledTimes(2);
   });
-
 });

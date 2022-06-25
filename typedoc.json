@@ -2,5 +2,6 @@
   "includeVersion": true,
   "out": "./docs",
   "excludePrivate": true,
-  "excludeInternal": true
+  "excludeInternal": true,
+  "cleanOutputDir": true
 }

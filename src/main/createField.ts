@@ -1,6 +1,6 @@
-import {Accessor, Enhancer, Field} from './Field';
-import {EventBus} from '@smikhalevski/event-bus';
-import {callOrGet} from './utils';
+import { Accessor, Enhancer, Field } from './Field';
+import { EventBus } from '@smikhalevski/event-bus';
+import { callOrGet } from './utils';
 
 /**
  * Creates the new filed instance.
@@ -12,7 +12,11 @@ import {callOrGet} from './utils';
  * @template T The type of the value held by the field.
  * @template M The type of mixin added by the enhancer.
  */
-export function createField<T = any, M = {}>(accessor: Accessor, initialValue?: T, enhancer?: Enhancer<M>): Field<T, M> & M {
+export function createField<T = any, M = {}>(
+  accessor: Accessor,
+  initialValue?: T,
+  enhancer?: Enhancer<M>
+): Field<T, M> & M {
   return getOrCreateFieldController(accessor, null, null, initialValue, enhancer).__field as Field<T, M> & M;
 }
 
@@ -27,12 +31,16 @@ interface FieldController {
   __accessor: Accessor;
 }
 
-function getOrCreateFieldController(accessor: Accessor, parent: FieldController | null, key: unknown, initialValue: unknown, enhancer: Enhancer<{}> | undefined): FieldController {
-
+function getOrCreateFieldController(
+  accessor: Accessor,
+  parent: FieldController | null,
+  key: unknown,
+  initialValue: unknown,
+  enhancer: Enhancer<{}> | undefined
+): FieldController {
   let parentField: Field | null = null;
 
   if (parent !== null) {
-
     if (parent.__children !== null) {
       for (const child of parent.__children) {
         if (Object.is(child.__key, key)) {
@@ -84,7 +92,7 @@ function getOrCreateFieldController(accessor: Accessor, parent: FieldController 
   };
 
   if (parent !== null) {
-    const children = parent.__children ||= [];
+    const children = (parent.__children ||= []);
     children.push(controller);
   }
 
@@ -102,12 +110,12 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
 
   controller.__field.transient = controller.__transient = transient;
 
-  const {__accessor} = controller;
+  const { __accessor } = controller;
 
   let rootController = controller;
 
   while (rootController.__parent !== null && !rootController.__transient) {
-    const {__key} = rootController;
+    const { __key } = rootController;
     rootController = rootController.__parent;
     value = __accessor.set(rootController.__value, __key, value);
   }
@@ -117,8 +125,7 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
 
 function propagateValue(targetField: Field, controller: FieldController, value: unknown): void {
   if (controller.__children !== null) {
-
-    const {__accessor} = controller;
+    const { __accessor } = controller;
 
     for (const child of controller.__children) {
       if (child.__transient) {

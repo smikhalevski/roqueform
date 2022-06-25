@@ -10,14 +10,14 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc && npm run rollup && npm run terser",
-    "rollup": "rollup --external @smikhalevski/event-bus,react,react-hookers --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "terser": "t=$(mktemp) && rm $t && for file in $(find ./lib -name '*.js'); do terser --name-cache $t --compress --mangle --mangle-props reserved=[__esModule],regex=/^__/ --output $file -- $file; done && rm $t || exit 1",
-    "clean": "rimraf ./lib ./docs",
-    "test": "jest --detectOpenHandles --forceExit",
-    "docs": "typedoc ./src/main/index.ts",
-    "publish-docs": "[ -d ./docs ] && [[ ! $(git status --porcelain) ]] && branch=$(git rev-parse --abbrev-ref HEAD) && sha=$(git rev-parse --short HEAD) && t=$(mktemp -d) && cp -R ./docs/ $t && git checkout ghpages && ls -A | grep -wv .git | xargs rm -rf && cp -R $t/ . && git add . && git commit -m \"Updated docs ($sha)\" && git push && git checkout $branch",
-    "release-docs": "npm run clean && npm run docs && npm run publish-docs"
+    "build": "tsc && npm run build:rollup && npm run build:terser",
+    "build:rollup": "rollup --external @smikhalevski/event-bus,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "build:terser": "TEMP=$(mktemp) && rm $TEMP && for FILE in $(find ./lib -name '*.js'); do terser --name-cache $TEMP --mangle-props reserved=[__esModule],regex=/^__/ --output $FILE -- $FILE; done && rm $TEMP || exit 1",
+    "prettier": "prettier --write './src/**/*.{ts,tsx}' --loglevel error",
+    "clean": "rimraf './lib' './docs'",
+    "test": "jest",
+    "docs:build": "typedoc './src/main/index.ts'",
+    "docs:release": "npm run docs:build && SHA=$(git rev-parse --short HEAD) && ORIGIN=$(git config --get remote.origin.url) && TEMP=$(mktemp -d) && git clone -b ghpages --single-branch $ORIGIN $TEMP && ls -A $TEMP | grep -wv .git | xargs rm -rf && cp -R ./docs/ $TEMP && cd $TEMP && git add . && git commit -m \"Updated docs ($SHA)\" && git push && rm -rf $TEMP"
   },
   "repository": {
     "type": "git",
@@ -36,37 +36,25 @@
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
   "homepage": "https://github.com/smikhalevski/roqueform#readme",
-  "jest": {
-    "preset": "ts-jest",
-    "globals": {
-      "ts-jest": {
-        "diagnostics": {
-          "ignoreCodes": [
-            151001
-          ]
-        }
-      }
-    }
-  },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.3.0",
-    "@testing-library/react-hooks": "^7.0.2",
-    "@types/jest": "^28.1.1",
-    "@types/react": "^17.0.39",
+    "@testing-library/react": "^13.0.0",
+    "@types/jest": "^28.1.3",
+    "@types/react": "^18.0.14",
     "jest": "^28.1.1",
-    "react-test-renderer": "^17.0.2",
+    "jest-environment-jsdom": "^28.1.1",
+    "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
-    "rollup": "^2.75.6",
+    "rollup": "^2.75.7",
     "terser": "^5.14.1",
     "ts-jest": "^28.0.5",
-    "typedoc": "^0.22.17",
+    "typedoc": "^0.22.18",
     "typescript": "^4.7.3"
   },
   "peerDependencies": {
-    "react": ">=16.14.0"
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
-    "@smikhalevski/event-bus": "^1.0.0",
-    "react-hookers": "^5.1.0"
+    "@smikhalevski/event-bus": "^1.0.0"
   }
 }
