@@ -5,14 +5,5 @@
   ],
   "testEnvironment": "jsdom",
   "detectOpenHandles": true,
-  "forceExit": true,
-  "globals": {
-    "ts-jest": {
-      "diagnostics": {
-        "ignoreCodes": [
-          151001
-        ]
-      }
-    }
-  }
+  "forceExit": true
 }
