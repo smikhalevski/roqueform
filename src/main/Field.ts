@@ -161,7 +161,11 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
       }
 
       prevValue = value;
-      handleChangeRef.current?.(value);
+
+      const handleChange = handleChangeRef.current;
+      if (typeof handleChange === 'function') {
+        handleChange(value);
+      }
     });
   }, [field, eagerlyUpdated]);
 

@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks/native';
+import { renderHook } from '@testing-library/react';
 import { Errors, useField, withErrors } from '../../main';
 
 describe('withErrors', () => {
