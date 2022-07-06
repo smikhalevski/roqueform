@@ -221,6 +221,12 @@ field.subscribe(targetField => {
 `targetField` is a field that initiated the update, so this can be `field` itself, any of its derived fields, or any of
 its ancestors (if `field` is also a derived field).
 
+You can trigger all listeners that are subscribed to the field with `notify`:
+
+```ts
+field.notify();
+```
+
 ## `Field`
 
 The `Field` component subscribes to the given field instance and re-renders its children when the field is updated:
