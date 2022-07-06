@@ -22,8 +22,9 @@ npm install --save-prod roqueform
         - [Field observability](#field-observability)
     - [`Field`](#field)
         - [Eager and lazy re-renders](#eager-and-lazy-re-renders)
-- [Enhancers](#enhancers)
-    - [Composing enhancers](#composing-enhancers)
+        - [Reacting to changes](#reacting-to-changes)
+    - [Enhancers](#enhancers)
+        - [Composing enhancers](#composing-enhancers)
 - [Validation](#validation)
 - [Accessors](#accessors)
 
@@ -31,7 +32,7 @@ npm install --save-prod roqueform
 
 Here are the requirements I wanted the management solution to satisfy:
 
-- Everything should be strictly typed ut to the very field value setter, so the string value from the silly input would
+- Everything should be strictly typed up to the very field value setter, so the string value from the silly input would
   be set to the number-typed value in the form value object.
 
 - There should be no restrictions on how and when the input is submitted because data submission is generally
@@ -338,7 +339,31 @@ affected.
 
 Now both fields are re-rendered when user edits the input text.
 
-# Enhancers
+### Reacting to changes
+
+[Subscribing to a field](#field-observability) isn't always convenient. Instead, you can use an `onChange` handler that
+is triggered only when the field value was updated [non-transiently](#transient-updates).
+
+```tsx
+<Field
+    field={rootField.at('bar')}
+    onChange={(value) => {
+      // Handle the value change
+    }}
+>
+  {(barField) => (
+      <input
+          type="text"
+          value={barField.value}
+          onChange={(event) => {
+            barField.dispatchValue(event.target.value);
+          }}
+      />
+  )}
+</Field>
+```
+
+## Enhancers
 
 Enhancers are a very powerful mechanism that allows enriching fields with custom functionality.
 
@@ -390,7 +415,7 @@ const rootField = useField({bar: 'qux'}, withRef<HTMLInputElement>());
 // → Field<{ bar: string }, WithRef<HTMLInputElement>> & WithRef<HTMLInputElement>
 ```
 
-## Composing enhancers
+### Composing enhancers
 
 You may want to use multiple enhancers at the same time, but `useField` allows passing only one enhancer function. To
 combine multiple enhancers into one, use `compose` helper function:
