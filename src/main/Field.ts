@@ -1,4 +1,4 @@
-import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useRef, useState } from 'react';
+import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useReducer, useRef } from 'react';
 import { callOrGet } from './utils';
 
 /**
@@ -142,7 +142,7 @@ export interface FieldProps<F extends Field> {
 export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   const { field, eagerlyUpdated } = props;
 
-  const [, setState] = useState();
+  const [, rerender] = useReducer(reduceCount, 0);
   const handleChangeRef = useRef<FieldProps<F>['onChange']>();
 
   handleChangeRef.current = props.onChange;
@@ -154,7 +154,7 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
       const { value } = field;
 
       if (eagerlyUpdated || field === targetField) {
-        setState(value);
+        rerender();
       }
       if (field.transient || Object.is(value, prevValue)) {
         return;
@@ -170,4 +170,8 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   }, [field, eagerlyUpdated]);
 
   return createElement(Fragment, null, callOrGet(props.children, field));
+}
+
+function reduceCount(count: number): number {
+  return count + 1;
 }

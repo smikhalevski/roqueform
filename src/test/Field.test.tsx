@@ -44,6 +44,30 @@ describe('Field', () => {
     await waitFor(() => expect(renderCount).toBe(2));
   });
 
+  test('re-renders if field is notified', async () => {
+    let renderCount = 0;
+    let rootField!: Field;
+
+    const Test = () => {
+      rootField = useField();
+
+      return (
+        <Field field={rootField}>
+          {() => {
+            renderCount++;
+            return null;
+          }}
+        </Field>
+      );
+    };
+
+    render(<Test />);
+
+    await waitFor(() => rootField.notify());
+
+    await waitFor(() => expect(renderCount).toBe(2));
+  });
+
   test('does not re-render if derived field value is changed externally', async () => {
     let renderCount = 0;
     let rootField!: Field<{ foo: number }>;
