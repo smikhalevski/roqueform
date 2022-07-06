@@ -70,7 +70,7 @@ The central piece of Roqueform is a `useField` hook that returns a `Field` objec
 form input controllers:
 
 ```ts
-import {useField} from 'roqueform';
+import { useField } from 'roqueform';
 
 const unconstrainedField = useField();
 // → Field<any, {}>
@@ -79,7 +79,7 @@ const unconstrainedField = useField();
 You can provide an initial value to a field:
 
 ```ts
-const field = useField({foo: 'bar'});
+const field = useField({ foo: 'bar' });
 // → Field<{ foo: string }, {}>
 ```
 
@@ -100,7 +100,7 @@ field.at('foo') === field.at('foo') // → true
 Fields can be derived at any depth:
 
 ```ts
-const field = useField({foo: [{bar: 'qux'}]});
+const field = useField({ foo: [{ bar: 'qux' }] });
 
 field.at('foo').at(0).at('bar');
 // → Field<string, {}>
@@ -112,14 +112,14 @@ The field is essentially a container that encapsulates the value and provides me
 the `dispatchValue` method that updates the field value:
 
 ```ts
-const field = useField({foo: 'bar'});
+const field = useField({ foo: 'bar' });
 
-field.value // → {foo: 'bar'}
+field.value // → { foo: 'bar' }
 
-field.dispatchValue({foo: 'qux'});
+field.dispatchValue({ foo: 'qux' });
 
 // The field value was updated
-field.value // → {foo: 'qux'}
+field.value // → { foo: 'qux' }
 ```
 
 `useField` doesn't trigger a re-render of the enclosing component. Navigate to
@@ -128,17 +128,17 @@ field.value // → {foo: 'qux'}
 When the parent field is updated using `dispatchValue`, all of the affected derived fields also receive an update:
 
 ```ts
-const field = useField({foo: 'bar'});
+const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
-field.value    // → {foo: 'bar'}
+field.value    // → { foo: 'bar' }
 fooField.value // → 'bar'
 
 // Updating the root field
-field.dispatchValue({foo: 'qux'});
+field.dispatchValue({ foo: 'qux' });
 
 // The update was propagated to the derived field
-field.value    // → {foo: 'qux'}
+field.value    // → { foo: 'qux' }
 fooField.value // → 'qux'
 ```
 
@@ -146,21 +146,21 @@ The same is valid for updating derived fields: when the derived field is updated
 propagated to the parent field.
 
 ```ts
-const field = useField({foo: 'bar'});
+const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 // Updating the derived field
 fooField.dispatchValue('qux');
 
 // The update was propagated to the parent field
-field.value    // → {foo: 'qux'}
+field.value    // → { foo: 'qux' }
 fooField.value // → 'qux'
 ```
 
 `dispatchValue` has a callback signature:
 
 ```ts
-fooField.dispatchValue((prevValue) => 'qux');
+fooField.dispatchValue(prevValue => 'qux');
 ```
 
 ### Transient updates
@@ -172,21 +172,21 @@ To achieve this behavior we're going to use `setValue`/`dispatch` instead of `di
 [Field value updates](#field-value-updates) section:
 
 ```ts
-const field = useField({foo: 'bar'});
+const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 // Set the transient value, "git add"
 fooField.setValue('qux');
 
 // 🟡 Notice that fooField was updated but field wasn't
-field.value    // → {foo: 'bar'}
+field.value    // → { foo: 'bar' }
 fooField.value // → 'qux'
 
 // Notify the parent, "git commit"
 fooField.dispatch();
 
 // Now both fields are in sync
-field.value    // → {foo: 'qux'}
+field.value    // → { foo: 'qux' }
 fooField.value // → 'qux'
 ```
 
@@ -196,7 +196,7 @@ fooField.value // → 'qux'
 You can check that the field has a transient value using `transient` property:
 
 ```ts
-const field = useField({foo: 'bar'});
+const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 fooField.setValue('qux');
@@ -213,7 +213,7 @@ fooField.transient // → false
 Fields are observable, you can subscribe to them and receive a callback whenever the field state is updated:
 
 ```ts
-field.subscribe((targetField) => {
+field.subscribe(targetField => {
   // Handle the update here
 });
 ```
@@ -226,22 +226,22 @@ its ancestors (if `field` is also a derived field).
 The `Field` component subscribes to the given field instance and re-renders its children when the field is updated:
 
 ```tsx
-import {Field, useField} from 'roqueform';
+import { Field, useField } from 'roqueform';
 
 const App = () => {
   const rootField = useField('foo');
 
   return (
-      <Field field={rootField}>
-        {(rootField) => (
-            <input
-                value={rootField.value}
-                onChange={(event) => {
-                  rootField.dispatchValue(event.target.value);
-                }}
-            />
-        )}
-      </Field>
+    <Field field={rootField}>
+      {rootField => (
+        <input
+          value={rootField.value}
+          onChange={event => {
+            rootField.dispatchValue(event.target.value);
+          }}
+        />
+      )}
+    </Field>
   );
 };
 ```
@@ -254,30 +254,30 @@ required:
 
 ```tsx
 const App = () => {
-  const rootField = useField({foo: 'bar', bar: 123});
+  const rootField = useField({ foo: 'bar', bar: 123 });
 
   return <>
     <Field field={rootField.at('foo')}>
-      {(fooField) => (
-          <input
-              type="text"
-              value={fooField.value}
-              onChange={(event) => {
-                fooField.dispatchValue(event.target.value);
-              }}
-          />
+      {fooField => (
+        <input
+          type="text"
+          value={fooField.value}
+          onChange={event => {
+            fooField.dispatchValue(event.target.value);
+          }}
+        />
       )}
     </Field>
 
     <Field field={rootField.at('bar')}>
-      {(barField) => (
-          <input
-              type="number"
-              value={barField.value}
-              onChange={(event) => {
-                barField.dispatchValue(event.target.valueAsNumber);
-              }}
-          />
+      {barField => (
+        <input
+          type="number"
+          value={barField.value}
+          onChange={event => {
+            barField.dispatchValue(event.target.valueAsNumber);
+          }}
+        />
       )}
     </Field>
   </>;
@@ -301,22 +301,22 @@ updates the derived field:
 
 ```tsx
 const App = () => {
-  const rootField = useField({bar: 'qux'});
+  const rootField = useField({ bar: 'qux' });
 
   return <>
     <Field field={rootField}>
-      {(rootField) => JSON.stringify(rootField.value)}
+      {rootField => JSON.stringify(rootField.value)}
     </Field>
 
     <Field field={rootField.at('bar')}>
-      {(barField) => (
-          <input
-              type="text"
-              value={barField.value}
-              onChange={(event) => {
-                barField.dispatchValue(event.target.value);
-              }}
-          />
+      {barField => (
+        <input
+          type="text"
+          value={barField.value}
+          onChange={event => {
+            barField.dispatchValue(event.target.value);
+          }}
+        />
       )}
     </Field>
   </>;
@@ -330,10 +330,10 @@ affected.
 ```diff
 - <Field field={rootField}>
 + <Field
-+     field={rootField}
-+     eagerlyUpdated={true}
++   field={rootField}
++   eagerlyUpdated={true}
 + >
-    {(rootField) => JSON.stringify(rootField.value)}
+    {rootField => JSON.stringify(rootField.value)}
   </Field>
 ```
 
@@ -346,19 +346,19 @@ is triggered only when the field value was updated [non-transiently](#transient-
 
 ```tsx
 <Field
-    field={rootField.at('bar')}
-    onChange={(value) => {
-      // Handle the value change
-    }}
+  field={rootField.at('bar')}
+  onChange={value => {
+    // Handle the value change
+  }}
 >
-  {(barField) => (
-      <input
-          type="text"
-          value={barField.value}
-          onChange={(event) => {
-            barField.dispatchValue(event.target.value);
-          }}
-      />
+  {barField => (
+    <input
+      type="text"
+      value={barField.value}
+      onChange={event => {
+        barField.dispatchValue(event.target.value);
+      }}
+    />
   )}
 </Field>
 ```
@@ -370,13 +370,13 @@ Enhancers are a very powerful mechanism that allows enriching fields with custom
 Let's enhance the field with the `ref` property that would hold the `RefObject`:
 
 ```ts
-import {createRef} from 'react';
-import {useField} from 'roqueform';
+import { createRef } from 'react';
+import { useField } from 'roqueform';
 
 const rootField = useField(
-    {bar: 'qux'},
+  { bar: 'qux' },
 
-    (field) => Object.assign(field, {ref: createRef<HTMLInputElement>()})
+  field => Object.assign(field, { ref: createRef<HTMLInputElement>() })
 );
 // → Field<{ bar: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
 ```
@@ -387,15 +387,15 @@ itself.
 
 ```tsx
 <Field field={rootField.at('bar')}>
-  {(barField) => (
-      <input
-          // 🟡 Notice the ref property
-          ref={barField.ref}
-          value={barField.value}
-          onChange={(event) => {
-            barField.dispatchValue(event.target.value);
-          }}
-      />
+  {barField => (
+    <input
+      // 🟡 Notice the ref property
+      ref={barField.ref}
+      value={barField.value}
+      onChange={event => {
+        barField.dispatchValue(event.target.value);
+      }}
+    />
   )}
 </Field>
 ```
@@ -409,9 +409,9 @@ rootField.at('bar').ref.current?.scrollIntoView();
 Roqueform is shipped with ref enhancer implementation:
 
 ```ts
-import {useField, withRef} from 'roqueform';
+import { useField, withRef } from 'roqueform';
 
-const rootField = useField({bar: 'qux'}, withRef<HTMLInputElement>());
+const rootField = useField({ bar: 'qux' }, withRef<HTMLInputElement>());
 // → Field<{ bar: string }, WithRef<HTMLInputElement>> & WithRef<HTMLInputElement>
 ```
 
@@ -421,7 +421,7 @@ You may want to use multiple enhancers at the same time, but `useField` allows p
 combine multiple enhancers into one, use `compose` helper function:
 
 ```ts
-import {compose, useField, withRef} from 'roqueform';
+import { compose, useField, withRef } from 'roqueform';
 
 const enhancer = compose(withRef(), anotherEnhancer);
 ```
@@ -432,12 +432,12 @@ Roqueform can be enhanced with an arbitrary validation mechanism. To showcase ho
 Roqueform is shipped with the `withErrors` enhancer and `useErrors` hook:
 
 ```ts
-import {ReactNode} from 'react';
-import {useErrors, useField, withErrors} from 'roqueform';
+import { ReactNode } from 'react';
+import { useErrors, useField, withErrors } from 'roqueform';
 
 const errors = useErrors<ReactNode>();
 
-const rootField = useField({bar: 'qux'}, withErrors(errors));
+const rootField = useField({ bar: 'qux' }, withErrors(errors));
 ```
 
 `errors` now holds the `Errors` object, which is an observable mapping from a `Field` to the associated error. In this
@@ -460,18 +460,18 @@ rendering:
 
 ```tsx
 <Field field={rootField.at('bar')}>
-  {(barField) => (
-      <>
-        <input
-            value={barField.value}
-            onChange={(event) => {
-              barField.dispatchValue(event.target.value);
-            }}
-            // 🟡 Notice the invalid property 
-            aria-invalid={barField.invalid}
-        />
-        {barField.error}
-      </>
+  {barField => (
+    <>
+      <input
+        value={barField.value}
+        onChange={event => {
+          barField.dispatchValue(event.target.value);
+        }}
+        // 🟡 Notice the invalid property 
+        aria-invalid={barField.invalid}
+      />
+      {barField.error}
+    </>
   )}
 </Field>
 ```
@@ -483,7 +483,7 @@ parent field. You can alter the way field values are read and written by providi
 interface to `AccessorContext`.
 
 ```tsx
-import {objectAccessor, AccessorContext} from 'roqueform';
+import { objectAccessor, AccessorContext } from 'roqueform';
 
 <AccessorContext.Provider value={objectAccessor}>
   {/* useField should go here */}
