@@ -19,6 +19,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
+      value: 0,
       param: 3,
       message: 'Must be greater than or equal to 3',
       meta: undefined,
@@ -40,6 +41,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
+      value: 0,
       param: 3,
       message: 'Must be greater than or equal to 3',
       meta: undefined,
@@ -62,6 +64,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
+      value: 0,
       param: 3,
       message: 'Must be greater than or equal to 3',
       meta: undefined,
@@ -69,6 +72,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('bar').error).toEqual({
       code: 'stringMinLength',
+      value: '',
       param: 3,
       message: 'Must have the minimum length of 3',
       meta: undefined,

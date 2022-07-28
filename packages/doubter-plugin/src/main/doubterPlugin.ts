@@ -8,7 +8,12 @@ export interface FieldError {
   /**
    * An error code that uniquely identifies the error.
    */
-  code: string;
+  code?: string;
+
+  /**
+   * The field value that caused an error.
+   */
+  value?: any;
 
   /**
    * The human-readable message.
@@ -90,6 +95,7 @@ export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin<T>> {
 
         const error: FieldError = {
           code: issue.code,
+          value: issue.input,
           message: issue.message,
           param: issue.param,
           meta: issue.meta,
