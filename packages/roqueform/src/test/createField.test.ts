@@ -199,37 +199,37 @@ describe('createField', () => {
     expect(listenerMock).toHaveBeenCalledTimes(1);
   });
 
-  test('applies enhancer to the root field', () => {
+  test('applies plugin to the root field', () => {
     let field0;
-    const enhancerMock = jest.fn(field => (field0 = Object.assign({}, field)));
+    const pluginMock = jest.fn(field => (field0 = Object.assign({}, field)));
 
-    const field1 = createField(objectAccessor, 111, enhancerMock);
+    const field1 = createField(objectAccessor, 111, pluginMock);
 
     expect(field1).toBe(field0);
 
-    expect(enhancerMock).toHaveBeenCalledTimes(1);
-    expect(enhancerMock).toHaveBeenNthCalledWith(1, field1);
+    expect(pluginMock).toHaveBeenCalledTimes(1);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field1);
   });
 
-  test('returns field if enhancer returns undefined', () => {
-    const enhancerMock = jest.fn();
+  test('returns field if plugin returns undefined', () => {
+    const pluginMock = jest.fn();
 
-    const field = createField(objectAccessor, 111, enhancerMock);
+    const field = createField(objectAccessor, 111, pluginMock);
 
     expect(field.value).toBe(111);
 
-    expect(enhancerMock).toHaveBeenCalledTimes(1);
-    expect(enhancerMock).toHaveBeenNthCalledWith(1, field);
+    expect(pluginMock).toHaveBeenCalledTimes(1);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field);
   });
 
-  test('applies enhancer to the derived field', () => {
+  test('applies plugin to the derived field', () => {
     let field0;
-    const enhancerMock = jest.fn(field => (field0 = Object.assign({}, field)));
+    const pluginMock = jest.fn(field => (field0 = Object.assign({}, field)));
 
-    const field = createField(objectAccessor, { foo: 111 }, enhancerMock);
+    const field = createField(objectAccessor, { foo: 111 }, pluginMock);
 
     expect(field.at('foo')).toBe(field0);
 
-    expect(enhancerMock).toHaveBeenCalledTimes(2);
+    expect(pluginMock).toHaveBeenCalledTimes(2);
   });
 });

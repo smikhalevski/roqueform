@@ -6,11 +6,19 @@
     "strict": true,
     "target": "ES5",
     "module": "ES6",
-    "rootDir": "./src/main",
-    "outDir": "./lib",
-    "jsx": "react"
+    "jsx": "react",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "roqueform": [
+        "./packages/roqueform/src/main"
+      ],
+      "@roqueform/*": [
+        "./packages/*/src/main"
+      ]
+    }
   },
   "include": [
-    "./src/main/**/*"
+    "./packages/*/src/main/**/*"
   ]
 }

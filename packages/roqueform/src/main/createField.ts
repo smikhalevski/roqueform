@@ -1,23 +1,22 @@
-import { Accessor, Enhancer, Field } from './Field';
-import { EventBus } from '@smikhalevski/event-bus';
-import { callOrGet } from './utils';
+import { Accessor, Plugin, Field } from './Field';
+import { callOrGet } from './callOrGet';
 
 /**
  * Creates the new filed instance.
  *
  * @param accessor Resolves values for derived fields.
  * @param initialValue The initial value assigned to the field.
- * @param enhancer Enhances the field with additional functionality.
+ * @param plugin Enhances the field with additional functionality.
  *
  * @template T The type of the value held by the field.
- * @template M The type of mixin added by the enhancer.
+ * @template P The type of enhancement added by the plugin.
  */
-export function createField<T = any, M = {}>(
+export function createField<T = any, P = {}>(
   accessor: Accessor,
   initialValue?: T,
-  enhancer?: Enhancer<M>
-): Field<T, M> & M {
-  return getOrCreateFieldController(accessor, null, null, initialValue, enhancer).__field as Field<T, M> & M;
+  plugin?: Plugin<T, P>
+): Field<T, P> & P {
+  return getOrCreateFieldController(accessor, null, null, initialValue, plugin).__field as Field<T, P> & P;
 }
 
 interface FieldController {
@@ -27,7 +26,7 @@ interface FieldController {
   __key: unknown;
   __value: unknown;
   __transient: boolean;
-  __eventBus: EventBus<Field>;
+  __notify: (targetField: Field) => void;
   __accessor: Accessor;
 }
 
@@ -36,7 +35,7 @@ function getOrCreateFieldController(
   parent: FieldController | null,
   key: unknown,
   initialValue: unknown,
-  enhancer: Enhancer<{}> | undefined
+  plugin: Plugin<any, {}> | undefined
 ): FieldController {
   let parentField: Field | null = null;
 
@@ -52,7 +51,13 @@ function getOrCreateFieldController(
     initialValue = accessor.get(parent.__value, key);
   }
 
-  const eventBus = new EventBus<Field>();
+  const listeners: Array<(field: Field) => void> = [];
+
+  const notify = (targetField: Field): void => {
+    for (const listener of listeners) {
+      listener(targetField);
+    }
+  };
 
   let field: Field = {
     parent: parentField,
@@ -70,13 +75,17 @@ function getOrCreateFieldController(
       applyValue(controller, controller.__value, false);
     },
     at(key) {
-      return getOrCreateFieldController(accessor, controller, key, null, enhancer).__field;
+      return getOrCreateFieldController(accessor, controller, key, null, plugin).__field;
     },
     subscribe(listener) {
-      return eventBus.subscribe(listener);
+      listeners.push(listener);
+
+      return () => {
+        listeners.splice(listeners.indexOf(listener), 1);
+      };
     },
     notify() {
-      eventBus.publish(field);
+      notify(field);
     },
   };
 
@@ -87,7 +96,7 @@ function getOrCreateFieldController(
     __key: key,
     __value: initialValue,
     __transient: false,
-    __eventBus: eventBus,
+    __notify: notify,
     __accessor: accessor,
   };
 
@@ -96,8 +105,8 @@ function getOrCreateFieldController(
     children.push(controller);
   }
 
-  if (typeof enhancer === 'function') {
-    field = controller.__field = enhancer(field) || field;
+  if (typeof plugin === 'function') {
+    field = controller.__field = plugin(field) || field;
   }
 
   return controller;
@@ -141,5 +150,5 @@ function propagateValue(targetField: Field, controller: FieldController, value: 
   }
 
   controller.__field.value = controller.__value = value;
-  controller.__eventBus.publish(targetField);
+  controller.__notify(targetField);
 }

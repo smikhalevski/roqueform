@@ -1,12 +1,12 @@
 import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useReducer, useRef } from 'react';
-import { callOrGet } from './utils';
+import { callOrGet } from './callOrGet';
 
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
  *
- * @template M The type of mixin added by the enhancer.
+ * @template P The type of enhancement added by the plugin.
  */
-export type Enhancer<M> = (field: Field) => Field & M;
+export type Plugin<T, P> = (field: Field<T>) => Field<T> & P;
 
 /**
  * The abstraction used by the {@link Field} to read and write values in controlled value.
@@ -34,13 +34,13 @@ export interface Accessor {
 
 /**
  * @template T The type of the value held by the field.
- * @template M The type of mixin added by the enhancer.
+ * @template P The type of enhancement added by the plugin.
  */
-export interface Field<T = any, M = {}> {
+export interface Field<T = any, P = {}> {
   /**
    * The parent field from which this one was derived.
    */
-  parent: (Field<any, M> & M) | null;
+  parent: (Field<any, P> & P) | null;
 
   /**
    * The key in the parent value that corresponds to the value controlled by the field, or `null` if there's no parent.
@@ -85,7 +85,8 @@ export interface Field<T = any, M = {}> {
    *
    * @template K The type of the key.
    */
-  at<K extends keyof T>(key: K): Field<T[K], M> & M;
+  // prettier-ignore
+  at<K extends keyof NonNullable<T>>(key: K): Field<T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K], P> & P;
 
   /**
    * Subscribes the listener to the field updates.
@@ -93,7 +94,7 @@ export interface Field<T = any, M = {}> {
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  subscribe(listener: (targetField: Field<any, M> & M) => void): () => void;
+  subscribe(listener: (targetField: Field<any, P> & P) => void): () => void;
 
   /**
    * Triggers listeners of the field.

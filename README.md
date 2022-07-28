@@ -4,7 +4,7 @@ The form state management library that can handle hundreds of fields without bre
 
 - Extremely fast, re-renders only updated fields;
 - Laconic API with strict typings;
-- [Built-in extensibility mechanisms](#enhancers);
+- [Built-in extensibility mechanisms](#plugins);
 - [Just 1 kB gzipped](https://bundlephobia.com/result?p=roqueform);
 - [Custom validation support](#validation).
 
@@ -23,8 +23,8 @@ npm install --save-prod roqueform
     - [`Field`](#field)
         - [Eager and lazy re-renders](#eager-and-lazy-re-renders)
         - [Reacting to changes](#reacting-to-changes)
-    - [Enhancers](#enhancers)
-        - [Composing enhancers](#composing-enhancers)
+    - [Plugins](#plugins)
+        - [Composing plugins](#composing-plugins)
 - [Validation](#validation)
 - [Accessors](#accessors)
 
@@ -61,7 +61,7 @@ phase:
 
 Phases are non-intersecting, and can happen in a different order, or even in parallel as with async validation.
 
-Roqueform provides a robust API for the input state management and a flexible [enhancers API](#enhancers) to extend the
+Roqueform provides a robust API for the input state management and a flexible [plugins API](#plugins) to extend the
 functionality.
 
 ## `useField`
@@ -369,9 +369,9 @@ is triggered only when the field value was updated [non-transiently](#transient-
 </Field>
 ```
 
-## Enhancers
+## Plugins
 
-Enhancers are a very powerful mechanism that allows enriching fields with custom functionality.
+Plugins are a very powerful mechanism that allows enriching fields with custom functionality.
 
 Let's enhance the field with the `ref` property that would hold the `RefObject`:
 
@@ -387,7 +387,7 @@ const rootField = useField(
 // → Field<{ bar: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
 ```
 
-The second argument of the `useField` hook is the enhancer function that accepts a field instance and enriches it with
+The second argument of the `useField` hook is the plugin function that accepts a field instance and enriches it with
 the new functionality. In our case it adds the `ref` to each field derived from the `rootField` and to the `rootField`
 itself.
 
@@ -412,7 +412,7 @@ After the `Field` mounts we can use ref to imperatively scroll the input element
 rootField.at('bar').ref.current?.scrollIntoView();
 ```
 
-Roqueform is shipped with ref enhancer implementation:
+Roqueform is shipped with ref plugin implementation:
 
 ```ts
 import { useField, withRef } from 'roqueform';
@@ -421,21 +421,21 @@ const rootField = useField({ bar: 'qux' }, withRef<HTMLInputElement>());
 // → Field<{ bar: string }, WithRef<HTMLInputElement>> & WithRef<HTMLInputElement>
 ```
 
-### Composing enhancers
+### Composing plugins
 
-You may want to use multiple enhancers at the same time, but `useField` allows passing only one enhancer function. To
-combine multiple enhancers into one, use `compose` helper function:
+You may want to use multiple plugins at the same time, but `useField` allows passing only one plugin function. To
+combine multiple plugins into one, use `applyPlugins` helper function:
 
 ```ts
-import { compose, useField, withRef } from 'roqueform';
+import { applyPlugins, useField, withRef } from 'roqueform';
 
-const enhancer = compose(withRef(), anotherEnhancer);
+const plugin = applyPlugins(withRef(), anotherPlugin);
 ```
 
 # Validation
 
-Roqueform can be enhanced with an arbitrary validation mechanism. To showcase how validation can be implemented,
-Roqueform is shipped with the `withErrors` enhancer and `useErrors` hook:
+Roqueform can be used with an arbitrary validation mechanism. To showcase how validation can be implemented, Roqueform
+is shipped with the `withErrors` plugin and `useErrors` hook:
 
 ```ts
 import { ReactNode } from 'react';
@@ -455,7 +455,7 @@ To associate an error with the field you can update `errors`:
 errors.set(rootField.at('bar'), 'Oh, snap!');
 ```
 
-Or you can use the new field method introduced by the `withErrors` enhancer:
+Or you can use the new field method introduced by the `withErrors` plugin:
 
 ```ts
 rootField.at('bar').setError('Oh, snap!');

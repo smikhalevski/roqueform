@@ -32,11 +32,11 @@ describe('useField', () => {
 
   test('enhances a field', () => {
     let field0;
-    const enhancerMock = jest.fn(field => (field0 = Object.assign({}, field)));
+    const pluginMock = jest.fn(field => (field0 = Object.assign({}, field)));
 
-    const hook = renderHook(() => useField(111, enhancerMock));
+    const hook = renderHook(() => useField(111, pluginMock));
 
     expect(hook.result.current).toBe(field0);
-    expect(enhancerMock).toHaveBeenCalledTimes(1);
+    expect(pluginMock).toHaveBeenCalledTimes(1);
   });
 });
