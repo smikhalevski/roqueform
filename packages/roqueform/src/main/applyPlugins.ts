@@ -28,20 +28,21 @@ export function applyPlugins<T, A, B, C, D, E>(
   b: Plugin<T, B>,
   c: Plugin<T, C>,
   d: Plugin<T, D>,
-  e: Plugin<T, D>
+  e: Plugin<T, E>
 ): Plugin<T, A & B & C & D & E>;
 
 /**
  * Composes a plugin from multiple plugins.
  */
-export function applyPlugins<T, A, B, C, D, E>(
+export function applyPlugins<T, A, B, C, D, E, F>(
   a: Plugin<T, A>,
   b: Plugin<T, B>,
   c: Plugin<T, C>,
   d: Plugin<T, D>,
-  e: Plugin<T, D>,
+  e: Plugin<T, E>,
+  f: Plugin<T, F>,
   ...other: Plugin<T, any>[]
-): Plugin<T, A & B & C & D & E>;
+): Plugin<T, A & B & C & D & E & F>;
 
 export function applyPlugins(...plugins: Plugin<unknown, unknown>[]): Plugin<unknown, unknown> {
   return field => {
