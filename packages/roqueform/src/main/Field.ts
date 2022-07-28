@@ -4,6 +4,7 @@ import { callOrGet } from './callOrGet';
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
  *
+ * @template T The type of the value held by the enhanced field.
  * @template P The type of enhancement added by the plugin.
  */
 export type Plugin<T, P> = (field: Field<T>) => Field<T> & P;
