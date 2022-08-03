@@ -1,4 +1,4 @@
-# Roqueform&ensp;🧀&ensp;[![build](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push)](https://github.com/smikhalevski/Roqueform/actions/workflows/master.yml)
+# Roqueform&ensp;🧀&ensp;[![build](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push)](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml)
 
 The form state management library that can handle hundreds of fields without breaking a sweat.
 
@@ -505,11 +505,11 @@ using [Doubter](https://github.com/smikhalevski/doubter).
 
 ```ts
 import { useErrors, useField } from 'roqueform';
-import { object, string } from 'doubter';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
+import * as d from 'doubter';
 
-const fieldType = object({
-  bar: string().min(5)
+const fieldType = d.object({
+  bar: d.string().min(5)
 });
 
 const field = useField({ bar: 'qux' }, doubterPlugin(fieldType));

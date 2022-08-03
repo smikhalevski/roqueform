@@ -37,6 +37,6 @@
   "homepage": "https://github.com/smikhalevski/roqueform#readme",
   "peerDependencies": {
     "roqueform": "^1.0.1",
-    "doubter": "^1.0.0"
+    "doubter": "~0.1.0"
   }
 }
