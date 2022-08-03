@@ -24,6 +24,7 @@ npm install --save-prod roqueform
     - [Reacting to changes](#reacting-to-changes)
 - [Plugins](#plugins)
     - [Composing plugins](#composing-plugins)
+- [Form submission](#form-submission)
 - [Validation](#validation)
 - [Accessors](#accessors)
 
@@ -114,12 +115,14 @@ the `dispatchValue` method that updates the field value:
 ```ts
 const field = useField({ foo: 'bar' });
 
-field.value // → { foo: 'bar' }
+field.getValue();
+// → { foo: 'bar' }
 
 field.dispatchValue({ foo: 'qux' });
 
 // The field value was updated
-field.value // → { foo: 'qux' }
+field.getValue();
+// → { foo: 'qux' }
 ```
 
 `useField` doesn't trigger a re-render of the enclosing component. Navigate to
@@ -131,15 +134,21 @@ When the parent field is updated using `dispatchValue`, all of the affected deri
 const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
-field.value    // → { foo: 'bar' }
-fooField.value // → 'bar'
+field.getValue();
+// → { foo: 'bar' }
+
+fooField.getValue();
+// → 'bar'
 
 // Updating the root field
 field.dispatchValue({ foo: 'qux' });
 
 // The update was propagated to the derived field
-field.value    // → { foo: 'qux' }
-fooField.value // → 'qux'
+field.getValue();
+// → { foo: 'qux' }
+
+fooField.getValue();
+// → 'qux'
 ```
 
 The same is valid for updating derived fields: when the derived field is updated using `dispatchValue`, the update is
@@ -153,8 +162,11 @@ const fooField = field.at('foo');
 fooField.dispatchValue('qux');
 
 // The update was propagated to the parent field
-field.value    // → { foo: 'qux' }
-fooField.value // → 'qux'
+field.getValue();
+// → { foo: 'qux' }
+
+fooField.getValue();
+// → 'qux'
 ```
 
 `dispatchValue` has a callback signature:
@@ -179,21 +191,27 @@ const fooField = field.at('foo');
 fooField.setValue('qux');
 
 // 🟡 Notice that fooField was updated but field wasn't
-field.value    // → { foo: 'bar' }
-fooField.value // → 'qux'
+field.getValue();
+// → { foo: 'bar' }
+
+fooField.getValue();
+// → 'qux'
 
 // Notify the parent, "git commit"
 fooField.dispatch();
 
 // Now both fields are in sync
-field.value    // → { foo: 'qux' }
-fooField.value // → 'qux'
+field.getValue();
+// → { foo: 'qux' }
+
+fooField.getValue();
+// → 'qux'
 ```
 
 `setValue` can be called multiple times, but the most recent update would be propagated to the parent only after
 `dispatch`/`dispatchValue` call.
 
-You can check that the field has a transient value using `transient` property:
+You can check that the field has a transient value using `isTransient` method:
 
 ```ts
 const field = useField({ foo: 'bar' });
@@ -201,11 +219,13 @@ const fooField = field.at('foo');
 
 fooField.setValue('qux');
 
-fooField.transient // → true
+fooField.isTransient();
+// → true
 
 fooField.dispatch();
 
-fooField.transient // → false
+fooField.isTransient();
+// → false
 ```
 
 ## Field observability
@@ -241,7 +261,7 @@ const App = () => {
     <Field field={rootField}>
       {rootField => (
         <input
-          value={rootField.value}
+          value={rootField.getValue()}
           onChange={event => {
             rootField.dispatchValue(event.target.value);
           }}
@@ -267,7 +287,7 @@ const App = () => {
       {fooField => (
         <input
           type="text"
-          value={fooField.value}
+          value={fooField.getValue()}
           onChange={event => {
             fooField.dispatchValue(event.target.value);
           }}
@@ -279,7 +299,7 @@ const App = () => {
       {barField => (
         <input
           type="number"
-          value={barField.value}
+          value={barField.getValue()}
           onChange={event => {
             barField.dispatchValue(event.target.valueAsNumber);
           }}
@@ -311,14 +331,14 @@ const App = () => {
 
   return <>
     <Field field={rootField}>
-      {rootField => JSON.stringify(rootField.value)}
+      {rootField => JSON.stringify(rootField.getValue())}
     </Field>
 
     <Field field={rootField.at('bar')}>
       {barField => (
         <input
           type="text"
-          value={barField.value}
+          value={barField.getValue()}
           onChange={event => {
             barField.dispatchValue(event.target.value);
           }}
@@ -339,7 +359,7 @@ affected.
 +   field={rootField}
 +   eagerlyUpdated={true}
 + >
-    {rootField => JSON.stringify(rootField.value)}
+    {rootField => JSON.stringify(rootField.getValue())}
   </Field>
 ```
 
@@ -360,7 +380,7 @@ is triggered only when the field value was updated [non-transiently](#transient-
   {barField => (
     <input
       type="text"
-      value={barField.value}
+      value={barField.getValue()}
       onChange={event => {
         barField.dispatchValue(event.target.value);
       }}
@@ -377,13 +397,13 @@ Let's enhance the field with the `ref` property that would hold the `RefObject`:
 
 ```ts
 import { createRef } from 'react';
-import { useField } from 'roqueform';
+import { Plugin, useField } from 'roqueform';
 
-const rootField = useField(
-  { bar: 'qux' },
+const refPlugin: Plugin<any, { ref: RefObject<HTMLInputElement> }> = field => {
+  return { ...field, ref: createRef() };
+};
 
-  field => Object.assign(field, { ref: createRef<HTMLInputElement>() })
-);
+const rootField = useField({ bar: 'qux' }, refPlugin);
 // → Field<{ bar: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
 ```
 
@@ -397,7 +417,7 @@ itself.
     <input
       // 🟡 Notice the ref property
       ref={barField.ref}
-      value={barField.value}
+      value={barField.getValue()}
       onChange={event => {
         barField.dispatchValue(event.target.value);
       }}
@@ -434,6 +454,47 @@ import { refPlugin } from '@roqueform/ref-plugin';
 const field = useField({ bar: 'qux' }, applyPlugins(refPlugin(), anotherPlugin));
 ```
 
+# Form submission
+
+Without plugins, Roqueform only manages the state of the form fields, and doesn't affect how the form is submitted. So
+you can use `form` tags as you did before, but read input values from the `Field` object:
+
+```tsx
+const App = () => {
+  const rootField = useField({ foo: 'bar' });
+
+  const handleSubmit = (event: SyntheticEvent): void => {
+    event.preventDefault();
+
+    // Acquire the current value of the root field
+    const value = rootField.getValue();
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+
+      <Field field={rootField.at('bar')}>
+        {barField => (
+          <input
+            value={barField.getValue()}
+            onChange={event => {
+              barField.dispatchValue(event.target.value);
+            }}
+          />
+        )}
+      </Field>
+
+      <button type="submit">
+        {'Submit'}
+      </button>
+
+    </form>
+  );
+};
+```
+
+You can always [create a plugin](#plugins) that would enhance the `Field` with custom submit mechanics.
+
 # Validation
 
 Roqueform isn't tied to any validation library. You can use an existing plugin, or write your own plugin to extend
@@ -461,8 +522,8 @@ Plugin enhances all fields with `validate` method that triggers the validation:
 ```ts
 field.validate();
 
-field.at('bar').error?.message
-// → "Must have the minimum length of 5"
+field.at('bar').getError()?.message
+// → 'Must have the minimum length of 5'
 ```
 
 You can manually set and clear field errors:
@@ -477,10 +538,10 @@ This comes in handy when you receive an error after a backend validation and wan
 field.
 
 ```tsx
-const handleSubmit = (event) => {
+const handleSubmit = (event: SyntheticEvent) => {
   field.validate();
 
-  if (field.invalid) {
+  if (field.isInvalid()) {
     event.preventDefault();
   }
 };
@@ -491,14 +552,14 @@ const handleSubmit = (event) => {
       <>
         <input
           name="bar"
-          value={barField.value}
+          value={barField.getValue()}
           onChange={event => {
             barField.dispatchValue(event.target.value);
           }}
-          aria-invalid={barField.invalid}
+          aria-invalid={barField.isInvalid()}
         />
 
-        {barField.error?.message}
+        {barField.getError()?.message}
       </>
     )}
   </Field>
