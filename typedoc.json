@@ -1,7 +1,6 @@
 {
-  "includeVersion": true,
+  "name": "Roqueform",
   "out": "./docs",
-  "excludePrivate": true,
-  "excludeInternal": true,
+  "includeVersion": true,
   "cleanOutputDir": true
 }
