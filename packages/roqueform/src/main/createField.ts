@@ -1,5 +1,5 @@
 import { Accessor, Field, Plugin } from './Field';
-import { callOrGet } from './callOrGet';
+import { callOrGet, isEqual } from './utils';
 
 /**
  * Creates the new filed instance.
@@ -42,7 +42,7 @@ function getOrCreateFieldController(
   if (parent !== null) {
     if (parent.__children !== null) {
       for (const child of parent.__children) {
-        if (Object.is(child.__key, key)) {
+        if (isEqual(child.__key, key)) {
           return child;
         }
       }
@@ -116,7 +116,7 @@ function getOrCreateFieldController(
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-  if (Object.is(value, controller.__value) && controller.__transient === transient) {
+  if (isEqual(value, controller.__value) && controller.__transient === transient) {
     return;
   }
 
@@ -145,7 +145,7 @@ function propagateValue(targetField: Field, controller: FieldController, value: 
       }
 
       const childValue = __accessor.get(value, child.__key);
-      if (Object.is(child.__value, childValue)) {
+      if (isEqual(child.__value, childValue)) {
         continue;
       }
       propagateValue(targetField, child, childValue);

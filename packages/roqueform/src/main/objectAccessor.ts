@@ -1,4 +1,5 @@
 import { Accessor } from './Field';
+import { isEqual } from './utils';
 
 /**
  * The accessor that reads and writes key-value pairs to object and arrays.
@@ -10,7 +11,7 @@ export const objectAccessor: Accessor = {
 
   set(obj, key, value) {
     if (obj !== null && typeof obj === 'object') {
-      if (Object.is(obj[key], value)) {
+      if (isEqual(obj[key], value)) {
         // Field value is unchanged
         return obj;
       }

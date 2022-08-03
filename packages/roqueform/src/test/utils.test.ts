@@ -1,4 +1,4 @@
-import { callOrGet } from '../main/callOrGet';
+import { callOrGet } from '../main/utils';
 
 describe('callOrGet', () => {
   test('returns non function value as is', () => {

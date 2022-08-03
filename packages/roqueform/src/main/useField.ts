@@ -1,7 +1,7 @@
 import { useContext, useRef } from 'react';
 import { AccessorContext } from './AccessorContext';
 import { createField } from './createField';
-import { callOrGet } from './callOrGet';
+import { callOrGet } from './utils';
 import { Plugin, Field } from './Field';
 
 /**

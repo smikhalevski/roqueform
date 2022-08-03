@@ -1,5 +1,5 @@
 import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useReducer, useRef } from 'react';
-import { callOrGet } from './callOrGet';
+import { callOrGet, isEqual } from './utils';
 
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
@@ -158,7 +158,7 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
       if (eagerlyUpdated || field === targetField) {
         rerender();
       }
-      if (field.isTransient() || Object.is(value, prevValue)) {
+      if (field.isTransient() || isEqual(value, prevValue)) {
         return;
       }
 
