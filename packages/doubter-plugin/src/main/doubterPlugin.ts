@@ -33,19 +33,14 @@ export interface FieldError {
 
 export interface DoubterPlugin<T> {
   /**
-   * `true` if the field has an error, or `false` otherwise.
+   * Returns `true` if the field has an error, or `false` otherwise.
    */
-  invalid: boolean;
+  isInvalid(): boolean;
 
   /**
    * An error associated with the field.
    */
-  error: FieldError | null;
-
-  /**
-   * Triggers field validation. If the field has a parent then validation is delegated to the parent.
-   */
-  validate(): void;
+  getError(): FieldError | null;
 
   /**
    * Sets an error for the field and notifies the subscribers.
@@ -58,6 +53,11 @@ export interface DoubterPlugin<T> {
    * Removes an error from the field and notifies the subscribers.
    */
   clearError(): void;
+
+  /**
+   * Triggers field validation. If the field has a parent then validation is delegated to the parent.
+   */
+  validate(): void;
 }
 
 type DoubterField = Field<any, DoubterPlugin<any>> & DoubterPlugin<any>;
@@ -70,13 +70,15 @@ type DoubterField = Field<any, DoubterPlugin<any>> & DoubterPlugin<any>;
  */
 export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin<T>> {
   return originalField => {
+    let error: FieldError | null = null;
+
     const validate = (): void => {
       if (field !== rootField) {
         rootField.validate();
         return;
       }
 
-      const issues = type.validate(rootField.value);
+      const issues = type.validate(rootField.getValue());
 
       if (issues === null) {
         invalidFields?.forEach(clearStaleError);
@@ -109,24 +111,26 @@ export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin<T>> {
       invalidFields = nextInvalidFields;
     };
 
-    const setError = (error: FieldError): void => {
-      field.error = error;
-      field.invalid = true;
+    const getError = () => error;
+
+    const isInvalid = () => error !== null;
+
+    const setError = (nextError: FieldError): void => {
+      error = nextError;
       field.notify();
     };
 
     const clearError = (): void => {
-      field.error = null;
-      field.invalid = false;
+      error = null;
       field.notify();
     };
 
     const field = Object.assign<Field<T, any>, DoubterPlugin<T>>(originalField, {
-      invalid: false,
-      error: null,
-      validate,
+      isInvalid,
+      getError,
       setError,
       clearError,
+      validate,
     });
 
     let invalidFields: Map<DoubterField, FieldError> | null = null;
@@ -141,7 +145,7 @@ export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin<T>> {
 }
 
 function clearStaleError(error: FieldError, field: DoubterField): void {
-  if (error === field.error) {
+  if (error === field.getError()) {
     field.clearError();
   }
 }

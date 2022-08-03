@@ -15,9 +15,9 @@ describe('doubterPlugin', () => {
 
     act(() => field.validate());
 
-    expect(field.error).toBe(null);
+    expect(field.getError()).toBe(null);
 
-    expect(field.at('foo').error).toEqual({
+    expect(field.at('foo').getError()).toEqual({
       code: 'numberGreaterThanOrEqual',
       value: 0,
       param: 3,
@@ -37,9 +37,9 @@ describe('doubterPlugin', () => {
 
     act(() => field.at('foo').validate());
 
-    expect(field.error).toBe(null);
+    expect(field.getError()).toBe(null);
 
-    expect(field.at('foo').error).toEqual({
+    expect(field.at('foo').getError()).toEqual({
       code: 'numberGreaterThanOrEqual',
       value: 0,
       param: 3,
@@ -60,9 +60,9 @@ describe('doubterPlugin', () => {
 
     act(() => field.at('foo').validate());
 
-    expect(field.error).toBe(null);
+    expect(field.getError()).toBe(null);
 
-    expect(field.at('foo').error).toEqual({
+    expect(field.at('foo').getError()).toEqual({
       code: 'numberGreaterThanOrEqual',
       value: 0,
       param: 3,
@@ -70,7 +70,7 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').error).toEqual({
+    expect(field.at('bar').getError()).toEqual({
       code: 'stringMinLength',
       value: '',
       param: 3,
@@ -94,7 +94,7 @@ describe('doubterPlugin', () => {
       field.at('foo').validate();
     });
 
-    expect(field.at('foo').error).toBe(null);
+    expect(field.at('foo').getError()).toBe(null);
   });
 
   test('does not clear the unknown error', () => {
@@ -113,6 +113,6 @@ describe('doubterPlugin', () => {
       field.at('foo').validate();
     });
 
-    expect(field.at('foo').error).toEqual({ code: 'qux' });
+    expect(field.at('foo').getError()).toEqual({ code: 'qux' });
   });
 });

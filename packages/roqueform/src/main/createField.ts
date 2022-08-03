@@ -1,4 +1,4 @@
-import { Accessor, Plugin, Field } from './Field';
+import { Accessor, Field, Plugin } from './Field';
 import { callOrGet } from './callOrGet';
 
 /**
@@ -62,9 +62,12 @@ function getOrCreateFieldController(
   let field: Field = {
     parent: parentField,
     key,
-    value: initialValue,
-    transient: false,
-
+    getValue() {
+      return controller.__value;
+    },
+    isTransient() {
+      return controller.__transient;
+    },
     dispatchValue(value) {
       applyValue(controller, callOrGet(value, controller.__value), false);
     },
@@ -117,7 +120,7 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
     return;
   }
 
-  controller.__field.transient = controller.__transient = transient;
+  controller.__transient = transient;
 
   const { __accessor } = controller;
 
@@ -149,6 +152,6 @@ function propagateValue(targetField: Field, controller: FieldController, value: 
     }
   }
 
-  controller.__field.value = controller.__value = value;
+  controller.__value = value;
   controller.__notify(targetField);
 }

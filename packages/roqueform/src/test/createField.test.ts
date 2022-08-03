@@ -6,14 +6,14 @@ describe('createField', () => {
 
     expect(field.parent).toBe(null);
     expect(field.key).toBe(null);
-    expect(field.value).toBe(undefined);
-    expect(field.transient).toBe(false);
+    expect(field.getValue()).toBe(undefined);
+    expect(field.isTransient()).toBe(false);
   });
 
   test('creates a field with the initial value', () => {
     const field = createField(objectAccessor, 111);
 
-    expect(field.value).toBe(111);
+    expect(field.getValue()).toBe(111);
   });
 
   test('returns a field at key', () => {
@@ -23,7 +23,7 @@ describe('createField', () => {
 
     expect(field1.parent).toBe(field0);
     expect(field1.key).toBe('foo');
-    expect(field1.value).toBe(111);
+    expect(field1.getValue()).toBe(111);
   });
 
   test('returns the same field for a key', () => {
@@ -37,8 +37,8 @@ describe('createField', () => {
 
     field.dispatchValue(222);
 
-    expect(field.value).toBe(222);
-    expect(field.transient).toBe(false);
+    expect(field.getValue()).toBe(222);
+    expect(field.isTransient()).toBe(false);
   });
 
   test('dispatches value to a derived field', () => {
@@ -48,11 +48,11 @@ describe('createField', () => {
 
     field1.dispatchValue(222);
 
-    expect(field0.value).toEqual({ foo: 222 });
-    expect(field0.transient).toBe(false);
+    expect(field0.getValue()).toEqual({ foo: 222 });
+    expect(field0.isTransient()).toBe(false);
 
-    expect(field1.value).toBe(222);
-    expect(field1.transient).toBe(false);
+    expect(field1.getValue()).toBe(222);
+    expect(field1.isTransient()).toBe(false);
   });
 
   test('invokes subscriber during value dispatch', () => {
@@ -76,8 +76,8 @@ describe('createField', () => {
 
     field.setValue(222);
 
-    expect(field.value).toBe(222);
-    expect(field.transient).toBe(true);
+    expect(field.getValue()).toBe(222);
+    expect(field.isTransient()).toBe(true);
   });
 
   test('sets value to a derived field', () => {
@@ -89,11 +89,11 @@ describe('createField', () => {
 
     field1.setValue(222);
 
-    expect(field0.value).toBe(initialValue);
-    expect(field0.transient).toBe(false);
+    expect(field0.getValue()).toBe(initialValue);
+    expect(field0.isTransient()).toBe(false);
 
-    expect(field1.value).toBe(222);
-    expect(field1.transient).toBe(true);
+    expect(field1.getValue()).toBe(222);
+    expect(field1.isTransient()).toBe(true);
   });
 
   test('dispatches the value after it was set to a derived field', () => {
@@ -104,11 +104,11 @@ describe('createField', () => {
     field1.setValue(222);
     field1.dispatch();
 
-    expect(field0.value).toEqual({ foo: 222 });
-    expect(field0.transient).toBe(false);
+    expect(field0.getValue()).toEqual({ foo: 222 });
+    expect(field0.isTransient()).toBe(false);
 
-    expect(field1.value).toBe(222);
-    expect(field1.transient).toBe(false);
+    expect(field1.getValue()).toBe(222);
+    expect(field1.isTransient()).toBe(false);
   });
 
   test('invokes subscriber during value set', () => {
@@ -143,11 +143,11 @@ describe('createField', () => {
     expect(listenerMock0).toHaveBeenCalledTimes(1);
     expect(listenerMock1).toHaveBeenCalledTimes(1);
 
-    expect(field0.value).toBe(nextValue);
-    expect(field0.transient).toBe(false);
+    expect(field0.getValue()).toBe(nextValue);
+    expect(field0.isTransient()).toBe(false);
 
-    expect(field1.value).toBe(333);
-    expect(field1.transient).toBe(false);
+    expect(field1.getValue()).toBe(333);
+    expect(field1.isTransient()).toBe(false);
   });
 
   test('does not propagate new value to the transient derived field', () => {
@@ -166,8 +166,8 @@ describe('createField', () => {
     expect(listenerMock0).toHaveBeenCalledTimes(1);
     expect(listenerMock1).toHaveBeenCalledTimes(1);
 
-    expect(field1.value).toBe(222);
-    expect(field1.transient).toBe(true);
+    expect(field1.getValue()).toBe(222);
+    expect(field1.isTransient()).toBe(true);
   });
 
   test('does not notify subscribers if value of the derived field did not change', () => {
@@ -216,7 +216,7 @@ describe('createField', () => {
 
     const field = createField(objectAccessor, 111, pluginMock);
 
-    expect(field.value).toBe(111);
+    expect(field.getValue()).toBe(111);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
     expect(pluginMock).toHaveBeenNthCalledWith(1, field);

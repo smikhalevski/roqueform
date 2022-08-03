@@ -41,22 +41,22 @@ export interface Field<T = any, P = {}> {
   /**
    * The parent field from which this one was derived.
    */
-  parent: (Field<any, P> & P) | null;
+  readonly parent: (Field<any, P> & P) | null;
 
   /**
    * The key in the parent value that corresponds to the value controlled by the field, or `null` if there's no parent.
    */
-  key: any;
+  readonly key: any;
 
   /**
-   * The current value of the field.
+   * Returns the current value of the field.
    */
-  value: T;
+  getValue(): T;
 
   /**
-   * `true` if the value was last updated using {@link setValue}.
+   * Returns `true` if the value was last updated using {@link setValue}.
    */
-  transient: boolean;
+  isTransient(): boolean;
 
   /**
    * Updates the value of the field and notifies both ancestors and derived fields. If field withholds a transient value
@@ -133,7 +133,7 @@ export interface FieldProps<F extends Field> {
    *
    * @param value The new field value.
    */
-  onChange?: (value: F['value']) => void;
+  onChange?: (value: ReturnType<F['getValue']>) => void;
 }
 
 /**
@@ -150,15 +150,15 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   handleChangeRef.current = props.onChange;
 
   useEffect(() => {
-    let prevValue: F['value'] | undefined;
+    let prevValue: ReturnType<F['getValue']> | undefined;
 
     return field.subscribe(targetField => {
-      const { value } = field;
+      const value = field.getValue();
 
       if (eagerlyUpdated || field === targetField) {
         rerender();
       }
-      if (field.transient || Object.is(value, prevValue)) {
+      if (field.isTransient() || Object.is(value, prevValue)) {
         return;
       }
 
