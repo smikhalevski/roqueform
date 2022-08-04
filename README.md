@@ -41,12 +41,18 @@ phase. For example, let's consider the following set of actions:
 - Errors received from the backend are displayed.
 
 These actions are non-intersecting and can happen in an arbitrary order, or even in parallel. The form management
-library should allow to tap in at any particular phase to tweak the data flow.
+library should allow to tap in (or at least not constrain the ability to do so) at any particular phase to tweak the
+data flow.
 
 So the Roqueform was built to satisfy the following requirements:
 
-- Everything should be strictly typed up to the very field value setter, so the string value from the silly input would
-  be set to the number-typed value in the form value object.
+- No excessive re-renders of unchanged fields.
+
+- Everything should be statically and strictly typed up to the very field value setter. So there must be a compilation
+  error if the string value from the silly input is assigned to the number-typed value in the form state object.
+
+- **Use the platform!** The form state management library must not constrain the use of the `form` submit behavior,
+  browser-based validation, and other related browser-native features.
 
 - There should be no restrictions on how and when the form input is submitted because data submission is generally
   an application-specific process.
@@ -58,12 +64,7 @@ So the Roqueform was built to satisfy the following requirements:
 - Validation errors aren't standardized, so an arbitrary error object shape must be allowed and related typings must be
   seamlessly propagated to the error consumers/renderers.
 
-- No excessive re-renders of unchanged fields.
-
-- The library API must be as simple as possible while providing a way to easily extend and customize it.
-
-- Use the platform! The form management library must not constrain the use of the `form` submit behavior, browser-based
-  validation, and other related browser-native features.
+- The library API must be simple.
 
 # `useField`
 
@@ -522,16 +523,16 @@ Plugin enhances all fields with `validate` method that triggers the validation:
 ```ts
 field.validate();
 
-field.at('bar').getError()?.message
+field.at('bar').getIssue()?.message
 // → 'Must have the minimum length of 5'
 ```
 
 You can manually set and clear field errors:
 
 ```ts
-field.at('bar').setError({ message: 'Oh, snap!' });
+field.at('bar').setIssue({ message: 'Oh, snap!' });
 
-field.at('bar').clearError();
+field.at('bar').clearIssue();
 ```
 
 This comes in handy when you receive an error after a backend validation and want to associate it with a particular
@@ -559,7 +560,7 @@ const handleSubmit = (event: SyntheticEvent) => {
           aria-invalid={barField.isInvalid()}
         />
 
-        {barField.getError()?.message}
+        {barField.getIssue()?.message}
       </>
     )}
   </Field>

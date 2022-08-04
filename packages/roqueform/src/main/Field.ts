@@ -1,13 +1,17 @@
 import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useReducer, useRef } from 'react';
 import { callOrGet, isEqual } from './utils';
 
+type Keyof<T> = keyof NonNullable<T>;
+
+type ValueAt<T, K extends Keyof<T>> = T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K];
+
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
  *
- * @template T The type of the value held by the enhanced field.
- * @template P The type of enhancement added by the plugin.
+ * @template T The value held by the enhanced field.
+ * @template P The enhancement added by the plugin.
  */
-export type Plugin<T, P> = (field: Field<T>) => Field<T> & P;
+export type Plugin<T, P> = (field: Field<T>) => (Field<T> & P) | void;
 
 /**
  * The abstraction used by the {@link Field} to read and write values in controlled value.
@@ -34,8 +38,8 @@ export interface Accessor {
 }
 
 /**
- * @template T The type of the value held by the field.
- * @template P The type of enhancement added by the plugin.
+ * @template T The value held by the field.
+ * @template P The enhancement added by the plugin.
  */
 export interface Field<T = any, P = {}> {
   /**
@@ -84,10 +88,9 @@ export interface Field<T = any, P = {}> {
    * @param key The key the derived field would control.
    * @returns The derived `Field` instance.
    *
-   * @template K The type of the key.
+   * @template K The key in the field value.
    */
-  // prettier-ignore
-  at<K extends keyof NonNullable<T>>(key: K): Field<T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K], P> & P;
+  at<K extends Keyof<T>>(key: K): Field<ValueAt<T, K>, P> & P;
 
   /**
    * Subscribes the listener to the field updates.
@@ -106,7 +109,7 @@ export interface Field<T = any, P = {}> {
 /**
  * Properties of the {@link Field} component.
  *
- * @template F The type of the field.
+ * @template F The field.
  */
 export interface FieldProps<F extends Field> {
   /**
@@ -139,7 +142,7 @@ export interface FieldProps<F extends Field> {
 /**
  * The component that subscribes to the given field instance and re-renders its children when the field is updated.
  *
- * @template F The type of the field.
+ * @template F The field.
  */
 export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   const { field, eagerlyUpdated } = props;

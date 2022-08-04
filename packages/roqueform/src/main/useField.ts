@@ -9,7 +9,7 @@ import { Plugin, Field } from './Field';
  *
  * @returns The `Field` instance.
  *
- * @template T The type of the value held by the field.
+ * @template T The value held by the field.
  */
 export function useField<T = any>(): Field<T | undefined>;
 
@@ -19,7 +19,7 @@ export function useField<T = any>(): Field<T | undefined>;
  * @param initialValue The initial value assigned to the field.
  * @returns The `Field` instance.
  *
- * @template T The type of the value held by the field.
+ * @template T The value held by the field.
  */
 export function useField<T>(initialValue: T | (() => T)): Field<T>;
 
@@ -30,8 +30,8 @@ export function useField<T>(initialValue: T | (() => T)): Field<T>;
  * @param plugin Enhances the field with additional functionality.
  * @returns The `Field` instance.
  *
- * @template T The type of the value held by the field.
- * @template P The type of enhancement added by the plugin.
+ * @template T The value held by the field.
+ * @template P The enhancement added by the plugin.
  */
 export function useField<T, P>(initialValue: T | (() => T), plugin: Plugin<T, P>): Field<T, P> & P;
 

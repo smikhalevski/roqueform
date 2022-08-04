@@ -47,7 +47,7 @@ export function applyPlugins<T, A, B, C, D, E, F>(
 export function applyPlugins(...plugins: Plugin<unknown, unknown>[]): Plugin<unknown, unknown> {
   return field => {
     for (const plugin of plugins) {
-      field = plugin(field);
+      field = plugin(field) || field;
     }
     return field;
   };

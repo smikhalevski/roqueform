@@ -8,8 +8,8 @@ import { callOrGet, isEqual } from './utils';
  * @param initialValue The initial value assigned to the field.
  * @param plugin Enhances the field with additional functionality.
  *
- * @template T The type of the value held by the field.
- * @template P The type of enhancement added by the plugin.
+ * @template T The value held by the field.
+ * @template P The enhancement added by the plugin.
  */
 export function createField<T = any, P = {}>(
   accessor: Accessor,
@@ -21,6 +21,7 @@ export function createField<T = any, P = {}>(
 
 interface FieldController {
   __parent: FieldController | null;
+  __childrenMap: Map<unknown, FieldController> | null;
   __children: FieldController[] | null;
   __field: Field;
   __key: unknown;
@@ -40,13 +41,12 @@ function getOrCreateFieldController(
   let parentField: Field | null = null;
 
   if (parent !== null) {
-    if (parent.__children !== null) {
-      for (const child of parent.__children) {
-        if (isEqual(child.__key, key)) {
-          return child;
-        }
-      }
+    const child = parent.__childrenMap?.get(key);
+
+    if (child !== undefined) {
+      return child;
     }
+
     parentField = parent.__field;
     initialValue = accessor.get(parent.__value, key);
   }
@@ -94,6 +94,7 @@ function getOrCreateFieldController(
 
   const controller: FieldController = {
     __parent: parent,
+    __childrenMap: null,
     __children: null,
     __field: field,
     __key: key,
@@ -104,8 +105,8 @@ function getOrCreateFieldController(
   };
 
   if (parent !== null) {
-    const children = (parent.__children ||= []);
-    children.push(controller);
+    (parent.__childrenMap ||= new Map()).set(key, controller);
+    (parent.__children ||= []).push(controller);
   }
 
   if (typeof plugin === 'function') {
