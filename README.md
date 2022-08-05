@@ -433,7 +433,7 @@ After the `Field` mounts we can use ref to imperatively scroll the input element
 rootField.at('bar').ref.current?.scrollIntoView();
 ```
 
-The `ref` plugin is available as a separate module:
+The `ref` plugin is available as a separate module [@roqueform/ref-plugin](./packages/ref-plugin#readme):
 
 ```ts
 import { useField } from 'roqueform';
