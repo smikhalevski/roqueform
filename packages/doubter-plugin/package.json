@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/doubter-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Doubter validation plugin for Roqueform.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
@@ -34,9 +34,9 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/doubter-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^1.0.1",
-    "doubter": "~0.1.0"
+    "roqueform": "^2.0.0",
+    "doubter": "~0.2.0"
   }
 }
