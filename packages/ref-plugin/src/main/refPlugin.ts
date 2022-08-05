@@ -9,5 +9,7 @@ export interface RefPlugin<T> {
  * Adds `ref` property to a field.
  */
 export function refPlugin<T = any>(): Plugin<any, RefPlugin<T>> {
-  return field => Object.assign(field, { ref: createRef<T>() });
+  return field => {
+    Object.assign(field, { ref: createRef<T>() });
+  };
 }

@@ -78,7 +78,7 @@ function getOrCreateFieldController(
       applyValue(controller, controller.__value, false);
     },
     at(key) {
-      return getOrCreateFieldController(accessor, controller, key, null, plugin).__field;
+      return getOrCreateFieldController(controller.__accessor, controller, key, null, plugin).__field;
     },
     subscribe(listener) {
       listeners.push(listener);
@@ -88,7 +88,7 @@ function getOrCreateFieldController(
       };
     },
     notify() {
-      notify(field);
+      notify(controller.__field);
     },
   };
 
@@ -110,7 +110,7 @@ function getOrCreateFieldController(
   }
 
   if (typeof plugin === 'function') {
-    field = controller.__field = plugin(field) || field;
+    controller.__field = plugin(field) || field;
   }
 
   return controller;

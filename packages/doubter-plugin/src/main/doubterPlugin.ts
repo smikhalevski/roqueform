@@ -3,12 +3,12 @@ import { Field, Plugin } from 'roqueform';
 
 export interface DoubterPlugin<T> {
   /**
-   * Returns `true` if the field or any of its derived fields have an associated validation issue, or `false` otherwise.
+   * Returns `true` if the field or any of its derived fields have an associated issue, or `false` otherwise.
    */
   isInvalid(): boolean;
 
   /**
-   * A validation issue associated with this field.
+   * Returns an issue associated with this field.
    */
   getIssue(): Partial<Issue> | null;
 
@@ -20,12 +20,12 @@ export interface DoubterPlugin<T> {
   setIssue(issue: Partial<Issue>): void;
 
   /**
-   * Deletes a validation issue associated with this field.
+   * Deletes an issue associated with this field.
    */
   deleteIssue(): void;
 
   /**
-   * Deletes validation issues associated with this field and all of its derived fields.
+   * Recursively deletes issues associated with this field and all of its derived fields.
    */
   clearIssues(): void;
 
@@ -36,75 +36,79 @@ export interface DoubterPlugin<T> {
 }
 
 /**
- * Enhances the field with validation mechanism through a {@link https://github.com/smikhalevski/doubter Doubter}
- * runtime types.
+ * Enhances the field with validation methods that use {@link https://github.com/smikhalevski/doubter Doubter} runtime
+ * type definitions.
  *
  * @param type The type definition that is used for validation.
+ * @returns The plugin.
  */
 export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin<T>> {
   return field => {
-    if (field.parent !== null) {
-      return;
-    }
-    return getOrCreateFieldController(null, field, type, 0, null).__field as Field<T, DoubterPlugin<T>> &
-      DoubterPlugin<T>;
+    enhanceField(field.parent && getController(field.parent), field, type);
   };
 }
 
-interface FieldController {
-  __parent: FieldController | null;
-  __childrenMap: Map<unknown, FieldController> | null;
-  __children: FieldController[] | null;
-  __field: Field;
-  __fieldType: AnyType | null;
-  __pathLength: number;
-  __key: unknown;
-  __issueCount: number;
-  __issue: Partial<Issue> | null;
-  __internal: boolean;
-  __at: (key: any) => Field;
-  __notify: () => void;
-  __isTransient: () => boolean;
+/**
+ * @internal
+ * The property that holds a controller instance.
+ *
+ * **Note:** Controller isn't intended to be accessed outside the plugin internal functions.
+ */
+const CONTROLLER_SYMBOL = Symbol('doubterPlugin.controller');
+
+/**
+ * @internal
+ * Retrieves a controller for the field instance.
+ */
+function getController(field: any): FieldController {
+  return field[CONTROLLER_SYMBOL];
 }
 
-function getOrCreateFieldController(
-  parent: FieldController | null,
-  rootField: Field | null,
-  rootFieldType: AnyType | null,
-  pathLength: number,
-  key: any
-): FieldController {
-  let field = rootField!;
-  let fieldType = rootFieldType instanceof Type ? rootFieldType : null;
+/**
+ * @internal
+ * The field controllers organise a tree that parallel to the tree of fields.
+ */
+interface FieldController {
+  __parent: FieldController | null;
+  __children: FieldController[] | null;
+  __field: Field;
+  __type: AnyType | null;
+  __issueCount: number;
+  __issue: Partial<Issue> | null;
 
-  if (parent !== null) {
-    const child = parent.__childrenMap?.get(key);
+  /**
+   * `true` if an issue was set internally by {@link DoubterPlugin.validate}, or `false` if an issue was set from the
+   * userland through {@link DoubterPlugin.setIssue}.
+   */
+  __internal: boolean;
+}
 
-    if (child !== undefined) {
-      return child;
-    }
-
-    field = parent.__at(key);
-    fieldType = parent.__fieldType && parent.__fieldType.at(key);
-  }
-
+/**
+ * @internal
+ * Enhances field with validation methods and adds a controller reference.
+ *
+ * @param parent The parent controller to which the field controller should be attached.
+ * @param field The field that should be enhanced, and for which the new controller is created.
+ * @param type The type definition used for validation, ignored if parent is provided.
+ */
+function enhanceField(parent: FieldController | null, field: Field, type: AnyType | null): void {
   const controller: FieldController = {
     __parent: parent,
-    __childrenMap: null,
     __children: null,
     __field: field,
-    __fieldType: fieldType,
-    __pathLength: pathLength,
-    __key: key,
+    __type: type,
     __issueCount: 0,
     __issue: null,
     __internal: false,
-    __at: field.at,
-    __notify: field.notify,
-    __isTransient: field.isTransient,
   };
 
-  field.at = key => getOrCreateFieldController(controller, null, null, pathLength + 1, key).__field;
+  if (parent !== null) {
+    controller.__type = parent.__type && parent.__type.at(field.key);
+
+    (parent.__children ||= []).push(controller);
+  }
+
+  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
 
   Object.assign<Field, DoubterPlugin<unknown>>(field, {
     isInvalid() {
@@ -126,22 +130,15 @@ function getOrCreateFieldController(
       notifyControllers(validate(controller, new Set()));
     },
   });
-
-  if (parent !== null) {
-    (parent.__childrenMap ||= new Map()).set(key, controller);
-    (parent.__children ||= []).push(controller);
-  }
-
-  return controller;
 }
 
 /**
  * @internal
- * Sets an issues to the controller.
+ * Associates an issue with the field.
  *
  * @param controller The controller for which an issue is set.
  * @param issue An issue to set.
- * @param internal If `true` then an issue is set internally (not by a user).
+ * @param internal If `true` then an issue is marked as internal.
  * @param updatedControllers The in-out set of controllers that were updated during the update propagation.
  * @returns The set of updated controllers.
  */
@@ -174,10 +171,10 @@ function setIssue(
 
 /**
  * @internal
- * Deletes an issue associated with the controller.
+ * Deletes an issue associated with the field.
  *
  * @param controller The controller for which an issue must be deleted.
- * @param internal If `true` then only issues set internally (not by a user) are deleted.
+ * @param internal If `true` then only issues set by {@link DoubterPlugin.validate} are deleted.
  * @param updatedControllers The in-out set of controllers that were updated during the update propagation.
  * @returns The set of updated controllers.
  */
@@ -192,6 +189,7 @@ function deleteIssue(
 
   controller.__issueCount--;
   controller.__issue = null;
+  controller.__internal = false;
 
   updatedControllers.add(controller);
 
@@ -204,10 +202,10 @@ function deleteIssue(
 
 /**
  * @internal
- * Recursively delete all issues in the controller tree.
+ * Recursively deletes issues associated with this field and all of its derived fields.
  *
  * @param controller The controller tree root.
- * @param internal If `true` then only issues set internally (not by a user) are deleted.
+ * @param internal If `true` then only issues set by {@link DoubterPlugin.validate} are deleted.
  * @param updatedControllers The in-out set of controllers that were updated during the update propagation.
  * @returns The set of updated controllers.
  */
@@ -223,7 +221,7 @@ function clearIssues(
   }
 
   for (const child of controller.__children) {
-    if (internal && child.__isTransient()) {
+    if (internal && child.__field.isTransient()) {
       continue;
     }
     clearIssues(child, internal, updatedControllers);
@@ -240,33 +238,36 @@ function clearIssues(
  * @returns The set of updated controllers.
  */
 function validate(controller: FieldController, updatedControllers: Set<FieldController>): Set<FieldController> {
-  if (controller.__fieldType === null) {
+  if (controller.__type === null) {
     return updatedControllers;
   }
 
   clearIssues(controller, true, updatedControllers);
 
-  const issues = controller.__fieldType.validate(controller.__field.getValue());
+  const issues = controller.__type.validate(controller.__field.getValue());
 
   if (issues === null) {
     return updatedControllers;
   }
 
-  const { __pathLength } = controller;
-
   issues: for (const issue of issues) {
     const { path } = issue;
 
-    let targetController = controller;
+    let field = controller.__field;
 
-    for (let i = __pathLength; i < path.length; ++i) {
-      targetController = getOrCreateFieldController(controller, null, null, i, path[i]);
+    for (let i = 0; i < path.length; ++i) {
+      field = field.at(path[i]);
 
-      if (targetController.__isTransient()) {
+      if (field.isTransient()) {
         continue issues;
       }
     }
-    setIssue(targetController, issue, true, updatedControllers);
+
+    for (let field = controller.__field; field.parent !== null; field = field.parent) {
+      path.unshift(field.key);
+    }
+
+    setIssue(getController(field), issue, true, updatedControllers);
   }
 
   return updatedControllers;
@@ -277,5 +278,5 @@ function notifyControllers(controllers: Set<FieldController>): void {
 }
 
 function notifyController(controller: FieldController): void {
-  controller.__notify();
+  controller.__field.notify();
 }
