@@ -462,12 +462,12 @@ you can use `form` tags as you did before, but read input values from the `Field
 
 ```tsx
 const App = () => {
-  const rootField = useField({ foo: 'bar' });
+  const rootField = useField({ bar: 'foo' });
 
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
 
-    // Acquire the current value of the root field
+    // The form value to submit
     const value = rootField.getValue();
   };
 
@@ -498,78 +498,30 @@ You can always [create a plugin](#plugins) that would enhance the `Field` with c
 
 # Validation
 
-Roqueform isn't tied to any validation library. You can use an existing plugin, or write your own plugin to extend
-Roqueform with validation provided by an arbitrary library.
+Roqueform isn't tied to any validation library. You can use an existing plugin, or write your own to extend Roqueform
+with validation provided by an arbitrary library.
 
-For example, let's consider a [@roqueform/doubter-plugin](./packages/doubter-plugin) that enables a no-hassle validation
-using [Doubter](https://github.com/smikhalevski/doubter).
+Currently, the only available validation plugin [@roqueform/doubter-plugin](./packages/doubter-plugin#readme) which
+uses [Doubter](https://github.com/smikhalevski/doubter#readme) under-the-hood.
 
 ```ts
-import { useErrors, useField } from 'roqueform';
+import { useField } from 'roqueform';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
 import * as d from 'doubter';
 
-const fieldType = d.object({
+const valueType = d.object({
   bar: d.string().min(5)
 });
 
-const field = useField({ bar: 'qux' }, doubterPlugin(fieldType));
+const rootField = useField({ bar: 'qux' }, doubterPlugin(valueType));
+
+rootField.validate();
+
+rootField.at('bar').getIssue();
+// → { message: 'Must have the minimum length of 5', … }
 ```
 
-The `field` value type is inferred from the `fieldType`.
-
-Plugin enhances all fields with `validate` method that triggers the validation:
-
-```ts
-field.validate();
-
-field.at('bar').getIssue()?.message
-// → 'Must have the minimum length of 5'
-```
-
-You can manually set and clear field errors:
-
-```ts
-field.at('bar').setIssue({ message: 'Oh, snap!' });
-
-field.at('bar').clearIssue();
-```
-
-This comes in handy when you receive an error after a backend validation and want to associate it with a particular
-field.
-
-```tsx
-const handleSubmit = (event: SyntheticEvent) => {
-  field.validate();
-
-  if (field.isInvalid()) {
-    event.preventDefault();
-  }
-};
-
-<form onSubmit={handleSubmit}>
-  <Field field={field.at('bar')}>
-    {barField => (
-      <>
-        <input
-          name="bar"
-          value={barField.getValue()}
-          onChange={event => {
-            barField.dispatchValue(event.target.value);
-          }}
-          aria-invalid={barField.isInvalid()}
-        />
-
-        {barField.getIssue()?.message}
-      </>
-    )}
-  </Field>
-
-  <button type="submit">
-    {'Submit'}
-  </button>
-</form>
-```
+[Plugin usage details can be found here.](./packages/doubter-plugin#readme)
 
 # Accessors
 

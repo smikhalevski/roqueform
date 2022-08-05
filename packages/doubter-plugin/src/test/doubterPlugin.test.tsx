@@ -1,6 +1,6 @@
 import * as d from 'doubter';
 import { doubterPlugin } from '../main';
-import { createField, objectAccessor } from 'roqueform/src/main';
+import { createField, objectAccessor } from 'roqueform';
 
 describe('doubterPlugin', () => {
   const fooType = d.object({
