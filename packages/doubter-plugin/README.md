@@ -12,9 +12,10 @@ npm install --save-prod @roqueform/doubter-plugin
 🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-doubter-plugin-example-74hkgw)
 
 ```tsx
-import * as d from 'doubter';
-import { useField } from 'roqueform';
+import { SyntheticEvent } from 'react';
+import { useField, Field } from 'roqueform';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
+import * as d from 'doubter';
 
 // Define a runtime type using Doubter DSL
 const valueType = d.object({
