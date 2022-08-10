@@ -234,13 +234,15 @@ fooField.isTransient();
 Fields are observable, you can subscribe to them and receive a callback whenever the field state is updated:
 
 ```ts
-field.subscribe(targetField => {
+field.subscribe((targetField, currentField) => {
   // Handle the update here
 });
 ```
 
 `targetField` is a field that initiated the update, so this can be `field` itself, any of its derived fields, or any of
 its ancestors (if `field` is also a derived field).
+
+`currentField` is the field to which the listener is subscribed, so in this case it is `field`.
 
 You can trigger all listeners that are subscribed to the field with `notify`:
 

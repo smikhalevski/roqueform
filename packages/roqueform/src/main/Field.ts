@@ -103,7 +103,7 @@ export interface Field<T = any, P = {}> {
   subscribe(
     /**
      * @param targetField The field that was the origin of the update, or where {@link Field.notify} was called.
-     * @param currentField The field to which this listener is subscribed.
+     * @param currentField The field to which the listener is subscribed.
      */
     listener: (targetField: Field<any, P> & P, currentField: Field<T, P> & P) => void
   ): () => void;
@@ -150,7 +150,7 @@ export interface FieldProps<F extends Field> {
 /**
  * The component that subscribes to the given field instance and re-renders its children when the field is updated.
  *
- * @template F The field.
+ * @template F The field to subscribe to.
  */
 export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   const { field, eagerlyUpdated } = props;
