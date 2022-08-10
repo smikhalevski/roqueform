@@ -18,7 +18,8 @@ export const App = () => {
   // Also you can provide custom equality checker through parameter plugin.
   const rootField = useField({ bar: '' }, statesPlugin(isEqual));
 
-  const handleSubmit = () => {};
+  const handleSubmit = () => {
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -34,14 +35,14 @@ export const App = () => {
         )}
       </Field>
 
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         disabled={!rootField.isDirty()}
       >
         {'Submit'}
       </button>
-      
-      <button 
+
+      <button
         type="button"
         onClick={() => {
           // You can reset dirty field and all of its derived fields and also reset values to its initial ones.

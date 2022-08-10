@@ -1,4 +1,4 @@
-import { Field, Plugin } from "roqueform";
+import { Field, Plugin } from 'roqueform';
 
 export interface StatesPlugin {
   /**
@@ -31,7 +31,7 @@ export type EqualityChecker = (left: any, right: any) => any;
  * @returns The plugin.
  */
 export function statesPlugin(equalityChecker: EqualityChecker = Object.is): Plugin<any, StatesPlugin> {
-  return (field) => enhanceField(field, equalityChecker);
+  return field => enhanceField(field, equalityChecker);
 }
 
 /**
@@ -43,7 +43,7 @@ export function statesPlugin(equalityChecker: EqualityChecker = Object.is): Plug
  */
 function enhanceField(field: Field, equalityChecker: EqualityChecker): void {
   const controller: FieldController = {
-    __initialValue: undefined
+    __initialValue: undefined,
   };
 
   controller.__initialValue = field.getValue();
@@ -54,7 +54,7 @@ function enhanceField(field: Field, equalityChecker: EqualityChecker): void {
     },
     reset() {
       field.dispatchValue(controller.__initialValue);
-    }
+    },
   });
 }
 

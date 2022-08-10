@@ -1,5 +1,5 @@
-import { createField, objectAccessor } from "roqueform";
-import { statesPlugin } from "../main";
+import { createField, objectAccessor } from 'roqueform';
+import { statesPlugin } from '../main';
 
 describe('statesPlugin', () => {
   test('sets dirty to "true" and "false"', () => {
