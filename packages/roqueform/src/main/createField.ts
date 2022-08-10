@@ -137,6 +137,8 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
 }
 
 function propagateValue(targetField: Field, controller: FieldController, value: unknown): void {
+  controller.__value = value;
+
   if (controller.__children !== null) {
     const { __accessor } = controller;
 
@@ -153,6 +155,5 @@ function propagateValue(targetField: Field, controller: FieldController, value: 
     }
   }
 
-  controller.__value = value;
   controller.__notify(targetField);
 }

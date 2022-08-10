@@ -1,70 +1,67 @@
 import { Field, Plugin } from "roqueform";
 
 export interface StatesPlugin {
-  isDirty: () => boolean;
-  reset: () => void;
+  /**
+   * Returns `true` if the field value or derived fields are different from the value it was initialized with. `false` otherwise.
+   *
+   * **Note:**
+   * Comparison is done with reference-equals.
+   * For the detecting dirty, fields need to be created and initialized before first dispatch value.
+   */
+  isDirty(): boolean;
+
+  /**
+   * Recursively deletes dirty flags associated with this field and all of its derived fields.
+   * Also resets values to initial ones.
+   */
+  reset(): void;
 }
 
-export function statesPlugin(): Plugin<any, StatesPlugin> {
-  return enhanceField;
+/**
+ * By default, comparison is done with reference-equals.
+ *
+ * Used for detecting is field dirty.
+ */
+export type EqualityChecker = (left: any, right: any) => any;
+
+/**
+ * Enhance field with states methods.
+ *
+ * @param equalityChecker The equality checker @see {@link EqualityChecker}
+ * @returns The plugin.
+ */
+export function statesPlugin(equalityChecker: EqualityChecker = Object.is): Plugin<any, StatesPlugin> {
+  return (field) => enhanceField(field, equalityChecker);
 }
 
-function enhanceField(field: Field): void {
+/**
+ * @internal
+ * Enhance fields with states methods.
+ *
+ * @param field
+ * @param equalityChecker
+ */
+function enhanceField(field: Field, equalityChecker: EqualityChecker): void {
   const controller: FieldController = {
-    __parent: null,
-    __field: field,
-    __initialValue: undefined,
-    __dirtySet: new Set<FieldController>()
+    __initialValue: undefined
   };
 
   controller.__initialValue = field.getValue();
-  controller.__parent = field.parent && getController(field.parent);
-
-  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
 
   Object.assign<Field, StatesPlugin>(field, {
     isDirty() {
-      return controller.__dirtySet.size !== 0;
+      return !equalityChecker(controller.__initialValue, field.getValue());
     },
     reset() {
       field.dispatchValue(controller.__initialValue);
     }
   });
-
-  field.subscribe(dirtyEnhanceSubscriber);
 }
 
-function dirtyEnhanceSubscriber(field: Field): void {
-  const controller = getController(field);
-  const val = field.getValue();
-  const isDirty = !Object.is(controller.__initialValue, field.getValue());
-
-  if (isDirty) {
-    controller.__dirtySet.add(controller);
-
-    for (let parent = controller.__parent; parent !== null; parent = parent.__parent) {
-      parent.__dirtySet.add(controller);
-    }
-
-    return;
-  }
-
-  controller.__dirtySet.delete(controller);
-
-  for (let parent = controller.__parent; parent !== null; parent = parent.__parent) {
-    parent.__dirtySet.delete(controller);
-  }
-}
-
+/**
+ * @internal
+ * The field controller that holds initial value of the field.
+ */
 interface FieldController {
-  __parent: FieldController | null,
-  __field: Field;
   __initialValue: unknown;
-  __dirtySet: Set<FieldController>;
-}
-
-const CONTROLLER_SYMBOL = Symbol("statesPlugin.controller");
-
-function getController(field: any): FieldController {
-  return field[CONTROLLER_SYMBOL];
 }

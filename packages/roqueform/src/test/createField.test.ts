@@ -232,4 +232,16 @@ describe('createField', () => {
 
     expect(pluginMock).toHaveBeenCalledTimes(2);
   });
+
+  test('actual parent value in derived field listener', (done) => {
+    const field = createField(objectAccessor, { foo: 111 });
+    const newValue = { foo: 222 };
+
+    field.at('foo').subscribe((targetField) => {
+      expect(targetField.getValue()).toBe(newValue);
+      done();
+    });
+
+    field.dispatchValue(newValue);
+  });
 });

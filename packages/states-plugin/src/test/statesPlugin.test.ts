@@ -1,35 +1,33 @@
-import { createField, objectAccessor } from 'roqueform';
-import { StatesPlugin, statesPlugin } from '../main';
+import { createField, objectAccessor } from "roqueform";
+import { statesPlugin } from "../main";
 
 describe('statesPlugin', () => {
-  test('set dirty to "true" and "false"', () => {
-    const field = createField<{ foo: number }, StatesPlugin>(objectAccessor, { foo: 0 }, statesPlugin());
+  test('sets dirty to "true" and "false"', () => {
+    const initialValue = { foo: 0 };
+    const field = createField(objectAccessor, initialValue, statesPlugin());
 
     field.at('foo').dispatchValue(2);
 
     expect(field.at('foo').isDirty()).toBe(true);
     expect(field.isDirty()).toBe(true);
 
-    field.at('foo').dispatchValue(0);
+    field.dispatchValue(initialValue);
 
     expect(field.at('foo').isDirty()).toBe(false);
     expect(field.isDirty()).toBe(false);
   });
 
-  test('set dirty to "true" and "false" from root field', () => {
-    const initialValue: { foo: number } = { foo: 0 };
-    const field = createField<{ foo: number }, StatesPlugin>(objectAccessor, initialValue, statesPlugin());
+  test('cleans dirty flags and resets values to initial', () => {
+    const field = createField(objectAccessor, { foo: 0 }, statesPlugin());
 
-    field.at('foo');
-
-    field.dispatchValue({ foo: 2 });
+    field.at('foo').dispatchValue(2);
 
     expect(field.isDirty()).toBe(true);
     expect(field.at('foo').isDirty()).toBe(true);
-    //
-    // field.dispatchValue(initialValue);
-    //
-    // expect(field.at('foo').isDirty()).toBe(false);
-    // expect(field.isDirty()).toBe(false);
+
+    field.reset();
+
+    expect(field.at('foo').isDirty()).toBe(false);
+    expect(field.isDirty()).toBe(false);
   });
 });
