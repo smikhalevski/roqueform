@@ -51,11 +51,11 @@ function getOrCreateFieldController(
     initialValue = accessor.get(parent.__value, key);
   }
 
-  const listeners: Array<(field: Field) => void> = [];
+  const listeners: Array<(targetField: Field, currentField: Field) => void> = [];
 
   const notify = (targetField: Field): void => {
     for (const listener of listeners) {
-      listener(targetField);
+      listener(targetField, controller.__field);
     }
   };
 

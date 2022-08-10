@@ -100,7 +100,13 @@ export interface Field<T = any, P = {}> {
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  subscribe(listener: (targetField: Field<any, P> & P) => void): () => void;
+  subscribe(
+    /**
+     * @param targetField The field that was the origin of the update, or where {@link Field.notify} was called.
+     * @param currentField The field to which this listener is subscribed.
+     */
+    listener: (targetField: Field<any, P> & P, currentField: Field<T, P> & P) => void
+  ): () => void;
 
   /**
    * Triggers listeners of the field.
