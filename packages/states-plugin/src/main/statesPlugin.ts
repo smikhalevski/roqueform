@@ -18,16 +18,14 @@ export interface StatesPlugin {
 }
 
 /**
- * By default, comparison is done with reference-equals.
- *
- * Used for detecting is field dirty.
+ * Returns truthy result if values are equal, and falsy result otherwise.
  */
 export type EqualityChecker = (left: any, right: any) => any;
 
 /**
  * Enhance field with states methods.
  *
- * @param equalityChecker The equality checker @see {@link EqualityChecker}
+ * @param equalityChecker The equality checker. By default, a reference equality checker is used.
  * @returns The plugin.
  */
 export function statesPlugin(equalityChecker: EqualityChecker = Object.is): Plugin<any, StatesPlugin> {
@@ -42,26 +40,14 @@ export function statesPlugin(equalityChecker: EqualityChecker = Object.is): Plug
  * @param equalityChecker
  */
 function enhanceField(field: Field, equalityChecker: EqualityChecker): void {
-  const controller: FieldController = {
-    __initialValue: undefined,
-  };
-
-  controller.__initialValue = field.getValue();
+  const initialValue = field.getValue();
 
   Object.assign<Field, StatesPlugin>(field, {
     isDirty() {
-      return !equalityChecker(controller.__initialValue, field.getValue());
+      return !equalityChecker(initialValue, field.getValue());
     },
     reset() {
-      field.dispatchValue(controller.__initialValue);
+      field.dispatchValue(initialValue);
     },
   });
-}
-
-/**
- * @internal
- * The field controller that holds initial value of the field.
- */
-interface FieldController {
-  __initialValue: unknown;
 }
