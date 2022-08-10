@@ -1,0 +1,39 @@
+{
+  "name": "@roqueform/states-plugin",
+  "version": "1.0.0",
+  "description": "States handler plugin for Roqueform.",
+  "main": "./lib/index-cjs.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --project ./tsconfig.build.json && npm run build:rollup",
+    "build:rollup": "rollup --external roqueform,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "clean": "rimraf './lib'",
+    "test": "jest --config ../../jest.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikhalevski/roqueform.git"
+  },
+  "keywords": [
+    "roqueform",
+    "react",
+    "form",
+    "field",
+    "plugin",
+    "states"
+  ],
+  "author": "Dmitry Paskhin <d.pasxin@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smikhalevski/roqueform/issues"
+  },
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/states-plugin#readme",
+  "peerDependencies": {
+    "roqueform": "^2.0.0"
+  }
+}

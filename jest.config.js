@@ -4,7 +4,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   modulePathIgnorePatterns: ['/lib/'],
   moduleNameMapper: {
-    '^roqueform$': __dirname + '/packages/roqueform',
+    '^roqueform$': __dirname + '/packages/roqueform/src/main',
     '^@roqueform/(.*)$': __dirname + '/packages/$1/src/main',
   },
 };

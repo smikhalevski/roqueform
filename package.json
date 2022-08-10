@@ -10,7 +10,8 @@
   "workspaces": [
     "./packages/roqueform",
     "./packages/ref-plugin",
-    "./packages/doubter-plugin"
+    "./packages/doubter-plugin",
+    "./packages/states-plugin"
   ],
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.3.0",
