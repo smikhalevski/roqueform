@@ -1,11 +1,11 @@
 import { Accessor, Field, Plugin } from 'roqueform';
 
-export interface StatesPlugin<T> {
+export interface ResetPlugin<T> {
   /**
    * Returns `true` if the field value is different from the initial value, or `false` otherwise.
    *
    * **Note:** By default, field values are compared using reference equality. Pass an equality checker to
-   * {@link statesPlugin} to alter this behavior.
+   * {@link resetPlugin} to alter this behavior.
    */
   isDirty(): boolean;
 
@@ -21,16 +21,22 @@ export interface StatesPlugin<T> {
 export type EqualityChecker = (left: any, right: any) => any;
 
 /**
- * Enhance field with states methods.
+ * Enhance field with `reset` and `isDirty` methods.
  *
  * @param [equalityChecker = Object.is] The field value equality checker.
  * @returns The plugin.
  */
-export function statesPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, StatesPlugin<T>> {
+export function resetPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, ResetPlugin<T>> {
   return (field, accessor) => enhanceField(field, accessor, equalityChecker);
 }
 
-const CONTROLLER_SYMBOL = Symbol('statesPlugin.controller');
+/**
+ * @internal
+ * The property that holds a controller instance.
+ *
+ * **Note:** Controller isn't intended to be accessed outside the plugin internal functions.
+ */
+const CONTROLLER_SYMBOL = Symbol('resetPlugin.controller');
 
 /**
  * @internal
@@ -40,13 +46,15 @@ function getController(field: any): FieldController {
   return field[CONTROLLER_SYMBOL];
 }
 
+/**
+ * @internal
+ */
 interface FieldController {
   __initialValue: unknown;
 }
 
 /**
  * @internal
- * Enhance fields with states methods.
  */
 function enhanceField(field: Field, accessor: Accessor, equalityChecker: EqualityChecker): void {
   const initialValue =
@@ -58,7 +66,7 @@ function enhanceField(field: Field, accessor: Accessor, equalityChecker: Equalit
 
   Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
 
-  Object.assign<Field, StatesPlugin<unknown>>(field, {
+  Object.assign<Field, ResetPlugin<unknown>>(field, {
     isDirty() {
       return !equalityChecker(initialValue, field.getValue());
     },

@@ -1,11 +1,11 @@
 import { createField, objectAccessor } from 'roqueform';
-import { statesPlugin } from '../main';
+import { resetPlugin } from '../main';
 
-describe('statesPlugin', () => {
+describe('resetPlugin', () => {
   test('flags field as dirty if current field value is equal to an initial value', () => {
     const initialValue = { foo: 111 };
 
-    const field = createField(objectAccessor, initialValue, statesPlugin());
+    const field = createField(objectAccessor, initialValue, resetPlugin());
 
     field.at('foo').dispatchValue(222);
 
@@ -19,7 +19,7 @@ describe('statesPlugin', () => {
   });
 
   test('field is dirty if its value is updated even before the Field instance is created', () => {
-    const field = createField(objectAccessor, { foo: 111 }, statesPlugin());
+    const field = createField(objectAccessor, { foo: 111 }, resetPlugin());
 
     field.dispatchValue({ foo: 222 });
 
@@ -27,7 +27,7 @@ describe('statesPlugin', () => {
   });
 
   test('cleans dirty flag and resets to the initial value', () => {
-    const field = createField(objectAccessor, { foo: 111 }, statesPlugin());
+    const field = createField(objectAccessor, { foo: 111 }, resetPlugin());
 
     field.at('foo').dispatchValue(222);
 
