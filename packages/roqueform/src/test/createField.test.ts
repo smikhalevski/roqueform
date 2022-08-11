@@ -68,7 +68,10 @@ describe('createField', () => {
     field1.dispatchValue(222);
 
     expect(listenerMock0).toHaveBeenCalledTimes(1);
+    expect(listenerMock0).toHaveBeenNthCalledWith(1, field1, field0);
+
     expect(listenerMock1).toHaveBeenCalledTimes(1);
+    expect(listenerMock1).toHaveBeenNthCalledWith(1, field1, field1);
   });
 
   test('sets value to a root field', () => {
@@ -124,7 +127,9 @@ describe('createField', () => {
     field1.setValue(222);
 
     expect(listenerMock0).toHaveBeenCalledTimes(0);
+
     expect(listenerMock1).toHaveBeenCalledTimes(1);
+    expect(listenerMock1).toHaveBeenNthCalledWith(1, field1, field1);
   });
 
   test('propagates new value to the derived field', () => {
@@ -185,6 +190,8 @@ describe('createField', () => {
     field0.dispatchValue({ foo: fooValue });
 
     expect(listenerMock0).toHaveBeenCalledTimes(1);
+    expect(listenerMock0).toHaveBeenNthCalledWith(1, field0, field0);
+
     expect(listenerMock1).toHaveBeenCalledTimes(0);
   });
 
@@ -208,7 +215,7 @@ describe('createField', () => {
     expect(field1).toBe(field0);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field1);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field1, objectAccessor);
   });
 
   test('returns field if plugin returns undefined', () => {
@@ -219,7 +226,7 @@ describe('createField', () => {
     expect(field.getValue()).toBe(111);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor);
   });
 
   test('applies plugin to the derived field', () => {

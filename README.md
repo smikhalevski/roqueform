@@ -4,7 +4,7 @@ The form state management library that can handle hundreds of fields without bre
 
 - Extremely fast, re-renders only updated fields;
 - Laconic API with strict typings;
-- [Built-in extensibility mechanisms](#plugins);
+- [Pluggable architecture and unconstrained extensibility](#plugins);
 - [Just 1 kB gzipped](https://bundlephobia.com/result?p=roqueform);
 - [Custom validation support](#validation).
 
@@ -23,6 +23,7 @@ npm install --save-prod roqueform
     - [Eager and lazy re-renders](#eager-and-lazy-re-renders)
     - [Reacting to changes](#reacting-to-changes)
 - [Plugins](#plugins)
+    - [Authoring a plugin](#authoring-a-plugin)
     - [Composing plugins](#composing-plugins)
 - [Form submission](#form-submission)
 - [Validation](#validation)
@@ -234,13 +235,15 @@ fooField.isTransient();
 Fields are observable, you can subscribe to them and receive a callback whenever the field state is updated:
 
 ```ts
-field.subscribe(targetField => {
+field.subscribe((targetField, currentField) => {
   // Handle the update here
 });
 ```
 
 `targetField` is a field that initiated the update, so this can be `field` itself, any of its derived fields, or any of
 its ancestors (if `field` is also a derived field).
+
+`currentField` is the field to which the listener is subscribed, so in this case it is `field`.
 
 You can trigger all listeners that are subscribed to the field with `notify`:
 
@@ -393,6 +396,19 @@ is triggered only when the field value was updated [non-transiently](#transient-
 # Plugins
 
 Plugins are a very powerful mechanism that allows enriching fields with custom functionality.
+
+There's a set of plugins available in this repo:
+
+- [@roqueform/doubter-plugin](./packages/doubter-plugin#readme)<br>
+  Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
+
+- [@roqueform/ref-plugin](./packages/ref-plugin#readme)<br>
+  Adds the `ref` property to fields.
+
+- [@roqueform/reset-plugin](./packages/reset-plugin#readme)<br>
+  Adds `reset` and `isDirty` methods to fields.
+
+## Authoring a plugin
 
 Let's enhance the field with the `ref` property that would hold the `RefObject`:
 

@@ -1,7 +1,7 @@
 {
-  "name": "@roqueform/doubter-plugin",
-  "version": "0.2.1",
-  "description": "Doubter validation plugin for Roqueform.",
+  "name": "@roqueform/reset-plugin",
+  "version": "1.0.0",
+  "description": "Field value reset plugin for Roqueform.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run build:rollup && npm run build:terser",
-    "build:rollup": "rollup --external roqueform,doubter --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "build:rollup": "rollup --external roqueform --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
     "build:terser": "TEMP=$(mktemp) && rm $TEMP && for FILE in $(find ./lib -name '*.js'); do terser --name-cache $TEMP --mangle-props reserved=[__esModule],regex=/^__/ --output $FILE -- $FILE; done && rm $TEMP || exit 1",
     "clean": "rimraf './lib'",
     "test": "jest --config ../../jest.config.js"
@@ -26,17 +26,16 @@
     "form",
     "field",
     "plugin",
-    "validation",
-    "doubter"
+    "reset",
+    "dirty"
   ],
-  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
+  "author": "Dmitry Paskhin <d.pasxin@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/doubter-plugin#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/reset-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^2.0.0",
-    "doubter": "~0.2.0"
+    "roqueform": "^2.1.0"
   }
 }

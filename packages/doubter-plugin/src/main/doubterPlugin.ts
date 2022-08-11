@@ -44,7 +44,7 @@ export interface DoubterPlugin<T> {
  */
 export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin<T>> {
   return field => {
-    enhanceField(field.parent && getController(field.parent), field, type);
+    enhanceField(field, type);
   };
 }
 
@@ -87,13 +87,12 @@ interface FieldController {
  * @internal
  * Enhances field with validation methods and adds a controller reference.
  *
- * @param parent The parent controller to which the field controller should be attached.
  * @param field The field that should be enhanced, and for which the new controller is created.
  * @param type The type definition used for validation, ignored if parent is provided.
  */
-function enhanceField(parent: FieldController | null, field: Field, type: AnyType | null): void {
+function enhanceField(field: Field, type: AnyType | null): void {
   const controller: FieldController = {
-    __parent: parent,
+    __parent: null,
     __children: null,
     __field: field,
     __type: type,
@@ -102,7 +101,10 @@ function enhanceField(parent: FieldController | null, field: Field, type: AnyTyp
     __internal: false,
   };
 
-  if (parent !== null) {
+  if (field.parent !== null) {
+    const parent = getController(field.parent);
+
+    controller.__parent = parent;
     controller.__type = parent.__type && parent.__type.at(field.key);
 
     (parent.__children ||= []).push(controller);

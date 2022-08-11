@@ -118,4 +118,59 @@ describe('Field', () => {
 
     await waitFor(() => expect(renderCount).toBe(2));
   });
+
+  test('triggers onChange handler when value is changed non-transiently', async () => {
+    let handleChangeMock = jest.fn();
+    let rootField!: Field<{ foo: number }>;
+
+    const Test = () => {
+      rootField = useField({ foo: 111 });
+
+      return (
+        <Field
+          field={rootField.at('foo')}
+          onChange={handleChangeMock}
+        >
+          {() => null}
+        </Field>
+      );
+    };
+
+    render(<Test />);
+
+    await waitFor(() => rootField.at('foo').dispatchValue(222));
+
+    expect(handleChangeMock).toHaveBeenCalledTimes(1);
+    expect(handleChangeMock).toHaveBeenNthCalledWith(1, 222);
+  });
+
+  test('triggers onChange handler when value is changed transiently', async () => {
+    let handleChangeMock = jest.fn();
+    let rootField!: Field<{ foo: number }>;
+
+    const Test = () => {
+      rootField = useField({ foo: 111 });
+
+      return (
+        <Field
+          field={rootField.at('foo')}
+          onChange={handleChangeMock}
+        >
+          {() => null}
+        </Field>
+      );
+    };
+
+    render(<Test />);
+
+    await waitFor(() => rootField.at('foo').setValue(222));
+    await waitFor(() => rootField.at('foo').setValue(333));
+
+    expect(handleChangeMock).toHaveBeenCalledTimes(0);
+
+    await waitFor(() => rootField.at('foo').dispatch());
+
+    expect(handleChangeMock).toHaveBeenCalledTimes(1);
+    expect(handleChangeMock).toHaveBeenNthCalledWith(1, 333);
+  });
 });

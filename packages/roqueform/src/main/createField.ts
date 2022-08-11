@@ -51,11 +51,11 @@ function getOrCreateFieldController(
     initialValue = accessor.get(parent.__value, key);
   }
 
-  const listeners: Array<(field: Field) => void> = [];
+  const listeners: Array<(targetField: Field, currentField: Field) => void> = [];
 
   const notify = (targetField: Field): void => {
     for (const listener of listeners) {
-      listener(targetField);
+      listener(targetField, controller.__field);
     }
   };
 
@@ -110,7 +110,7 @@ function getOrCreateFieldController(
   }
 
   if (typeof plugin === 'function') {
-    controller.__field = plugin(field) || field;
+    controller.__field = plugin(field, accessor) || field;
   }
 
   return controller;
@@ -133,10 +133,10 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
     value = __accessor.set(rootController.__value, __key, value);
   }
 
-  propagateValue(controller.__field, rootController, value);
+  propagateValue(controller, rootController, value);
 }
 
-function propagateValue(targetField: Field, controller: FieldController, value: unknown): void {
+function propagateValue(targetController: FieldController, controller: FieldController, value: unknown): void {
   controller.__value = value;
 
   if (controller.__children !== null) {
@@ -148,12 +148,12 @@ function propagateValue(targetField: Field, controller: FieldController, value: 
       }
 
       const childValue = __accessor.get(value, child.__key);
-      if (isEqual(child.__value, childValue)) {
+      if (child !== targetController && isEqual(child.__value, childValue)) {
         continue;
       }
-      propagateValue(targetField, child, childValue);
+      propagateValue(targetController, child, childValue);
     }
   }
 
-  controller.__notify(targetField);
+  controller.__notify(targetController.__field);
 }

@@ -13,7 +13,7 @@ type ValueAt<T, K extends Keyof<T>> = T extends null | undefined ? NonNullable<T
  * @template T The value held by the enhanced field.
  * @template P The enhancement added by the plugin.
  */
-export type Plugin<T, P> = (field: Field<T>) => (Field<T, P> & P) | void;
+export type Plugin<T, P> = (field: Field<T>, accessor: Accessor) => (Field<T, P> & P) | void;
 
 /**
  * The abstraction used by the {@link Field} to read and write values in controlled value.
@@ -100,7 +100,13 @@ export interface Field<T = any, P = {}> {
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  subscribe(listener: (targetField: Field<any, P> & P) => void): () => void;
+  subscribe(
+    /**
+     * @param targetField The field that was the origin of the update, or where {@link Field.notify} was called.
+     * @param currentField The field to which the listener is subscribed.
+     */
+    listener: (targetField: Field<any, P> & P, currentField: Field<T, P> & P) => void
+  ): () => void;
 
   /**
    * Triggers listeners of the field.
@@ -144,7 +150,7 @@ export interface FieldProps<F extends Field> {
 /**
  * The component that subscribes to the given field instance and re-renders its children when the field is updated.
  *
- * @template F The field.
+ * @template F The field to subscribe to.
  */
 export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   const { field, eagerlyUpdated } = props;
