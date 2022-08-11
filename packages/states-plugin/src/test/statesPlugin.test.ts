@@ -2,11 +2,12 @@ import { createField, objectAccessor } from 'roqueform';
 import { statesPlugin } from '../main';
 
 describe('statesPlugin', () => {
-  test('sets dirty to "true" and "false"', () => {
-    const initialValue = { foo: 0 };
+  test('flags field as dirty if current field value is equal to an initial value', () => {
+    const initialValue = { foo: 111 };
+
     const field = createField(objectAccessor, initialValue, statesPlugin());
 
-    field.at('foo').dispatchValue(2);
+    field.at('foo').dispatchValue(222);
 
     expect(field.at('foo').isDirty()).toBe(true);
     expect(field.isDirty()).toBe(true);
@@ -17,10 +18,18 @@ describe('statesPlugin', () => {
     expect(field.isDirty()).toBe(false);
   });
 
-  test('cleans dirty flags and resets values to initial', () => {
-    const field = createField(objectAccessor, { foo: 0 }, statesPlugin());
+  test('field is dirty if its value is updated even before the Field instance is created', () => {
+    const field = createField(objectAccessor, { foo: 111 }, statesPlugin());
 
-    field.at('foo').dispatchValue(2);
+    field.dispatchValue({ foo: 222 });
+
+    expect(field.at('foo').isDirty()).toBe(true);
+  });
+
+  test('cleans dirty flag and resets to the initial value', () => {
+    const field = createField(objectAccessor, { foo: 111 }, statesPlugin());
+
+    field.at('foo').dispatchValue(222);
 
     expect(field.isDirty()).toBe(true);
     expect(field.at('foo').isDirty()).toBe(true);

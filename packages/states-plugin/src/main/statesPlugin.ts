@@ -1,18 +1,16 @@
-import { Field, Plugin } from 'roqueform';
+import { Accessor, Field, Plugin } from 'roqueform';
 
-export interface StatesPlugin {
+export interface StatesPlugin<T> {
   /**
-   * Returns `true` if the field value or derived fields are different from the value it was initialized with. `false` otherwise.
+   * Returns `true` if the field value is different from the initial value, or `false` otherwise.
    *
-   * **Note:**
-   * Comparison is done with reference-equals.
-   * For the detecting dirty, fields need to be created and initialized before first dispatch value.
+   * **Note:** By default, field values are compared using reference equality. Pass an equality checker to
+   * {@link statesPlugin} to alter this behavior.
    */
   isDirty(): boolean;
 
   /**
-   * Recursively deletes dirty flags associated with this field and all of its derived fields.
-   * Also resets values to initial ones.
+   * Reverts the field to its initial value.
    */
   reset(): void;
 }
@@ -25,24 +23,42 @@ export type EqualityChecker = (left: any, right: any) => any;
 /**
  * Enhance field with states methods.
  *
- * @param equalityChecker The equality checker. By default, a reference equality checker is used.
+ * @param [equalityChecker = Object.is] The field value equality checker.
  * @returns The plugin.
  */
-export function statesPlugin(equalityChecker: EqualityChecker = Object.is): Plugin<any, StatesPlugin> {
-  return field => enhanceField(field, equalityChecker);
+export function statesPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, StatesPlugin<T>> {
+  return (field, accessor) => enhanceField(field, accessor, equalityChecker);
+}
+
+const CONTROLLER_SYMBOL = Symbol('statesPlugin.controller');
+
+/**
+ * @internal
+ * Retrieves a controller for the field instance.
+ */
+function getController(field: any): FieldController {
+  return field[CONTROLLER_SYMBOL];
+}
+
+interface FieldController {
+  __initialValue: unknown;
 }
 
 /**
  * @internal
  * Enhance fields with states methods.
- *
- * @param field
- * @param equalityChecker
  */
-function enhanceField(field: Field, equalityChecker: EqualityChecker): void {
-  const initialValue = field.getValue();
+function enhanceField(field: Field, accessor: Accessor, equalityChecker: EqualityChecker): void {
+  const initialValue =
+    field.parent === null ? field.getValue() : accessor.get(getController(field.parent).__initialValue, field.key);
 
-  Object.assign<Field, StatesPlugin>(field, {
+  const controller: FieldController = {
+    __initialValue: initialValue,
+  };
+
+  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
+
+  Object.assign<Field, StatesPlugin<unknown>>(field, {
     isDirty() {
       return !equalityChecker(initialValue, field.getValue());
     },
