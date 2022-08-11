@@ -27,7 +27,9 @@ export type EqualityChecker = (left: any, right: any) => any;
  * @returns The plugin.
  */
 export function resetPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, ResetPlugin<T>> {
-  return (field, accessor) => enhanceField(field, accessor, equalityChecker);
+  return (field, accessor) => {
+    enhanceField(field, accessor, equalityChecker);
+  };
 }
 
 /**
