@@ -1,13 +1,15 @@
 # Reset plugin for Roqueform
 
-Plugin that enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with `reset` and `isDirty`
-methods.
+Adds `reset` and `isDirty` methods to [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields.
 
 ```sh
 npm install --save-prod @roqueform/reset-plugin
 ```
 
 # Usage example
+
+The field is considered dirty when its value differs from the initial value. Values are compared using an equality
+checker function passed to the `resetPlugin`. By default, values are compared using `Object.is`.
 
 ```tsx
 import { useField } from 'roqueform';
