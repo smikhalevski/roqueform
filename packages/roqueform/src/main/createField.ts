@@ -110,7 +110,7 @@ function getOrCreateFieldController(
   }
 
   if (typeof plugin === 'function') {
-    controller.__field = plugin(field) || field;
+    controller.__field = plugin(field, accessor) || field;
   }
 
   return controller;

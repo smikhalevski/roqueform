@@ -215,7 +215,7 @@ describe('createField', () => {
     expect(field1).toBe(field0);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field1);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field1, objectAccessor);
   });
 
   test('returns field if plugin returns undefined', () => {
@@ -226,7 +226,7 @@ describe('createField', () => {
     expect(field.getValue()).toBe(111);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor);
   });
 
   test('applies plugin to the derived field', () => {

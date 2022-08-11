@@ -13,7 +13,7 @@ type ValueAt<T, K extends Keyof<T>> = T extends null | undefined ? NonNullable<T
  * @template T The value held by the enhanced field.
  * @template P The enhancement added by the plugin.
  */
-export type Plugin<T, P> = (field: Field<T>) => (Field<T, P> & P) | void;
+export type Plugin<T, P> = (field: Field<T>, accessor: Accessor) => (Field<T, P> & P) | void;
 
 /**
  * The abstraction used by the {@link Field} to read and write values in controlled value.
