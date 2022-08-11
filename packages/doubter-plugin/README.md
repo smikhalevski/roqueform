@@ -7,6 +7,11 @@ powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
 npm install --save-prod @roqueform/doubter-plugin
 ```
 
+- [Usage example](#usage-example)
+- [Validating fields](#validating-fields)
+- [Manage issues manually](#manage-issues-manually)
+- [Custom issue messages](#custom-issue-messages)
+
 # Usage example
 
 🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-doubter-plugin-example-74hkgw)
@@ -142,4 +147,24 @@ Sometimes it is required to clear issues of the field itself and all of its deri
 
 ```ts
 rootField.clearIssues();
+```
+
+# Custom issue messages
+
+You can customize messages for issues raised by Doubter (the component code is omitted for clarity):
+
+```ts
+import { useField } from 'roqueform';
+import { doubterPlugin } from '@roqueform/doubter-plugin';
+import * as d from 'doubter';
+
+const valueType = d.array(d.string(), { message: 'Expected an array' })
+  .min(3, { message: 'Not enough' });
+
+const rootField = useField([], doubterPlugin(valueType));
+
+rootField.validate();
+
+rootField.getIssue();
+// → { message: 'Not enough', … }
 ```
