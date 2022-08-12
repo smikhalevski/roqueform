@@ -1,12 +1,14 @@
 # DOM reference plugin for Roqueform
 
-Adds the `ref` property to [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields.
+Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with DOM-related methods.
 
 ```sh
 npm install --save-prod @roqueform/doubter-plugin
 ```
 
 # Usage example
+
+🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/ref_plugin_src_main.html)
 
 ```tsx
 import { useEffect } from 'react';
@@ -15,17 +17,17 @@ import { refPlugin } from '@roqueform/ref-plugin';
 
 export const App = () => {
 
-  const rootField = useField({ bar: 'qux' }, refPlugin<HTMLInputElement>());
+  const rootField = useField({ bar: 'qux' }, refPlugin());
 
   useEffect(() => {
-    rootField.at('bar').ref.current?.scrollIntoView();
+    rootField.at('bar').scrollIntoView();
   }, []);
 
   return (
     <Field field={rootField.at('bar')}>
       {barField => (
         <input
-          ref={barField.ref}
+          ref={barField.refCallback}
           value={barField.getValue()}
           onChange={event => {
             barField.dispatchValue(event.target.value);

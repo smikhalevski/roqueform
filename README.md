@@ -403,10 +403,10 @@ There's a set of plugins available in this repo:
   Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
 
 - [@roqueform/ref-plugin](./packages/ref-plugin#readme)<br>
-  Adds the `ref` property to fields.
+  Enhances fields with DOM-related methods.
 
 - [@roqueform/reset-plugin](./packages/reset-plugin#readme)<br>
-  Adds `reset` and `isDirty` methods to fields.
+  Enhances fields methods to manage their initial value.
 
 ## Authoring a plugin
 

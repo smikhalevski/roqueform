@@ -1,6 +1,9 @@
 import { Accessor, Field, Plugin } from 'roqueform';
 
-export interface ResetPlugin<T> {
+/**
+ * The mixin added to fields by {@link resetPlugin}.
+ */
+export interface ResetPlugin {
   /**
    * Returns `true` if the field value is different from the initial value, or `false` otherwise.
    *
@@ -26,7 +29,7 @@ export type EqualityChecker = (left: any, right: any) => any;
  * @param [equalityChecker = Object.is] The field value equality checker.
  * @returns The plugin.
  */
-export function resetPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, ResetPlugin<T>> {
+export function resetPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, ResetPlugin> {
   return (field, accessor) => {
     enhanceField(field, accessor, equalityChecker);
   };
@@ -68,7 +71,7 @@ function enhanceField(field: Field, accessor: Accessor, equalityChecker: Equalit
 
   Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
 
-  Object.assign<Field, ResetPlugin<unknown>>(field, {
+  Object.assign<Field, ResetPlugin>(field, {
     isDirty() {
       return !equalityChecker(initialValue, field.getValue());
     },
