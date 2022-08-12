@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/reset-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Field value reset plugin for Roqueform.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",

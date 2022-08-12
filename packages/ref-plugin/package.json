@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/ref-plugin",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "DOM reference plugin for Roqueform.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
