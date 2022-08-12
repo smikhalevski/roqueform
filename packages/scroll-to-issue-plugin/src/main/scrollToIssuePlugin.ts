@@ -11,10 +11,10 @@ export interface ScrollToIssuePlugin {
    *
    * The field `ref` should be populated with an HTML element reference.
    *
-   * @param [index = 0] The zero-based index of an issue to scroll to. A negative index can be used, indicating an
-   * offset from the end of the sequence. `scrollToIssue(-1)` scroll to the last issue. The order of issues is the same
-   * as the visual order of fields left-to-right and top-to-bottom.
-   * @param [alignToTop = true] If `true`, the top of the element will be aligned to the top of the visible area of the
+   * @param index The zero-based index of an issue to scroll to. A negative index can be used, indicating an offset from
+   * the end of the sequence. `scrollToIssue(-1)` scroll to the last issue. The order of issues is the same as the
+   * visual order of fields left-to-right and top-to-bottom.
+   * @param alignToTop If `true`, the top of the element will be aligned to the top of the visible area of the
    * scrollable ancestor, otherwise element will be aligned to the bottom of the visible area of the scrollable
    * ancestor.
    * @returns `true` if there's an issue to scroll to, or `false` otherwise.
@@ -27,10 +27,10 @@ export interface ScrollToIssuePlugin {
    *
    * The field `ref` should be populated with an HTML element reference.
    *
-   * @param [index = 0] The zero-based index of an issue to scroll to. A negative index can be used, indicating an
-   * offset from the end of the sequence. `scrollToIssue(-1)` scroll to the last issue. The order of issues is the same
-   * as the visual order of fields left-to-right and top-to-bottom.
-   * @param options The scroll options.
+   * @param index The zero-based index of an issue to scroll to. A negative index can be used, indicating an offset from
+   * the end of the sequence. `scrollToIssue(-1)` scroll to the last issue. The order of issues is the same as the
+   * visual order of fields left-to-right and top-to-bottom.
+   * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
    * @returns `true` if there's an issue to scroll to, or `false` otherwise.
    */
   scrollToIssue(index?: number, options?: ScrollIntoViewOptions): boolean;
@@ -41,11 +41,13 @@ export interface ScrollToIssuePlugin {
  * @template T The root field value.
  * @returns The plugin.
  */
-export function scrollToIssuePlugin<T, E extends HTMLElement, P extends { ref: RefObject<E>; getIssue(): unknown }>(
-  plugin: Plugin<T, P>
-): Plugin<T, P & ScrollToIssuePlugin> {
+export function scrollToIssuePlugin<
+  T,
+  E extends HTMLElement,
+  P extends { ref: RefObject<E>; getIssue(): unknown } | { ref: RefObject<E>; getError(): unknown }
+>(plugin: Plugin<T, P>): Plugin<T, P & ScrollToIssuePlugin> {
   return (field, accessor) => {
-    enhanceField(plugin(field, accessor) || (field as InternalField));
+    enhanceField((plugin(field, accessor) || field) as InternalField);
   };
 }
 
@@ -71,7 +73,9 @@ function getController(field: any): FieldController {
 interface InternalField extends Field {
   ref: RefObject<HTMLElement>;
 
-  getIssue(): unknown;
+  getIssue?(): unknown;
+
+  getError?(): unknown;
 }
 
 /**
@@ -112,7 +116,7 @@ function enhanceField(field: InternalField): void {
       if (controller.__descendants === null) {
         return false;
       }
-      const controllers = controller.__descendants.filter(hasRefAndIssue);
+      const controllers = controller.__descendants.filter(hasVisibleIssue);
 
       if (controllers.length === 0) {
         return false;
@@ -131,8 +135,10 @@ function enhanceField(field: InternalField): void {
 /**
  * @internal
  */
-function hasRefAndIssue(controller: FieldController): boolean {
-  return controller.__field.ref.current !== null && controller.__field.getIssue() !== null;
+function hasVisibleIssue(controller: FieldController): boolean {
+  const { __field } = controller;
+
+  return __field.ref.current !== null && (__field.getIssue?.() || __field.getError?.()) !== null;
 }
 
 const round = Math.round;

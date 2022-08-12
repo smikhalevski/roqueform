@@ -23,7 +23,7 @@ export interface RefPlugin<E extends HTMLElement> {
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
    *
-   * @param [alignToTop = true] If `true`, the top of the element will be aligned to the top of the visible area of the
+   * @param alignToTop If `true`, the top of the element will be aligned to the top of the visible area of the
    * scrollable ancestor, otherwise element will be aligned to the bottom of the visible area of the scrollable
    * ancestor.
    */
@@ -32,14 +32,14 @@ export interface RefPlugin<E extends HTMLElement> {
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
    *
-   * @param options The scroll options.
+   * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
    */
   scrollIntoView(options?: ScrollIntoViewOptions): void;
 
   /**
    * Focuses the field element.
    *
-   * @param options The focus options.
+   * @param options [The focus options.](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus#options)
    */
   focus(options?: FocusOptions): void;
 

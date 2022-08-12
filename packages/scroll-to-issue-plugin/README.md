@@ -58,7 +58,7 @@ export const App = () => {
         {barField => (
           <>
             <input
-              // 🟡 Note that field ref is populated
+              // 🟡 Note that the field ref is populated
               ref={barField.refCallback}
               value={barField.getValue()}
               onChange={event => {
