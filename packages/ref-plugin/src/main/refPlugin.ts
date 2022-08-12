@@ -1,15 +1,79 @@
-import { createRef, RefObject } from 'react';
-import { Plugin } from 'roqueform';
+import { MutableRefObject, RefCallback, RefObject } from 'react';
+import { Field, Plugin } from 'roqueform';
 
-export interface RefPlugin<T> {
-  ref: RefObject<T>;
+/**
+ * The mixin added to fields by {@link refPlugin}.
+ */
+export interface RefPlugin<E extends Element> {
+  /**
+   * The ref object that should be passed to the `ref` property of a DOM element.
+   */
+  ref: RefObject<E>;
+
+  /**
+   * The callback that updates {@link ref}.
+   */
+  refCallback: RefCallback<E | null>;
+
+  /**
+   * Returns `true` is the field element has focus, or `false` otherwise.
+   */
+  isActive(): void;
+
+  /**
+   * Scrolls the element's ancestor containers such that the field element is visible to the user.
+   *
+   * @param [alignToTop = true] If `true`, the top of the element will be aligned to the top of the visible area of the
+   * scrollable ancestor, otherwise element will be aligned to the bottom of the visible area of the scrollable
+   * ancestor.
+   */
+  scrollIntoView(alignToTop?: boolean): void;
+
+  /**
+   * Scrolls the element's ancestor containers such that the field element is visible to the user.
+   *
+   * @param options The scroll options.
+   */
+  scrollIntoView(options?: ScrollIntoViewOptions): void;
+
+  /**
+   * Focuses the field element.
+   *
+   * @param options The focus options.
+   */
+  focus(options?: FocusOptions): void;
+
+  /**
+   * Blurs the field element.
+   */
+  blur(): void;
 }
 
 /**
- * Adds `ref` property to a field.
+ * Adds DOM-related methods to a field.
  */
-export function refPlugin<T = any>(): Plugin<any, RefPlugin<T>> {
+export function refPlugin<E extends HTMLElement = HTMLElement>(): Plugin<any, RefPlugin<E>> {
   return field => {
-    Object.assign(field, { ref: createRef<T>() });
+    const ref: MutableRefObject<E | null> = { current: null };
+
+    Object.assign<Field, RefPlugin<E>>(field, {
+      ref,
+
+      refCallback(element) {
+        ref.current = element;
+      },
+      isActive() {
+        return document.activeElement === ref.current;
+      },
+      scrollIntoView(options) {
+        ref.current?.scrollIntoView(options);
+      },
+      focus(options) {
+        ref.current?.focus(options);
+      },
+      blur() {
+        ref.current?.blur();
+      },
+    });
   };
 }
