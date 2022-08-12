@@ -110,18 +110,22 @@ function enhanceField(field: Field): void {
     refCallback(element) {
       const prevElement = controller.__ref.current;
 
-      if (prevElement !== null && prevElement !== element) {
+      if (prevElement === element) {
+        return;
+      }
+
+      controller.__ref.current = element;
+
+      if (prevElement !== null) {
         prevElement.removeEventListener('input', listener);
         prevElement.removeEventListener('change', listener);
         prevElement.removeEventListener('invalid', listener);
       }
-      if (prevElement !== element && element !== null) {
+      if (element !== null) {
         element.addEventListener('input', listener);
         element.addEventListener('change', listener);
         element.addEventListener('invalid', listener);
       }
-
-      controller.__ref.current = element;
     },
     isInvalid() {
       return controller.__invalid;
