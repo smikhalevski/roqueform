@@ -1,7 +1,10 @@
 import { AnyType, Issue, Type } from 'doubter';
 import { Field, Plugin } from 'roqueform';
 
-export interface DoubterPlugin<T> {
+/**
+ * The mixin added to fields by {@link doubterPlugin}.
+ */
+export interface DoubterPlugin {
   /**
    * Returns `true` if the field or any of its derived fields have an associated issue, or `false` otherwise.
    */
@@ -40,9 +43,10 @@ export interface DoubterPlugin<T> {
  * type definitions.
  *
  * @param type The type definition that is used for validation.
+ * @template T The type of the root field value.
  * @returns The plugin.
  */
-export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin<T>> {
+export function doubterPlugin<T>(type: Type<T>): Plugin<T, DoubterPlugin> {
   return field => {
     enhanceField(field, type);
   };
@@ -112,7 +116,7 @@ function enhanceField(field: Field, type: AnyType | null): void {
 
   Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
 
-  Object.assign<Field, DoubterPlugin<unknown>>(field, {
+  Object.assign<Field, DoubterPlugin>(field, {
     isInvalid() {
       return controller.__issueCount !== 0;
     },
