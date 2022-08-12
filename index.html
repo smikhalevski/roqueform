@@ -18,7 +18,7 @@
 <ul>
 <li>Extremely fast, re-renders only updated fields;</li>
 <li>Laconic API with strict typings;</li>
-<li><a href="#plugins">Built-in extensibility mechanisms</a>;</li>
+<li><a href="#plugins">Pluggable architecture and unconstrained extensibility</a>;</li>
 <li><a href="https://bundlephobia.com/result?p=roqueform">Just 1 kB gzipped</a>;</li>
 <li><a href="#validation">Custom validation support</a>.</li>
 </ul>
@@ -39,6 +39,7 @@
 </ul>
 </li>
 <li><a href="#plugins">Plugins</a><ul>
+<li><a href="#authoring-a-plugin">Authoring a plugin</a></li>
 <li><a href="#composing-plugins">Composing plugins</a></li>
 </ul>
 </li>
@@ -147,10 +148,11 @@ you first stage your changes with <code>git add</code> and then commit them with
   <h2>Field observability</h2>
 </a>
 <p>Fields are observable, you can subscribe to them and receive a callback whenever the field state is updated:</p>
-<pre><code class="language-ts"><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">subscribe</span><span class="hl-0">(</span><span class="hl-2">targetField</span><span class="hl-0"> </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-7">// Handle the update here</span><br/><span class="hl-0">});</span>
+<pre><code class="language-ts"><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">subscribe</span><span class="hl-0">((</span><span class="hl-2">targetField</span><span class="hl-0">, </span><span class="hl-2">currentField</span><span class="hl-0">) </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-7">// Handle the update here</span><br/><span class="hl-0">});</span>
 </code></pre>
 <p><code>targetField</code> is a field that initiated the update, so this can be <code>field</code> itself, any of its derived fields, or any of
 its ancestors (if <code>field</code> is also a derived field).</p>
+<p><code>currentField</code> is the field to which the listener is subscribed, so in this case it is <code>field</code>.</p>
 <p>You can trigger all listeners that are subscribed to the field with <code>notify</code>:</p>
 <pre><code class="language-ts"><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">notify</span><span class="hl-0">();</span>
 </code></pre>
@@ -199,6 +201,22 @@ is triggered only when the field value was updated <a href="#transient-updates">
   <h1>Plugins</h1>
 </a>
 <p>Plugins are a very powerful mechanism that allows enriching fields with custom functionality.</p>
+<p>There&#39;s a set of plugins available in this repo:</p>
+<ul>
+<li><p><a href="./packages/doubter-plugin#readme">@roqueform/doubter-plugin</a><br>
+Enhances fields with validation methods powered by <a href="https://github.com/smikhalevski/doubter#readme">Doubter</a>.</p>
+</li>
+<li><p><a href="./packages/ref-plugin#readme">@roqueform/ref-plugin</a><br>
+Adds the <code>ref</code> property to fields.</p>
+</li>
+<li><p><a href="./packages/reset-plugin#readme">@roqueform/reset-plugin</a><br>
+Adds <code>reset</code> and <code>isDirty</code> methods to fields.</p>
+</li>
+</ul>
+
+<a href="#authoring-a-plugin" id="authoring-a-plugin" style="color: inherit; text-decoration: none;">
+  <h2>Authoring a plugin</h2>
+</a>
 <p>Let&#39;s enhance the field with the <code>ref</code> property that would hold the <code>RefObject</code>:</p>
 <pre><code class="language-ts"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">createRef</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;react&#39;</span><span class="hl-0">;</span><br/><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">Plugin</span><span class="hl-0">, </span><span class="hl-2">useField</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">refPlugin</span><span class="hl-0">: </span><span class="hl-10">Plugin</span><span class="hl-0">&lt;</span><span class="hl-10">any</span><span class="hl-0">, { </span><span class="hl-2">ref</span><span class="hl-0">: </span><span class="hl-10">RefObject</span><span class="hl-0">&lt;</span><span class="hl-10">HTMLInputElement</span><span class="hl-0">&gt; }&gt; = </span><span class="hl-2">field</span><span class="hl-0"> </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> { ...</span><span class="hl-2">field</span><span class="hl-0">, </span><span class="hl-2">ref:</span><span class="hl-0"> </span><span class="hl-6">createRef</span><span class="hl-0">() };</span><br/><span class="hl-0">};</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rootField</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> }, </span><span class="hl-2">refPlugin</span><span class="hl-0">);</span><br/><span class="hl-7">// → Field&lt;{ bar: string }, { ref: RefObject&lt;HTMLInputElement&gt; }&gt; &amp; { ref: RefObject&lt;HTMLInputElement&gt; }</span>
 </code></pre>
@@ -274,6 +292,7 @@ interface to <code>AccessorContext</code>.</p>
 <ul>
 <li class="tsd-kind-module"><a href="modules/doubter_plugin_src_main.html">doubter-<wbr/>plugin/src/main</a></li>
 <li class="tsd-kind-module"><a href="modules/ref_plugin_src_main.html">ref-<wbr/>plugin/src/main</a></li>
+<li class="tsd-kind-module"><a href="modules/reset_plugin_src_main.html">reset-<wbr/>plugin/src/main</a></li>
 <li class="tsd-kind-module"><a href="modules/roqueform_src_main.html">roqueform/src/main</a></li></ul></li></ul></div></details></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
