@@ -3,7 +3,7 @@
 Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with DOM-related methods.
 
 ```sh
-npm install --save-prod @roqueform/doubter-plugin
+npm install --save-prod @roqueform/ref-plugin
 ```
 
 # Usage example
@@ -20,7 +20,7 @@ export const App = () => {
   const rootField = useField({ bar: 'qux' }, refPlugin());
 
   useEffect(() => {
-    rootField.at('bar').scrollIntoView();
+    rootField.at('bar').scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   return (

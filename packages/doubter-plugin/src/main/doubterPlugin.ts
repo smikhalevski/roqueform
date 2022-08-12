@@ -6,7 +6,7 @@ import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
  * type definitions.
  *
  * @param type The type definition that is used for validation.
- * @template T The type of the root field value.
+ * @template T The root field value.
  * @returns The plugin.
  */
 export function doubterPlugin<T>(type: Type<T>): Plugin<T, ValidationPlugin<Partial<Issue>>> {

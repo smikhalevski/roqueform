@@ -42,7 +42,7 @@ export const App = () => {
     rootField.validate();
 
     if (rootField.isInvalid()) {
-      // Scroll to the topmost field that has an associated issue
+      // Scroll to the issue that is closest to the top left conrner of the document 
       rootField.scrollToIssue(0, { behavior: 'smooth' });
       return;
     }

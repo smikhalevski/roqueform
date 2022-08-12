@@ -27,6 +27,7 @@ export type EqualityChecker = (left: any, right: any) => any;
  * Enhance field with `reset` and `isDirty` methods.
  *
  * @param [equalityChecker = Object.is] The field value equality checker.
+ * @template T The root field value.
  * @returns The plugin.
  */
 export function resetPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, ResetPlugin> {
