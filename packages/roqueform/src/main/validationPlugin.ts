@@ -156,17 +156,17 @@ function enhanceField(
     invalid: false,
     error: null,
 
-    setValue() {
+    setValue(value) {
       if (controller.__validator !== null) {
         notifyAll(unsetValidator(controller, controller.__validator, []));
       }
-      return setValue.call(this, arguments);
+      return setValue(value);
     },
-    dispatchValue() {
+    dispatchValue(value) {
       if (controller.__validator !== null) {
         notifyAll(unsetValidator(controller, controller.__validator, []));
       }
-      return dispatchValue.call(this, arguments);
+      return dispatchValue(value);
     },
     setError(error) {
       notifyAll(setError(controller, error, false, []));
