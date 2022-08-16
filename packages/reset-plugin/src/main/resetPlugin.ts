@@ -63,7 +63,7 @@ interface FieldController {
  */
 function enhanceField(field: Field, accessor: Accessor, equalityChecker: EqualityChecker): void {
   const initialValue =
-    field.parent === null ? field.getValue() : accessor.get(getController(field.parent).__initialValue, field.key);
+    field.parent === null ? field.value : accessor.get(getController(field.parent).__initialValue, field.key);
 
   const controller: FieldController = {
     __initialValue: initialValue,
@@ -73,7 +73,7 @@ function enhanceField(field: Field, accessor: Accessor, equalityChecker: Equalit
 
   Object.assign<Field, ResetPlugin>(field, {
     isDirty() {
-      return !equalityChecker(initialValue, field.getValue());
+      return !equalityChecker(initialValue, field.value);
     },
     reset() {
       field.dispatchValue(initialValue);

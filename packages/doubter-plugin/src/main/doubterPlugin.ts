@@ -227,7 +227,7 @@ function clearIssues(
   }
 
   for (const child of controller.__children) {
-    if (internal && child.__field.isTransient()) {
+    if (internal && child.__field.transient) {
       continue;
     }
     clearIssues(child, internal, updatedControllers);
@@ -250,7 +250,7 @@ function validate(controller: FieldController, updatedControllers: Set<FieldCont
 
   clearIssues(controller, true, updatedControllers);
 
-  const issues = controller.__type.validate(controller.__field.getValue());
+  const issues = controller.__type.validate(controller.__field.value);
 
   if (issues === null) {
     return updatedControllers;
@@ -264,7 +264,7 @@ function validate(controller: FieldController, updatedControllers: Set<FieldCont
     for (let i = 0; i < path.length; ++i) {
       field = field.at(path[i]);
 
-      if (field.isTransient()) {
+      if (field.transient) {
         continue issues;
       }
     }

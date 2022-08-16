@@ -1,5 +1,5 @@
 import { Accessor, Field, Plugin } from './Field';
-import { callOrGet, isEqual } from './utils';
+import { callOrGet, isEqual, Writable } from './utils';
 
 /**
  * Creates the new filed instance.
@@ -23,7 +23,7 @@ interface FieldController {
   __parent: FieldController | null;
   __childrenMap: Map<unknown, FieldController> | null;
   __children: FieldController[] | null;
-  __field: Field;
+  __field: Writable<Field>;
   __key: unknown;
   __value: unknown;
   __transient: boolean;
@@ -62,12 +62,9 @@ function getOrCreateFieldController(
   let field: Field = {
     parent: parentField,
     key,
-    getValue() {
-      return controller.__value;
-    },
-    isTransient() {
-      return controller.__transient;
-    },
+    value: initialValue,
+    transient: false,
+
     dispatchValue(value) {
       applyValue(controller, callOrGet(value, controller.__value), false);
     },
@@ -121,7 +118,7 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
     return;
   }
 
-  controller.__transient = transient;
+  controller.__field.transient = controller.__transient = transient;
 
   const { __accessor } = controller;
 
@@ -137,7 +134,7 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
 }
 
 function propagateValue(targetController: FieldController, controller: FieldController, value: unknown): void {
-  controller.__value = value;
+  controller.__field.value = controller.__value = value;
 
   if (controller.__children !== null) {
     const { __accessor } = controller;

@@ -1,18 +1,18 @@
 import { Field, Plugin } from './Field';
-import { isEqual } from './utils';
+import { isEqual, Writable } from './utils';
 
 export interface ValidationPlugin<E> {
-  isInvalid(): boolean;
+  readonly validating: boolean;
 
-  getError(): E | null;
+  readonly invalid: boolean;
+
+  readonly error: E | null;
 
   setError(error: E): void;
 
   deleteError(): void;
 
   clearErrors(): void;
-
-  isValidating(): boolean;
 
   validate(): Promise<void> | void;
 
@@ -21,7 +21,7 @@ export interface ValidationPlugin<E> {
 
 export type ValidateCallback<E> = (
   targetField: Field,
-  applyError: (field: Field, error: E) => void,
+  setError: (field: Field, error: E) => void,
   signal: AbortSignal
 ) => Promise<void> | void;
 
@@ -38,12 +38,34 @@ export function validationPlugin<E>(validate: ValidateCallback<E>): Plugin<any, 
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field;
+  __field: Field & Writable<ValidationPlugin<unknown>>;
+
+  /**
+   * The total number of errors associated with the field and its children.
+   */
   __errorCount: number;
+
+  /**
+   * `true` if this field has an associated error, or `false` otherwise.
+   */
+  __errored: boolean;
   __error: unknown | null;
+
+  /**
+   * `true` if an error was set internally by {@link ValidationPlugin.validate}, or `false` if an issue was set by the
+   * user through {@link ValidationPlugin.setError}.
+   */
   __internal: boolean;
   __validate: ValidateCallback<unknown>;
+
+  /**
+   * The controller that initiated the subtree validation, or `null` if there's no pending validation.
+   */
   __validator: FieldController | null;
+
+  /**
+   * The abort controller that aborts the signal passed to {@link ValidateCallback}.
+   */
   __abortController: AbortController | null;
   __controllerMap: WeakMap<Field, FieldController>;
 }
@@ -56,8 +78,9 @@ function enhanceField(
   const controller: FieldController = {
     __parent: null,
     __children: null,
-    __field: field,
+    __field: field as Field & Writable<ValidationPlugin<unknown>>,
     __errorCount: 0,
+    __errored: false,
     __error: null,
     __internal: false,
     __validate: validate,
@@ -72,7 +95,6 @@ function enhanceField(
     const parent = controllerMap.get(field.parent) as FieldController;
 
     controller.__parent = parent;
-    controller.__validate = parent.__validate;
     controller.__validator = parent.__validator;
 
     (parent.__children ||= []).push(controller);
@@ -80,7 +102,11 @@ function enhanceField(
 
   const { setValue, dispatchValue } = field;
 
-  Object.assign<Field, ValidationPlugin<unknown> & Partial<Field>>(field, {
+  Object.assign<Field, Partial<Field> & ValidationPlugin<unknown>>(field, {
+    validating: false,
+    invalid: false,
+    error: null,
+
     setValue() {
       if (controller.__validator !== null) {
         notifyControllers(unsetControllerValidator(controller, controller.__validator, []));
@@ -93,12 +119,6 @@ function enhanceField(
       }
       return dispatchValue.call(this, arguments);
     },
-    isInvalid() {
-      return controller.__errorCount !== 0;
-    },
-    getError() {
-      return controller.__error;
-    },
     setError(error) {
       notifyControllers(setControllerError(controller, error, false, []));
     },
@@ -107,9 +127,6 @@ function enhanceField(
     },
     clearErrors() {
       notifyControllers(clearControllerErrors(controller, false, []));
-    },
-    isValidating() {
-      return controller.__validator !== null;
     },
     validate() {
       return validateController(controller);
@@ -126,8 +143,6 @@ function enhanceField(
  * @internal
  * Associates a validation error with the field.
  *
- * If `null` or `undefined` is passed, an error is deleted from the controller.
- *
  * @param controller The controller for which an error is set.
  * @param error An error to set.
  * @param internal If `true` then an error is set internally (not during {@link ValidationPlugin.validate} call).
@@ -140,28 +155,26 @@ function setControllerError(
   internal: boolean,
   dirtyControllers: FieldController[]
 ): FieldController[] {
-  if (error == null) {
-    return deleteControllerError(controller, internal, dirtyControllers);
-  }
-
-  if (isEqual(controller.__error, error) && controller.__internal === internal) {
+  if (controller.__errored && isEqual(controller.__error, error) && controller.__internal === internal) {
     return dirtyControllers;
   }
 
-  dirtyControllers.push(controller);
-
+  controller.__field.error = controller.__error = error;
+  controller.__field.invalid = true;
   controller.__internal = internal;
 
-  if (controller.__error !== null) {
-    controller.__error = error;
+  dirtyControllers.push(controller);
+
+  if (controller.__errored) {
     return dirtyControllers;
   }
 
   controller.__errorCount++;
-  controller.__error = error;
+  controller.__errored = true;
 
   for (let parent = controller.__parent; parent !== null; parent = parent.__parent) {
     if (parent.__errorCount++ === 0) {
+      parent.__field.invalid = true;
       dirtyControllers.push(parent);
     }
   }
@@ -183,17 +196,18 @@ function deleteControllerError(
   internal: boolean,
   dirtyControllers: FieldController[]
 ): FieldController[] {
-  if (controller.__error === null || (internal && !controller.__internal)) {
+  if (!controller.__errored || (internal && !controller.__internal)) {
     return dirtyControllers;
   }
 
-  controller.__errorCount--;
-  controller.__error = null;
-  controller.__internal = false;
+  controller.__field.error = controller.__error = null;
+  controller.__field.invalid = --controller.__errorCount !== 0;
+  controller.__internal = controller.__errored = false;
 
   dirtyControllers.push(controller);
 
   for (let parent = controller.__parent; parent !== null && --parent.__errorCount === 0; parent = parent.__parent) {
+    parent.__field.invalid = false;
     dirtyControllers.push(parent);
   }
 
@@ -220,7 +234,7 @@ function clearControllerErrors(
     return dirtyControllers;
   }
   for (const child of controller.__children) {
-    if (internal && child.__field.isTransient()) {
+    if (internal && child.__field.transient) {
       continue;
     }
     clearControllerErrors(child, internal, dirtyControllers);
@@ -250,7 +264,7 @@ function setControllerValidator(
     return dirtyControllers;
   }
   for (const child of controller.__children) {
-    if (child.__field.isTransient()) {
+    if (child.__field.transient) {
       continue;
     }
     setControllerValidator(child, validator, dirtyControllers);
