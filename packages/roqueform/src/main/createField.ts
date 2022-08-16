@@ -21,6 +21,10 @@ export function createField<T = any, P = {}>(
 
 interface FieldController {
   __parent: FieldController | null;
+
+  /**
+   * The map from a child key to a corresponding controller.
+   */
   __childrenMap: Map<unknown, FieldController> | null;
   __children: FieldController[] | null;
   __field: Writable<Field>;
