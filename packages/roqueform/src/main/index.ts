@@ -4,3 +4,4 @@ export * from './createField';
 export * from './Field';
 export * from './objectAccessor';
 export * from './useField';
+export * from './validationPlugin';

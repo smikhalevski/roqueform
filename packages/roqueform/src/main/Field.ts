@@ -55,14 +55,14 @@ export interface Field<T = any, P = {}> {
   readonly key: any;
 
   /**
-   * Returns the current value of the field.
+   * The current value of the field.
    */
-  getValue(): T;
+  readonly value: T;
 
   /**
-   * Returns `true` if the value was last updated using {@link setValue}.
+   * `true` if the value was last updated using {@link setValue}, or `false` otherwise.
    */
-  isTransient(): boolean;
+  readonly transient: boolean;
 
   /**
    * Updates the value of the field and notifies both ancestors and derived fields. If field withholds a transient value
@@ -144,7 +144,7 @@ export interface FieldProps<F extends Field> {
    *
    * @param value The new field value.
    */
-  onChange?: (value: ReturnType<F['getValue']>) => void;
+  onChange?: (value: F['value']) => void;
 }
 
 /**
@@ -161,15 +161,15 @@ export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
   handleChangeRef.current = props.onChange;
 
   useEffect(() => {
-    let prevValue: ReturnType<F['getValue']> | undefined;
+    let prevValue: F['value'] | undefined;
 
     return field.subscribe(targetField => {
-      const value = field.getValue();
+      const { value } = field;
 
       if (eagerlyUpdated || field === targetField) {
         rerender();
       }
-      if (field.isTransient() || isEqual(value, prevValue)) {
+      if (field.transient || isEqual(value, prevValue)) {
         return;
       }
 
