@@ -1,24 +1,24 @@
-import { MutableRefObject, RefCallback, RefObject } from 'react';
-import { Field, Plugin } from 'roqueform';
+import type { MutableRefObject, RefCallback, RefObject } from 'react';
+import type { Field, Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by {@linkcode refPlugin}.
+ * The enhancement added to fields by the {@linkcode refPlugin}.
  */
 export interface RefPlugin<E extends HTMLElement> {
   /**
    * The ref object that should be passed to the `ref` property of a DOM element.
    */
-  ref: RefObject<E>;
+  readonly ref: RefObject<E>;
 
   /**
    * The callback that updates {@linkcode ref}.
    */
-  refCallback: RefCallback<E | null>;
+  readonly refCallback: RefCallback<E | null>;
 
   /**
-   * Returns `true` is the field element has focus, or `false` otherwise.
+   * `true` if the field element has focus, or `false` otherwise.
    */
-  isActive(): boolean;
+  readonly active: boolean;
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -60,14 +60,17 @@ export function refPlugin<T, E extends HTMLElement = HTMLElement>(): Plugin<T, R
   return field => {
     const ref: MutableRefObject<E | null> = { current: null };
 
-    Object.assign<Field, RefPlugin<E>>(field, {
+    Object.defineProperty(field, 'active', {
+      get() {
+        return typeof document !== 'undefined' && ref.current !== null && document.activeElement === ref.current;
+      },
+    });
+
+    Object.assign<Field, Omit<RefPlugin<E>, 'active'>>(field, {
       ref,
 
       refCallback(element) {
         ref.current = element;
-      },
-      isActive() {
-        return document.activeElement === ref.current;
       },
       scrollIntoView(options) {
         ref.current?.scrollIntoView(options);

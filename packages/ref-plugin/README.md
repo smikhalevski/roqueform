@@ -8,7 +8,7 @@ npm install --save-prod @roqueform/ref-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/ref_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/ref_plugin_src_main.html)
 
 ```tsx
 import { useEffect } from 'react';
@@ -28,7 +28,7 @@ export const App = () => {
       {barField => (
         <input
           ref={barField.refCallback}
-          value={barField.getValue()}
+          value={barField.value}
           onChange={event => {
             barField.dispatchValue(event.target.value);
           }}
