@@ -2,7 +2,7 @@ import { MutableRefObject, RefCallback, RefObject } from 'react';
 import { Field, Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by {@link refPlugin}.
+ * The mixin added to fields by {@linkcode refPlugin}.
  */
 export interface RefPlugin<E extends HTMLElement> {
   /**
@@ -11,7 +11,7 @@ export interface RefPlugin<E extends HTMLElement> {
   ref: RefObject<E>;
 
   /**
-   * The callback that updates {@link ref}.
+   * The callback that updates {@linkcode ref}.
    */
   refCallback: RefCallback<E | null>;
 

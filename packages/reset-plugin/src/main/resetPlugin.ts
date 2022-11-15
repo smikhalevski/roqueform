@@ -1,14 +1,14 @@
 import { Accessor, Field, Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by {@link resetPlugin}.
+ * The mixin added to fields by {@linkcode resetPlugin}.
  */
 export interface ResetPlugin {
   /**
    * Returns `true` if the field value is different from the initial value, or `false` otherwise.
    *
    * **Note:** By default, field values are compared using reference equality. Pass an equality checker to
-   * {@link resetPlugin} to alter this behavior.
+   * {@linkcode resetPlugin} to alter this behavior.
    */
   isDirty(): boolean;
 

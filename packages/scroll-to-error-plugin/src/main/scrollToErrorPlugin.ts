@@ -2,7 +2,7 @@ import { Field, Plugin } from 'roqueform';
 import { RefObject } from 'react';
 
 /**
- * The mixin added to fields by {@link scrollToErrorPlugin}.
+ * The mixin added to fields by {@linkcode scrollToErrorPlugin}.
  */
 export interface ScrollToErrorPlugin {
   /**

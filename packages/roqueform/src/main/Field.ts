@@ -16,7 +16,7 @@ type ValueAt<T, K extends Keyof<T>> = T extends null | undefined ? NonNullable<T
 export type Plugin<T, P> = (field: Field<T>, accessor: Accessor) => (Field<T, P> & P) | void;
 
 /**
- * The abstraction used by the {@link Field} to read and write values in controlled value.
+ * The abstraction used by the {@linkcode Field} to read and write values in controlled value.
  */
 export interface Accessor {
   /**
@@ -60,7 +60,7 @@ export interface Field<T = any, P = {}> {
   readonly value: T;
 
   /**
-   * `true` if the value was last updated using {@link setValue}, or `false` otherwise.
+   * `true` if the value was last updated using {@linkcode setValue}, or `false` otherwise.
    */
   readonly transient: boolean;
 
@@ -102,7 +102,7 @@ export interface Field<T = any, P = {}> {
    */
   subscribe(
     /**
-     * @param targetField The field that was the origin of the update, or where {@link Field.notify} was called.
+     * @param targetField The field that was the origin of the update, or where {@linkcode Field.notify} was called.
      * @param currentField The field to which the listener is subscribed.
      */
     listener: (targetField: Field<any, P> & P, currentField: Field<T, P> & P) => void
@@ -115,7 +115,7 @@ export interface Field<T = any, P = {}> {
 }
 
 /**
- * Properties of the {@link Field} component.
+ * Properties of the {@linkcode Field} component.
  *
  * @template F The field.
  */
@@ -131,8 +131,8 @@ export interface FieldProps<F extends Field> {
   children: ((field: F) => ReactNode) | ReactNode;
 
   /**
-   * If set to `true` then `Field` is re-rendered whenever the {@link field} is notified, so updates from ancestors and
-   * derived fields would trigger re-render, as well as {@link Field.notify} calls on any of those. Otherwise,
+   * If set to `true` then `Field` is re-rendered whenever the {@linkcode field} is notified, so updates from ancestors and
+   * derived fields would trigger re-render, as well as {@linkcode Field.notify} calls on any of those. Otherwise,
    * re-rendered only if field is notified explicitly, so the `targetField` is set to this field.
    *
    * @default false

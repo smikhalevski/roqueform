@@ -2,7 +2,7 @@ import { AnyType, Issue, Type } from 'doubter';
 import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
 
 /**
- * Enhances the field with validation methods that use {@link https://github.com/smikhalevski/doubter Doubter} runtime
+ * Enhances the field with validation methods that use [Doubter](https://github.com/smikhalevski/doubter) runtime
  * type definitions.
  *
  * @param type The type definition that is used for validation.

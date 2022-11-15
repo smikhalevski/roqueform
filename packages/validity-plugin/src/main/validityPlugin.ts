@@ -12,7 +12,7 @@ export type ValidityElement =
   | HTMLTextAreaElement;
 
 /**
- * The mixin added to fields by {@link validityPlugin}.
+ * The mixin added to fields by {@linkcode validityPlugin}.
  */
 export interface ValidityPlugin {
   ref: RefObject<ValidityElement>;

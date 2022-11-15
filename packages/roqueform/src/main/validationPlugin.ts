@@ -2,7 +2,7 @@ import { Field, Plugin } from './Field';
 import { isEqual, Writable } from './utils';
 
 /**
- * The mixin added to fields by {@link validationPlugin}.
+ * The mixin added to fields by {@linkcode validationPlugin}.
  *
  * @template E The error associated with the field.
  */
@@ -53,7 +53,7 @@ export interface ValidationPlugin<E> {
 /**
  * The callback that applies validation rules to a given field.
  *
- * @param targetField The field where {@link ValidationPlugin.validate} was called.
+ * @param targetField The field where {@linkcode ValidationPlugin.validate} was called.
  * @param applyError Associates an error with the field.
  * @param signal The signal that is aborted is validation should be stopped.
  * @returns The promise that resolves when validation is completed, or `undefined` is validation is synchronous.
@@ -98,8 +98,8 @@ interface FieldController {
   __error: unknown | null;
 
   /**
-   * `true` if an error was set internally by {@link ValidationPlugin.validate}, or `false` if an issue was set by the
-   * user through {@link ValidationPlugin.setError}.
+   * `true` if an error was set internally by {@linkcode ValidationPlugin.validate}, or `false` if an issue was set by the
+   * user through {@linkcode ValidationPlugin.setError}.
    */
   __internal: boolean;
   __validateCallback: ValidateCallback<unknown>;
@@ -110,7 +110,7 @@ interface FieldController {
   __validator: FieldController | null;
 
   /**
-   * The abort controller that aborts the signal passed to {@link ValidateCallback}.
+   * The abort controller that aborts the signal passed to {@linkcode ValidateCallback}.
    */
   __abortController: AbortController | null;
   __controllerMap: WeakMap<Field, FieldController>;
@@ -194,7 +194,7 @@ function enhanceField(
  *
  * @param controller The controller for which an error is set.
  * @param error An error to set.
- * @param internal If `true` then an error is set internally (not during {@link ValidationPlugin.validate} call).
+ * @param internal If `true` then an error is set internally (not during {@linkcode ValidationPlugin.validate} call).
  * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
  * @returns The set of updated controllers.
  */
@@ -236,7 +236,7 @@ function setError(
  * Deletes a validation error from the field.
  *
  * @param controller The controller for which an error must be deleted.
- * @param internal If `true` then only errors set by {@link ValidationPlugin.validate} are deleted.
+ * @param internal If `true` then only errors set by {@linkcode ValidationPlugin.validate} are deleted.
  * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
  * @returns The set of updated controllers.
  */
@@ -268,7 +268,7 @@ function deleteError(
  * Recursively deletes errors associated with the field and all of its derived fields.
  *
  * @param controller The controller tree root.
- * @param internal If `true` then only errors set by {@link ValidationPlugin.validate} are deleted.
+ * @param internal If `true` then only errors set by {@linkcode ValidationPlugin.validate} are deleted.
  * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
  * @returns The set of updated controllers.
  */
