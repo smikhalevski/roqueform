@@ -4,7 +4,7 @@ import { Field, Plugin } from 'roqueform';
 /**
  * The mixin added to fields by {@link refPlugin}.
  */
-export interface RefPlugin<E extends Element> {
+export interface RefPlugin<E extends HTMLElement> {
   /**
    * The ref object that should be passed to the `ref` property of a DOM element.
    */
@@ -18,28 +18,28 @@ export interface RefPlugin<E extends Element> {
   /**
    * Returns `true` is the field element has focus, or `false` otherwise.
    */
-  isActive(): void;
+  isActive(): boolean;
 
   /**
-   * Scrolls the element's ancestor containers such that the field element is visible to the user.
+   * Scrolls the field element's ancestor containers such that the field element is visible to the user.
    *
-   * @param [alignToTop = true] If `true`, the top of the element will be aligned to the top of the visible area of the
+   * @param alignToTop If `true`, the top of the element will be aligned to the top of the visible area of the
    * scrollable ancestor, otherwise element will be aligned to the bottom of the visible area of the scrollable
    * ancestor.
    */
   scrollIntoView(alignToTop?: boolean): void;
 
   /**
-   * Scrolls the element's ancestor containers such that the field element is visible to the user.
+   * Scrolls the field element's ancestor containers such that the field element is visible to the user.
    *
-   * @param options The scroll options.
+   * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
    */
   scrollIntoView(options?: ScrollIntoViewOptions): void;
 
   /**
    * Focuses the field element.
    *
-   * @param options The focus options.
+   * @param options [The focus options.](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus#options)
    */
   focus(options?: FocusOptions): void;
 
@@ -51,8 +51,12 @@ export interface RefPlugin<E extends Element> {
 
 /**
  * Adds DOM-related methods to a field.
+ *
+ * @template T The root field value.
+ * @template E The element type stored by ref.
+ * @returns The plugin.
  */
-export function refPlugin<E extends HTMLElement = HTMLElement>(): Plugin<any, RefPlugin<E>> {
+export function refPlugin<T, E extends HTMLElement = HTMLElement>(): Plugin<T, RefPlugin<E>> {
   return field => {
     const ref: MutableRefObject<E | null> = { current: null };
 
