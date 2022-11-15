@@ -1,7 +1,7 @@
 {
-  "name": "@roqueform/scroll-to-issue-plugin",
+  "name": "@roqueform/scroll-to-error-plugin",
   "version": "1.0.0",
-  "description": "Roqueform plugin that enables scrolling to a field that has an associated validation issue.",
+  "description": "Roqueform plugin that enables scrolling to a field that has an associated validation error.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -33,7 +33,7 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/scroll-to-issue-plugin#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/scroll-to-error-plugin#readme",
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
     "roqueform": "^2.0.0"

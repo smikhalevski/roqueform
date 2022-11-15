@@ -408,8 +408,8 @@ There's a set of plugins available in this repo:
 - [@roqueform/reset-plugin](./packages/reset-plugin#readme)<br>
   Enhances fields with methods to manage the initial value.
 
-- [@roqueform/scroll-to-issue-plugin](./packages/scroll-to-issue-plugin#readme)<br>
-  Plugin that enables scrolling to a field that has an associated validation issue.
+- [@roqueform/scroll-to-error-plugin](./packages/scroll-to-error-plugin#readme)<br>
+  Plugin that enables scrolling to a field that has an associated validation error.
 
 ## Authoring a plugin
 

@@ -40,7 +40,7 @@ function getOrCreateFieldController(
   parent: FieldController | null,
   key: unknown,
   initialValue: unknown,
-  plugin: Plugin<any, {}> | undefined
+  plugin: Plugin<any, any> | undefined
 ): FieldController {
   let parentField: Field | null = null;
 

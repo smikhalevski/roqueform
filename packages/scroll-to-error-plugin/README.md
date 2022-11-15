@@ -1,22 +1,22 @@
-# Scroll to an issue plugin for Roqueform
+# Scroll to an error plugin for Roqueform
 
 [Roqueform](https://github.com/smikhalevski/roqueform#readme) plugin that enables scrolling to a field that has an
-associated validation issue.
+associated validation error.
 
 ```sh
-npm install --save-prod @roqueform/scroll-to-issue-plugin
+npm install --save-prod @roqueform/scroll-to-error-plugin
 ```
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_issue_plugin_src_main.html)
+🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin_src_main.html)
 
 ```tsx
 import { useEffect } from 'react';
 import { useField } from 'roqueform';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
-import { refPlugin } from '@roqueform/refplugin';
-import { scrollToIssuePlugin } from '@roqueform/scroll-to-issue-plugin';
+import { refPlugin } from '@roqueform/ref-plugin';
+import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
 import * as d from 'doubter';
 
 // Define a runtime type using Doubter DSL
@@ -24,16 +24,14 @@ const valueType = d.object({
   bar: d.string().min(1),
 });
 
+const plugin = scrollToErrorPlugin(applyPlugins(
+  refPlugin(),
+  doubterPlugin(valueType)
+));
+
 export const App = () => {
 
-  const rootField = useField(
-    { bar: 'qux' },
-
-    scrollToIssuePlugin(applyPlugins(
-      refPlugin(),
-      doubterPlugin(valueType)
-    ))
-  );
+  const rootField = useField({ bar: 'qux' }, plugin);
 
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
@@ -41,14 +39,14 @@ export const App = () => {
     // Trigger validation
     rootField.validate();
 
-    if (rootField.isInvalid()) {
-      // Scroll to the issue that is closest to the top left conrner of the document 
-      rootField.scrollToIssue(0, { behavior: 'smooth' });
+    if (rootField.invalid) {
+      // Scroll to the error that is closest to the top left conrner of the document 
+      rootField.scrollToError(0, { behavior: 'smooth' });
       return;
     }
 
     // The form value to submit
-    const value = rootField.getValue();
+    const value = rootField.value;
   };
 
   return (
@@ -60,13 +58,13 @@ export const App = () => {
             <input
               // 🟡 Note that the field ref is populated
               ref={barField.refCallback}
-              value={barField.getValue()}
+              value={barField.value}
               onChange={event => {
                 barField.dispatchValue(event.target.value);
               }}
             />
 
-            {barField.getIssue()?.message}
+            {barField.error?.message}
           </>
         )}
       </Field>
