@@ -190,7 +190,7 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    field.at('bar').dispatchValue('');
+    field.at('bar').setValue('');
 
     field.validate();
 
@@ -240,7 +240,7 @@ describe('doubterPlugin', () => {
   test('validate does not raise issues for transient fields', () => {
     const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarType));
 
-    field.at('bar').setValue('aaabbb');
+    field.at('bar').setTransientValue('aaabbb');
 
     field.validate();
 

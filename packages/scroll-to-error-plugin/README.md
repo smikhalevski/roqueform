@@ -19,19 +19,19 @@ import { refPlugin } from '@roqueform/ref-plugin';
 import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
 import * as d from 'doubter';
 
-// Define a runtime type using Doubter DSL
-const valueType = d.object({
+// Define a runtime type using Doubter
+const valueShape = d.object({
   bar: d.string().min(1),
 });
 
-const plugin = scrollToErrorPlugin(applyPlugins(
-  refPlugin(),
-  doubterPlugin(valueType)
-));
-
 export const App = () => {
-
-  const rootField = useField({ bar: 'qux' }, plugin);
+  const rootField = useField(
+    { bar: 'qux' },
+    scrollToErrorPlugin(applyPlugins(
+      refPlugin(),
+      doubterPlugin(valueShape)
+    ))
+  );
 
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
@@ -56,11 +56,11 @@ export const App = () => {
         {barField => (
           <>
             <input
-              // 🟡 Note that the field ref is populated
+              // 🟡 Note that the input element ref is populated
               ref={barField.refCallback}
               value={barField.value}
               onChange={event => {
-                barField.dispatchValue(event.target.value);
+                barField.setValue(event.target.value);
               }}
             />
 

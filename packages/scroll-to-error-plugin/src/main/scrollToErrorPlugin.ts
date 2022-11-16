@@ -1,5 +1,5 @@
-import { Field, Plugin } from 'roqueform';
-import { RefObject } from 'react';
+import type { Field, Plugin } from 'roqueform';
+import type { RefObject } from 'react';
 
 /**
  * The enhancement added to fields by the {@linkcode scrollToErrorPlugin}.
@@ -9,7 +9,7 @@ export interface ScrollToErrorPlugin {
    * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
    * ancestor containers such that the field element is visible to the user.
    *
-   * The field `ref` should be populated with an HTML element reference.
+   * The field `ref` should be populated with an `Element` reference.
    *
    * @param index The zero-based index of an error to scroll to. A negative index can be used, indicating an offset from
    * the end of the sequence. `scrollToError(-1)` scroll to the last error. The order of errors is the same as the
@@ -25,7 +25,7 @@ export interface ScrollToErrorPlugin {
    * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
    * ancestor containers such that the field element is visible to the user.
    *
-   * The field `ref` should be populated with an HTML element reference.
+   * The field `ref` should be populated with an `Element` reference.
    *
    * @param index The zero-based index of an error to scroll to. A negative index can be used, indicating an offset from
    * the end of the sequence. `scrollToError(-1)` scroll to the last error. The order of errors is the same as the
@@ -37,63 +37,46 @@ export interface ScrollToErrorPlugin {
 }
 
 /**
- * @param plugin The plugin that enhances field with `ref` and `getIssue` properties.
+ * @param plugin The plugin that enhances field with `ref` and `error` properties.
  * @template T The root field value.
+ * @template E The element type stored by ref.
+ * @template P The enhancement added by the ref and validation plugins.
  * @returns The plugin.
  */
-export function scrollToErrorPlugin<T, E extends HTMLElement, P extends { ref: RefObject<E>; error: any }>(
+export function scrollToErrorPlugin<T, E extends Element, P extends { ref: RefObject<E>; error: any }>(
   plugin: Plugin<T, P>
 ): Plugin<T, P & ScrollToErrorPlugin> {
+  const controllerMap = new WeakMap<Field, FieldController>();
+
   return (field, accessor) => {
-    enhanceField((plugin(field, accessor) || field) as InternalField);
+    if (!controllerMap.has(field)) {
+      enhanceField((plugin(field, accessor) || field) as InternalField, controllerMap);
+    }
   };
 }
 
-/**
- * @internal
- * The property that holds a controller instance.
- *
- * **Note:** Controller isn't intended to be accessed outside the plugin internal functions.
- */
-const CONTROLLER_SYMBOL = Symbol('scrollToErrorPlugin.controller');
-
-/**
- * @internal
- * Retrieves a controller for the field instance.
- */
-function getController(field: any): FieldController {
-  return field[CONTROLLER_SYMBOL];
-}
-
-/**
- * @internal
- */
 interface InternalField extends Field {
-  ref: RefObject<HTMLElement>;
+  ref: RefObject<Element>;
   error: unknown;
 }
 
-/**
- * @internal
- */
 interface FieldController {
   __parent: FieldController | null;
   __descendants: FieldController[] | null;
   __field: InternalField;
 }
 
-/**
- * @internal
- */
-function enhanceField(field: InternalField): void {
+function enhanceField(field: InternalField, controllerMap: WeakMap<Field, FieldController>): void {
   const controller: FieldController = {
     __parent: null,
     __descendants: null,
     __field: field,
   };
 
+  controllerMap.set(field, controller);
+
   if (field.parent !== null) {
-    const parent = getController(field.parent);
+    const parent = controllerMap.get(field.parent)!;
 
     controller.__parent = parent;
 
@@ -103,8 +86,6 @@ function enhanceField(field: InternalField): void {
   for (let parent = controller.__parent; parent !== null; parent = controller.__parent) {
     parent.__descendants!.push(controller);
   }
-
-  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
 
   Object.assign<Field, ScrollToErrorPlugin>(field, {
     scrollToError(index = 0, options) {
@@ -128,7 +109,16 @@ function enhanceField(field: InternalField): void {
 }
 
 function hasVisibleError(controller: FieldController): boolean {
-  return controller.__field.ref.current !== null && controller.__field.error != null;
+  const element = controller.__field.ref.current;
+
+  if (!(element instanceof Element) || controller.__field.error == null) {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+
+  // Exclude non-displayed elements
+  return rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0;
 }
 
 /**

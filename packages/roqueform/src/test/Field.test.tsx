@@ -39,7 +39,7 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.dispatchValue(111));
+    await waitFor(() => rootField.setValue(111));
 
     await waitFor(() => expect(renderCount).toBe(2));
   });
@@ -87,7 +87,7 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').dispatchValue(222));
+    await waitFor(() => rootField.at('foo').setValue(222));
 
     await waitFor(() => expect(renderCount).toBe(1));
   });
@@ -114,7 +114,7 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').dispatchValue(222));
+    await waitFor(() => rootField.at('foo').setValue(222));
 
     await waitFor(() => expect(renderCount).toBe(2));
   });
@@ -138,7 +138,7 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').dispatchValue(222));
+    await waitFor(() => rootField.at('foo').setValue(222));
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 222);
@@ -163,8 +163,8 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').setValue(222));
-    await waitFor(() => rootField.at('foo').setValue(333));
+    await waitFor(() => rootField.at('foo').setTransientValue(222));
+    await waitFor(() => rootField.at('foo').setTransientValue(333));
 
     expect(handleChangeMock).toHaveBeenCalledTimes(0);
 

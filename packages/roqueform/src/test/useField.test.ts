@@ -31,12 +31,12 @@ describe('useField', () => {
   });
 
   test('enhances a field', () => {
-    let field0;
-    const pluginMock = jest.fn(field => (field0 = Object.assign({}, field)));
+    let fieldClone;
+    const pluginMock = jest.fn(field => (fieldClone = Object.assign({}, field)));
 
     const hook = renderHook(() => useField(111, pluginMock));
 
-    expect(hook.result.current).toBe(field0);
+    expect(hook.result.current).toBe(fieldClone);
     expect(pluginMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,5 +1,5 @@
 import { Accessor, Field, Plugin } from './Field';
-import { callOrGet, isEqual, Writable } from './utils';
+import { callAll, callOrGet, isEqual, Writable } from './utils';
 
 /**
  * Creates the new filed instance.
@@ -71,21 +71,19 @@ function getOrCreateFieldController(
   const listeners: Array<(targetField: Field, currentField: Field) => void> = [];
 
   const notify = (targetField: Field): void => {
-    for (const listener of listeners) {
-      listener(targetField, controller.__field);
-    }
+    callAll(listeners, targetField, controller.__field);
   };
 
-  let field: Field = {
+  const field: Field = {
     parent: parentField,
     key,
     value: initialValue,
     transient: false,
 
-    dispatchValue(value) {
+    setValue(value) {
       applyValue(controller, callOrGet(value, controller.__value), false);
     },
-    setValue(value) {
+    setTransientValue(value) {
       applyValue(controller, callOrGet(value, controller.__value), true);
     },
     dispatch() {
@@ -95,6 +93,9 @@ function getOrCreateFieldController(
       return getOrCreateFieldController(controller.__accessor, controller, key, null, plugin).__field;
     },
     subscribe(listener) {
+      if (typeof listener !== 'function') {
+        throw new Error('Expected a listener to be a function');
+      }
       listeners.push(listener);
 
       return () => {
@@ -131,43 +132,46 @@ function getOrCreateFieldController(
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-  if (isEqual(value, controller.__value) && controller.__transient === transient) {
+  if (isEqual(controller.__value, value) && controller.__transient === transient) {
     return;
   }
 
   controller.__field.transient = controller.__transient = transient;
-
-  const { __accessor } = controller;
 
   let rootController = controller;
 
   while (rootController.__parent !== null && !rootController.__transient) {
     const { __key } = rootController;
     rootController = rootController.__parent;
-    value = __accessor.set(rootController.__value, __key, value);
+    value = controller.__accessor.set(rootController.__value, __key, value);
   }
 
-  propagateValue(controller, rootController, value);
+  callAll(propagateValue(controller, rootController, value, []), controller.__field);
 }
 
-function propagateValue(targetController: FieldController, controller: FieldController, value: unknown): void {
+function propagateValue(
+  targetController: FieldController,
+  controller: FieldController,
+  value: unknown,
+  notifiers: FieldController['__notify'][]
+): FieldController['__notify'][] {
+  notifiers.push(controller.__notify);
+
   controller.__field.value = controller.__value = value;
 
   if (controller.__children !== null) {
-    const { __accessor } = controller;
-
     for (const child of controller.__children) {
       if (child.__transient) {
         continue;
       }
 
-      const childValue = __accessor.get(value, child.__key);
+      const childValue = controller.__accessor.get(value, child.__key);
       if (child !== targetController && isEqual(child.__value, childValue)) {
         continue;
       }
-      propagateValue(targetController, child, childValue);
+      propagateValue(targetController, child, childValue, notifiers);
     }
   }
 
-  controller.__notify(targetController.__field);
+  return notifiers;
 }

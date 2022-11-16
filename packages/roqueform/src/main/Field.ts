@@ -58,27 +58,28 @@ export interface Field<T = any, P = unknown> {
   readonly value: T;
 
   /**
-   * `true` if the value was last updated using {@linkcode setValue}, or `false` otherwise.
+   * `true` if the value was last updated using {@linkcode setTransientValue}, or `false` otherwise.
    */
   readonly transient: boolean;
 
   /**
-   * Updates the value of the field and notifies both ancestors and derived fields. If field withholds a transient value
-   * then it becomes non-transient.
-   *
-   * @param value The value to set or a callback that receives a previous value and returns a new one.
-   */
-  dispatchValue(value: SetStateAction<T>): void;
-
-  /**
-   * Updates the value of the field and notifies only derived fields and marks value as transient.
+   * Updates the value of the field and notifies both ancestors and derived fields. If field withholds a
+   * {@linkcode transient} value then it becomes non-transient.
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
   setValue(value: SetStateAction<T>): void;
 
   /**
-   * If the current value is transient then notifies parent about this value and marks value as non-transient.
+   * Updates the value of the field and notifies only derived fields and marks value as {@linkcode transient}.
+   *
+   * @param value The value to set or a callback that receives a previous value and returns a new one.
+   */
+  setTransientValue(value: SetStateAction<T>): void;
+
+  /**
+   * If the current value is {@linkcode transient} then notifies parent about this value and marks value as
+   * non-transient.
    */
   dispatch(): void;
 
@@ -93,6 +94,8 @@ export interface Field<T = any, P = unknown> {
 
   /**
    * Subscribes the listener to the field updates.
+   *
+   * Listeners are guaranteed to be called once when the field is {@linkcode notify notified}.
    *
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.

@@ -25,14 +25,14 @@ import { doubterPlugin } from '@roqueform/doubter-plugin';
 import * as d from 'doubter';
 
 // Define a runtime type using Doubter DSL
-const valueType = d.object({
+const valueShape = d.object({
   bar: d.string().min(1),
 });
 
 export const App = () => {
 
   // Create a field enhanced by a plugin
-  const rootField = useField({ bar: '' }, doubterPlugin(valueType));
+  const rootField = useField({ bar: '' }, doubterPlugin(valueShape));
 
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
@@ -40,13 +40,13 @@ export const App = () => {
     // Trigger validation
     rootField.validate();
 
-    if (rootField.isInvalid()) {
+    if (rootField.invalid) {
       // Isses are associated with fields automatically
       return;
     }
 
     // The form value to submit
-    const value = rootField.getValue();
+    const value = rootField.value;
   };
 
   return (
@@ -56,14 +56,14 @@ export const App = () => {
         {barField => (
           <>
             <input
-              value={barField.getValue()}
+              value={barField.value}
               onChange={event => {
-                barField.dispatchValue(event.target.value);
+                barField.setValue(event.target.value);
               }}
-              aria-invalid={barField.isInvalid()}
+              aria-invalid={barField.invalid}
             />
 
-            {barField.getIssue()?.message}
+            {barField.error?.message}
           </>
         )}
       </Field>
@@ -85,7 +85,7 @@ DSL.
 ```ts
 import * as d from 'doubter';
 
-const valueType = d.object({
+const valueShape = d.object({
   bar: d.string().min(5)
 });
 // → Type<{ bar: string }>

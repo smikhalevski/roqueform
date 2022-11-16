@@ -29,7 +29,7 @@ export const App = () => {
           ref={barField.refCallback}
           value={barField.value}
           onChange={event => {
-            barField.dispatchValue(event.target.value);
+            barField.setValue(event.target.value);
           }}
         />
       )}

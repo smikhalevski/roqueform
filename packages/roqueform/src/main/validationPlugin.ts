@@ -141,7 +141,7 @@ function enhanceField(
   controllerMap.set(field, controller);
 
   if (field.parent !== null) {
-    const parent = controllerMap.get(field.parent) as FieldController;
+    const parent = controllerMap.get(field.parent)!;
 
     controller.__parent = parent;
     controller.__validator = parent.__validator;
@@ -149,24 +149,24 @@ function enhanceField(
     (parent.__children ||= []).push(controller);
   }
 
-  const { setValue, dispatchValue } = field;
+  const { setTransientValue, setValue } = field;
 
   Object.assign<Field, Partial<Field> & ValidationPlugin<unknown>>(field, {
     validating: controller.__validator !== null,
     invalid: false,
     error: null,
 
+    setTransientValue(value) {
+      if (controller.__validator !== null) {
+        notifyAll(unsetValidator(controller, controller.__validator, []));
+      }
+      return setTransientValue(value);
+    },
     setValue(value) {
       if (controller.__validator !== null) {
         notifyAll(unsetValidator(controller, controller.__validator, []));
       }
       return setValue(value);
-    },
-    dispatchValue(value) {
-      if (controller.__validator !== null) {
-        notifyAll(unsetValidator(controller, controller.__validator, []));
-      }
-      return dispatchValue(value);
     },
     setError(error) {
       notifyAll(setError(controller, error, false, []));

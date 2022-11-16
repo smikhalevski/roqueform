@@ -29,12 +29,12 @@ export const App = () => {
       {barField => (
         <input
           ref={barField.refCallback}
-          value={barField.getValue()}
+          value={barField.value}
           onChange={event => {
-            barField.dispatchValue(event.target.value);
+            barField.setValue(event.target.value);
           }}
-          aria-invalid={barField.isInvalid()}
-          aria-errormessage={barField.getError()}
+          aria-invalid={barField.invalid}
+          aria-errormessage={barField.error}
         />
       )}
     </Field>

@@ -112,7 +112,7 @@ field.at('foo').at(0).at('bar');
 ## Field value updates
 
 The field is essentially a container that encapsulates the value and provides methods to update it. Let's have a look at
-the `dispatchValue` method that updates the field value:
+the `setValue` method that updates the field value:
 
 ```ts
 const field = useField({ foo: 'bar' });
@@ -120,7 +120,7 @@ const field = useField({ foo: 'bar' });
 field.getValue();
 // → { foo: 'bar' }
 
-field.dispatchValue({ foo: 'qux' });
+field.setValue({ foo: 'qux' });
 
 // The field value was updated
 field.getValue();
@@ -130,7 +130,7 @@ field.getValue();
 `useField` doesn't trigger a re-render of the enclosing component. Navigate to
 [Field observability](#field-observability) section for more details.
 
-When the parent field is updated using `dispatchValue`, all of the affected derived fields also receive an update:
+When the parent field is updated using `setValue`, all of the affected derived fields also receive an update:
 
 ```ts
 const field = useField({ foo: 'bar' });
@@ -143,7 +143,7 @@ fooField.getValue();
 // → 'bar'
 
 // Updating the root field
-field.dispatchValue({ foo: 'qux' });
+field.setValue({ foo: 'qux' });
 
 // The update was propagated to the derived field
 field.getValue();
@@ -153,7 +153,7 @@ fooField.getValue();
 // → 'qux'
 ```
 
-The same is valid for updating derived fields: when the derived field is updated using `dispatchValue`, the update is
+The same is valid for updating derived fields: when the derived field is updated using `setValue`, the update is
 propagated to the parent field.
 
 ```ts
@@ -161,7 +161,7 @@ const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 // Updating the derived field
-fooField.dispatchValue('qux');
+fooField.setValue('qux');
 
 // The update was propagated to the parent field
 field.getValue();
@@ -171,10 +171,10 @@ fooField.getValue();
 // → 'qux'
 ```
 
-`dispatchValue` has a callback signature:
+`setValue` has a callback signature:
 
 ```ts
-fooField.dispatchValue(prevValue => 'qux');
+fooField.setValue(prevValue => 'qux');
 ```
 
 ## Transient updates
@@ -182,7 +182,7 @@ fooField.dispatchValue(prevValue => 'qux');
 The field update can be done transiently, so the parent won't be notified. You can think about this as a commit in git:
 you first stage your changes with `git add` and then commit them with `git commit`.
 
-To achieve this behavior we're going to use `setValue`/`dispatch` instead of `dispatchValue` that we discussed in
+To achieve this behavior we're going to use `setTransientValue`/`dispatch` instead of `setValue` that we discussed in
 [Field value updates](#field-value-updates) section:
 
 ```ts
@@ -190,7 +190,7 @@ const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 // Set the transient value, "git add"
-fooField.setValue('qux');
+fooField.setTransientValue('qux');
 
 // 🟡 Notice that fooField was updated but field wasn't
 field.getValue();
@@ -210,8 +210,8 @@ fooField.getValue();
 // → 'qux'
 ```
 
-`setValue` can be called multiple times, but the most recent update would be propagated to the parent only after
-`dispatch`/`dispatchValue` call.
+`setTransientValue` can be called multiple times, but the most recent update would be propagated to the parent only
+after `dispatch`/`setValue` call.
 
 You can check that the field has a transient value using `isTransient` method:
 
@@ -219,7 +219,7 @@ You can check that the field has a transient value using `isTransient` method:
 const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
-fooField.setValue('qux');
+fooField.setTransientValue('qux');
 
 fooField.isTransient();
 // → true
@@ -267,7 +267,7 @@ const App = () => {
         <input
           value={rootField.getValue()}
           onChange={event => {
-            rootField.dispatchValue(event.target.value);
+            rootField.setValue(event.target.value);
           }}
         />
       )}
@@ -293,7 +293,7 @@ const App = () => {
           type="text"
           value={fooField.getValue()}
           onChange={event => {
-            fooField.dispatchValue(event.target.value);
+            fooField.setValue(event.target.value);
           }}
         />
       )}
@@ -305,7 +305,7 @@ const App = () => {
           type="number"
           value={barField.getValue()}
           onChange={event => {
-            barField.dispatchValue(event.target.valueAsNumber);
+            barField.setValue(event.target.valueAsNumber);
           }}
         />
       )}
@@ -318,8 +318,8 @@ You may have noticed that even though we didn't specify any types yet, our field
 by replacing the value dispatched to `barField`:
 
 ```diff
-- barField.dispatchValue(event.target.valueAsNumber);
-+ barField.dispatchValue(event.target.value);
+- barField.setValue(event.target.valueAsNumber);
++ barField.setValue(event.target.value);
 ```
 
 This would cause TypeScript to show an error that `barField` value must be of a number type.
@@ -344,7 +344,7 @@ const App = () => {
           type="text"
           value={barField.getValue()}
           onChange={event => {
-            barField.dispatchValue(event.target.value);
+            barField.setValue(event.target.value);
           }}
         />
       )}
@@ -386,7 +386,7 @@ is triggered only when the field value was updated [non-transiently](#transient-
       type="text"
       value={barField.getValue()}
       onChange={event => {
-        barField.dispatchValue(event.target.value);
+        barField.setValue(event.target.value);
       }}
     />
   )}
@@ -439,7 +439,7 @@ itself.
       ref={barField.ref}
       value={barField.getValue()}
       onChange={event => {
-        barField.dispatchValue(event.target.value);
+        barField.setValue(event.target.value);
       }}
     />
   )}
@@ -498,7 +498,7 @@ const App = () => {
           <input
             value={barField.getValue()}
             onChange={event => {
-              barField.dispatchValue(event.target.value);
+              barField.setValue(event.target.value);
             }}
           />
         )}

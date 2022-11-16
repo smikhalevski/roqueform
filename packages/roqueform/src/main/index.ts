@@ -5,3 +5,4 @@ export * from './Field';
 export * from './objectAccessor';
 export * from './useField';
 export * from './validationPlugin';
+export * from './utils';

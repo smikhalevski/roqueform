@@ -319,7 +319,7 @@ describe('validationPlugin', () => {
       })
     );
 
-    field.at('bar').setValue('');
+    field.at('bar').setTransientValue('');
 
     field.validate();
 
