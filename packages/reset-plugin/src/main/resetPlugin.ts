@@ -1,16 +1,14 @@
 import { Accessor, Field, Plugin } from 'roqueform';
+import { isEqual } from 'roqueform/src/main/utils';
 
 /**
- * The mixin added to fields by {@linkcode resetPlugin}.
+ * The enhancement added to fields by the {@linkcode resetPlugin}.
  */
-export interface ResetPlugin {
+export interface ResetPlugin<T> {
   /**
-   * Returns `true` if the field value is different from the initial value, or `false` otherwise.
-   *
-   * **Note:** By default, field values are compared using reference equality. Pass an equality checker to
-   * {@linkcode resetPlugin} to alter this behavior.
+   * `true` if the field value is different from its initial value, or `false` otherwise.
    */
-  isDirty(): boolean;
+  readonly dirty: boolean;
 
   /**
    * Reverts the field to its initial value.
@@ -19,50 +17,24 @@ export interface ResetPlugin {
 }
 
 /**
- * Returns truthy result if values are equal, and falsy result otherwise.
- */
-export type EqualityChecker = (left: any, right: any) => any;
-
-/**
- * Enhance field with `reset` and `isDirty` methods.
+ * Enhances field with reset functionality.
  *
- * @param equalityChecker The field value equality checker. Defaults to `Object.is`.
  * @template T The root field value.
  * @returns The plugin.
  */
-export function resetPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, ResetPlugin> {
+export function resetPlugin<T>(
+  equalityChecker: (initialValue: any, value: any) => boolean = isEqual
+): Plugin<T, ResetPlugin<T>> {
   return (field, accessor) => {
     enhanceField(field, accessor, equalityChecker);
   };
 }
 
-/**
- * @internal
- * The property that holds a controller instance.
- *
- * **Note:** Controller isn't intended to be accessed outside the plugin internal functions.
- */
-const CONTROLLER_SYMBOL = Symbol('resetPlugin.controller');
-
-/**
- * @internal
- * Retrieves a controller for the field instance.
- */
-function getController(field: any): FieldController {
-  return field[CONTROLLER_SYMBOL];
-}
-
-/**
- * @internal
- */
-interface FieldController {
-  __initialValue: unknown;
-}
-
-/**
- * @internal
- */
-function enhanceField(field: Field, accessor: Accessor, equalityChecker: EqualityChecker): void {
+function enhanceField(
+  field: Field,
+  accessor: Accessor,
+  equalityChecker: (initialValue: any, value: any) => boolean
+): void {
   const initialValue =
     field.parent === null ? field.value : accessor.get(getController(field.parent).__initialValue, field.key);
 
@@ -70,11 +42,9 @@ function enhanceField(field: Field, accessor: Accessor, equalityChecker: Equalit
     __initialValue: initialValue,
   };
 
-  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
-
   Object.assign<Field, ResetPlugin>(field, {
     isDirty() {
-      return !equalityChecker(initialValue, field.value);
+      return !isEqual(initialValue, field.value);
     },
     reset() {
       field.dispatchValue(initialValue);

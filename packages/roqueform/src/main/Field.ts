@@ -1,22 +1,20 @@
 import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useReducer, useRef } from 'react';
 import { callOrGet, isEqual } from './utils';
 
-type Keyof<T> = keyof NonNullable<T>;
-
-type ValueAt<T, K extends Keyof<T>> = T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K];
-
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
  *
  * If plugin returns void, then it's implied that the passed field object was extended.
  *
- * @template T The value held by the enhanced field.
+ * @param field The field that must be enhanced.
+ * @param accessor The accessor that reads and writes object properties.
+ * @template T The value controlled by the enhanced field.
  * @template P The enhancement added by the plugin.
  */
-export type Plugin<T, P> = (field: Field<T>, accessor: Accessor) => (Field<T, P> & P) | void;
+export type Plugin<T, P> = (field: Field<T>, accessor: Accessor) => (Field<T, P> & P) | undefined | void;
 
 /**
- * The abstraction used by the {@linkcode Field} to read and write values in controlled value.
+ * The abstraction used by the {@linkcode Field} to read and write object properties.
  */
 export interface Accessor {
   /**
@@ -40,12 +38,12 @@ export interface Accessor {
 }
 
 /**
- * @template T The value held by the field.
+ * @template T The value controlled by the field.
  * @template P The enhancement added by the plugin.
  */
-export interface Field<T = any, P = {}> {
+export interface Field<T = any, P = unknown> {
   /**
-   * The parent field from which this one was derived.
+   * The parent field from which this one was derived, or `null` if there's no parent.
    */
   readonly parent: (Field<any, P> & P) | null;
 
@@ -89,10 +87,9 @@ export interface Field<T = any, P = {}> {
    *
    * @param key The key the derived field would control.
    * @returns The derived `Field` instance.
-   *
-   * @template K The key in the field value.
+   * @template K The key of the object value controlled by the field.
    */
-  at<K extends Keyof<T>>(key: K): Field<ValueAt<T, K>, P> & P;
+  at<K extends keyof (T & {})>(key: K): Field<T extends {} ? T[K] : undefined, P> & P;
 
   /**
    * Subscribes the listener to the field updates.
@@ -131,8 +128,8 @@ export interface FieldProps<F extends Field> {
   children: ((field: F) => ReactNode) | ReactNode;
 
   /**
-   * If set to `true` then `Field` is re-rendered whenever the {@linkcode field} is notified, so updates from ancestors and
-   * derived fields would trigger re-render, as well as {@linkcode Field.notify} calls on any of those. Otherwise,
+   * If set to `true` then `Field` is re-rendered whenever the {@linkcode field} is notified, so updates from ancestors
+   * and derived fields would trigger re-render, as well as {@linkcode Field.notify} calls on any of those. Otherwise,
    * re-rendered only if field is notified explicitly, so the `targetField` is set to this field.
    *
    * @default false

@@ -9,7 +9,7 @@ npm install --save-prod @roqueform/validity-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/validity_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/validity_plugin_src_main.html)
 
 ```tsx
 import { useEffect } from 'react';

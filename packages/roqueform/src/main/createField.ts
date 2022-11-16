@@ -5,18 +5,31 @@ import { callOrGet, isEqual, Writable } from './utils';
  * Creates the new filed instance.
  *
  * @param accessor Resolves values for derived fields.
+ */
+export function createField(accessor: Accessor): Field;
+
+/**
+ * Creates the new filed instance.
+ *
+ * @param accessor Resolves values for derived fields.
+ * @param initialValue The initial value assigned to the field.
+ * @template T The value controlled by the field.
+ */
+export function createField<T>(accessor: Accessor, initialValue: T): Field<T>;
+
+/**
+ * Creates the new filed instance.
+ *
+ * @param accessor Resolves values for derived fields.
  * @param initialValue The initial value assigned to the field.
  * @param plugin Enhances the field with additional functionality.
- *
- * @template T The value held by the field.
+ * @template T The value controlled by the field.
  * @template P The enhancement added by the plugin.
  */
-export function createField<T = any, P = {}>(
-  accessor: Accessor,
-  initialValue?: T,
-  plugin?: Plugin<T, P>
-): Field<T, P> & P {
-  return getOrCreateFieldController(accessor, null, null, initialValue, plugin).__field as Field<T, P> & P;
+export function createField<T, P>(accessor: Accessor, initialValue: T, plugin: Plugin<T, P>): Field<T, P> & P;
+
+export function createField(accessor: Accessor, initialValue?: unknown, plugin?: Plugin<unknown, unknown>) {
+  return getOrCreateFieldController(accessor, null, null, initialValue, plugin).__field;
 }
 
 interface FieldController {

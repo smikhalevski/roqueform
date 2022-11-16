@@ -16,7 +16,6 @@ import { useField } from 'roqueform';
 import { refPlugin } from '@roqueform/ref-plugin';
 
 export const App = () => {
-
   const rootField = useField({ bar: 'qux' }, refPlugin());
 
   useEffect(() => {

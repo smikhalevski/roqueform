@@ -2,7 +2,7 @@ import { Field, Plugin } from './Field';
 import { isEqual, Writable } from './utils';
 
 /**
- * The mixin added to fields by {@linkcode validationPlugin}.
+ * The enhancement added to fields by the {@linkcode validationPlugin}.
  *
  * @template E The error associated with the field.
  */

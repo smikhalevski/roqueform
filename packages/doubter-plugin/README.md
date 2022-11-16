@@ -16,7 +16,7 @@ npm install --save-prod @roqueform/doubter-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/doubter_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/doubter_plugin_src_main.html)
 
 ```tsx
 import { SyntheticEvent } from 'react';

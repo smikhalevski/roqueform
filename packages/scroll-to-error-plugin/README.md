@@ -9,7 +9,7 @@ npm install --save-prod @roqueform/scroll-to-error-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin_src_main.html)
 
 ```tsx
 import { useEffect } from 'react';

@@ -61,9 +61,7 @@ export function refPlugin<T, E extends HTMLElement = HTMLElement>(): Plugin<T, R
     const ref: MutableRefObject<E | null> = { current: null };
 
     Object.defineProperty(field, 'active', {
-      get() {
-        return typeof document !== 'undefined' && ref.current !== null && document.activeElement === ref.current;
-      },
+      get: () => typeof document !== 'undefined' && ref.current !== null && document.activeElement === ref.current,
     });
 
     Object.assign<Field, Omit<RefPlugin<E>, 'active'>>(field, {
