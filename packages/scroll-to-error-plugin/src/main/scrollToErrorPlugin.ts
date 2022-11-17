@@ -46,57 +46,50 @@ export interface ScrollToErrorPlugin {
 export function scrollToErrorPlugin<T, E extends Element, P extends { ref: RefObject<E>; error: any }>(
   plugin: Plugin<T, P>
 ): Plugin<T, P & ScrollToErrorPlugin> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
 
   return (field, accessor) => {
-    if (!controllerMap.has(field)) {
-      enhanceField((plugin(field, accessor) || field) as InternalField, controllerMap);
+    controllerMap ||= new WeakMap();
+
+    const scrollField = (plugin(field, accessor) || field) as ScrollField;
+
+    if (!controllerMap.has(scrollField)) {
+      enhanceField(scrollField, controllerMap);
     }
   };
 }
 
-interface InternalField extends Field {
+interface ScrollField extends Field {
   ref: RefObject<Element>;
   error: unknown;
 }
 
 interface FieldController {
   __parent: FieldController | null;
-  __descendants: FieldController[] | null;
-  __field: InternalField;
+
+  /**
+   * The list of controllers that can be scrolled to.
+   */
+  __targetControllers: FieldController[];
+  __field: ScrollField;
 }
 
-function enhanceField(field: InternalField, controllerMap: WeakMap<Field, FieldController>): void {
+function enhanceField(field: ScrollField, controllerMap: WeakMap<Field, FieldController>): void {
   const controller: FieldController = {
-    __parent: null,
-    __descendants: null,
+    __parent: field.parent !== null ? controllerMap.get(field.parent)! : null,
+    __targetControllers: [],
     __field: field,
   };
 
   controllerMap.set(field, controller);
 
-  if (field.parent !== null) {
-    const parent = controllerMap.get(field.parent)!;
-
-    controller.__parent = parent;
-
-    parent.__descendants ||= [];
-  }
-
-  for (let parent = controller.__parent; parent !== null; parent = controller.__parent) {
-    parent.__descendants!.push(controller);
+  for (let parent: FieldController | null = controller; parent !== null; parent = parent.__parent) {
+    parent.__targetControllers!.push(controller);
   }
 
   Object.assign<Field, ScrollToErrorPlugin>(field, {
     scrollToError(index = 0, options) {
-      if (controller.__descendants === null) {
-        return false;
-      }
-      const controllers = controller.__descendants.filter(hasVisibleError);
-
-      if (controllers.length === 0) {
-        return false;
-      }
+      const controllers = controller.__targetControllers.filter(hasVisibleError);
       const targetController = sortByBoundingRect(controllers)[index < 0 ? controllers.length + index : index];
 
       if (targetController === undefined) {

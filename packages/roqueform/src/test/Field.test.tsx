@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { Field, useField } from '../main';
 
 describe('Field', () => {
@@ -39,9 +39,9 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.setValue(111));
+    await act(() => rootField.setValue(111));
 
-    await waitFor(() => expect(renderCount).toBe(2));
+    expect(renderCount).toBe(2);
   });
 
   test('re-renders if field is notified', async () => {
@@ -63,9 +63,9 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.notify());
+    await act(() => rootField.notify());
 
-    await waitFor(() => expect(renderCount).toBe(2));
+    expect(renderCount).toBe(2);
   });
 
   test('does not re-render if derived field value is changed externally', async () => {
@@ -87,9 +87,9 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').setValue(222));
+    await act(() => rootField.at('foo').setValue(222));
 
-    await waitFor(() => expect(renderCount).toBe(1));
+    expect(renderCount).toBe(1);
   });
 
   test('does not re-render if eagerlyUpdated and derived field value is changed externally', async () => {
@@ -114,9 +114,9 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').setValue(222));
+    await act(() => rootField.at('foo').setValue(222));
 
-    await waitFor(() => expect(renderCount).toBe(2));
+    expect(renderCount).toBe(2);
   });
 
   test('triggers onChange handler when value is changed non-transiently', async () => {
@@ -138,7 +138,7 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').setValue(222));
+    await act(() => rootField.at('foo').setValue(222));
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 222);
@@ -163,12 +163,14 @@ describe('Field', () => {
 
     render(<Test />);
 
-    await waitFor(() => rootField.at('foo').setTransientValue(222));
-    await waitFor(() => rootField.at('foo').setTransientValue(333));
+    await act(() => {
+      rootField.at('foo').setTransientValue(222);
+      rootField.at('foo').setTransientValue(333);
+    });
 
     expect(handleChangeMock).toHaveBeenCalledTimes(0);
 
-    await waitFor(() => rootField.at('foo').dispatch());
+    await act(() => rootField.at('foo').dispatch());
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 333);

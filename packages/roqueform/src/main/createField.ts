@@ -153,9 +153,9 @@ function propagateValue(
   targetController: FieldController,
   controller: FieldController,
   value: unknown,
-  notifiers: FieldController['__notify'][]
+  notifyCallbacks: FieldController['__notify'][]
 ): FieldController['__notify'][] {
-  notifiers.push(controller.__notify);
+  notifyCallbacks.push(controller.__notify);
 
   controller.__field.value = controller.__value = value;
 
@@ -169,9 +169,9 @@ function propagateValue(
       if (child !== targetController && isEqual(child.__value, childValue)) {
         continue;
       }
-      propagateValue(targetController, child, childValue, notifiers);
+      propagateValue(targetController, child, childValue, notifyCallbacks);
     }
   }
 
-  return notifiers;
+  return notifyCallbacks;
 }

@@ -6,7 +6,7 @@ import isDeepEqual from 'fast-deep-equal';
  */
 export interface ResetPlugin<T> {
   /**
-   * `true` if the field value is different from its initial value, or `false` otherwise.
+   * `true` if the field value is different from its {@link initialValue initial value}, or `false` otherwise.
    */
   readonly dirty: boolean;
 
@@ -16,7 +16,7 @@ export interface ResetPlugin<T> {
   readonly initialValue: T;
 
   /**
-   * Sets the initial value of the field and notifies ancestors and descendants.
+   * Sets the {@link initialValue initial value} of the field and notifies ancestors and descendants.
    *
    * @param value The initial value to set.
    */
@@ -29,7 +29,7 @@ export interface ResetPlugin<T> {
 }
 
 /**
- * Enhances field with reset functionality.
+ * Enhances the field with methods to manage the initial value and reset the field value.
  *
  * @template T The root field value.
  * @returns The plugin.
@@ -37,9 +37,11 @@ export interface ResetPlugin<T> {
 export function resetPlugin<T>(
   equalityChecker: (initialValue: T, value: T) => boolean = isDeepEqual
 ): Plugin<T, ResetPlugin<T>> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
 
   return (field, accessor) => {
+    controllerMap ||= new WeakMap();
+
     if (!controllerMap.has(field)) {
       enhanceField(field, accessor, equalityChecker, controllerMap);
     }
@@ -126,9 +128,9 @@ function propagateInitialValue(
   targetController: FieldController,
   controller: FieldController,
   initialValue: unknown,
-  notifiers: Array<() => void>
-): Array<() => void> {
-  notifiers.push(controller.__field.notify);
+  notifyCallbacks: Field['notify'][]
+): Field['notify'][] {
+  notifyCallbacks.push(controller.__field.notify);
 
   controller.__field.initialValue = controller.__initialValue = initialValue;
 
@@ -140,9 +142,9 @@ function propagateInitialValue(
       if (child !== targetController && isEqual(child.__initialValue, childInitialValue)) {
         continue;
       }
-      propagateInitialValue(targetController, child, childInitialValue, notifiers);
+      propagateInitialValue(targetController, child, childInitialValue, notifyCallbacks);
     }
   }
 
-  return notifiers;
+  return notifyCallbacks;
 }
