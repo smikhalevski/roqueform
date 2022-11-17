@@ -1,10 +1,10 @@
+import React from 'react';
+import * as d from 'doubter';
+import { act, render } from '@testing-library/react';
 import { applyPlugins, createField, Field, objectAccessor, ValidationPlugin } from 'roqueform';
-import { ScrollToErrorPlugin, scrollToErrorPlugin } from '../main';
 import { RefPlugin, refPlugin } from '@roqueform/ref-plugin';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
-import * as d from 'doubter';
-import React from 'react';
-import { act, render } from '@testing-library/react';
+import { ScrollToErrorPlugin, scrollToErrorPlugin } from '../main';
 
 describe('scrollToErrorPlugin', () => {
   test('returns false if there are no errors', () => {
@@ -15,7 +15,7 @@ describe('scrollToErrorPlugin', () => {
     const field = createField(
       objectAccessor,
       { foo: 111 },
-      scrollToErrorPlugin(applyPlugins(refPlugin(), doubterPlugin(valueType)))
+      applyPlugins(refPlugin(), doubterPlugin(valueType), scrollToErrorPlugin())
     );
 
     expect(field.scrollToError()).toBe(false);
@@ -39,7 +39,7 @@ describe('scrollToErrorPlugin', () => {
       rootField = createField(
         objectAccessor,
         { foo: 111, bar: 'aaa' },
-        scrollToErrorPlugin(applyPlugins(refPlugin(), doubterPlugin(valueType)))
+        applyPlugins(refPlugin(), doubterPlugin(valueType), scrollToErrorPlugin())
       );
 
       return (

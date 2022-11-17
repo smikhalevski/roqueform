@@ -11,6 +11,10 @@ npm install --save-prod @roqueform/scroll-to-error-plugin
 
 🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin_src_main.html)
 
+Scroll plugin assumes that the field is enhanced with `ref` and `error` properties. The `ref` property should be a Rect
+reference object that points to the `Element`, and `error` holds a validation error. If an element is displayed and an
+error is defined and not `null` than `scrollToError()` would reveal this element on the screen.
+
 ```tsx
 import { useEffect } from 'react';
 import { useField } from 'roqueform';
@@ -27,10 +31,11 @@ const valueShape = d.object({
 export const App = () => {
   const rootField = useField(
     { bar: 'qux' },
-    scrollToErrorPlugin(applyPlugins(
+    applyPlugins(
       refPlugin(),
-      doubterPlugin(valueShape)
-    ))
+      doubterPlugin(valueShape),
+      scrollToErrorPlugin()
+    )
   );
 
   const handleSubmit = (event: SyntheticEvent): void => {
