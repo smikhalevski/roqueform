@@ -183,7 +183,7 @@ describe('validationPlugin', () => {
     expect(barNotifyMock).toHaveBeenCalledTimes(2);
   });
 
-  test('synchronously validates the root field', () => {
+  test('syncly validates the root field', () => {
     const field = createField(
       objectAccessor,
       { foo: 0 },
@@ -209,7 +209,7 @@ describe('validationPlugin', () => {
     expect(fooNotifyMock).toHaveBeenCalledTimes(1);
   });
 
-  test('synchronously validates the child field', () => {
+  test('syncly validates the child field', () => {
     const field = createField(
       objectAccessor,
       { foo: 0 },
@@ -235,7 +235,7 @@ describe('validationPlugin', () => {
     expect(fooNotifyMock).toHaveBeenCalledTimes(1);
   });
 
-  test('synchronously validates multiple fields', () => {
+  test('syncly validates multiple fields', () => {
     const field = createField(
       objectAccessor,
       { foo: 0, bar: 'qux' },
@@ -333,7 +333,7 @@ describe('validationPlugin', () => {
     expect(field.at('bar').error).toBe(null);
   });
 
-  test('asynchronously validates the root field', async () => {
+  test('asyncly validates the root field', async () => {
     const field = createField(
       objectAccessor,
       { foo: 0 },
@@ -366,7 +366,7 @@ describe('validationPlugin', () => {
     expect(fooNotifyMock).toHaveBeenCalledTimes(2);
   });
 
-  test('asynchronously validates the child field', async () => {
+  test('asyncly validates the child field', async () => {
     const field = createField(
       objectAccessor,
       { foo: 0 },
@@ -397,7 +397,7 @@ describe('validationPlugin', () => {
     expect(fooNotifyMock).toHaveBeenCalledTimes(2);
   });
 
-  test('cleans up validation if a synchronous error is thrown', () => {
+  test('cleans up validation if a sync error is thrown', () => {
     const field = createField(
       objectAccessor,
       { foo: 0, bar: 'qux' },
@@ -419,7 +419,7 @@ describe('validationPlugin', () => {
     expect(field.at('foo').error).toBe(null);
   });
 
-  test('cleans up validation if an asynchronous error is thrown', async () => {
+  test('cleans up validation if an async error is thrown', async () => {
     const field = createField(
       objectAccessor,
       { foo: 0, bar: 'qux' },

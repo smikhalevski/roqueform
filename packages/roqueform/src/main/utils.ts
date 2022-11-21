@@ -19,8 +19,8 @@ export function callOrGet<T, A extends any[]>(value: T | ((...args: A) => T), ..
 }
 
 /**
- * Calls all callbacks from the list with given set of arguments. If a callback throw, the remaining callbacks are still
- * called and the last occurred error is thrown at the very end.
+ * Calls all callbacks from the list with given set of arguments. If a callback throws an error, the remaining callbacks
+ * are still called and the first occurred error is re-thrown in the end.
  *
  * @param callbacks The list of callbacks.
  * @param args The list of arguments to pass to each callback.
@@ -34,8 +34,10 @@ export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, 
     try {
       callback.apply(undefined, args);
     } catch (e) {
-      errored = true;
-      error = e;
+      if (!errored) {
+        errored = true;
+        error = e;
+      }
     }
   }
   if (errored) {

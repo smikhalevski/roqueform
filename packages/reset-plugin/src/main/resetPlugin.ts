@@ -6,7 +6,7 @@ import isDeepEqual from 'fast-deep-equal';
  */
 export interface ResetPlugin<T> {
   /**
-   * `true` if the field value is different from its {@link initialValue initial value}, or `false` otherwise.
+   * `true` if the field value is different from its initial value, or `false` otherwise.
    */
   readonly dirty: boolean;
 
@@ -16,14 +16,14 @@ export interface ResetPlugin<T> {
   readonly initialValue: T;
 
   /**
-   * Sets the {@link initialValue initial value} of the field and notifies ancestors and descendants.
+   * Sets the initial value of the field and notifies ancestors and descendants.
    *
    * @param value The initial value to set.
    */
   setInitialValue(value: T): void;
 
   /**
-   * Reverts the field to its {@link initialValue initial value}.
+   * Reverts the field to its initial value.
    */
   reset(): void;
 }
@@ -37,11 +37,9 @@ export interface ResetPlugin<T> {
 export function resetPlugin<T>(
   equalityChecker: (initialValue: T, value: T) => boolean = isDeepEqual
 ): Plugin<T, ResetPlugin<T>> {
-  let controllerMap: WeakMap<Field, FieldController> | undefined;
+  const controllerMap = new WeakMap<Field, FieldController>();
 
   return (field, accessor) => {
-    controllerMap ||= new WeakMap();
-
     if (!controllerMap.has(field)) {
       enhanceField(field, accessor, equalityChecker, controllerMap);
     }
@@ -139,6 +137,7 @@ function propagateInitialValue(
   if (controller.__children !== null) {
     for (const child of controller.__children) {
       const childInitialValue = controller.__accessor.get(initialValue, child.__key);
+
       if (child !== targetController && isEqual(child.__initialValue, childInitialValue)) {
         continue;
       }

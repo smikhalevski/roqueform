@@ -3,17 +3,17 @@ import { doubterPlugin } from '../main';
 import { createField, objectAccessor } from 'roqueform';
 
 describe('doubterPlugin', () => {
-  const fooType = d.object({
+  const fooShape = d.object({
     foo: d.number().gte(3),
   });
 
-  const fooBarType = d.object({
+  const fooBarShape = d.object({
     foo: d.number().gte(3),
     bar: d.string().max(2),
   });
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooType));
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
 
     expect(field.invalid).toBe(false);
     expect(field.error).toBe(null);
@@ -23,7 +23,7 @@ describe('doubterPlugin', () => {
   });
 
   test('sets an issue to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooType));
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
 
     const issue = { code: 'aaa' };
 
@@ -37,7 +37,7 @@ describe('doubterPlugin', () => {
   });
 
   test('sets an issue to the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooType));
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
 
     const issue = { code: 'aaa' };
 
@@ -51,7 +51,7 @@ describe('doubterPlugin', () => {
   });
 
   test('deletes an issue from the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooType));
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
 
     field.setError({ code: 'aaa' });
     field.deleteError();
@@ -64,7 +64,7 @@ describe('doubterPlugin', () => {
   });
 
   test('deletes an issue from the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooType));
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
 
     field.at('foo').setError({ code: 'aaa' });
     field.at('foo').deleteError();
@@ -77,7 +77,7 @@ describe('doubterPlugin', () => {
   });
 
   test('deletes an issue from the child field but parent remains invalid', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarType));
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     const issue1 = { code: 'aaa' };
     const issue2 = { code: 'bbb' };
@@ -98,7 +98,7 @@ describe('doubterPlugin', () => {
   });
 
   test('clears all issues', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarType));
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     const issue1 = { code: 'aaa' };
     const issue2 = { code: 'bbb' };
@@ -119,7 +119,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validates the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooType));
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
 
     field.validate();
 
@@ -138,7 +138,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validates the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooType));
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
 
     field.at('foo').validate();
 
@@ -157,7 +157,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validates multiple fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarType));
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     field.validate();
 
@@ -186,7 +186,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validate clears previous validation issues', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarType));
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     field.validate();
 
@@ -212,7 +212,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validate does not clear an issue set from userland', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, doubterPlugin(fooBarType));
+    const field = createField(objectAccessor, { foo: 0, bar: '' }, doubterPlugin(fooBarShape));
 
     const issue = { code: 'aaa' };
 
@@ -238,7 +238,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validate does not raise issues for transient fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarType));
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     field.at('bar').setTransientValue('aaabbb');
 

@@ -1,65 +1,106 @@
-import { AnyType, Issue, Type } from 'doubter';
+import { AnyShape, Issue } from 'doubter';
 import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
 
 /**
- * Enhances the field with validation methods that use [Doubter](https://github.com/smikhalevski/doubter) runtime
- * type definitions.
+ * Enhances the field with validation methods that use [Doubter](https://github.com/smikhalevski/doubter) shapes.
  *
- * @param type The type definition that is used for validation.
- * @template T The root field value.
- * @returns The plugin.
+ * @param shape The shape that parses the field value.
+ * @template S The shape that parses the field value.
+ * @returns The validation plugin.
  */
-export function doubterPlugin<T>(type: Type<T>): Plugin<T, ValidationPlugin<Partial<Issue>>> {
-  const fieldTypeMap = new WeakMap<Field, AnyType | null>();
+export function doubterPlugin<S extends AnyShape>(
+  shape: S
+): Plugin<S['input'], ValidationPlugin<S['output'], Partial<Issue>>> {
+  const shapeMap = new WeakMap<Field, AnyShape | null>();
 
-  return validationPlugin((targetField, applyError) => {
-    const fieldType = getType(targetField, fieldTypeMap, type);
+  return validationPlugin({
+    validate(field, setInternalError, context) {
+      const fieldShape = getShapeForField(field, shapeMap, shape);
 
-    if (fieldType === null) {
-      return;
-    }
-    const issues = fieldType.validate(targetField.value);
+      if (fieldShape === null) {
+        return { ok: true, value: field.value };
+      }
 
-    if (issues === null) {
-      return;
-    }
-    issues: for (const issue of issues) {
-      const { path } = issue;
+      const result = fieldShape.try(field.value, { verbose: true, context });
 
-      let field = targetField;
+      if (result.ok) {
+        return result;
+      }
 
-      for (let i = 0; i < path.length; ++i) {
-        field = field.at(path[i]);
+      setIssues(field, result.issues, setInternalError);
 
-        if (field.transient) {
-          continue issues;
+      return { ok: false, errors: result.issues };
+    },
+
+    validateAsync(field, setInternalError, context) {
+      const fieldShape = getShapeForField(field, shapeMap, shape);
+
+      if (fieldShape === null) {
+        return Promise.resolve({ ok: true, value: field.value });
+      }
+
+      return fieldShape.tryAsync(field.value, { verbose: true, context }).then(result => {
+        if (result.ok) {
+          return result;
         }
-      }
 
-      for (let field = targetField; field.parent !== null; field = field.parent) {
-        path.unshift(field.key);
-      }
+        setIssues(field, result.issues, setInternalError);
 
-      applyError(field, issue);
-    }
+        return { ok: false, errors: result.issues };
+      });
+    },
   });
 }
 
-function getType(targetField: Field, fieldTypeMap: WeakMap<Field, AnyType | null>, rootType: AnyType): AnyType | null {
-  if (targetField.parent === null) {
-    return rootType;
+/**
+ * Returns a shape that should be used to validate field.
+ *
+ * @param field The field to validate.
+ * @param shapeMap Cached shapes.
+ * @param shape The shape of the root field.
+ * @returns The shape or `null` if there's no shape for the field.
+ */
+function getShapeForField(field: Field, shapeMap: WeakMap<Field, AnyShape | null>, shape: AnyShape): AnyShape | null {
+  if (field.parent === null) {
+    return shape;
   }
-  let type = fieldTypeMap.get(targetField);
 
-  if (type === null || type !== undefined) {
-    return type;
+  let fieldShape = shapeMap.get(field);
+
+  if (fieldShape === null || fieldShape !== undefined) {
+    return fieldShape;
   }
-  const parentType = getType(targetField.parent, fieldTypeMap, rootType);
 
-  if (parentType === null) {
+  const parentShape = getShapeForField(field.parent, shapeMap, shape);
+
+  if (parentShape === null) {
     return null;
   }
-  type = parentType.at(targetField.key);
-  fieldTypeMap.set(targetField, type);
-  return type;
+
+  fieldShape = parentShape.at(field.key);
+  shapeMap.set(field, fieldShape);
+
+  return fieldShape;
+}
+
+function setIssues(targetField: Field, issues: Issue[], setInternalError: (field: Field, error: Issue) => void): void {
+  issues: for (const issue of issues) {
+    const { path } = issue;
+
+    let field = targetField;
+
+    for (let i = 0; i < path.length; ++i) {
+      field = field.at(path[i]);
+
+      if (field.transient) {
+        continue issues;
+      }
+    }
+
+    for (let field = targetField; field.parent !== null; field = field.parent) {
+      path.unshift(field.key);
+    }
+
+    setInternalError(field, issue);
+  }
 }

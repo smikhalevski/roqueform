@@ -41,11 +41,9 @@ export interface ScrollToErrorPlugin {
  * @returns The plugin.
  */
 export function scrollToErrorPlugin<T>(): Plugin<T, ScrollToErrorPlugin> {
-  let controllerMap: WeakMap<Field, FieldController> | undefined;
+  const controllerMap = new WeakMap<Field, FieldController>();
 
   return field => {
-    controllerMap ||= new WeakMap();
-
     if (!controllerMap.has(field)) {
       enhanceField(field, controllerMap);
     }

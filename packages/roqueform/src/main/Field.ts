@@ -4,7 +4,7 @@ import { callOrGet, isEqual } from './utils';
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
  *
- * If plugin returns void, then it's implied that the passed field object was extended.
+ * If plugin returns `undefined`, then it's implied that the passed field object was extended.
  *
  * @param field The field that must be enhanced.
  * @param accessor The accessor that reads and writes object properties.
@@ -95,7 +95,7 @@ export interface Field<T = any, P = unknown> {
   /**
    * Subscribes the listener to the field updates.
    *
-   * Listeners are guaranteed to be called once when the field is {@linkcode notify notified}.
+   * Listeners are guaranteed to be called once when {@linkcode notify} is called.
    *
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
