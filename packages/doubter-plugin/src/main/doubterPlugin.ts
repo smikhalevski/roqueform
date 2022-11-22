@@ -1,8 +1,8 @@
-import { AnyShape, Issue } from 'doubter';
+import { AnyShape, Issue, ParseOptions } from 'doubter';
 import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
 
 /**
- * Enhances the field with validation methods that use [Doubter](https://github.com/smikhalevski/doubter) shapes.
+ * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
  *
  * @param shape The shape that parses the field value.
  * @template S The shape that parses the field value.
@@ -10,18 +10,18 @@ import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
  */
 export function doubterPlugin<S extends AnyShape>(
   shape: S
-): Plugin<S['input'], ValidationPlugin<S['output'], Partial<Issue>>> {
+): Plugin<S['input'], ValidationPlugin<S['output'], Partial<Issue>, ParseOptions>> {
   const shapeMap = new WeakMap<Field, AnyShape | null>();
 
   return validationPlugin({
-    validate(field, setInternalError, context) {
+    validate(field, setInternalError, options) {
       const fieldShape = getShapeForField(field, shapeMap, shape);
 
       if (fieldShape === null) {
         return { ok: true, value: field.value };
       }
 
-      const result = fieldShape.try(field.value, { verbose: true, context });
+      const result = fieldShape.try(field.value, Object.assign({ verbose: true }, options));
 
       if (result.ok) {
         return result;
@@ -32,14 +32,14 @@ export function doubterPlugin<S extends AnyShape>(
       return { ok: false, errors: result.issues };
     },
 
-    validateAsync(field, setInternalError, context) {
+    validateAsync(field, setInternalError, options) {
       const fieldShape = getShapeForField(field, shapeMap, shape);
 
       if (fieldShape === null) {
         return Promise.resolve({ ok: true, value: field.value });
       }
 
-      return fieldShape.tryAsync(field.value, { verbose: true, context }).then(result => {
+      return fieldShape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
         if (result.ok) {
           return result;
         }

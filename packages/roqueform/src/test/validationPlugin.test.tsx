@@ -1,7 +1,7 @@
 import { createField, objectAccessor, validationPlugin, Validator } from '../main';
 
 describe('validationPlugin', () => {
-  const validatorStub: Validator<unknown, unknown> = {
+  const validatorStub: Validator<unknown, unknown, unknown> = {
     validate(field) {
       return { ok: true, value: field.value };
     },

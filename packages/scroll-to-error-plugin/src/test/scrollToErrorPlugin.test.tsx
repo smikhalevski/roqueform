@@ -1,45 +1,53 @@
 import React from 'react';
-import * as d from 'doubter';
 import { act, render } from '@testing-library/react';
-import { applyPlugins, createField, Field, objectAccessor, ValidationPlugin } from 'roqueform';
+import {
+  applyPlugins,
+  createField,
+  Field,
+  objectAccessor,
+  Plugin,
+  ValidationPlugin,
+  validationPlugin,
+} from 'roqueform';
 import { RefPlugin, refPlugin } from '@roqueform/ref-plugin';
-import { doubterPlugin } from '@roqueform/doubter-plugin';
 import { ScrollToErrorPlugin, scrollToErrorPlugin } from '../main';
 
 describe('scrollToErrorPlugin', () => {
-  test('returns false if there are no errors', () => {
-    const valueType = d.object({
-      foo: d.number(),
+  function anotherValidationPlugin<T>(): Plugin<T, ValidationPlugin<T, string, never>> {
+    return validationPlugin({
+      validate(field, setInternalError, options) {
+        return { ok: true, value: field.value };
+      },
+      async validateAsync(field, setInternalError, options, signal) {
+        return { ok: true, value: field.value };
+      },
     });
+  }
 
+  test('returns false if there are no errors', () => {
     const field = createField(
       objectAccessor,
       { foo: 111 },
-      applyPlugins(refPlugin(), doubterPlugin(valueType), scrollToErrorPlugin())
+      applyPlugins(refPlugin(), anotherValidationPlugin(), scrollToErrorPlugin())
     );
 
     expect(field.scrollToError()).toBe(false);
   });
 
   test('scrolls to error at index', async () => {
-    const valueType = d.object({
-      foo: d.number(),
-      bar: d.string(),
-    });
-
     let rootField!: Field<
       { foo: number; bar: string },
-      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<{ foo: number; bar: string }, Partial<d.Issue>>
+      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<{ foo: number; bar: string }, string, never>
     > &
       ScrollToErrorPlugin &
       RefPlugin<Element> &
-      ValidationPlugin<{ foo: number; bar: string }, Partial<d.Issue>>;
+      ValidationPlugin<{ foo: number; bar: string }, string, never>;
 
     const Test = () => {
       rootField = createField(
         objectAccessor,
         { foo: 111, bar: 'aaa' },
-        applyPlugins(refPlugin(), doubterPlugin(valueType), scrollToErrorPlugin())
+        applyPlugins(refPlugin(), anotherValidationPlugin(), scrollToErrorPlugin())
       );
 
       return (
@@ -95,8 +103,8 @@ describe('scrollToErrorPlugin', () => {
     const barScrollIntoViewMock = (barElement.scrollIntoView = jest.fn());
 
     await act(() => {
-      rootField.at('foo').setError({ message: 'error1' });
-      rootField.at('bar').setError({ message: 'error2' });
+      rootField.at('foo').setError('error1');
+      rootField.at('bar').setError('error2');
     });
 
     // Scroll to default index
