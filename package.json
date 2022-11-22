@@ -12,8 +12,7 @@
     "./packages/doubter-plugin",
     "./packages/ref-plugin",
     "./packages/reset-plugin",
-    "./packages/scroll-to-error-plugin",
-    "./packages/validity-plugin"
+    "./packages/scroll-to-error-plugin"
   ],
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.3.0",
