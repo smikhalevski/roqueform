@@ -539,10 +539,7 @@ rootField.at('bar').error;
 
 ## Validation scaffolding
 
-Roqueform a shipped with validation scaffolding plugin `validatePlugin`, so you can build your validation on top of it:
-
-This plugin makes all the heavy lifting related to field status updates and notifications, handling async validation
-abortions, etc.
+Roqueform a shipped with validation scaffolding plugin `validatePlugin`, so you can build your validation on top of it.
 
 ```ts
 import { Plugin, useField, validationPlugin, ValidationPlugin } from 'roqueform';
@@ -563,9 +560,10 @@ const field = useField({ foo: 'bar' }, anotherValidationPlugin());
 field.at('foo').setError('Some useful message');
 ```
 
-`validatePlugin` takes a validator object that implements `validate` and `validateAsync` methods.
-These methods receive a field that must be validated, and should return a validation result. You can call
-`setInternalError` callback to notify Roqueform that a particular field has an error.
+This plugin makes all the heavy lifting related to field status updates and notifications, handling async validation
+abortions, etc. It takes a validator object that implements `validate` and `validateAsync` methods. These methods
+receive a field that must be validated, and should return a validation result. You can call `setInternalError` to notify
+Roqueform that a particular field has an error.
 
 `validatePlugin` distinguishes internal errors (those set via `setInternalError`) and external errors (those set via
 `field.setError`). Internal errors are automatically cleared when the `field.validate` or `field.validateAsync`
