@@ -134,7 +134,7 @@ describe('createField', () => {
     field.at('foo').subscribe(fooListenerMock);
     field.at('bar').subscribe(barListenerMock);
 
-    expect(() => field.setValue({ foo: 333, bar: 444 })).toThrow(new Error('barExpected'));
+    expect(() => field.setValue({ foo: 333, bar: 444 })).toThrow(new Error('fooExpected'));
 
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
     expect(barListenerMock).toHaveBeenCalledTimes(1);
@@ -142,7 +142,7 @@ describe('createField', () => {
     expect(field.at('bar').value).toBe(444);
   });
 
-  test('calls all listeners and throws the last caught error', () => {
+  test('calls all listeners and throws the first caught error', () => {
     const listenerMock1 = jest.fn(() => {
       throw new Error('expected1');
     });
@@ -155,7 +155,7 @@ describe('createField', () => {
     field.at('foo').subscribe(listenerMock1);
     field.at('foo').subscribe(listenerMock2);
 
-    expect(() => field.setValue({ foo: 333, bar: 444 })).toThrow(new Error('expected2'));
+    expect(() => field.setValue({ foo: 333, bar: 444 })).toThrow(new Error('expected1'));
 
     expect(listenerMock1).toHaveBeenCalledTimes(1);
     expect(listenerMock2).toHaveBeenCalledTimes(1);

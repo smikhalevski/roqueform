@@ -30,9 +30,14 @@ export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, 
   let errored = false;
   let error;
 
-  for (const callback of callbacks) {
+  for (let i = 0; i < callbacks.length; ++i) {
+    const cb = callbacks[i];
+
+    if (callbacks.indexOf(cb, i + 1) !== -1) {
+      continue;
+    }
     try {
-      callback.apply(undefined, args);
+      cb.apply(undefined, args);
     } catch (e) {
       if (!errored) {
         errored = true;

@@ -29,11 +29,11 @@ describe('scrollToErrorPlugin', () => {
 
     let rootField!: Field<
       { foo: number; bar: string },
-      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<Partial<d.Issue>>
+      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<{ foo: number; bar: string }, Partial<d.Issue>>
     > &
       ScrollToErrorPlugin &
       RefPlugin<Element> &
-      ValidationPlugin<Partial<d.Issue>>;
+      ValidationPlugin<{ foo: number; bar: string }, Partial<d.Issue>>;
 
     const Test = () => {
       rootField = createField(
