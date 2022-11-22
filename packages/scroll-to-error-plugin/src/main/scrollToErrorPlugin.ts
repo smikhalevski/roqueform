@@ -37,6 +37,9 @@ export interface ScrollToErrorPlugin {
 }
 
 /**
+ * Enhances the field with methods to scroll to a field that has an associated validation error. This plugin should be
+ * used in conjunction with a plugin (or multiple plugins) that adds `ref` and `error` properties to a field.
+ *
  * @template T The root field value.
  * @returns The plugin.
  */

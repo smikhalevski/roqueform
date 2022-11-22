@@ -8,7 +8,7 @@ npm install --save-prod @roqueform/ref-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/ref_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_ref_plugin.html)
 
 ```tsx
 import { useEffect } from 'react';

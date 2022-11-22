@@ -19,8 +19,10 @@ export function callOrGet<T, A extends any[]>(value: T | ((...args: A) => T), ..
 }
 
 /**
- * Calls all callbacks from the list with given set of arguments. If a callback throws an error, the remaining callbacks
- * are still called and the first occurred error is re-thrown in the end.
+ * Calls each callback from the list once with given set of arguments.
+ *
+ * If the list contains the same callback multiple times then the callback is called only once. If a callback throws an
+ * error, the remaining callbacks are still called and the first occurred error is re-thrown in the end.
  *
  * @param callbacks The list of callbacks.
  * @param args The list of arguments to pass to each callback.

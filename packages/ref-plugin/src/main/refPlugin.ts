@@ -45,7 +45,7 @@ export interface RefPlugin<E extends Element> {
 }
 
 /**
- * Adds DOM-related methods to a field.
+ * Enhances fields with DOM-related methods.
  *
  * @template T The field value.
  * @template E The element type stored by ref.

@@ -29,7 +29,7 @@ export interface ResetPlugin<T> {
 }
 
 /**
- * Enhances the field with methods to manage the initial value and reset the field value.
+ * Enhances fields with methods that manage the initial value.
  *
  * @template T The root field value.
  * @returns The plugin.
