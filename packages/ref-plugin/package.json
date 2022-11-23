@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/ref-plugin",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "DOM reference plugin for Roqueform.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
@@ -28,6 +28,7 @@
     "form",
     "field",
     "plugin",
+    "dom",
     "ref"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
@@ -38,6 +39,6 @@
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/ref-plugin#readme",
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
-    "roqueform": "^2.0.0"
+    "roqueform": "^3.0.0"
   }
 }

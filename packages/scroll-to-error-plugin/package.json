@@ -29,6 +29,10 @@
     "form",
     "field",
     "plugin",
+    "scroll",
+    "error",
+    "dom",
+    "validation",
     "ref"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
@@ -39,6 +43,6 @@
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/scroll-to-error-plugin#readme",
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
-    "roqueform": "^2.0.0"
+    "roqueform": "^3.0.0"
   }
 }
