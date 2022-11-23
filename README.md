@@ -27,7 +27,7 @@ npm install --save-prod roqueform
     - [Composing plugins](#composing-plugins)
 - [Form submission](#form-submission)
 - [Validation](#validation)
-    - [Validation scaffolding](#validation-scaffolding)
+    - [Validation scaffolding plugin](#validation-scaffolding-plugin)
 - [Accessors](#accessors)
 
 # Foreword
@@ -537,7 +537,7 @@ rootField.at('bar').error;
 
 [Plugin usage details can be found here.](./packages/doubter-plugin#readme)
 
-## Validation scaffolding
+## Validation scaffolding plugin
 
 Roqueform a shipped with validation scaffolding plugin `validatePlugin`, so you can build your validation on top of it.
 
