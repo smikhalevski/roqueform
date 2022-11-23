@@ -3,7 +3,6 @@ import { createField, objectAccessor, validationPlugin, Validator } from '../mai
 describe('validationPlugin', () => {
   const noopValidator: Validator<unknown, unknown> = {
     validate: () => undefined,
-    validateAsync: () => Promise.resolve(),
   };
 
   test('enhances the field', () => {
@@ -164,8 +163,32 @@ describe('validationPlugin', () => {
         validate(field, setInternalError) {
           setInternalError(field.at('foo'), 111);
         },
+      })
+    );
 
-        validateAsync: () => Promise.resolve(),
+    const notifySpy = jest.spyOn(field, 'notify');
+    const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
+
+    expect(field.validate()).toEqual([111]);
+
+    expect(field.validating).toBe(false);
+    expect(field.invalid).toBe(true);
+    expect(field.error).toBe(null);
+
+    expect(field.at('foo').validating).toBe(false);
+    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').error).toBe(111);
+
+    expect(notifySpy).toHaveBeenCalledTimes(1);
+    expect(fooNotifySpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('synchronously validates the root field with a callback validator', () => {
+    const field = createField(
+      objectAccessor,
+      { foo: 0 },
+      validationPlugin((field, setInternalError) => {
+        setInternalError(field.at('foo'), 111);
       })
     );
 
@@ -194,8 +217,6 @@ describe('validationPlugin', () => {
         validate(field, setInternalError) {
           setInternalError(field, 111);
         },
-
-        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -225,8 +246,6 @@ describe('validationPlugin', () => {
           setInternalError(field.at('foo'), 111);
           setInternalError(field.at('bar'), 222);
         },
-
-        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -259,7 +278,6 @@ describe('validationPlugin', () => {
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: validateMock,
-        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -286,8 +304,6 @@ describe('validationPlugin', () => {
         validate(field, setInternalError) {
           setInternalError(field.at('foo'), 111);
         },
-
-        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -314,8 +330,6 @@ describe('validationPlugin', () => {
           setInternalError(field.at('foo'), 111);
           setInternalError(field.at('bar'), 222);
         },
-
-        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -413,7 +427,6 @@ describe('validationPlugin', () => {
         validate() {
           throw new Error('expected');
         },
-        validateAsync: () => Promise.resolve(),
       })
     );
 

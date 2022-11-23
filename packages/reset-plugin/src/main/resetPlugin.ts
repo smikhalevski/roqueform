@@ -42,9 +42,11 @@ export interface ResetPlugin {
 export function resetPlugin<T>(
   equalityChecker: (initialValue: T, value: T) => boolean = isDeepEqual
 ): Plugin<T, ResetPlugin> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
 
   return (field, accessor) => {
+    controllerMap ||= new WeakMap();
+
     if (!controllerMap.has(field)) {
       enhanceField(field, accessor, equalityChecker, controllerMap);
     }

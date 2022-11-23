@@ -1,5 +1,17 @@
 import { AnyShape, Issue, ParseOptions, Shape } from 'doubter';
-import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
+import { Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
+
+const anyShape = new Shape();
+
+/**
+ * The enhancement added to fields by the {@linkcode doubterPlugin}.
+ */
+export interface DoubterPlugin extends ValidationPlugin<Partial<Issue>, ParseOptions> {
+  /**
+   * The shape that validates the value of the field.
+   */
+  readonly shape: AnyShape;
+}
 
 /**
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
@@ -8,64 +20,32 @@ import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
  * @template S The shape that parses the field value.
  * @returns The validation plugin.
  */
-export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, ValidationPlugin<Partial<Issue>, ParseOptions>> {
-  const shapeMap = new WeakMap<Field, AnyShape | null>();
+export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, DoubterPlugin> {
+  let proxyPlugin: Plugin<any, ValidationPlugin<Partial<Issue>, ParseOptions>> | undefined;
 
-  return validationPlugin({
-    validate(field, setInternalError, options) {
-      const fieldShape = getShapeForField(field, shapeMap, shape);
+  return (field, accessor) => {
+    proxyPlugin ||= validationPlugin({
+      validate(field: Field & DoubterPlugin, setInternalError, options) {
+        const result = field.shape.try(field.value, Object.assign({ verbose: true }, options));
 
-      if (fieldShape === null) {
-        return;
-      }
-      const result = fieldShape.try(field.value, Object.assign({ verbose: true }, options));
-      if (!result.ok) {
-        setIssues(field, result.issues, setInternalError);
-      }
-    },
-
-    validateAsync(field, setInternalError, options) {
-      const fieldShape = getShapeForField(field, shapeMap, shape);
-
-      if (fieldShape === null) {
-        return Promise.resolve();
-      }
-      return fieldShape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
         if (!result.ok) {
           setIssues(field, result.issues, setInternalError);
         }
-      });
-    },
-  });
-}
+      },
 
-/**
- * Returns a shape that should be used to validate field.
- *
- * @param field The field to validate.
- * @param shapeMap Cached shapes.
- * @param shape The shape of the root field.
- * @returns The shape or `null` if there's no shape for the field.
- */
-function getShapeForField(field: Field, shapeMap: WeakMap<Field, AnyShape | null>, shape: AnyShape): AnyShape | null {
-  if (field.parent === null) {
-    return shape;
-  }
+      validateAsync(field: Field & DoubterPlugin, setInternalError, options) {
+        return field.shape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
+          if (!result.ok) {
+            setIssues(field, result.issues, setInternalError);
+          }
+        });
+      },
+    });
 
-  let fieldShape = shapeMap.get(field);
-  if (fieldShape === null || fieldShape !== undefined) {
-    return fieldShape;
-  }
-
-  const parentShape = getShapeForField(field.parent, shapeMap, shape);
-  if (parentShape === null) {
-    return null;
-  }
-
-  fieldShape = parentShape.at(field.key);
-  shapeMap.set(field, fieldShape);
-
-  return fieldShape;
+    Object.assign(proxyPlugin(field, accessor) || field, {
+      shape: field.parent === null ? shape : (field.parent as Field & DoubterPlugin).shape.at(field.key) || anyShape
+    });
+  };
 }
 
 function setIssues(targetField: Field, issues: Issue[], setInternalError: (field: Field, error: Issue) => void): void {
@@ -78,10 +58,10 @@ function setIssues(targetField: Field, issues: Issue[], setInternalError: (field
       field = field.at(path[i]);
 
       if (field.transient) {
+        // Nested transient fields don't receive errors
         continue issues;
       }
     }
-
     for (let field = targetField; field.parent !== null; field = field.parent) {
       path.unshift(field.key);
     }

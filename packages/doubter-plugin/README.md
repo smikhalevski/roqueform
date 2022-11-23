@@ -35,15 +35,14 @@ export const App = () => {
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
     
-    const result = rootField.validate();
-
-    if (!result.ok) {
+    if (rootField.validate()) {
       // Errors are associated with fields automatically
       return;
     }
 
-    // The validated form value to submit
-    result.value;
+    // If your shapes have transformations, you can safely parse
+    // the field value after it was successfully validated
+    const value = rootField.shape.parse(rootField.value);
   };
 
   return (
@@ -103,7 +102,7 @@ When you call the `validate` method it triggers validation of the field and all 
 
 ```ts
 rootField.at('bar').validate();
-// → { ok: false, errors: [ … ] }
+// → [{ message: 'Must have the minimum length of 5', … }]
 ```
 
 In this example, `rootField.value` isn't validated, but `rootField.at('bar').value` is validated.

@@ -93,7 +93,7 @@ export interface Validator<E, O> {
    * @param options The options passed to the {@linkcode ValidationPlugin.validate} method.
    * @param signal The signal that is aborted if the validation process should be stopped.
    */
-  validateAsync(
+  validateAsync?(
     field: Field,
     setInternalError: (field: Field, error: E) => void,
     options: O | undefined,
@@ -108,18 +108,23 @@ export interface Validator<E, O> {
  * highly likely that this is not the plugin you're looking for. Have a look at
  * [library-based validation plugins](https://github.com/smikhalevski/roqueform#validation) instead.
  *
- * @param validator The controller that applies validation rules to a provided field.
+ * @param validator The callback or an object with `validate` and optional `validateAsync` methods that applies
+ * validation rules to a provided field.
  * @template T The field value.
  * @template E The error associated with the field.
  * @template O Options passed to the validator.
  * @returns The plugin.
  */
-export function validationPlugin<T, E, O>(validator: Validator<E, O>): Plugin<T, ValidationPlugin<E, O>> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+export function validationPlugin<T, E, O>(
+  validator: Validator<E, O> | Validator<E, O>['validate']
+): Plugin<T, ValidationPlugin<E, O>> {
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
 
   return field => {
+    controllerMap ||= new WeakMap();
+
     if (!controllerMap.has(field)) {
-      enhanceField(field, validator, controllerMap);
+      enhanceField(field, typeof validator === 'function' ? { validate: validator } : validator, controllerMap);
     }
   };
 }
@@ -419,7 +424,7 @@ function endValidation(
  *
  * @param controller The controller that must be validated.
  * @param options Options passed to the validator.
- * @returns The validation result.
+ * @returns The list of validation errors, or `null` if there are no errors.
  */
 function validate(controller: FieldController, options: unknown): unknown[] | null {
   const notifyCallbacks: Field['notify'][] = [];
@@ -452,7 +457,8 @@ function validate(controller: FieldController, options: unknown): unknown[] | nu
   } catch (e) {
     try {
       callAll(endValidation(controller, controller, false, notifyCallbacks));
-    } catch {}
+    } catch {
+    }
     throw e;
   }
 
@@ -465,7 +471,7 @@ function validate(controller: FieldController, options: unknown): unknown[] | nu
  *
  * @param controller The controller that must be validated.
  * @param options Options passed to the validator.
- * @returns The promise of the validation result.
+ * @returns The list of validation errors, or `null` if there are no errors.
  */
 function validateAsync(controller: FieldController, options: unknown): Promise<unknown[] | null> {
   const notifyCallbacks: Field['notify'][] = [];
@@ -498,9 +504,12 @@ function validateAsync(controller: FieldController, options: unknown): Promise<u
     }
   };
 
+  const { validate, validateAsync = validate } = controller.__validator;
+
   return Promise.race([
     new Promise(resolve => {
-      resolve(controller.__validator.validateAsync(controller.__field, setInternalError, options, abortSignal));
+      // noinspection JSVoidFunctionReturnValueUsed
+      resolve(validateAsync(controller.__field, setInternalError, options, abortSignal));
     }),
     new Promise((resolve, reject) => {
       abortSignal.addEventListener('abort', () => reject(new Error('Aborted')));
@@ -513,7 +522,8 @@ function validateAsync(controller: FieldController, options: unknown): Promise<u
     error => {
       try {
         callAll(endValidation(controller, controller, false, []));
-      } catch {}
+      } catch {
+      }
       throw error;
     }
   );

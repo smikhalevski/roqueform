@@ -529,7 +529,7 @@ const valueShape = d.object({
 const rootField = useField({ bar: 'qux' }, doubterPlugin(valueShape));
 
 rootField.validate();
-// → { ok: false, errors: [ … ] }
+// → [{ message'Must have the minimum length of 5', … }]
 
 rootField.at('bar').error;
 // → { message: 'Must have the minimum length of 5', … }
@@ -544,26 +544,27 @@ Roqueform a shipped with validation scaffolding plugin `validatePlugin`, so you 
 ```ts
 import { Plugin, useField, validationPlugin, ValidationPlugin } from 'roqueform';
 
-function anotherValidationPlugin<T>(): Plugin<T, ValidationPlugin<T, string, never>> {
-  return validationPlugin({
-    validate(field, setInternalError, options) {
-      return { ok: true, value: field.value };
-    },
-    async validateAsync(field, setInternalError, options, signal) {
-      return { ok: true, value: field.value };
-    },
+function fooValidationPlugin<T>(): Plugin<T, ValidationPlugin<string, never>> {
+  return validationPlugin((field, setInternalError, options) => {
+    if (field.at('foo').value === null) {
+      setInternalError(field.at('foo'), 'Must not be null');
+    }
   });
 }
 
-const field = useField({ foo: 'bar' }, anotherValidationPlugin());
+const field = useField({ foo: 'bar' }, fooValidationPlugin());
 
+// Manually set an error for a field
 field.at('foo').setError('Some useful message');
+
+// Clear all errors of the field and its derived fields
+field.clearErrors();
 ```
 
-This plugin makes all the heavy lifting related to field status updates and notifications, handling async validation
-abortions, etc. It takes a validator object that implements `validate` and `validateAsync` methods. These methods
-receive a field that must be validated, and should return a validation result. You can call `setInternalError` to notify
-Roqueform that a particular field has an error.
+This plugin makes all the heavy lifting related to field updates, manual validation error management, async validation
+abortions, etc. It takes a validator callback or an object that has a `validate` method and an optional `validateAsync`
+method. The validator receives a field that must be validated and a `setInternalError` callback that to notifies
+Roqueform that an error should be assigned to a particular field.
 
 `validatePlugin` distinguishes internal errors (those set via `setInternalError`) and external errors (those set via
 `field.setError`). Internal errors are automatically cleared when the `field.validate` or `field.validateAsync`
