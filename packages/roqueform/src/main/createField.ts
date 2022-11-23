@@ -1,4 +1,4 @@
-import { Accessor, Field, Plugin } from './Field';
+import { Accessor, Field, Plugin } from './field-types';
 import { callAll, callOrGet, isEqual, Writable } from './utils';
 
 /**

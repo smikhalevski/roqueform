@@ -19,7 +19,7 @@ npm install --save-prod roqueform
     - [Field value updates](#field-value-updates)
     - [Transient updates](#transient-updates)
     - [Field observability](#field-observability)
-- [`Field`](#field)
+- [`FieldRenderer`](#fieldrenderer)
     - [Eager and lazy re-renders](#eager-and-lazy-re-renders)
     - [Reacting to changes](#reacting-to-changes)
 - [Plugins](#plugins)
@@ -254,18 +254,19 @@ You can trigger all listeners that are subscribed to the field with `notify`:
 field.notify();
 ```
 
-# `Field`
+# `FieldRenderer`
 
-The `Field` component subscribes to the given field instance and re-renders its children when the field is updated:
+The `FieldRenderer` component subscribes to the given field instance and re-renders its children when the field is
+notified:
 
 ```tsx
-import { Field, useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 
 const App = () => {
   const rootField = useField('foo');
 
   return (
-    <Field field={rootField}>
+    <FieldRenderer field={rootField}>
       {rootField => (
         <input
           value={rootField.value}
@@ -274,23 +275,23 @@ const App = () => {
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   );
 };
 ```
 
-When a user updates the input value, the `rootField` is updated and `Field` component is re-rendered. The single
-argument of the `children` render function is the field passed as a `field` prop to the `Field` component.
+When a user updates the input value, the `rootField` is updated and `FieldRenderer` component is re-rendered. The single
+argument of the `children` render function is the field passed as a `field` prop to the `FieldRenderer` component.
 
 It is unlikely that you would use a form with a single literal field. Most of the time multiple derived fields are
 required:
 
 ```tsx
 const App = () => {
-  const rootField = useField({ foo: 'bar', bar: 123 });
+  const rootField = useField({ foo: 'qux', bar: 123 });
 
   return <>
-    <Field field={rootField.at('foo')}>
+    <FieldRenderer field={rootField.at('foo')}>
       {fooField => (
         <input
           type="text"
@@ -300,9 +301,9 @@ const App = () => {
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
 
-    <Field field={rootField.at('bar')}>
+    <FieldRenderer field={rootField.at('bar')}>
       {barField => (
         <input
           type="number"
@@ -312,7 +313,7 @@ const App = () => {
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   </>;
 };
 ```
@@ -329,19 +330,19 @@ This would cause TypeScript to show an error that `barField` value must be of a 
 
 ## Eager and lazy re-renders
 
-Let's consider the form with two `Field` elements. One of them renders the value of the root field and the other one
-updates the derived field:
+Let's consider the form with two `FieldRenderer` elements. One of them renders the value of the root field and the other
+one renders an input that updates the derived field:
 
 ```tsx
 const App = () => {
   const rootField = useField({ bar: 'qux' });
 
   return <>
-    <Field field={rootField}>
+    <FieldRenderer field={rootField}>
       {rootField => JSON.stringify(rootField.value)}
-    </Field>
+    </FieldRenderer>
 
-    <Field field={rootField.at('bar')}>
+    <FieldRenderer field={rootField.at('bar')}>
       {barField => (
         <input
           type="text"
@@ -351,23 +352,23 @@ const App = () => {
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   </>;
 };
 ```
 
-By default, `Form` component re-renders only when the provided field was updated directly, so updates from ancestors or
-derived fields would be ignored. Add the `eagerlyUpdated` property to force `Field` to re-render whenever its value was
-affected.
+By default, `FieldRenderer` component re-renders only when the provided field was updated directly, so updates from
+ancestors or derived fields would be ignored. Add the `eagerlyUpdated` property to force `FieldRenderer` to re-render
+whenever its value was affected.
 
 ```diff
-- <Field field={rootField}>
-+ <Field
+- <FieldRenderer field={rootField}>
++ <FieldRenderer
 +   field={rootField}
 +   eagerlyUpdated={true}
 + >
     {rootField => JSON.stringify(rootField.value)}
-  </Field>
+  </FieldRenderer>
 ```
 
 Now both fields are re-rendered when user edits the input text.
@@ -378,7 +379,7 @@ Now both fields are re-rendered when user edits the input text.
 is triggered only when the field value was updated [non-transiently](#transient-updates).
 
 ```tsx
-<Field
+<FieldRenderer
   field={rootField.at('bar')}
   onChange={value => {
     // Handle the value change
@@ -393,7 +394,7 @@ is triggered only when the field value was updated [non-transiently](#transient-
       }}
     />
   )}
-</Field>
+</FieldRenderer>
 ```
 
 # Plugins
@@ -437,7 +438,7 @@ the new functionality. In our case it adds the `ref` to each field derived from 
 itself.
 
 ```tsx
-<Field field={rootField.at('bar')}>
+<FieldRenderer field={rootField.at('bar')}>
   {barField => (
     <input
       // 🟡 Notice the ref property
@@ -448,10 +449,10 @@ itself.
       }}
     />
   )}
-</Field>
+</FieldRenderer>
 ```
 
-After the `Field` is mounted we can use ref to imperatively scroll the input element into view:
+After the `FieldRenderer` is mounted we can use ref to imperatively scroll the input element into view:
 
 ```ts
 rootField.at('bar').ref.current?.scrollIntoView();
@@ -471,7 +472,7 @@ const field = useField({ bar: 'qux' }, applyPlugins(refPlugin(), anotherPlugin()
 # Form submission
 
 Without plugins, Roqueform only manages the state of the form fields, and doesn't affect how the form is submitted. So
-you can use `form` tags as you did before, but read input values from the `Field` object:
+you can use `form` tags and read input values from the `Field` object:
 
 ```tsx
 const App = () => {
@@ -487,7 +488,7 @@ const App = () => {
   return (
     <form onSubmit={handleSubmit}>
 
-      <Field field={rootField.at('bar')}>
+      <FieldRenderer field={rootField.at('bar')}>
         {barField => (
           <input
             value={barField.value}
@@ -496,7 +497,7 @@ const App = () => {
             }}
           />
         )}
-      </Field>
+      </FieldRenderer>
 
       <button type="submit">
         {'Submit'}
@@ -507,7 +508,7 @@ const App = () => {
 };
 ```
 
-You can always [create a plugin](#plugins) that would enhance the `Field` with custom submit mechanics.
+You can always [create a plugin](#plugins) that would enhance the `Field` instance with custom submit mechanics.
 
 # Validation
 

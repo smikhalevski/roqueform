@@ -12,7 +12,7 @@ npm install --save-prod @roqueform/ref-plugin
 
 ```tsx
 import { useEffect } from 'react';
-import { useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 import { refPlugin } from '@roqueform/ref-plugin';
 
 export const App = () => {
@@ -23,7 +23,7 @@ export const App = () => {
   }, []);
 
   return (
-    <Field field={rootField.at('bar')}>
+    <FieldRenderer field={rootField.at('bar')}>
       {barField => (
         <input
           ref={barField.refCallback}
@@ -33,7 +33,7 @@ export const App = () => {
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   );
 };
 ```

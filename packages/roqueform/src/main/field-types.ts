@@ -1,5 +1,4 @@
-import { createElement, Fragment, ReactElement, ReactNode, SetStateAction, useEffect, useReducer, useRef } from 'react';
-import { callOrGet, isEqual } from './utils';
+import { SetStateAction } from 'react';
 
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
@@ -114,79 +113,4 @@ export interface Field<T = any, P = unknown> {
    * Triggers listeners of the field.
    */
   notify(): void;
-}
-
-/**
- * Properties of the {@linkcode Field} component.
- *
- * @template F The field.
- */
-export interface FieldProps<F extends Field> {
-  /**
-   * The field to subscribe to.
-   */
-  field: F;
-
-  /**
-   * The render function that receive a field as an argument or a node to render.
-   */
-  children: ((field: F) => ReactNode) | ReactNode;
-
-  /**
-   * If set to `true` then `Field` is re-rendered whenever the {@linkcode field} is notified, so updates from ancestors
-   * and derived fields would trigger re-render, as well as {@linkcode Field.notify} calls on any of those. Otherwise,
-   * re-rendered only if field is notified explicitly, so the `targetField` is set to this field.
-   *
-   * @default false
-   */
-  eagerlyUpdated?: boolean;
-
-  /**
-   * Triggered when the field value received a non-transient update.
-   *
-   * @param value The new field value.
-   */
-  onChange?: (value: F['value']) => void;
-}
-
-/**
- * The component that subscribes to the given field instance and re-renders its children when the field is updated.
- *
- * @template F The field to subscribe to.
- */
-export function Field<F extends Field>(props: FieldProps<F>): ReactElement {
-  const { field, eagerlyUpdated } = props;
-
-  const [, rerender] = useReducer(reduceCount, 0);
-  const handleChangeRef = useRef<FieldProps<F>['onChange']>();
-
-  handleChangeRef.current = props.onChange;
-
-  useEffect(() => {
-    let prevValue: F['value'] | undefined;
-
-    return field.subscribe(targetField => {
-      const { value } = field;
-
-      if (eagerlyUpdated || field === targetField) {
-        rerender();
-      }
-      if (field.transient || isEqual(value, prevValue)) {
-        return;
-      }
-
-      prevValue = value;
-
-      const handleChange = handleChangeRef.current;
-      if (typeof handleChange === 'function') {
-        handleChange(value);
-      }
-    });
-  }, [field, eagerlyUpdated]);
-
-  return createElement(Fragment, null, callOrGet(props.children, field));
-}
-
-function reduceCount(count: number): number {
-  return count + 1;
 }

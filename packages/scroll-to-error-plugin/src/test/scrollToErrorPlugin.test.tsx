@@ -4,20 +4,18 @@ import {
   applyPlugins,
   createField,
   Field,
+  FieldRenderer,
   objectAccessor,
   Plugin,
-  ValidationPlugin,
   validationPlugin,
+  ValidationPlugin
 } from 'roqueform';
 import { RefPlugin, refPlugin } from '@roqueform/ref-plugin';
 import { ScrollToErrorPlugin, scrollToErrorPlugin } from '../main';
 
 describe('scrollToErrorPlugin', () => {
   function noopValidationPlugin<T>(): Plugin<T, ValidationPlugin<string, never>> {
-    return validationPlugin({
-      validate: () => undefined,
-      validateAsync: () => Promise.resolve(),
-    });
+    return validationPlugin(() => undefined);
   }
 
   test('returns false if there are no errors', () => {
@@ -31,10 +29,8 @@ describe('scrollToErrorPlugin', () => {
   });
 
   test('scrolls to error at index', async () => {
-    let rootField!: Field<
-      { foo: number; bar: string },
-      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<string, never>
-    > &
+    let rootField!: Field<{ foo: number; bar: string },
+      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<string, never>> &
       ScrollToErrorPlugin &
       RefPlugin<Element> &
       ValidationPlugin<string, never>;
@@ -48,7 +44,7 @@ describe('scrollToErrorPlugin', () => {
 
       return (
         <>
-          <Field field={rootField.at('foo')}>
+          <FieldRenderer field={rootField.at('foo')}>
             {field => (
               <input
                 id="foo"
@@ -60,8 +56,8 @@ describe('scrollToErrorPlugin', () => {
                 }}
               />
             )}
-          </Field>
-          <Field field={rootField.at('bar')}>
+          </FieldRenderer>
+          <FieldRenderer field={rootField.at('bar')}>
             {field => (
               <input
                 id="bar"
@@ -73,12 +69,12 @@ describe('scrollToErrorPlugin', () => {
                 }}
               />
             )}
-          </Field>
+          </FieldRenderer>
         </>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
 
     const fooElement = document.getElementById('foo')!;
     const barElement = document.getElementById('bar')!;

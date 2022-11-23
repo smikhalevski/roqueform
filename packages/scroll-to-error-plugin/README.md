@@ -17,7 +17,7 @@ error is defined and not `null` than `scrollToError()` would reveal this element
 
 ```tsx
 import { useEffect } from 'react';
-import { useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
 import { refPlugin } from '@roqueform/ref-plugin';
 import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
@@ -54,7 +54,7 @@ export const App = () => {
   return (
     <form onSubmit={handleSubmit}>
 
-      <Field field={rootField.at('bar')}>
+      <FieldRenderer field={rootField.at('bar')}>
         {barField => (
           <>
             <input
@@ -69,7 +69,7 @@ export const App = () => {
             {barField.error?.message}
           </>
         )}
-      </Field>
+      </FieldRenderer>
 
       <button type="submit">
         {'Submit'}

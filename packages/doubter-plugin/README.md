@@ -20,7 +20,7 @@ npm install --save-prod @roqueform/doubter-plugin
 
 ```tsx
 import { SyntheticEvent } from 'react';
-import { useField, Field } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
 import * as d from 'doubter';
 
@@ -48,7 +48,7 @@ export const App = () => {
   return (
     <form onSubmit={handleSubmit}>
 
-      <Field field={rootField.at('bar')}>
+      <FieldRenderer field={rootField.at('bar')}>
         {barField => (
           <>
             <input
@@ -62,7 +62,7 @@ export const App = () => {
             {barField.error?.message}
           </>
         )}
-      </Field>
+      </FieldRenderer>
 
       <button type="submit">
         {'Submit'}

@@ -16,7 +16,7 @@ checker function passed to the `resetPlugin`. By default, values are compared us
 [fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal).
 
 ```tsx
-import { useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 import { resetPlugin } from '@roqueform/reset-plugin';
 
 export const App = () => {
@@ -25,7 +25,7 @@ export const App = () => {
   return (
     <form>
 
-      <Field field={rootField.at('bar')}>
+      <FieldRenderer field={rootField.at('bar')}>
         {barField => (
           <input
             value={barField.value}
@@ -34,7 +34,7 @@ export const App = () => {
             }}
           />
         )}
-      </Field>
+      </FieldRenderer>
 
       <button
         type="submit"
@@ -45,10 +45,8 @@ export const App = () => {
 
       <button
         type="button"
-        onClick={() => {
-          // Reset the field to its initial value 
-          rootField.reset();
-        }}
+        // Reset the field to its initial value 
+        onClick={rootField.reset}
       >
         {'Reset'}
       </button>

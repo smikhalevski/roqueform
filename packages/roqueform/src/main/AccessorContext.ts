@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { Accessor } from './Field';
+import { Accessor } from './field-types';
 import { objectAccessor } from './objectAccessor';
 
 /**
