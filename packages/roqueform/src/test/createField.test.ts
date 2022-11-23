@@ -1,6 +1,20 @@
 import { createField, objectAccessor } from '../main';
 
 describe('createField', () => {
+  test('infers type of nested field with nullable parent', () => {
+    const field = createField<{ foo: { bar?: string } | null }>(objectAccessor, { foo: null });
+
+    const aaa = field.at('foo').value;
+
+    const value: string | undefined = field.at('foo').at('bar').value;
+  });
+
+  test('infers type of nested field with optional parent', () => {
+    const field = createField<{ foo?: { bar?: string } }>(objectAccessor, {});
+
+    const value: string | undefined = field.at('foo').at('bar').value;
+  });
+
   test('creates a field without an initial value', () => {
     const field = createField(objectAccessor);
 

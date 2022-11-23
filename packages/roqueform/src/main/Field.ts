@@ -90,7 +90,9 @@ export interface Field<T = any, P = unknown> {
    * @returns The derived `Field` instance.
    * @template K The key of the object value controlled by the field.
    */
-  at<K extends keyof (T & {})>(key: K): Field<T extends {} ? T[K] : undefined, P> & P;
+  at<K extends keyof NonNullable<T>>(
+    key: K
+  ): Field<T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K], P> & P;
 
   /**
    * Subscribes the listener to the field updates.

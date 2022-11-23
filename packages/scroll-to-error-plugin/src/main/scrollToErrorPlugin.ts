@@ -82,7 +82,7 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
   }
 
   Object.assign<Field, ScrollToErrorPlugin>(field, {
-    scrollToError(index = 0, options) {
+    scrollToError(index = 0, options?: ScrollIntoViewOptions | boolean) {
       const controllers = controller.__targetControllers.filter(hasVisibleError);
       const targetController = sortByBoundingRect(controllers)[index < 0 ? controllers.length + index : index];
 

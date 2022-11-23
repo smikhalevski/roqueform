@@ -61,7 +61,7 @@ export function refPlugin<T, E extends Element = Element>(): Plugin<T, RefPlugin
       refCallback(element) {
         ref.current = element;
       },
-      scrollIntoView(options) {
+      scrollIntoView(options?: ScrollIntoViewOptions | boolean) {
         ref.current?.scrollIntoView(options);
       },
       focus(options) {
