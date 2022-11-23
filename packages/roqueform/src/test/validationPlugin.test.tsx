@@ -1,17 +1,13 @@
 import { createField, objectAccessor, validationPlugin, Validator } from '../main';
 
 describe('validationPlugin', () => {
-  const validatorStub: Validator<unknown, unknown, unknown> = {
-    validate(field) {
-      return { ok: true, value: field.value };
-    },
-    validateAsync(field) {
-      return Promise.resolve({ ok: true, value: field.value });
-    },
+  const noopValidator: Validator<unknown, unknown> = {
+    validate: () => undefined,
+    validateAsync: () => Promise.resolve(),
   };
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
 
     expect(field.validating).toBe(false);
     expect(field.invalid).toBe(false);
@@ -23,7 +19,7 @@ describe('validationPlugin', () => {
   });
 
   test('sets an error to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
 
     const notifySpy = jest.spyOn(field, 'notify');
     const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
@@ -41,7 +37,7 @@ describe('validationPlugin', () => {
   });
 
   test('sets an error to the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
 
     const notifySpy = jest.spyOn(field, 'notify');
     const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
@@ -59,7 +55,7 @@ describe('validationPlugin', () => {
   });
 
   test('sets null as an error to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
 
     field.setError(null);
 
@@ -71,7 +67,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
 
     const notifySpy = jest.spyOn(field, 'notify');
     const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
@@ -90,7 +86,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
 
     const notifySpy = jest.spyOn(field, 'notify');
     const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
@@ -109,7 +105,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the child field but parent remains invalid', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
     const notifySpy = jest.spyOn(field, 'notify');
     const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
@@ -135,7 +131,7 @@ describe('validationPlugin', () => {
   });
 
   test('clears all errors', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(validatorStub));
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
     const notifySpy = jest.spyOn(field, 'notify');
     const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
@@ -167,17 +163,16 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate(field, setInternalError) {
           setInternalError(field.at('foo'), 111);
-          return { ok: true, value: field.value };
         },
 
-        validateAsync: validatorStub.validateAsync,
+        validateAsync: () => Promise.resolve(),
       })
     );
 
     const notifySpy = jest.spyOn(field, 'notify');
     const fooNotifySpy = jest.spyOn(field.at('foo'), 'notify');
 
-    expect(field.validate()).toEqual({ ok: true, value: { foo: 0 } });
+    expect(field.validate()).toEqual([111]);
 
     expect(field.validating).toBe(false);
     expect(field.invalid).toBe(true);
@@ -198,10 +193,9 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate(field, setInternalError) {
           setInternalError(field, 111);
-          return { ok: true, value: field.value };
         },
 
-        validateAsync: validatorStub.validateAsync,
+        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -230,10 +224,9 @@ describe('validationPlugin', () => {
         validate(field, setInternalError) {
           setInternalError(field.at('foo'), 111);
           setInternalError(field.at('bar'), 222);
-          return { ok: true, value: field.value };
         },
 
-        validateAsync: validatorStub.validateAsync,
+        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -255,12 +248,10 @@ describe('validationPlugin', () => {
     validateMock.mockImplementationOnce((field, setInternalError) => {
       setInternalError(field.at('foo'), 111);
       setInternalError(field.at('bar'), 222);
-      return { ok: true, value: field.value };
     });
 
     validateMock.mockImplementationOnce((field, setInternalError) => {
       setInternalError(field.at('foo'), 111);
-      return { ok: true, value: field.value };
     });
 
     const field = createField(
@@ -268,7 +259,7 @@ describe('validationPlugin', () => {
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: validateMock,
-        validateAsync: validatorStub.validateAsync,
+        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -294,10 +285,9 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate(field, setInternalError) {
           setInternalError(field.at('foo'), 111);
-          return { ok: true, value: field.value };
         },
 
-        validateAsync: validatorStub.validateAsync,
+        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -323,10 +313,9 @@ describe('validationPlugin', () => {
         validate(field, setInternalError) {
           setInternalError(field.at('foo'), 111);
           setInternalError(field.at('bar'), 222);
-          return { ok: true, value: field.value };
         },
 
-        validateAsync: validatorStub.validateAsync,
+        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -349,11 +338,10 @@ describe('validationPlugin', () => {
       objectAccessor,
       { foo: 0 },
       validationPlugin({
-        validate: validatorStub.validate,
+        validate: () => undefined,
 
         async validateAsync(field, setInternalError) {
           setInternalError(field.at('foo'), 111);
-          return { ok: true, value: field.value };
         },
       })
     );
@@ -368,7 +356,7 @@ describe('validationPlugin', () => {
     expect(field.validating).toBe(true);
     expect(field.at('foo').validating).toBe(true);
 
-    await expect(promise).resolves.toEqual({ ok: true, value: { foo: 0 } });
+    await expect(promise).resolves.toEqual([111]);
 
     expect(field.validating).toBe(false);
     expect(field.invalid).toBe(true);
@@ -387,11 +375,10 @@ describe('validationPlugin', () => {
       objectAccessor,
       { foo: 0 },
       validationPlugin({
-        validate: validatorStub.validate,
+        validate: () => undefined,
 
         async validateAsync(field, setInternalError) {
           setInternalError(field, 111);
-          return { ok: true, value: field.value };
         },
       })
     );
@@ -404,7 +391,7 @@ describe('validationPlugin', () => {
     expect(field.validating).toBe(false);
     expect(field.at('foo').validating).toBe(true);
 
-    await expect(promise).resolves.toEqual({ ok: true, value: 0 });
+    await expect(promise).resolves.toEqual([111]);
 
     expect(field.validating).toBe(false);
     expect(field.invalid).toBe(true);
@@ -426,7 +413,7 @@ describe('validationPlugin', () => {
         validate() {
           throw new Error('expected');
         },
-        validateAsync: validatorStub.validateAsync,
+        validateAsync: () => Promise.resolve(),
       })
     );
 
@@ -448,7 +435,7 @@ describe('validationPlugin', () => {
       objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate: validatorStub.validate,
+        validate: () => undefined,
 
         async validateAsync() {
           throw new Error('expected');
@@ -478,11 +465,10 @@ describe('validationPlugin', () => {
       objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate: validatorStub.validate,
+        validate: () => undefined,
 
         async validateAsync(field, setInternalError, context, signal) {
           lastSignal = signal;
-          return { ok: true, value: field.value };
         },
       })
     );
@@ -508,11 +494,10 @@ describe('validationPlugin', () => {
       objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate: validatorStub.validate,
+        validate: () => undefined,
 
         async validateAsync(field, setInternalError, context, signal) {
           signals.push(signal);
-          return { ok: true, value: field.value };
         },
       })
     );
@@ -534,11 +519,10 @@ describe('validationPlugin', () => {
       objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate: validatorStub.validate,
+        validate: () => undefined,
 
         async validateAsync(field, setInternalError, context, signal) {
           signals.push(signal);
-          return { ok: true, value: field.value };
         },
       })
     );
@@ -565,7 +549,7 @@ describe('validationPlugin', () => {
       objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate: validatorStub.validate,
+        validate: () => undefined,
         validateAsync: validateAsyncMock,
       })
     );

@@ -1,4 +1,4 @@
-import { AnyShape, Issue, ParseOptions } from 'doubter';
+import { AnyShape, Issue, ParseOptions, Shape } from 'doubter';
 import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
 
 /**
@@ -8,9 +8,7 @@ import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
  * @template S The shape that parses the field value.
  * @returns The validation plugin.
  */
-export function doubterPlugin<S extends AnyShape>(
-  shape: S
-): Plugin<S['input'], ValidationPlugin<S['output'], Partial<Issue>, ParseOptions>> {
+export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, ValidationPlugin<Partial<Issue>, ParseOptions>> {
   const shapeMap = new WeakMap<Field, AnyShape | null>();
 
   return validationPlugin({
@@ -18,35 +16,24 @@ export function doubterPlugin<S extends AnyShape>(
       const fieldShape = getShapeForField(field, shapeMap, shape);
 
       if (fieldShape === null) {
-        return { ok: true, value: field.value };
+        return;
       }
-
       const result = fieldShape.try(field.value, Object.assign({ verbose: true }, options));
-
-      if (result.ok) {
-        return result;
+      if (!result.ok) {
+        setIssues(field, result.issues, setInternalError);
       }
-
-      setIssues(field, result.issues, setInternalError);
-
-      return { ok: false, errors: result.issues };
     },
 
     validateAsync(field, setInternalError, options) {
       const fieldShape = getShapeForField(field, shapeMap, shape);
 
       if (fieldShape === null) {
-        return Promise.resolve({ ok: true, value: field.value });
+        return Promise.resolve();
       }
-
       return fieldShape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
-        if (result.ok) {
-          return result;
+        if (!result.ok) {
+          setIssues(field, result.issues, setInternalError);
         }
-
-        setIssues(field, result.issues, setInternalError);
-
-        return { ok: false, errors: result.issues };
       });
     },
   });
@@ -66,13 +53,11 @@ function getShapeForField(field: Field, shapeMap: WeakMap<Field, AnyShape | null
   }
 
   let fieldShape = shapeMap.get(field);
-
   if (fieldShape === null || fieldShape !== undefined) {
     return fieldShape;
   }
 
   const parentShape = getShapeForField(field.parent, shapeMap, shape);
-
   if (parentShape === null) {
     return null;
   }
@@ -100,7 +85,6 @@ function setIssues(targetField: Field, issues: Issue[], setInternalError: (field
     for (let field = targetField; field.parent !== null; field = field.parent) {
       path.unshift(field.key);
     }
-
     setInternalError(field, issue);
   }
 }

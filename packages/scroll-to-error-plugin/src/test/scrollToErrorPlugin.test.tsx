@@ -13,14 +13,10 @@ import { RefPlugin, refPlugin } from '@roqueform/ref-plugin';
 import { ScrollToErrorPlugin, scrollToErrorPlugin } from '../main';
 
 describe('scrollToErrorPlugin', () => {
-  function anotherValidationPlugin<T>(): Plugin<T, ValidationPlugin<T, string, never>> {
+  function noopValidationPlugin<T>(): Plugin<T, ValidationPlugin<string, never>> {
     return validationPlugin({
-      validate(field, setInternalError, options) {
-        return { ok: true, value: field.value };
-      },
-      async validateAsync(field, setInternalError, options, signal) {
-        return { ok: true, value: field.value };
-      },
+      validate: () => undefined,
+      validateAsync: () => Promise.resolve(),
     });
   }
 
@@ -28,7 +24,7 @@ describe('scrollToErrorPlugin', () => {
     const field = createField(
       objectAccessor,
       { foo: 111 },
-      applyPlugins(refPlugin(), anotherValidationPlugin(), scrollToErrorPlugin())
+      applyPlugins(refPlugin(), noopValidationPlugin(), scrollToErrorPlugin())
     );
 
     expect(field.scrollToError()).toBe(false);
@@ -37,17 +33,17 @@ describe('scrollToErrorPlugin', () => {
   test('scrolls to error at index', async () => {
     let rootField!: Field<
       { foo: number; bar: string },
-      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<{ foo: number; bar: string }, string, never>
+      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<string, never>
     > &
       ScrollToErrorPlugin &
       RefPlugin<Element> &
-      ValidationPlugin<{ foo: number; bar: string }, string, never>;
+      ValidationPlugin<string, never>;
 
     const Test = () => {
       rootField = createField(
         objectAccessor,
         { foo: 111, bar: 'aaa' },
-        applyPlugins(refPlugin(), anotherValidationPlugin(), scrollToErrorPlugin())
+        applyPlugins(refPlugin(), noopValidationPlugin(), scrollToErrorPlugin())
       );
 
       return (

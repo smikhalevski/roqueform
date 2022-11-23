@@ -4,7 +4,12 @@ import isDeepEqual from 'fast-deep-equal';
 /**
  * The enhancement added to fields by the {@linkcode resetPlugin}.
  */
-export interface ResetPlugin<T> {
+export interface ResetPlugin {
+  /**
+   * The current value of the field.
+   */
+  readonly value: unknown;
+
   /**
    * `true` if the field value is different from its initial value, or `false` otherwise.
    */
@@ -13,14 +18,14 @@ export interface ResetPlugin<T> {
   /**
    * The initial field value.
    */
-  readonly initialValue: T;
+  readonly initialValue: this['value'];
 
   /**
    * Sets the initial value of the field and notifies ancestors and descendants.
    *
    * @param value The initial value to set.
    */
-  setInitialValue(value: T): void;
+  setInitialValue(value: this['value']): void;
 
   /**
    * Reverts the field to its initial value.
@@ -36,7 +41,7 @@ export interface ResetPlugin<T> {
  */
 export function resetPlugin<T>(
   equalityChecker: (initialValue: T, value: T) => boolean = isDeepEqual
-): Plugin<T, ResetPlugin<T>> {
+): Plugin<T, ResetPlugin> {
   const controllerMap = new WeakMap<Field, FieldController>();
 
   return (field, accessor) => {
@@ -49,7 +54,7 @@ export function resetPlugin<T>(
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field & Writable<ResetPlugin<unknown>>;
+  __field: Field & Writable<ResetPlugin>;
   __key: unknown;
   __initialValue: unknown;
   __accessor: Accessor;
@@ -65,7 +70,7 @@ function enhanceField(
   const controller: FieldController = {
     __parent: null,
     __children: null,
-    __field: field as Field & Writable<ResetPlugin<unknown>>,
+    __field: field as Field & Writable<ResetPlugin>,
     __key: field.key,
     __initialValue: field.value,
     __accessor: accessor,
@@ -83,11 +88,11 @@ function enhanceField(
     (parent.__children ||= []).push(controller);
   }
 
-  Object.assign<Field, ResetPlugin<unknown>>(field, {
+  Object.assign<Field, Omit<ResetPlugin, 'value'>>(field, {
     dirty: false,
     initialValue: controller.__initialValue,
 
-    setInitialValue(value) {
+    setInitialValue(value: any) {
       applyInitialValue(controller, value);
     },
     reset() {
