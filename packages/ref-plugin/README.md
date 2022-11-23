@@ -8,15 +8,14 @@ npm install --save-prod @roqueform/ref-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/ref_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_ref_plugin.html)
 
 ```tsx
 import { useEffect } from 'react';
-import { useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 import { refPlugin } from '@roqueform/ref-plugin';
 
 export const App = () => {
-
   const rootField = useField({ bar: 'qux' }, refPlugin());
 
   useEffect(() => {
@@ -24,17 +23,17 @@ export const App = () => {
   }, []);
 
   return (
-    <Field field={rootField.at('bar')}>
+    <FieldRenderer field={rootField.at('bar')}>
       {barField => (
         <input
           ref={barField.refCallback}
-          value={barField.getValue()}
+          value={barField.value}
           onChange={event => {
-            barField.dispatchValue(event.target.value);
+            barField.setValue(event.target.value);
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   );
 };
 ```

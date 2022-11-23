@@ -1,15 +1,15 @@
-import { Field, Plugin } from 'roqueform';
-import { RefObject } from 'react';
+import type { Field, Plugin } from 'roqueform';
+import type { RefObject } from 'react';
 
 /**
- * The mixin added to fields by {@link scrollToErrorPlugin}.
+ * The enhancement added to fields by the {@linkcode scrollToErrorPlugin}.
  */
 export interface ScrollToErrorPlugin {
   /**
    * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
    * ancestor containers such that the field element is visible to the user.
    *
-   * The field `ref` should be populated with an HTML element reference.
+   * The field `ref` should be populated with an `Element` reference.
    *
    * @param index The zero-based index of an error to scroll to. A negative index can be used, indicating an offset from
    * the end of the sequence. `scrollToError(-1)` scroll to the last error. The order of errors is the same as the
@@ -25,7 +25,7 @@ export interface ScrollToErrorPlugin {
    * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
    * ancestor containers such that the field element is visible to the user.
    *
-   * The field `ref` should be populated with an HTML element reference.
+   * The field `ref` should be populated with an `Element` reference.
    *
    * @param index The zero-based index of an error to scroll to. A negative index can be used, indicating an offset from
    * the end of the sequence. `scrollToError(-1)` scroll to the last error. The order of errors is the same as the
@@ -37,98 +37,77 @@ export interface ScrollToErrorPlugin {
 }
 
 /**
- * @param plugin The plugin that enhances field with `ref` and `getIssue` properties.
+ * Enhances the field with methods to scroll to a field that has an associated validation error. This plugin should be
+ * used in conjunction with a plugin (or multiple plugins) that adds `ref` and `error` properties to a field.
+ *
  * @template T The root field value.
  * @returns The plugin.
  */
-export function scrollToErrorPlugin<T, E extends HTMLElement, P extends { ref: RefObject<E>; error: any }>(
-  plugin: Plugin<T, P>
-): Plugin<T, P & ScrollToErrorPlugin> {
-  return (field, accessor) => {
-    enhanceField((plugin(field, accessor) || field) as InternalField);
+export function scrollToErrorPlugin<T>(): Plugin<T, ScrollToErrorPlugin> {
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
+
+  return field => {
+    controllerMap ||= new WeakMap();
+
+    if (!controllerMap.has(field)) {
+      enhanceField(field, controllerMap);
+    }
   };
 }
 
-/**
- * @internal
- * The property that holds a controller instance.
- *
- * **Note:** Controller isn't intended to be accessed outside the plugin internal functions.
- */
-const CONTROLLER_SYMBOL = Symbol('scrollToErrorPlugin.controller');
-
-/**
- * @internal
- * Retrieves a controller for the field instance.
- */
-function getController(field: any): FieldController {
-  return field[CONTROLLER_SYMBOL];
+interface EnhancedField extends Field {
+  ref?: RefObject<Element>;
+  error?: unknown;
 }
 
-/**
- * @internal
- */
-interface InternalField extends Field {
-  ref: RefObject<HTMLElement>;
-  error: unknown;
-}
-
-/**
- * @internal
- */
 interface FieldController {
   __parent: FieldController | null;
-  __descendants: FieldController[] | null;
-  __field: InternalField;
+
+  /**
+   * The list of controllers that can be scrolled to.
+   */
+  __targetControllers: FieldController[];
+  __field: EnhancedField;
 }
 
-/**
- * @internal
- */
-function enhanceField(field: InternalField): void {
+function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldController>): void {
   const controller: FieldController = {
-    __parent: null,
-    __descendants: null,
+    __parent: field.parent !== null ? controllerMap.get(field.parent)! : null,
+    __targetControllers: [],
     __field: field,
   };
 
-  if (field.parent !== null) {
-    const parent = getController(field.parent);
+  controllerMap.set(field, controller);
 
-    controller.__parent = parent;
-
-    parent.__descendants ||= [];
+  for (let parent: FieldController | null = controller; parent !== null; parent = parent.__parent) {
+    parent.__targetControllers!.push(controller);
   }
-
-  for (let parent = controller.__parent; parent !== null; parent = controller.__parent) {
-    parent.__descendants!.push(controller);
-  }
-
-  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
 
   Object.assign<Field, ScrollToErrorPlugin>(field, {
-    scrollToError(index = 0, options) {
-      if (controller.__descendants === null) {
-        return false;
-      }
-      const controllers = controller.__descendants.filter(hasVisibleError);
-
-      if (controllers.length === 0) {
-        return false;
-      }
+    scrollToError(index = 0, options?: ScrollIntoViewOptions | boolean) {
+      const controllers = controller.__targetControllers.filter(hasVisibleError);
       const targetController = sortByBoundingRect(controllers)[index < 0 ? controllers.length + index : index];
 
       if (targetController === undefined) {
         return false;
       }
-      targetController.__field.ref.current!.scrollIntoView(options);
+      targetController.__field.ref!.current!.scrollIntoView(options);
       return true;
     },
   });
 }
 
 function hasVisibleError(controller: FieldController): boolean {
-  return controller.__field.ref.current !== null && controller.__field.error != null;
+  const { ref } = controller.__field;
+
+  if (ref == null || !(ref.current instanceof Element) || controller.__field.error == null) {
+    return false;
+  }
+
+  const rect = ref.current.getBoundingClientRect();
+
+  // Exclude non-displayed elements
+  return rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0;
 }
 
 /**
@@ -144,8 +123,8 @@ function sortByBoundingRect(controllers: FieldController[]): FieldController[] {
   const clientX = documentElement.clientLeft || body.clientLeft || 0;
 
   return controllers.sort((controller1, controller2) => {
-    const rect1 = controller1.__field.ref.current!.getBoundingClientRect();
-    const rect2 = controller2.__field.ref.current!.getBoundingClientRect();
+    const rect1 = controller1.__field.ref!.current!.getBoundingClientRect();
+    const rect2 = controller2.__field.ref!.current!.getBoundingClientRect();
 
     const y1 = Math.round(rect1.top + scrollY - clientY);
     const y2 = Math.round(rect2.top + scrollY - clientY);

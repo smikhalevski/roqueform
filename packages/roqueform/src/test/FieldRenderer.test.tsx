@@ -1,23 +1,23 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
-import { Field, useField } from '../main';
+import { act, render } from '@testing-library/react';
+import { Field, FieldRenderer, useField } from '../main';
 
-describe('Field', () => {
+describe('FieldRenderer', () => {
   test('passes the field as an argument', () => {
     const Test = () => {
       const rootField = useField({ foo: 'bar' });
 
       return (
-        <Field field={rootField.at('foo')}>
+        <FieldRenderer field={rootField.at('foo')}>
           {field => {
             expect(field).toBe(rootField.at('foo'));
             return null;
           }}
-        </Field>
+        </FieldRenderer>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
   });
 
   test('re-renders if field value is changed externally', async () => {
@@ -28,20 +28,20 @@ describe('Field', () => {
       rootField = useField();
 
       return (
-        <Field field={rootField}>
+        <FieldRenderer field={rootField}>
           {() => {
             renderCount++;
             return null;
           }}
-        </Field>
+        </FieldRenderer>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
 
-    await waitFor(() => rootField.dispatchValue(111));
+    await act(() => rootField.setValue(111));
 
-    await waitFor(() => expect(renderCount).toBe(2));
+    expect(renderCount).toBe(2);
   });
 
   test('re-renders if field is notified', async () => {
@@ -52,20 +52,20 @@ describe('Field', () => {
       rootField = useField();
 
       return (
-        <Field field={rootField}>
+        <FieldRenderer field={rootField}>
           {() => {
             renderCount++;
             return null;
           }}
-        </Field>
+        </FieldRenderer>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
 
-    await waitFor(() => rootField.notify());
+    await act(() => rootField.notify());
 
-    await waitFor(() => expect(renderCount).toBe(2));
+    expect(renderCount).toBe(2);
   });
 
   test('does not re-render if derived field value is changed externally', async () => {
@@ -76,20 +76,20 @@ describe('Field', () => {
       rootField = useField({ foo: 111 });
 
       return (
-        <Field field={rootField}>
+        <FieldRenderer field={rootField}>
           {() => {
             renderCount++;
             return null;
           }}
-        </Field>
+        </FieldRenderer>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
 
-    await waitFor(() => rootField.at('foo').dispatchValue(222));
+    await act(() => rootField.at('foo').setValue(222));
 
-    await waitFor(() => expect(renderCount).toBe(1));
+    expect(renderCount).toBe(1);
   });
 
   test('does not re-render if eagerlyUpdated and derived field value is changed externally', async () => {
@@ -100,7 +100,7 @@ describe('Field', () => {
       rootField = useField({ foo: 111 });
 
       return (
-        <Field
+        <FieldRenderer
           field={rootField}
           eagerlyUpdated={true}
         >
@@ -108,15 +108,15 @@ describe('Field', () => {
             renderCount++;
             return null;
           }}
-        </Field>
+        </FieldRenderer>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
 
-    await waitFor(() => rootField.at('foo').dispatchValue(222));
+    await act(() => rootField.at('foo').setValue(222));
 
-    await waitFor(() => expect(renderCount).toBe(2));
+    expect(renderCount).toBe(2);
   });
 
   test('triggers onChange handler when value is changed non-transiently', async () => {
@@ -127,18 +127,18 @@ describe('Field', () => {
       rootField = useField({ foo: 111 });
 
       return (
-        <Field
+        <FieldRenderer
           field={rootField.at('foo')}
           onChange={handleChangeMock}
         >
           {() => null}
-        </Field>
+        </FieldRenderer>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
 
-    await waitFor(() => rootField.at('foo').dispatchValue(222));
+    await act(() => rootField.at('foo').setValue(222));
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 222);
@@ -152,23 +152,25 @@ describe('Field', () => {
       rootField = useField({ foo: 111 });
 
       return (
-        <Field
+        <FieldRenderer
           field={rootField.at('foo')}
           onChange={handleChangeMock}
         >
           {() => null}
-        </Field>
+        </FieldRenderer>
       );
     };
 
-    render(<Test />);
+    render(<Test/>);
 
-    await waitFor(() => rootField.at('foo').setValue(222));
-    await waitFor(() => rootField.at('foo').setValue(333));
+    await act(() => {
+      rootField.at('foo').setTransientValue(222);
+      rootField.at('foo').setTransientValue(333);
+    });
 
     expect(handleChangeMock).toHaveBeenCalledTimes(0);
 
-    await waitFor(() => rootField.at('foo').dispatch());
+    await act(() => rootField.at('foo').dispatch());
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 333);

@@ -1,4 +1,4 @@
-import { Accessor } from './Field';
+import { Accessor } from './field-types';
 import { isEqual } from './utils';
 
 /**

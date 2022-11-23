@@ -1,14 +1,15 @@
-import { Field, Plugin } from './Field';
-import { isEqual, Writable } from './utils';
+import { Field, Plugin } from './field-types';
+import { callAll, isEqual, Writable } from './utils';
 
 /**
- * The mixin added to fields by {@link validationPlugin}.
+ * The enhancement added to fields by the {@linkcode validationPlugin}.
  *
  * @template E The error associated with the field.
+ * @template O Options passed to the validator.
  */
-export interface ValidationPlugin<E> {
+export interface ValidationPlugin<E, O> {
   /**
-   * `true` if asynchronous validation is pending, or `false` otherwise.
+   * `true` if an async validation is pending, or `false` otherwise.
    */
   readonly validating: boolean;
 
@@ -18,7 +19,7 @@ export interface ValidationPlugin<E> {
   readonly invalid: boolean;
 
   /**
-   * An error associated with this field, or `null` if there's no error.
+   * An error associated with the field, or `null` if there's no error.
    */
   readonly error: E | null;
 
@@ -40,43 +41,90 @@ export interface ValidationPlugin<E> {
   clearErrors(): void;
 
   /**
-   * Triggers field validation.
+   * Triggers a sync field validation. Starting a validation will clear errors that were set during the previous
+   * validation and preserve errors set manually by {@linkcode setError}. If you want to clear all errors before the
+   * validation, use {@linkcode clearErrors}.
+   *
+   * @param options Options passed to the validator.
+   * @returns The list of validation errors, or `null` if there are no errors.
    */
-  validate(): Promise<void> | void;
+  validate(options?: O): E[] | null;
 
   /**
-   * Aborts asynchronous validation.
+   * Triggers an async field validation. Starting a validation will clear errors that were set during the previous
+   * validation and preserve errors set manually by {@linkcode setError}. If you want to clear all errors before the
+   * validation, use {@linkcode clearErrors}.
+   *
+   * @param options Options passed to the validator.
+   * @returns The list of validation errors, or `null` if there are no errors.
+   */
+  validateAsync(options?: O): Promise<E[] | null>;
+
+  /**
+   * Aborts async validation of the field or no-op if there's no pending validation. If the field's parent is being
+   * validated then parent validation proceeds but this field won't be updated with validation errors.
    */
   abortValidation(): void;
 }
 
 /**
- * The callback that applies validation rules to a given field.
+ * The validator implements the library-specific validation logic.
  *
- * @param targetField The field where {@link ValidationPlugin.validate} was called.
- * @param applyError Associates an error with the field.
- * @param signal The signal that is aborted is validation should be stopped.
- * @returns The promise that resolves when validation is completed, or `undefined` is validation is synchronous.
+ * @template E The error associated with the field.
+ * @template O Options passed to the validator.
  */
-export type ValidateCallback<E> = (
-  targetField: Field,
-  applyError: (field: Field, error: E) => void,
-  signal: AbortSignal
-) => Promise<void> | void;
+export interface Validator<E, O> {
+  /**
+   * The callback that applies validation rules to a field.
+   *
+   * @param field The field where {@linkcode ValidationPlugin.validate} was called.
+   * @param setInternalError The callback that sets an internal error to a field, so it can be cleared automatically if
+   * another validation is started.
+   * @param options The options passed to the {@linkcode ValidationPlugin.validate} method.
+   */
+  validate(field: Field, setInternalError: (field: Field, error: E) => void, options: O | undefined): void;
+
+  /**
+   * The callback that applies validation rules to a field.
+   *
+   * @param field The field where {@linkcode ValidationPlugin.validate} was called.
+   * @param setInternalError The callback that sets an internal error to a field, so it can be cleared automatically if
+   * another validation is started.
+   * @param options The options passed to the {@linkcode ValidationPlugin.validate} method.
+   * @param signal The signal that is aborted if the validation process should be stopped.
+   */
+  validateAsync?(
+    field: Field,
+    setInternalError: (field: Field, error: E) => void,
+    options: O | undefined,
+    signal: AbortSignal
+  ): Promise<void>;
+}
 
 /**
  * Enhances the field with validation methods.
  *
- * @param cb The callback that applies validation rules to a provided field.
+ * This plugin is a scaffold for implementing validation. If you don't know how to validate your fields then it is
+ * highly likely that this is not the plugin you're looking for. Have a look at
+ * [library-based validation plugins](https://github.com/smikhalevski/roqueform#validation) instead.
+ *
+ * @param validator The callback or an object with `validate` and optional `validateAsync` methods that applies
+ * validation rules to a provided field.
+ * @template T The field value.
  * @template E The error associated with the field.
+ * @template O Options passed to the validator.
  * @returns The plugin.
  */
-export function validationPlugin<E, T = unknown>(cb: ValidateCallback<E>): Plugin<T, ValidationPlugin<E>> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+export function validationPlugin<T, E, O>(
+  validator: Validator<E, O> | Validator<E, O>['validate']
+): Plugin<T, ValidationPlugin<E, O>> {
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
 
   return field => {
+    controllerMap ||= new WeakMap();
+
     if (!controllerMap.has(field)) {
-      enhanceField(field, cb, controllerMap);
+      enhanceField(field, typeof validator === 'function' ? { validate: validator } : validator, controllerMap);
     }
   };
 }
@@ -84,10 +132,10 @@ export function validationPlugin<E, T = unknown>(cb: ValidateCallback<E>): Plugi
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field & Writable<ValidationPlugin<unknown>>;
+  __field: Field & Writable<ValidationPlugin<unknown, unknown>>;
 
   /**
-   * The total number of errors associated with the field and its children.
+   * The total number of errors associated with the field and its derived fields.
    */
   __errorCount: number;
 
@@ -98,42 +146,49 @@ interface FieldController {
   __error: unknown | null;
 
   /**
-   * `true` if an error was set internally by {@link ValidationPlugin.validate}, or `false` if an issue was set by the
-   * user through {@link ValidationPlugin.setError}.
+   * `true` if an error was set internally by {@linkcode ValidationPlugin.validate}, or `false` if an issue was set by
+   * the user through {@linkcode ValidationPlugin.setError}.
    */
   __internal: boolean;
-  __validateCallback: ValidateCallback<unknown>;
+  __validator: Validator<unknown, unknown>;
 
   /**
    * The controller that initiated the subtree validation, or `null` if there's no pending validation.
    */
-  __validator: FieldController | null;
+  __initiator: FieldController | null;
 
   /**
-   * The abort controller that aborts the signal passed to {@link ValidateCallback}.
+   * The number that is incremented every time a validation is started for {@linkcode __field}.
+   */
+  __validationNonce: number;
+
+  /**
+   * The abort controller that aborts the signal passed to {@linkcode Validator.validateAsync}.
    */
   __abortController: AbortController | null;
+
+  /**
+   * The controller map that maps all fields to a corresponding controller.
+   */
   __controllerMap: WeakMap<Field, FieldController>;
 }
 
-/**
- * @internal
- */
 function enhanceField(
   field: Field,
-  cb: ValidateCallback<unknown>,
+  validator: Validator<unknown, unknown>,
   controllerMap: WeakMap<Field, FieldController>
 ): void {
   const controller: FieldController = {
     __parent: null,
     __children: null,
-    __field: field as Field & Writable<ValidationPlugin<unknown>>,
+    __field: field as Field & Writable<ValidationPlugin<unknown, unknown>>,
     __errorCount: 0,
     __errored: false,
     __error: null,
     __internal: false,
-    __validateCallback: cb,
-    __validator: null,
+    __validator: validator,
+    __initiator: null,
+    __validationNonce: 0,
     __abortController: null,
     __controllerMap: controllerMap,
   };
@@ -141,81 +196,89 @@ function enhanceField(
   controllerMap.set(field, controller);
 
   if (field.parent !== null) {
-    const parent = controllerMap.get(field.parent) as FieldController;
+    const parent = controllerMap.get(field.parent)!;
 
     controller.__parent = parent;
-    controller.__validator = parent.__validator;
+    controller.__initiator = parent.__initiator;
 
     (parent.__children ||= []).push(controller);
   }
 
-  const { setValue, dispatchValue } = field;
+  const { setTransientValue, setValue } = field;
 
-  Object.assign<Field, Partial<Field> & ValidationPlugin<unknown>>(field, {
-    validating: controller.__validator !== null,
+  // noinspection JSUnusedGlobalSymbols
+  Object.assign<Field, Pick<Field, 'setTransientValue' | 'setValue'> & ValidationPlugin<unknown, unknown>>(field, {
+    validating: controller.__initiator !== null,
     invalid: false,
     error: null,
 
-    setValue(value) {
-      if (controller.__validator !== null) {
-        notifyAll(unsetValidator(controller, controller.__validator, []));
+    setTransientValue(value) {
+      try {
+        if (controller.__initiator !== null) {
+          callAll(endValidation(controller, controller.__initiator, true, []));
+        }
+      } finally {
+        setTransientValue(value);
       }
-      return setValue(value);
     },
-    dispatchValue(value) {
-      if (controller.__validator !== null) {
-        notifyAll(unsetValidator(controller, controller.__validator, []));
+    setValue(value) {
+      try {
+        if (controller.__initiator !== null) {
+          callAll(endValidation(controller, controller.__initiator, true, []));
+        }
+      } finally {
+        setValue(value);
       }
-      return dispatchValue(value);
     },
     setError(error) {
-      notifyAll(setError(controller, error, false, []));
+      callAll(setError(controller, error, false, []));
     },
     deleteError() {
-      notifyAll(deleteError(controller, false, []));
+      callAll(deleteError(controller, false, []));
     },
     clearErrors() {
-      notifyAll(clearErrors(controller, false, []));
+      callAll(clearErrors(controller, false, []));
     },
-    validate() {
-      return applyValidation(controller);
+    validate(options) {
+      return validate(controller, options);
+    },
+    validateAsync(options) {
+      return validateAsync(controller, options);
     },
     abortValidation() {
-      if (controller.__validator !== null) {
-        notifyAll(unsetValidator(controller.__validator, controller.__validator, []));
-      }
+      callAll(endValidation(controller, controller, true, []));
     },
   });
 }
 
 /**
- * @internal
  * Associates a validation error with the field.
  *
  * @param controller The controller for which an error is set.
  * @param error An error to set.
- * @param internal If `true` then an error is set internally (not during {@link ValidationPlugin.validate} call).
- * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
- * @returns The set of updated controllers.
+ * @param internal Must be `true` if an error is set internally (during {@linkcode ValidationPlugin.validate} call), or
+ * `false` if an error is set using {@linkcode ValidationPlugin.setError} call.
+ * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
+ * @returns An array of callbacks that notify affected fields.
  */
 function setError(
   controller: FieldController,
   error: unknown,
   internal: boolean,
-  dirtyControllers: FieldController[]
-): FieldController[] {
+  notifyCallbacks: Field['notify'][]
+): Field['notify'][] {
   if (controller.__errored && isEqual(controller.__error, error) && controller.__internal === internal) {
-    return dirtyControllers;
+    return notifyCallbacks;
   }
 
   controller.__field.error = controller.__error = error;
   controller.__field.invalid = true;
   controller.__internal = internal;
 
-  dirtyControllers.push(controller);
+  notifyCallbacks.push(controller.__field.notify);
 
   if (controller.__errored) {
-    return dirtyControllers;
+    return notifyCallbacks;
   }
 
   controller.__errorCount++;
@@ -224,229 +287,244 @@ function setError(
   for (let parent = controller.__parent; parent !== null; parent = parent.__parent) {
     if (parent.__errorCount++ === 0) {
       parent.__field.invalid = true;
-      dirtyControllers.push(parent);
+      notifyCallbacks.push(parent.__field.notify);
     }
   }
 
-  return dirtyControllers;
+  return notifyCallbacks;
 }
 
 /**
- * @internal
  * Deletes a validation error from the field.
  *
  * @param controller The controller for which an error must be deleted.
- * @param internal If `true` then only errors set by {@link ValidationPlugin.validate} are deleted.
- * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
- * @returns The set of updated controllers.
+ * @param internal If `true` then only errors set by {@linkcode ValidationPlugin.validate} are deleted, otherwise all
+ * errors are deleted.
+ * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
+ * @returns An array of callbacks that notify affected fields.
  */
 function deleteError(
   controller: FieldController,
   internal: boolean,
-  dirtyControllers: FieldController[]
-): FieldController[] {
+  notifyCallbacks: Field['notify'][]
+): Field['notify'][] {
   if (!controller.__errored || (internal && !controller.__internal)) {
-    return dirtyControllers;
+    return notifyCallbacks;
   }
 
   controller.__field.error = controller.__error = null;
   controller.__field.invalid = --controller.__errorCount !== 0;
   controller.__internal = controller.__errored = false;
 
-  dirtyControllers.push(controller);
+  notifyCallbacks.push(controller.__field.notify);
 
   for (let parent = controller.__parent; parent !== null && --parent.__errorCount === 0; parent = parent.__parent) {
     parent.__field.invalid = false;
-    dirtyControllers.push(parent);
+    notifyCallbacks.push(parent.__field.notify);
   }
 
-  return dirtyControllers;
+  return notifyCallbacks;
 }
 
 /**
- * @internal
  * Recursively deletes errors associated with the field and all of its derived fields.
  *
  * @param controller The controller tree root.
- * @param internal If `true` then only errors set by {@link ValidationPlugin.validate} are deleted.
- * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
- * @returns The set of updated controllers.
+ * @param internal If `true` then only errors set by {@linkcode ValidationPlugin.validate} are deleted, otherwise all
+ * errors are deleted.
+ * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
+ * @returns An array of callbacks that notify affected fields.
  */
 function clearErrors(
   controller: FieldController,
   internal: boolean,
-  dirtyControllers: FieldController[]
-): FieldController[] {
-  deleteError(controller, internal, dirtyControllers);
+  notifyCallbacks: Field['notify'][]
+): Field['notify'][] {
+  deleteError(controller, internal, notifyCallbacks);
 
-  if (controller.__children === null) {
-    return dirtyControllers;
-  }
-  for (const child of controller.__children) {
-    if (!internal || !child.__field.transient) {
-      clearErrors(child, internal, dirtyControllers);
+  if (controller.__children !== null) {
+    for (const child of controller.__children) {
+      if (!internal || !child.__field.transient) {
+        clearErrors(child, internal, notifyCallbacks);
+      }
     }
   }
-  return dirtyControllers;
+  return notifyCallbacks;
 }
 
 /**
- * @internal
- * Assigns validator to the controller.
+ * Marks the controller as being validated by assigning an initiator to the controller and all of its children.
  *
- * @param controller The controller to which the validator must be assigned.
- * @param validator The controller that triggered the validation process.
- * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
- * @returns The set of updated controllers.
+ * @param controller The controller to which the initiator must be assigned.
+ * @param initiator The controller that initiated the validation process.
+ * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
+ * @returns An array of callbacks that notify affected fields.
  */
-function setValidator(
+function beginValidation(
   controller: FieldController,
-  validator: FieldController,
-  dirtyControllers: FieldController[]
-): FieldController[] {
-  controller.__validator = validator;
+  initiator: FieldController,
+  notifyCallbacks: Field['notify'][]
+): Field['notify'][] {
+  controller.__initiator = initiator;
   controller.__field.validating = true;
 
-  dirtyControllers.push(controller);
+  notifyCallbacks.push(controller.__field.notify);
 
-  if (controller.__children === null) {
-    return dirtyControllers;
-  }
-  for (const child of controller.__children) {
-    if (!child.__field.transient) {
-      setValidator(child, validator, dirtyControllers);
+  if (controller.__children !== null) {
+    for (const child of controller.__children) {
+      if (!child.__field.transient) {
+        beginValidation(child, initiator, notifyCallbacks);
+      }
     }
   }
-  return dirtyControllers;
+  return notifyCallbacks;
 }
 
 /**
- * @internal
- * Removes validator from the controller.
+ * Aborts the pending validation that was begun by the initiator.
  *
  * @param controller The controller that is being validated.
- * @param validator The validator that is manages the controller validation process.
- * @param dirtyControllers The in-out set of controllers that were updated during the update propagation.
- * @returns The set of updated controllers.
+ * @param initiator The controller that initiated validation process.
+ * @param aborted If `true` then the abort signal is aborted, otherwise it is ignored.
+ * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
+ * @returns An array of callbacks that notify affected fields.
  */
-function unsetValidator(
+function endValidation(
   controller: FieldController,
-  validator: FieldController,
-  dirtyControllers: FieldController[]
-): FieldController[] {
-  if (controller.__validator !== validator) {
-    return dirtyControllers;
+  initiator: FieldController,
+  aborted: boolean,
+  notifyCallbacks: Field['notify'][]
+): Field['notify'][] {
+  if (controller.__initiator !== initiator) {
+    return notifyCallbacks;
   }
-  if (controller.__validator === controller) {
-    controller.__abortController?.abort();
+
+  if (controller.__abortController !== null) {
+    if (aborted) {
+      controller.__abortController.abort();
+    }
     controller.__abortController = null;
   }
 
-  controller.__validator = null;
+  controller.__initiator = null;
   controller.__field.validating = false;
 
-  dirtyControllers.push(controller);
+  notifyCallbacks.push(controller.__field.notify);
 
-  if (controller.__children === null) {
-    return dirtyControllers;
+  if (controller.__children !== null) {
+    for (const child of controller.__children) {
+      endValidation(child, initiator, aborted, notifyCallbacks);
+    }
   }
-  for (const child of controller.__children) {
-    unsetValidator(child, validator, dirtyControllers);
-  }
-  return dirtyControllers;
+  return notifyCallbacks;
 }
 
 /**
- * @internal
- * Starts the controller validation process.
+ * Synchronously validates the field and its derived fields and notifies them on change.
  *
- * @param controller The controller to validate.
+ * @param controller The controller that must be validated.
+ * @param options Options passed to the validator.
+ * @returns The list of validation errors, or `null` if there are no errors.
  */
-function applyValidation(controller: FieldController): Promise<void> | void {
-  const dirtyControllers: FieldController[] = [];
+function validate(controller: FieldController, options: unknown): unknown[] | null {
+  const notifyCallbacks: Field['notify'][] = [];
 
-  if (controller.__validator !== null) {
-    // Abort pending validation
-    unsetValidator(controller.__validator, controller.__validator, dirtyControllers);
+  if (controller.__initiator === controller) {
+    endValidation(controller, controller, true, notifyCallbacks);
   }
 
-  const pendingControllers: FieldController[] = [];
-  const abortController = new AbortController();
+  clearErrors(controller, true, notifyCallbacks);
+  beginValidation(controller, controller, notifyCallbacks);
 
-  controller.__abortController = abortController;
+  const validationNonce = ++controller.__validationNonce;
 
-  clearErrors(controller, true, dirtyControllers);
-  setValidator(controller, controller, pendingControllers);
+  let errors: unknown[] | null = null;
 
-  let async = false;
-  let result;
-
-  const applyError = (targetField: Field, error: unknown): void => {
+  const setInternalError = (targetField: Field, error: unknown): void => {
     const targetController = controller.__controllerMap.get(targetField);
-
     if (
-      targetController === undefined ||
-      targetController.__validator !== controller ||
-      controller.__abortController !== abortController
+      targetController !== undefined &&
+      targetController.__initiator === controller &&
+      controller.__validationNonce === validationNonce
     ) {
-      return;
-    }
-    if (async) {
-      notifyAll(setError(targetController, error, true, []));
-    } else {
-      setError(targetController, error, true, dirtyControllers);
+      (errors ||= []).push(error);
+      setError(targetController, error, true, notifyCallbacks);
     }
   };
 
   try {
-    result = controller.__validateCallback(controller.__field, applyError, abortController.signal);
-  } catch (error) {
-    controller.__abortController = null;
-    unsetValidator(controller, controller, []);
-    notifyAll(dirtyControllers);
-    throw error;
+    controller.__validator.validate(controller.__field, setInternalError, options);
+  } catch (e) {
+    try {
+      callAll(endValidation(controller, controller, false, notifyCallbacks));
+    } catch {
+    }
+    throw e;
   }
 
-  if (!(result instanceof Promise)) {
-    controller.__abortController = null;
-    unsetValidator(controller, controller, []);
-    notifyAll(dirtyControllers);
-    return;
-  }
-
-  async = true;
-
-  const cleanUp = () => {
-    controller.__abortController = null;
-    notifyAll(unsetValidator(controller, controller, []));
-  };
-
-  const abortPromise = new Promise(resolve => {
-    abortController.signal.addEventListener('abort', resolve);
-  });
-
-  const promise = Promise.race([result, abortPromise]).then(cleanUp, error => {
-    cleanUp();
-    throw error;
-  });
-
-  notifyAll(dirtyControllers.concat(pendingControllers));
-
-  return promise;
+  callAll(endValidation(controller, controller, false, notifyCallbacks));
+  return errors;
 }
 
 /**
- * @internal
- * Notifies each controller from the array once.
+ * Asynchronously validates the field and its derived fields and notifies them on change.
  *
- * @param controllers Controllers to notify.
+ * @param controller The controller that must be validated.
+ * @param options Options passed to the validator.
+ * @returns The list of validation errors, or `null` if there are no errors.
  */
-function notifyAll(controllers: FieldController[]): void {
-  for (let i = 0; i < controllers.length; ++i) {
-    const controller = controllers[i];
+function validateAsync(controller: FieldController, options: unknown): Promise<unknown[] | null> {
+  const notifyCallbacks: Field['notify'][] = [];
 
-    if (controllers.indexOf(controller, i + 1) === -1) {
-      controller.__field.notify();
-    }
+  if (controller.__initiator === controller) {
+    endValidation(controller, controller, true, notifyCallbacks);
   }
+
+  clearErrors(controller, true, notifyCallbacks);
+  beginValidation(controller, controller, notifyCallbacks);
+
+  controller.__abortController = new AbortController();
+
+  const abortSignal = controller.__abortController.signal;
+  const validationNonce = ++controller.__validationNonce;
+
+  callAll(notifyCallbacks);
+
+  let errors: unknown[] | null = null;
+
+  const setInternalError = (targetField: Field, error: unknown): void => {
+    const targetController = controller.__controllerMap.get(targetField);
+    if (
+      targetController !== undefined &&
+      targetController.__initiator === controller &&
+      controller.__validationNonce === validationNonce
+    ) {
+      (errors ||= []).push(error);
+      callAll(setError(targetController, error, true, []));
+    }
+  };
+
+  const { validate, validateAsync = validate } = controller.__validator;
+
+  return Promise.race([
+    new Promise(resolve => {
+      // noinspection JSVoidFunctionReturnValueUsed
+      resolve(validateAsync(controller.__field, setInternalError, options, abortSignal));
+    }),
+    new Promise((resolve, reject) => {
+      abortSignal.addEventListener('abort', () => reject(new Error('Aborted')));
+    }),
+  ]).then(
+    () => {
+      callAll(endValidation(controller, controller, false, []));
+      return errors;
+    },
+    error => {
+      try {
+        callAll(endValidation(controller, controller, false, []));
+      } catch {
+      }
+      throw error;
+    }
+  );
 }

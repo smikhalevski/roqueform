@@ -1,5 +1,21 @@
-import { Accessor, Field, Plugin } from './Field';
-import { callOrGet, isEqual, Writable } from './utils';
+import { Accessor, Field, Plugin } from './field-types';
+import { callAll, callOrGet, isEqual, Writable } from './utils';
+
+/**
+ * Creates the new filed instance.
+ *
+ * @param accessor Resolves values for derived fields.
+ */
+export function createField(accessor: Accessor): Field;
+
+/**
+ * Creates the new filed instance.
+ *
+ * @param accessor Resolves values for derived fields.
+ * @param initialValue The initial value assigned to the field.
+ * @template T The value controlled by the field.
+ */
+export function createField<T>(accessor: Accessor, initialValue: T): Field<T>;
 
 /**
  * Creates the new filed instance.
@@ -7,16 +23,13 @@ import { callOrGet, isEqual, Writable } from './utils';
  * @param accessor Resolves values for derived fields.
  * @param initialValue The initial value assigned to the field.
  * @param plugin Enhances the field with additional functionality.
- *
- * @template T The value held by the field.
+ * @template T The value controlled by the field.
  * @template P The enhancement added by the plugin.
  */
-export function createField<T = any, P = {}>(
-  accessor: Accessor,
-  initialValue?: T,
-  plugin?: Plugin<T, P>
-): Field<T, P> & P {
-  return getOrCreateFieldController(accessor, null, null, initialValue, plugin).__field as Field<T, P> & P;
+export function createField<T, P>(accessor: Accessor, initialValue: T, plugin: Plugin<T, P>): Field<T, P> & P;
+
+export function createField(accessor: Accessor, initialValue?: unknown, plugin?: Plugin<unknown, unknown>) {
+  return getOrCreateFieldController(accessor, null, null, initialValue, plugin).__field;
 }
 
 interface FieldController {
@@ -58,21 +71,19 @@ function getOrCreateFieldController(
   const listeners: Array<(targetField: Field, currentField: Field) => void> = [];
 
   const notify = (targetField: Field): void => {
-    for (const listener of listeners) {
-      listener(targetField, controller.__field);
-    }
+    callAll(listeners, targetField, controller.__field);
   };
 
-  let field: Field = {
+  const field: Field = {
     parent: parentField,
     key,
     value: initialValue,
     transient: false,
 
-    dispatchValue(value) {
+    setValue(value) {
       applyValue(controller, callOrGet(value, controller.__value), false);
     },
-    setValue(value) {
+    setTransientValue(value) {
       applyValue(controller, callOrGet(value, controller.__value), true);
     },
     dispatch() {
@@ -82,6 +93,9 @@ function getOrCreateFieldController(
       return getOrCreateFieldController(controller.__accessor, controller, key, null, plugin).__field;
     },
     subscribe(listener) {
+      if (typeof listener !== 'function') {
+        throw new Error('Expected a listener to be a function');
+      }
       listeners.push(listener);
 
       return () => {
@@ -118,43 +132,46 @@ function getOrCreateFieldController(
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-  if (isEqual(value, controller.__value) && controller.__transient === transient) {
+  if (isEqual(controller.__value, value) && controller.__transient === transient) {
     return;
   }
 
   controller.__field.transient = controller.__transient = transient;
-
-  const { __accessor } = controller;
 
   let rootController = controller;
 
   while (rootController.__parent !== null && !rootController.__transient) {
     const { __key } = rootController;
     rootController = rootController.__parent;
-    value = __accessor.set(rootController.__value, __key, value);
+    value = controller.__accessor.set(rootController.__value, __key, value);
   }
 
-  propagateValue(controller, rootController, value);
+  callAll(propagateValue(controller, rootController, value, []), controller.__field);
 }
 
-function propagateValue(targetController: FieldController, controller: FieldController, value: unknown): void {
+function propagateValue(
+  targetController: FieldController,
+  controller: FieldController,
+  value: unknown,
+  notifyCallbacks: FieldController['__notify'][]
+): FieldController['__notify'][] {
+  notifyCallbacks.push(controller.__notify);
+
   controller.__field.value = controller.__value = value;
 
   if (controller.__children !== null) {
-    const { __accessor } = controller;
-
     for (const child of controller.__children) {
       if (child.__transient) {
         continue;
       }
 
-      const childValue = __accessor.get(value, child.__key);
+      const childValue = controller.__accessor.get(value, child.__key);
       if (child !== targetController && isEqual(child.__value, childValue)) {
         continue;
       }
-      propagateValue(targetController, child, childValue);
+      propagateValue(targetController, child, childValue, notifyCallbacks);
     }
   }
 
-  controller.__notify(targetController.__field);
+  return notifyCallbacks;
 }

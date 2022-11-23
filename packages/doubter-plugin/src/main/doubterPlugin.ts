@@ -1,65 +1,70 @@
-import { AnyType, Issue, Type } from 'doubter';
-import { Field, Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
+import { AnyShape, Issue, ParseOptions, Shape } from 'doubter';
+import { Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
+
+const anyShape = new Shape();
 
 /**
- * Enhances the field with validation methods that use {@link https://github.com/smikhalevski/doubter Doubter} runtime
- * type definitions.
- *
- * @param type The type definition that is used for validation.
- * @template T The root field value.
- * @returns The plugin.
+ * The enhancement added to fields by the {@linkcode doubterPlugin}.
  */
-export function doubterPlugin<T>(type: Type<T>): Plugin<T, ValidationPlugin<Partial<Issue>>> {
-  const fieldTypeMap = new WeakMap<Field, AnyType | null>();
-
-  return validationPlugin((targetField, applyError) => {
-    const fieldType = getType(targetField, fieldTypeMap, type);
-
-    if (fieldType === null) {
-      return;
-    }
-    const issues = fieldType.validate(targetField.value);
-
-    if (issues === null) {
-      return;
-    }
-    issues: for (const issue of issues) {
-      const { path } = issue;
-
-      let field = targetField;
-
-      for (let i = 0; i < path.length; ++i) {
-        field = field.at(path[i]);
-
-        if (field.transient) {
-          continue issues;
-        }
-      }
-
-      for (let field = targetField; field.parent !== null; field = field.parent) {
-        path.unshift(field.key);
-      }
-
-      applyError(field, issue);
-    }
-  });
+export interface DoubterPlugin extends ValidationPlugin<Partial<Issue>, ParseOptions> {
+  /**
+   * The shape that validates the value of the field.
+   */
+  readonly shape: AnyShape;
 }
 
-function getType(targetField: Field, fieldTypeMap: WeakMap<Field, AnyType | null>, rootType: AnyType): AnyType | null {
-  if (targetField.parent === null) {
-    return rootType;
-  }
-  let type = fieldTypeMap.get(targetField);
+/**
+ * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
+ *
+ * @param shape The shape that parses the field value.
+ * @template S The shape that parses the field value.
+ * @returns The validation plugin.
+ */
+export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, DoubterPlugin> {
+  let proxyPlugin: Plugin<any, ValidationPlugin<Partial<Issue>, ParseOptions>> | undefined;
 
-  if (type === null || type !== undefined) {
-    return type;
-  }
-  const parentType = getType(targetField.parent, fieldTypeMap, rootType);
+  return (field, accessor) => {
+    proxyPlugin ||= validationPlugin({
+      validate(field: Field & DoubterPlugin, setInternalError, options) {
+        const result = field.shape.try(field.value, Object.assign({ verbose: true }, options));
 
-  if (parentType === null) {
-    return null;
+        if (!result.ok) {
+          setIssues(field, result.issues, setInternalError);
+        }
+      },
+
+      validateAsync(field: Field & DoubterPlugin, setInternalError, options) {
+        return field.shape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
+          if (!result.ok) {
+            setIssues(field, result.issues, setInternalError);
+          }
+        });
+      },
+    });
+
+    Object.assign(proxyPlugin(field, accessor) || field, {
+      shape: field.parent === null ? shape : (field.parent as Field & DoubterPlugin).shape.at(field.key) || anyShape
+    });
+  };
+}
+
+function setIssues(targetField: Field, issues: Issue[], setInternalError: (field: Field, error: Issue) => void): void {
+  issues: for (const issue of issues) {
+    const { path } = issue;
+
+    let field = targetField;
+
+    for (let i = 0; i < path.length; ++i) {
+      field = field.at(path[i]);
+
+      if (field.transient) {
+        // Nested transient fields don't receive errors
+        continue issues;
+      }
+    }
+    for (let field = targetField; field.parent !== null; field = field.parent) {
+      path.unshift(field.key);
+    }
+    setInternalError(field, issue);
   }
-  type = parentType.at(targetField.key);
-  fieldTypeMap.set(targetField, type);
-  return type;
 }

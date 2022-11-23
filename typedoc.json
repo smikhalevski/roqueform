@@ -2,5 +2,9 @@
   "name": "Roqueform",
   "out": "./docs",
   "includeVersion": true,
-  "cleanOutputDir": true
+  "cleanOutputDir": true,
+  "entryPoints": [
+    "./packages/*"
+  ],
+  "entryPointStrategy": "packages"
 }

@@ -4,8 +4,8 @@ The form state management library that can handle hundreds of fields without bre
 
 - Extremely fast, re-renders only updated fields;
 - Laconic API with strict typings;
-- [Pluggable architecture and unconstrained extensibility](#plugins);
-- [Just 1 kB gzipped](https://bundlephobia.com/result?p=roqueform);
+- [Pluggable architecture and great extensibility](#plugins);
+- [Just 2 kB gzipped](https://bundlephobia.com/result?p=roqueform);
 - [Custom validation support](#validation).
 
 🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-example-2evfif)
@@ -14,12 +14,12 @@ The form state management library that can handle hundreds of fields without bre
 npm install --save-prod roqueform
 ```
 
-- [Introduction](#introduction)
+- [Foreword](#foreword)
 - [`useField`](#usefield)
     - [Field value updates](#field-value-updates)
     - [Transient updates](#transient-updates)
     - [Field observability](#field-observability)
-- [`Field`](#field)
+- [`FieldRenderer`](#fieldrenderer)
     - [Eager and lazy re-renders](#eager-and-lazy-re-renders)
     - [Reacting to changes](#reacting-to-changes)
 - [Plugins](#plugins)
@@ -27,9 +27,10 @@ npm install --save-prod roqueform
     - [Composing plugins](#composing-plugins)
 - [Form submission](#form-submission)
 - [Validation](#validation)
+    - [Validation scaffolding plugin](#validation-scaffolding-plugin)
 - [Accessors](#accessors)
 
-# Introduction
+# Foreword
 
 Form lifecycle consists of four separate phases: Input, Validate, Display errors, and Submit. These phases can be
 represented as non-intersecting processes. The result obtained during one phase may be used as an input for another
@@ -69,35 +70,37 @@ So the Roqueform was built to satisfy the following requirements:
 
 # `useField`
 
-The central piece of Roqueform is a `useField` hook that returns a `Field` object that represents a node in a tree of
-form input controllers:
+The central piece of Roqueform is a `useField` hook that returns a
+[`Field`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html) object that represents a node in a
+tree of form input controllers:
 
 ```ts
 import { useField } from 'roqueform';
 
-const unconstrainedField = useField();
-// → Field<any, {}>
+const field = useField();
+// → Field<any>
 ```
 
-You can provide an initial value to a field:
+You can provide an initial value to a field (a field value type would is automatically inferred):
 
 ```ts
 const field = useField({ foo: 'bar' });
-// → Field<{ foo: string }, {}>
+// → Field<{ foo: string }>
 ```
 
 You can derive new fields from the existing ones using `at` method:
 
 ```ts
 const fooField = field.at('foo');
-// → Field<string, {}>
+// → Field<string>
 ```
 
 `fooField` is a derived field, it is linked to the parent `field`. Fields returned by the `at` method have a stable
 identity, so you can invoke `at` with the same key multiple times and the same field instance would be returned:
 
 ```ts
-field.at('foo') === field.at('foo') // → true
+field.at('foo') === field.at('foo')
+// → true
 ```
 
 Fields can be derived at any depth:
@@ -106,54 +109,54 @@ Fields can be derived at any depth:
 const field = useField({ foo: [{ bar: 'qux' }] });
 
 field.at('foo').at(0).at('bar');
-// → Field<string, {}>
+// → Field<string>
 ```
 
 ## Field value updates
 
 The field is essentially a container that encapsulates the value and provides methods to update it. Let's have a look at
-the `dispatchValue` method that updates the field value:
+the `setValue` method that updates the field value:
 
 ```ts
 const field = useField({ foo: 'bar' });
 
-field.getValue();
+field.value;
 // → { foo: 'bar' }
 
-field.dispatchValue({ foo: 'qux' });
+field.setValue({ foo: 'qux' });
 
-// The field value was updated
-field.getValue();
+// 🟡 The field value was updated
+field.value;
 // → { foo: 'qux' }
 ```
 
-`useField` doesn't trigger a re-render of the enclosing component. Navigate to
+`useField` doesn't trigger re-renders of the enclosing component. Navigate to
 [Field observability](#field-observability) section for more details.
 
-When the parent field is updated using `dispatchValue`, all of the affected derived fields also receive an update:
+When the parent field is updated using `setValue`, all of the affected derived fields also receive an update:
 
 ```ts
 const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
-field.getValue();
+field.value;
 // → { foo: 'bar' }
 
-fooField.getValue();
+fooField.value;
 // → 'bar'
 
 // Updating the root field
-field.dispatchValue({ foo: 'qux' });
+field.setValue({ foo: 'qux' });
 
-// The update was propagated to the derived field
-field.getValue();
+// 🟡 The update was propagated to the derived field
+field.value;
 // → { foo: 'qux' }
 
-fooField.getValue();
+fooField.value;
 // → 'qux'
 ```
 
-The same is valid for updating derived fields: when the derived field is updated using `dispatchValue`, the update is
+The same is valid for updating derived fields: when the derived field is updated using `setValue`, the update is
 propagated to the parent field.
 
 ```ts
@@ -161,20 +164,20 @@ const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 // Updating the derived field
-fooField.dispatchValue('qux');
+fooField.setValue('qux');
 
 // The update was propagated to the parent field
-field.getValue();
+field.value;
 // → { foo: 'qux' }
 
-fooField.getValue();
+fooField.value;
 // → 'qux'
 ```
 
-`dispatchValue` has a callback signature:
+`setValue` also has a callback signature:
 
 ```ts
-fooField.dispatchValue(prevValue => 'qux');
+fooField.setValue(prevValue => 'qux');
 ```
 
 ## Transient updates
@@ -182,7 +185,7 @@ fooField.dispatchValue(prevValue => 'qux');
 The field update can be done transiently, so the parent won't be notified. You can think about this as a commit in git:
 you first stage your changes with `git add` and then commit them with `git commit`.
 
-To achieve this behavior we're going to use `setValue`/`dispatch` instead of `dispatchValue` that we discussed in
+To achieve this behavior we're going to use `setTransientValue`/`dispatch` instead of `setValue` that we discussed in
 [Field value updates](#field-value-updates) section:
 
 ```ts
@@ -190,43 +193,43 @@ const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 // Set the transient value, "git add"
-fooField.setValue('qux');
+fooField.setTransientValue('qux');
 
-// 🟡 Notice that fooField was updated but field wasn't
-field.getValue();
+field.value;
 // → { foo: 'bar' }
 
-fooField.getValue();
+// 🟡 Notice that fooField was updated but field wasn't
+fooField.value;
 // → 'qux'
 
 // Notify the parent, "git commit"
 fooField.dispatch();
 
 // Now both fields are in sync
-field.getValue();
+field.value;
 // → { foo: 'qux' }
 
-fooField.getValue();
+fooField.value;
 // → 'qux'
 ```
 
-`setValue` can be called multiple times, but the most recent update would be propagated to the parent only after
-`dispatch`/`dispatchValue` call.
+`setTransientValue` can be called multiple times, but the most recent update would be propagated to the parent only
+after the `dispatch` call.
 
-You can check that the field has a transient value using `isTransient` method:
+You can check that the field has a transient value using `transient` property:
 
 ```ts
 const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
-fooField.setValue('qux');
+fooField.setTransientValue('qux');
 
-fooField.isTransient();
+fooField.transient;
 // → true
 
 fooField.dispatch();
 
-fooField.isTransient();
+fooField.transient;
 // → false
 ```
 
@@ -240,8 +243,8 @@ field.subscribe((targetField, currentField) => {
 });
 ```
 
-`targetField` is a field that initiated the update, so this can be `field` itself, any of its derived fields, or any of
-its ancestors (if `field` is also a derived field).
+`targetField` is a field that initiated the update, so this can be the `field` itself, any of its derived fields, or any
+of its ancestors (if `field` is also a derived field).
 
 `currentField` is the field to which the listener is subscribed, so in this case it is `field`.
 
@@ -251,65 +254,66 @@ You can trigger all listeners that are subscribed to the field with `notify`:
 field.notify();
 ```
 
-# `Field`
+# `FieldRenderer`
 
-The `Field` component subscribes to the given field instance and re-renders its children when the field is updated:
+The `FieldRenderer` component subscribes to the given field instance and re-renders its children when the field is
+notified:
 
 ```tsx
-import { Field, useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 
 const App = () => {
   const rootField = useField('foo');
 
   return (
-    <Field field={rootField}>
+    <FieldRenderer field={rootField}>
       {rootField => (
         <input
-          value={rootField.getValue()}
+          value={rootField.value}
           onChange={event => {
-            rootField.dispatchValue(event.target.value);
+            rootField.setValue(event.target.value);
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   );
 };
 ```
 
-Now, when a user would update the input value, the `rootField` would be updated. The single argument passed to
-`children` render function is the field passed as a `field` prop to the `Field` component.
+When a user updates the input value, the `rootField` is updated and `FieldRenderer` component is re-rendered. The single
+argument of the `children` render function is the field passed as a `field` prop to the `FieldRenderer` component.
 
 It is unlikely that you would use a form with a single literal field. Most of the time multiple derived fields are
 required:
 
 ```tsx
 const App = () => {
-  const rootField = useField({ foo: 'bar', bar: 123 });
+  const rootField = useField({ foo: 'qux', bar: 123 });
 
   return <>
-    <Field field={rootField.at('foo')}>
+    <FieldRenderer field={rootField.at('foo')}>
       {fooField => (
         <input
           type="text"
-          value={fooField.getValue()}
+          value={fooField.value}
           onChange={event => {
-            fooField.dispatchValue(event.target.value);
+            fooField.setValue(event.target.value);
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
 
-    <Field field={rootField.at('bar')}>
+    <FieldRenderer field={rootField.at('bar')}>
       {barField => (
         <input
           type="number"
-          value={barField.getValue()}
+          value={barField.value}
           onChange={event => {
-            barField.dispatchValue(event.target.valueAsNumber);
+            barField.setValue(event.target.valueAsNumber);
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   </>;
 };
 ```
@@ -318,53 +322,53 @@ You may have noticed that even though we didn't specify any types yet, our field
 by replacing the value dispatched to `barField`:
 
 ```diff
-- barField.dispatchValue(event.target.valueAsNumber);
-+ barField.dispatchValue(event.target.value);
+- barField.setValue(event.target.valueAsNumber);
++ barField.setValue(event.target.value);
 ```
 
 This would cause TypeScript to show an error that `barField` value must be of a number type.
 
 ## Eager and lazy re-renders
 
-Let's consider the form with two `Field` elements. One of them renders the value of the root field and the other one
-updates the derived field:
+Let's consider the form with two `FieldRenderer` elements. One of them renders the value of the root field and the other
+one renders an input that updates the derived field:
 
 ```tsx
 const App = () => {
   const rootField = useField({ bar: 'qux' });
 
   return <>
-    <Field field={rootField}>
-      {rootField => JSON.stringify(rootField.getValue())}
-    </Field>
+    <FieldRenderer field={rootField}>
+      {rootField => JSON.stringify(rootField.value)}
+    </FieldRenderer>
 
-    <Field field={rootField.at('bar')}>
+    <FieldRenderer field={rootField.at('bar')}>
       {barField => (
         <input
           type="text"
-          value={barField.getValue()}
+          value={barField.value}
           onChange={event => {
-            barField.dispatchValue(event.target.value);
+            barField.setValue(event.target.value);
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   </>;
 };
 ```
 
-By default, `Form` component re-renders only when the provided field was updated directly, so updates from ancestors or
-derived fields would be ignored. Add the `eagerlyUpdated` property to force `Field` to re-render whenever its value was
-affected.
+By default, `FieldRenderer` component re-renders only when the provided field was updated directly, so updates from
+ancestors or derived fields would be ignored. Add the `eagerlyUpdated` property to force `FieldRenderer` to re-render
+whenever its value was affected.
 
 ```diff
-- <Field field={rootField}>
-+ <Field
+- <FieldRenderer field={rootField}>
++ <FieldRenderer
 +   field={rootField}
 +   eagerlyUpdated={true}
 + >
-    {rootField => JSON.stringify(rootField.getValue())}
-  </Field>
+    {rootField => JSON.stringify(rootField.value)}
+  </FieldRenderer>
 ```
 
 Now both fields are re-rendered when user edits the input text.
@@ -375,7 +379,7 @@ Now both fields are re-rendered when user edits the input text.
 is triggered only when the field value was updated [non-transiently](#transient-updates).
 
 ```tsx
-<Field
+<FieldRenderer
   field={rootField.at('bar')}
   onChange={value => {
     // Handle the value change
@@ -384,18 +388,18 @@ is triggered only when the field value was updated [non-transiently](#transient-
   {barField => (
     <input
       type="text"
-      value={barField.getValue()}
+      value={barField.value}
       onChange={event => {
-        barField.dispatchValue(event.target.value);
+        barField.setValue(event.target.value);
       }}
     />
   )}
-</Field>
+</FieldRenderer>
 ```
 
 # Plugins
 
-Plugins are a very powerful mechanism that allows enriching fields with custom functionality.
+Plugins are a very powerful mechanism that allows enriching fields with a custom functionality.
 
 There's a set of plugins available in this repo:
 
@@ -406,24 +410,26 @@ There's a set of plugins available in this repo:
   Enhances fields with DOM-related methods.
 
 - [@roqueform/reset-plugin](./packages/reset-plugin#readme)<br>
-  Enhances fields with methods to manage the initial value.
+  Enhances fields with methods that manage the initial value.
 
 - [@roqueform/scroll-to-error-plugin](./packages/scroll-to-error-plugin#readme)<br>
-  Plugin that enables scrolling to a field that has an associated validation error.
+  Enables scrolling to a field that has an associated validation error.
 
 ## Authoring a plugin
 
 Let's enhance the field with the `ref` property that would hold the `RefObject`:
 
 ```ts
-import { createRef } from 'react';
+import { createRef, RefObject } from 'react';
 import { Plugin, useField } from 'roqueform';
 
-const refPlugin: Plugin<any, { ref: RefObject<HTMLInputElement> }> = field => {
-  return { ...field, ref: createRef() };
-};
+function refPlugin<T>(): Plugin<T, { ref: RefObject<HTMLInputElement> }> {
+  return field => {
+    Object.assign(field, { ref: createRef() });
+  };
+}
 
-const rootField = useField({ bar: 'qux' }, refPlugin);
+const rootField = useField({ bar: 'qux' }, refPlugin());
 // → Field<{ bar: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
 ```
 
@@ -432,52 +438,41 @@ the new functionality. In our case it adds the `ref` to each field derived from 
 itself.
 
 ```tsx
-<Field field={rootField.at('bar')}>
+<FieldRenderer field={rootField.at('bar')}>
   {barField => (
     <input
       // 🟡 Notice the ref property
       ref={barField.ref}
-      value={barField.getValue()}
+      value={barField.value}
       onChange={event => {
-        barField.dispatchValue(event.target.value);
+        barField.setValue(event.target.value);
       }}
     />
   )}
-</Field>
+</FieldRenderer>
 ```
 
-After the `Field` mounts we can use ref to imperatively scroll the input element into view:
+After the `FieldRenderer` is mounted we can use ref to imperatively scroll the input element into view:
 
 ```ts
 rootField.at('bar').ref.current?.scrollIntoView();
 ```
 
-The `ref` plugin is available as a separate module [@roqueform/ref-plugin](./packages/ref-plugin#readme):
-
-```ts
-import { useField } from 'roqueform';
-import { refPlugin } from '@roqueform/ref-plugin';
-
-const rootField = useField({ bar: 'qux' }, refPlugin<HTMLInputElement>());
-// → Field<{ bar: string }, RefPlugin<HTMLInputElement>> & RefPlugin<HTMLInputElement>
-```
-
 ## Composing plugins
 
-You may want to use multiple plugins at the same time, but `useField` allows passing only one plugin function. To
-combine multiple plugins into one, use `applyPlugins` helper function:
+To combine multiple plugins into one, use `applyPlugins` helper function:
 
 ```ts
 import { applyPlugins, useField } from 'roqueform';
 import { refPlugin } from '@roqueform/ref-plugin';
 
-const field = useField({ bar: 'qux' }, applyPlugins(refPlugin(), anotherPlugin));
+const field = useField({ bar: 'qux' }, applyPlugins(refPlugin(), anotherPlugin()));
 ```
 
 # Form submission
 
 Without plugins, Roqueform only manages the state of the form fields, and doesn't affect how the form is submitted. So
-you can use `form` tags as you did before, but read input values from the `Field` object:
+you can use `form` tags and read input values from the `Field` object:
 
 ```tsx
 const App = () => {
@@ -487,22 +482,22 @@ const App = () => {
     event.preventDefault();
 
     // The form value to submit
-    const value = rootField.getValue();
+    rootField.value;
   };
 
   return (
     <form onSubmit={handleSubmit}>
 
-      <Field field={rootField.at('bar')}>
+      <FieldRenderer field={rootField.at('bar')}>
         {barField => (
           <input
-            value={barField.getValue()}
+            value={barField.value}
             onChange={event => {
-              barField.dispatchValue(event.target.value);
+              barField.setValue(event.target.value);
             }}
           />
         )}
-      </Field>
+      </FieldRenderer>
 
       <button type="submit">
         {'Submit'}
@@ -513,34 +508,69 @@ const App = () => {
 };
 ```
 
-You can always [create a plugin](#plugins) that would enhance the `Field` with custom submit mechanics.
+You can always [create a plugin](#plugins) that would enhance the `Field` instance with custom submit mechanics.
 
 # Validation
 
 Roqueform isn't tied to any validation library. You can use an existing plugin, or write your own to extend Roqueform
 with validation provided by an arbitrary library.
 
-Currently, the only available validation plugin [@roqueform/doubter-plugin](./packages/doubter-plugin#readme) which
-uses [Doubter](https://github.com/smikhalevski/doubter#readme) under-the-hood.
+Consider using [@roqueform/doubter-plugin](./packages/doubter-plugin#readme) which relies on
+[Doubter](https://github.com/smikhalevski/doubter#readme) under-the-hood.
 
 ```ts
 import { useField } from 'roqueform';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
 import * as d from 'doubter';
 
-const valueType = d.object({
+const valueShape = d.object({
   bar: d.string().min(5)
 });
 
-const rootField = useField({ bar: 'qux' }, doubterPlugin(valueType));
+const rootField = useField({ bar: 'qux' }, doubterPlugin(valueShape));
 
 rootField.validate();
+// → [{ message'Must have the minimum length of 5', … }]
 
-rootField.at('bar').getIssue();
+rootField.at('bar').error;
 // → { message: 'Must have the minimum length of 5', … }
 ```
 
 [Plugin usage details can be found here.](./packages/doubter-plugin#readme)
+
+## Validation scaffolding plugin
+
+Roqueform a shipped with validation scaffolding plugin `validatePlugin`, so you can build your validation on top of it.
+
+```ts
+import { Plugin, useField, validationPlugin, ValidationPlugin } from 'roqueform';
+
+function fooValidationPlugin<T>(): Plugin<T, ValidationPlugin<string, never>> {
+  return validationPlugin((field, setInternalError, options) => {
+    if (field.at('foo').value === null) {
+      setInternalError(field.at('foo'), 'Must not be null');
+    }
+  });
+}
+
+const field = useField({ foo: 'bar' }, fooValidationPlugin());
+
+// Manually set an error for a field
+field.at('foo').setError('Some useful message');
+
+// Clear all errors of the field and its derived fields
+field.clearErrors();
+```
+
+This plugin makes all the heavy lifting related to field updates, manual validation error management, async validation
+abortions, etc. It takes a validator callback or an object that has a `validate` method and an optional `validateAsync`
+method. The validator receives a field that must be validated and a `setInternalError` callback that to notifies
+Roqueform that an error should be assigned to a particular field.
+
+`validatePlugin` distinguishes internal errors (those set via `setInternalError`) and external errors (those set via
+`field.setError`). Internal errors are automatically cleared when the `field.validate` or `field.validateAsync`
+methods are called. External errors are preserved as is, and you should explicitly call `field.clearErrors` before
+validation to delete them.
 
 # Accessors
 

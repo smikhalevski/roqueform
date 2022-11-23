@@ -1,24 +1,19 @@
-import { MutableRefObject, RefCallback, RefObject } from 'react';
-import { Field, Plugin } from 'roqueform';
+import type { MutableRefObject, RefCallback, RefObject } from 'react';
+import type { Field, Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by {@link refPlugin}.
+ * The enhancement added to fields by the {@linkcode refPlugin}.
  */
-export interface RefPlugin<E extends HTMLElement> {
+export interface RefPlugin<E extends Element> {
   /**
    * The ref object that should be passed to the `ref` property of a DOM element.
    */
-  ref: RefObject<E>;
+  readonly ref: RefObject<E>;
 
   /**
-   * The callback that updates {@link ref}.
+   * The callback that updates {@linkcode ref}.
    */
-  refCallback: RefCallback<E | null>;
-
-  /**
-   * Returns `true` is the field element has focus, or `false` otherwise.
-   */
-  isActive(): boolean;
+  readonly refCallback: RefCallback<E | null>;
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -50,13 +45,13 @@ export interface RefPlugin<E extends HTMLElement> {
 }
 
 /**
- * Adds DOM-related methods to a field.
+ * Enhances fields with DOM-related methods.
  *
- * @template T The root field value.
+ * @template T The field value.
  * @template E The element type stored by ref.
  * @returns The plugin.
  */
-export function refPlugin<T, E extends HTMLElement = HTMLElement>(): Plugin<T, RefPlugin<E>> {
+export function refPlugin<T, E extends Element = Element>(): Plugin<T, RefPlugin<E>> {
   return field => {
     const ref: MutableRefObject<E | null> = { current: null };
 
@@ -66,17 +61,18 @@ export function refPlugin<T, E extends HTMLElement = HTMLElement>(): Plugin<T, R
       refCallback(element) {
         ref.current = element;
       },
-      isActive() {
-        return document.activeElement === ref.current;
-      },
-      scrollIntoView(options) {
+      scrollIntoView(options?: ScrollIntoViewOptions | boolean) {
         ref.current?.scrollIntoView(options);
       },
       focus(options) {
-        ref.current?.focus(options);
+        if (ref.current instanceof HTMLElement) {
+          ref.current.focus(options);
+        }
       },
       blur() {
-        ref.current?.blur();
+        if (ref.current instanceof HTMLElement) {
+          ref.current.blur();
+        }
       },
     });
   };

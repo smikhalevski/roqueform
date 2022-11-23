@@ -1,16 +1,31 @@
-import { Accessor, Field, Plugin } from 'roqueform';
+import { Accessor, callAll, Field, isEqual, Plugin, Writable } from 'roqueform';
+import isDeepEqual from 'fast-deep-equal';
 
 /**
- * The mixin added to fields by {@link resetPlugin}.
+ * The enhancement added to fields by the {@linkcode resetPlugin}.
  */
 export interface ResetPlugin {
   /**
-   * Returns `true` if the field value is different from the initial value, or `false` otherwise.
-   *
-   * **Note:** By default, field values are compared using reference equality. Pass an equality checker to
-   * {@link resetPlugin} to alter this behavior.
+   * The current value of the field.
    */
-  isDirty(): boolean;
+  readonly value: unknown;
+
+  /**
+   * `true` if the field value is different from its initial value, or `false` otherwise.
+   */
+  readonly dirty: boolean;
+
+  /**
+   * The initial field value.
+   */
+  readonly initialValue: this['value'];
+
+  /**
+   * Sets the initial value of the field and notifies ancestors and descendants.
+   *
+   * @param value The initial value to set.
+   */
+  setInitialValue(value: this['value']): void;
 
   /**
    * Reverts the field to its initial value.
@@ -19,65 +34,123 @@ export interface ResetPlugin {
 }
 
 /**
- * Returns truthy result if values are equal, and falsy result otherwise.
- */
-export type EqualityChecker = (left: any, right: any) => any;
-
-/**
- * Enhance field with `reset` and `isDirty` methods.
+ * Enhances fields with methods that manage the initial value.
  *
- * @param equalityChecker The field value equality checker. Defaults to `Object.is`.
  * @template T The root field value.
  * @returns The plugin.
  */
-export function resetPlugin<T>(equalityChecker: EqualityChecker = Object.is): Plugin<T, ResetPlugin> {
+export function resetPlugin<T>(
+  equalityChecker: (initialValue: T, value: T) => boolean = isDeepEqual
+): Plugin<T, ResetPlugin> {
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
+
   return (field, accessor) => {
-    enhanceField(field, accessor, equalityChecker);
+    controllerMap ||= new WeakMap();
+
+    if (!controllerMap.has(field)) {
+      enhanceField(field, accessor, equalityChecker, controllerMap);
+    }
   };
 }
 
-/**
- * @internal
- * The property that holds a controller instance.
- *
- * **Note:** Controller isn't intended to be accessed outside the plugin internal functions.
- */
-const CONTROLLER_SYMBOL = Symbol('resetPlugin.controller');
-
-/**
- * @internal
- * Retrieves a controller for the field instance.
- */
-function getController(field: any): FieldController {
-  return field[CONTROLLER_SYMBOL];
-}
-
-/**
- * @internal
- */
 interface FieldController {
+  __parent: FieldController | null;
+  __children: FieldController[] | null;
+  __field: Field & Writable<ResetPlugin>;
+  __key: unknown;
   __initialValue: unknown;
+  __accessor: Accessor;
+  __equalityChecker: (initialValue: any, value: any) => boolean;
 }
 
-/**
- * @internal
- */
-function enhanceField(field: Field, accessor: Accessor, equalityChecker: EqualityChecker): void {
-  const initialValue =
-    field.parent === null ? field.value : accessor.get(getController(field.parent).__initialValue, field.key);
-
+function enhanceField(
+  field: Field,
+  accessor: Accessor,
+  equalityChecker: (initialValue: any, value: any) => boolean,
+  controllerMap: WeakMap<Field, FieldController>
+): void {
   const controller: FieldController = {
-    __initialValue: initialValue,
+    __parent: null,
+    __children: null,
+    __field: field as Field & Writable<ResetPlugin>,
+    __key: field.key,
+    __initialValue: field.value,
+    __accessor: accessor,
+    __equalityChecker: equalityChecker,
   };
 
-  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
+  controllerMap.set(field, controller);
 
-  Object.assign<Field, ResetPlugin>(field, {
-    isDirty() {
-      return !equalityChecker(initialValue, field.value);
+  if (field.parent !== null) {
+    const parent = controllerMap.get(field.parent)!;
+
+    controller.__parent = parent;
+    controller.__initialValue = accessor.get(parent.__initialValue, controller.__key);
+
+    (parent.__children ||= []).push(controller);
+  }
+
+  Object.assign<Field, Omit<ResetPlugin, 'value'>>(field, {
+    dirty: false,
+    initialValue: controller.__initialValue,
+
+    setInitialValue(value: any) {
+      applyInitialValue(controller, value);
     },
     reset() {
-      field.dispatchValue(initialValue);
+      controller.__field.setValue(controller.__initialValue);
     },
   });
+
+  field.subscribe(() => {
+    updateDirty(controller);
+  });
+
+  updateDirty(controller);
+}
+
+function updateDirty(controller: FieldController): void {
+  controller.__field.dirty = !controller.__equalityChecker(controller.__initialValue, controller.__field.value);
+}
+
+function applyInitialValue(controller: FieldController, initialValue: unknown): void {
+  if (isEqual(controller.__initialValue, initialValue)) {
+    return;
+  }
+
+  let rootController = controller;
+
+  while (rootController.__parent !== null) {
+    const { __key } = rootController;
+    rootController = rootController.__parent;
+    initialValue = controller.__accessor.set(rootController.__initialValue, __key, initialValue);
+  }
+
+  callAll(propagateInitialValue(controller, rootController, initialValue, []));
+}
+
+function propagateInitialValue(
+  targetController: FieldController,
+  controller: FieldController,
+  initialValue: unknown,
+  notifyCallbacks: Field['notify'][]
+): Field['notify'][] {
+  notifyCallbacks.push(controller.__field.notify);
+
+  controller.__field.initialValue = controller.__initialValue = initialValue;
+
+  updateDirty(controller);
+
+  if (controller.__children !== null) {
+    for (const child of controller.__children) {
+      const childInitialValue = controller.__accessor.get(initialValue, child.__key);
+
+      if (child !== targetController && isEqual(child.__initialValue, childInitialValue)) {
+        continue;
+      }
+      propagateInitialValue(targetController, child, childInitialValue, notifyCallbacks);
+    }
+  }
+
+  return notifyCallbacks;
 }

@@ -1,6 +1,7 @@
 # Reset plugin for Roqueform
 
-Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with methods to manage the initial value.
+Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with methods that manage the initial
+value.
 
 ```sh
 npm install --save-prod @roqueform/reset-plugin
@@ -8,47 +9,44 @@ npm install --save-prod @roqueform/reset-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/reset_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_reset_plugin.html)
 
 The field is considered dirty when its value differs from the initial value. Values are compared using an equality
-checker function passed to the `resetPlugin`. By default, values are compared using `Object.is`.
+checker function passed to the `resetPlugin`. By default, values are compared using
+[fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal).
 
 ```tsx
-import { useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 import { resetPlugin } from '@roqueform/reset-plugin';
-import isEqual from "lodash/isEqual";
 
 export const App = () => {
-  // Provide an optional equality checker
-  const rootField = useField({ bar: '' }, resetPlugin(isEqual));
+  const rootField = useField({ bar: '' }, resetPlugin());
 
   return (
     <form>
 
-      <Field field={rootField.at('bar')}>
+      <FieldRenderer field={rootField.at('bar')}>
         {barField => (
           <input
-            value={barField.getValue()}
+            value={barField.value}
             onChange={event => {
-              barField.dispatchValue(event.target.value);
+              barField.setValue(event.target.value);
             }}
           />
         )}
-      </Field>
+      </FieldRenderer>
 
       <button
         type="submit"
-        disabled={!rootField.isDirty()}
+        disabled={!rootField.dirty}
       >
         {'Submit'}
       </button>
 
       <button
         type="button"
-        onClick={() => {
-          // Reset the field to its initial value 
-          rootField.reset();
-        }}
+        // Reset the field to its initial value 
+        onClick={rootField.reset}
       >
         {'Reset'}
       </button>

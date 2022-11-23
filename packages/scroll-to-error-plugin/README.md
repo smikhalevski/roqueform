@@ -9,65 +9,67 @@ npm install --save-prod @roqueform/scroll-to-error-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin_src_main.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_scroll_to_error_plugin.html)
+
+Scroll plugin assumes that the field is enhanced with `ref` and `error` properties. The `ref` property should be a Rect
+reference object that points to the `Element`, and `error` holds a validation error. If an element is displayed and an
+error is defined and not `null` than `scrollToError()` would reveal this element on the screen.
 
 ```tsx
 import { useEffect } from 'react';
-import { useField } from 'roqueform';
+import { FieldRenderer, useField } from 'roqueform';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
 import { refPlugin } from '@roqueform/ref-plugin';
 import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
 import * as d from 'doubter';
 
-// Define a runtime type using Doubter DSL
-const valueType = d.object({
+// Define a runtime type using Doubter
+const valueShape = d.object({
   bar: d.string().min(1),
 });
 
-const plugin = scrollToErrorPlugin(applyPlugins(
-  refPlugin(),
-  doubterPlugin(valueType)
-));
-
 export const App = () => {
-
-  const rootField = useField({ bar: 'qux' }, plugin);
+  const rootField = useField(
+    { bar: 'qux' },
+    applyPlugins(
+      refPlugin(),
+      doubterPlugin(valueShape),
+      scrollToErrorPlugin()
+    )
+  );
 
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
-
-    // Trigger validation
-    rootField.validate();
-
-    if (rootField.invalid) {
+    
+    if (rootField.validate()) {
       // Scroll to the error that is closest to the top left conrner of the document 
       rootField.scrollToError(0, { behavior: 'smooth' });
       return;
     }
 
     // The form value to submit
-    const value = rootField.value;
+    rootField.value;
   };
 
   return (
     <form onSubmit={handleSubmit}>
 
-      <Field field={rootField.at('bar')}>
+      <FieldRenderer field={rootField.at('bar')}>
         {barField => (
           <>
             <input
-              // 🟡 Note that the field ref is populated
+              // 🟡 Note that the input element ref is populated
               ref={barField.refCallback}
               value={barField.value}
               onChange={event => {
-                barField.dispatchValue(event.target.value);
+                barField.setValue(event.target.value);
               }}
             />
 
             {barField.error?.message}
           </>
         )}
-      </Field>
+      </FieldRenderer>
 
       <button type="submit">
         {'Submit'}
