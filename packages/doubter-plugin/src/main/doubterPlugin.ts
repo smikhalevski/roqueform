@@ -1,5 +1,5 @@
 import { AnyShape, Issue, ParseOptions, Shape } from 'doubter';
-import { Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
+import { Field, Plugin, validationPlugin, ValidationPlugin, Writable } from 'roqueform';
 
 const anyShape = new Shape();
 
@@ -42,25 +42,21 @@ export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, DoubterPlugin>
       },
     });
 
-    Object.assign(proxyPlugin(field, accessor) || field, {
-      shape: field.parent === null ? shape : (field.parent as Field & DoubterPlugin).shape.at(field.key) || anyShape
-    });
+    field = proxyPlugin(field, accessor) || field;
+
+    (field as Field & Writable<DoubterPlugin>).shape =
+      field.parent === null ? shape : (field.parent as Field & DoubterPlugin).shape.at(field.key) || anyShape;
   };
 }
 
 function setIssues(targetField: Field, issues: Issue[], setInternalError: (field: Field, error: Issue) => void): void {
-  issues: for (const issue of issues) {
+  for (const issue of issues) {
     const { path } = issue;
 
     let field = targetField;
 
     for (let i = 0; i < path.length; ++i) {
       field = field.at(path[i]);
-
-      if (field.transient) {
-        // Nested transient fields don't receive errors
-        continue issues;
-      }
     }
     for (let field = targetField; field.parent !== null; field = field.parent) {
       path.unshift(field.key);
