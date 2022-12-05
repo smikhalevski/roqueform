@@ -318,9 +318,11 @@ function deleteError(
 
   notifyCallbacks.push(controller.__field.notify);
 
-  for (let parent = controller.__parent; parent !== null && --parent.__errorCount === 0; parent = parent.__parent) {
-    parent.__field.invalid = false;
-    notifyCallbacks.push(parent.__field.notify);
+  for (let parent = controller.__parent; parent !== null; parent = parent.__parent) {
+    if (--parent.__errorCount === 0) {
+      parent.__field.invalid = false;
+      notifyCallbacks.push(parent.__field.notify);
+    }
   }
 
   return notifyCallbacks;
@@ -344,9 +346,7 @@ function clearErrors(
 
   if (controller.__children !== null) {
     for (const child of controller.__children) {
-      if (!internal || !child.__field.transient) {
-        clearErrors(child, internal, notifyCallbacks);
-      }
+      clearErrors(child, internal, notifyCallbacks);
     }
   }
   return notifyCallbacks;

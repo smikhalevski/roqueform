@@ -155,6 +155,30 @@ describe('validationPlugin', () => {
     expect(barNotifySpy).toHaveBeenCalledTimes(2);
   });
 
+  test('clears errors from nested fields', () => {
+    const field = createField(objectAccessor, {
+      foo: {
+        bar: {
+          baz: 'aaa',
+          qux: 'bbb'
+        }
+      }
+    }, validationPlugin(noopValidator));
+
+    field.at('foo').at('bar').at('baz').setError(111);
+    field.at('foo').at('bar').at('qux').setError(111);
+
+    field.clearErrors();
+
+    expect(field.invalid).toBe(false);
+    expect(field.error).toBe(null);
+
+    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').at('bar').invalid).toBe(false);
+    expect(field.at('foo').at('bar').at('baz').invalid).toBe(false);
+    expect(field.at('foo').at('bar').at('qux').invalid).toBe(false);
+  });
+
   test('synchronously validates the root field', () => {
     const field = createField(
       objectAccessor,
