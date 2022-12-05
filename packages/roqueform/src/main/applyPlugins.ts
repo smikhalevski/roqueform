@@ -1,4 +1,4 @@
-import { Plugin } from './field-types';
+import { Plugin } from './public-types';
 
 /**
  * Composes a plugin from multiple plugins.

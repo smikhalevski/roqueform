@@ -1,5 +1,6 @@
-import { Field, Plugin } from './field-types';
-import { callAll, isEqual, Writable } from './utils';
+import { Field, Plugin } from './public-types';
+import { Writable } from './utils';
+import { callAll, isEqual } from './public-utils';
 
 /**
  * The enhancement added to fields by the {@linkcode validationPlugin}.
@@ -457,8 +458,7 @@ function validate(controller: FieldController, options: unknown): unknown[] | nu
   } catch (e) {
     try {
       callAll(endValidation(controller, controller, false, notifyCallbacks));
-    } catch {
-    }
+    } catch {}
     throw e;
   }
 
@@ -522,8 +522,7 @@ function validateAsync(controller: FieldController, options: unknown): Promise<u
     error => {
       try {
         callAll(endValidation(controller, controller, false, []));
-      } catch {
-      }
+      } catch {}
       throw error;
     }
   );

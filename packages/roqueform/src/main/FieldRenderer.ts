@@ -1,6 +1,6 @@
 import { createElement, Fragment, ReactElement, ReactNode, useEffect, useReducer, useRef } from 'react';
-import { callOrGet, isEqual } from './utils';
-import { Field } from './field-types';
+import { callOrGet, isEqual } from './public-utils';
+import { Field } from './public-types';
 
 /**
  * Properties of the {@linkcode FieldRenderer} component.

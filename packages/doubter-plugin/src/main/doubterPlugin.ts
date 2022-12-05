@@ -1,5 +1,6 @@
 import { AnyShape, Issue, ParseOptions, Shape } from 'doubter';
-import { Field, Plugin, validationPlugin, ValidationPlugin, Writable } from 'roqueform';
+import { Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
+import { Writable } from './utils';
 
 const anyShape = new Shape();
 
