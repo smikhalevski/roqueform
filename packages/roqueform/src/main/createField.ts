@@ -1,5 +1,6 @@
-import { Accessor, Field, Plugin } from './field-types';
-import { callAll, callOrGet, isEqual, Writable } from './utils';
+import { Accessor, Field, Plugin } from './public-types';
+import { Writable } from './utils';
+import { callAll, callOrGet, isEqual } from './public-utils';
 
 /**
  * Creates the new filed instance.

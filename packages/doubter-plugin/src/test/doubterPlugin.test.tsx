@@ -1,6 +1,7 @@
 import * as d from 'doubter';
 import { doubterPlugin } from '../main';
 import { createField, objectAccessor } from 'roqueform';
+import { Shape } from 'doubter';
 
 describe('doubterPlugin', () => {
   const fooShape = d.object({
@@ -17,9 +18,17 @@ describe('doubterPlugin', () => {
 
     expect(field.invalid).toBe(false);
     expect(field.error).toBe(null);
+    expect(field.shape).toBe(fooShape);
 
     expect(field.at('foo').invalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
+    expect(field.at('foo').shape).toBe(fooShape.at('foo'));
+  });
+
+  test('field with unknown fields have a shape', () => {
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+
+    expect(field.at('unknown' as any).shape).toBeInstanceOf(Shape);
   });
 
   test('sets an issue to the root field', () => {

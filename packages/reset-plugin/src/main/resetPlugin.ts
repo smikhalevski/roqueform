@@ -1,5 +1,6 @@
-import { Accessor, callAll, Field, isEqual, Plugin, Writable } from 'roqueform';
+import { Accessor, callAll, Field, isEqual, Plugin } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
+import { Writable } from './utils';
 
 /**
  * The enhancement added to fields by the {@linkcode resetPlugin}.

@@ -1,8 +1,8 @@
 import { useContext, useRef } from 'react';
 import { AccessorContext } from './AccessorContext';
 import { createField } from './createField';
-import { callOrGet } from './utils';
-import { Field, Plugin } from './field-types';
+import { Field, Plugin } from './public-types';
+import { callOrGet } from './public-utils';
 
 /**
  * Creates the new field.

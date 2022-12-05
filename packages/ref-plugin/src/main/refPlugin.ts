@@ -1,5 +1,5 @@
-import type { MutableRefObject, RefCallback, RefObject } from 'react';
-import type { Field, Plugin } from 'roqueform';
+import { MutableRefObject, RefCallback, RefObject } from 'react';
+import { Field, Plugin } from 'roqueform';
 
 /**
  * The enhancement added to fields by the {@linkcode refPlugin}.

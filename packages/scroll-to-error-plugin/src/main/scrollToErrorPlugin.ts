@@ -1,5 +1,5 @@
-import type { Field, Plugin } from 'roqueform';
-import type { RefObject } from 'react';
+import { Field, Plugin } from 'roqueform';
+import { RefObject } from 'react';
 
 /**
  * The enhancement added to fields by the {@linkcode scrollToErrorPlugin}.
