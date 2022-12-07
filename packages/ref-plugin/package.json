@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run build:rollup",
-    "build:rollup": "rollup --external roqueform,react --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "build:rollup": "rollup --external roqueform --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
     "clean": "rimraf './lib'",
     "test": "jest --config ../../jest.config.js"
   },
@@ -24,7 +24,6 @@
   },
   "keywords": [
     "roqueform",
-    "react",
     "form",
     "field",
     "plugin",
@@ -38,7 +37,6 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/ref-plugin#readme",
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
-    "roqueform": "^3.0.0"
+    "roqueform": "^3.0.1"
   }
 }

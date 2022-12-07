@@ -1,4 +1,3 @@
-import { MutableRefObject, RefCallback, RefObject } from 'react';
 import { Field, Plugin } from 'roqueform';
 
 /**
@@ -8,12 +7,12 @@ export interface RefPlugin<E extends Element> {
   /**
    * The ref object that should be passed to the `ref` property of a DOM element.
    */
-  readonly ref: RefObject<E>;
+  readonly ref: { current: E | null };
 
   /**
    * The callback that updates {@linkcode ref}.
    */
-  readonly refCallback: RefCallback<E | null>;
+  readonly refCallback: (element: E | null) => void;
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -53,7 +52,7 @@ export interface RefPlugin<E extends Element> {
  */
 export function refPlugin<T, E extends Element = Element>(): Plugin<T, RefPlugin<E>> {
   return field => {
-    const ref: MutableRefObject<E | null> = { current: null };
+    const ref: RefPlugin<E>['ref'] = { current: null };
 
     Object.assign<Field, RefPlugin<E>>(field, {
       ref,

@@ -13,7 +13,8 @@
     "./packages/ref-plugin",
     "./packages/reset-plugin",
     "./packages/scroll-to-error-plugin",
-    "./packages/zod-plugin"
+    "./packages/zod-plugin",
+    "./packages/react"
   ],
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.3.0",
