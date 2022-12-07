@@ -10,11 +10,12 @@
   "workspaces": [
     "./packages/roqueform",
     "./packages/doubter-plugin",
+    "./packages/react",
     "./packages/ref-plugin",
     "./packages/reset-plugin",
     "./packages/scroll-to-error-plugin",
-    "./packages/zod-plugin",
-    "./packages/react"
+    "./packages/validity-plugin",
+    "./packages/zod-plugin"
   ],
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.3.0",
