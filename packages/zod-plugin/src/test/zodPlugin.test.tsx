@@ -88,4 +88,49 @@ describe('zodPlugin', () => {
       type: 'string',
     });
   });
+
+  test('does not validate sibling fields', () => {
+    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
+
+    field.at('bar').validate();
+
+    expect(field.invalid).toBe(true);
+    expect(field.error).toBe(null);
+
+    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').error).toEqual(null);
+
+    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').error).toEqual({
+      code: 'too_big',
+      inclusive: true,
+      maximum: 2,
+      message: 'String must contain at most 2 character(s)',
+      path: ['bar'],
+      type: 'string',
+    });
+  });
+
+  test('validates a transient value', () => {
+    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType));
+
+    field.at('bar').setTransientValue('qux');
+    field.at('bar').validate();
+
+    expect(field.invalid).toBe(true);
+    expect(field.error).toBe(null);
+
+    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').error).toEqual(null);
+
+    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').error).toEqual({
+      code: 'too_big',
+      inclusive: true,
+      maximum: 2,
+      message: 'String must contain at most 2 character(s)',
+      path: ['bar'],
+      type: 'string',
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import { ZodErrorMap, ZodIssue, ZodType } from 'zod';
-import { Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
+import { Accessor, Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
 
 export interface ZodPluginOptions {
   errorMap?: ZodErrorMap;
@@ -18,20 +18,20 @@ export interface ZodPlugin extends ValidationPlugin<ZodIssue, ZodPluginOptions> 
  * @returns The validation plugin.
  */
 export function zodPlugin<T>(type: ZodType<any, any, T>): Plugin<T, ZodPlugin> {
-  let proxyPlugin: Plugin<any, ValidationPlugin<ZodIssue, ZodPluginOptions>> | undefined;
+  let basePlugin: Plugin<any, ValidationPlugin<ZodIssue, ZodPluginOptions>> | undefined;
 
   return (field, accessor) => {
-    proxyPlugin ||= validationPlugin({
-      validate(field: Field & ZodPlugin, setInternalError, options) {
-        const result = type.safeParse(getValue(field), { errorMap: options?.errorMap });
+    basePlugin ||= validationPlugin({
+      validate(field, setInternalError, options) {
+        const result = type.safeParse(getEffectiveValue(field, accessor), options);
 
         if (!result.success) {
           setIssues(field, result.error.issues, setInternalError);
         }
       },
 
-      validateAsync(field: Field & ZodPlugin, setInternalError, options) {
-        return type.safeParseAsync(getValue(field), { errorMap: options?.errorMap }).then(result => {
+      validateAsync(field, setInternalError, options) {
+        return type.safeParseAsync(getEffectiveValue(field, accessor), options).then(result => {
           if (!result.success) {
             setIssues(field, result.error.issues, setInternalError);
           }
@@ -39,15 +39,21 @@ export function zodPlugin<T>(type: ZodType<any, any, T>): Plugin<T, ZodPlugin> {
       },
     });
 
-    proxyPlugin(field, accessor);
+    basePlugin(field, accessor);
   };
 }
 
-function getValue(field: Field): unknown {
-  while (field.parent != null) {
+/**
+ * Returns the value of the root field that contains a transient value of the target field.
+ */
+function getEffectiveValue(field: Field, accessor: Accessor): unknown {
+  let value = field.value;
+
+  while (field.parent !== null) {
+    value = accessor.set(field.parent.value, field.key, value);
     field = field.parent;
   }
-  return field.value;
+  return value;
 }
 
 function setIssues(
@@ -55,30 +61,29 @@ function setIssues(
   issues: ZodIssue[],
   setInternalError: (field: Field, error: ZodIssue) => void
 ): void {
-  const pathPrefix: unknown[] = [];
+  let prefix: unknown[] = [];
 
-  for (let field = targetField; field.parent != null; field = field.parent) {
-    pathPrefix.unshift(field.key);
+  for (let field = targetField; field.parent !== null; field = field.parent) {
+    prefix.unshift(field.key);
   }
 
   nextIssue: for (const issue of issues) {
     const { path } = issue;
 
-    if (path.length < pathPrefix.length) {
+    let field = targetField;
+
+    if (path.length < prefix.length) {
       continue;
     }
-
-    for (let i = 0; i < pathPrefix.length; ++i) {
-      if (path[i] !== pathPrefix[i]) {
+    for (let i = 0; i < prefix.length; ++i) {
+      if (path[i] !== prefix[i]) {
         continue nextIssue;
       }
     }
-
-    let field = targetField;
-
-    for (let i = pathPrefix.length; i < path.length; ++i) {
+    for (let i = prefix.length; i < path.length; ++i) {
       field = field.at(path[i]);
     }
+
     setInternalError(field, issue);
   }
 }
