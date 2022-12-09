@@ -1,6 +1,76 @@
 import { Field, Plugin } from 'roqueform';
 
-export type ValidityElement =
+/**
+ * The enhancement added to fields by the {@linkcode validityPlugin}.
+ */
+export interface ValidityPlugin {
+  /**
+   * The object that holds the reference to the current DOM element.
+   */
+  readonly ref: { current: Element | null };
+
+  /**
+   * The callback that updates {@linkcode ref}.
+   */
+  refCallback(element: Element | null): void;
+
+  /**
+   * `true` if the field or any of its derived fields have an associated error, or `false` otherwise.
+   */
+  readonly invalid: boolean;
+
+  /**
+   * The [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState) or `null` if ref isn't set or
+   * an element doesn't support Constraint Validation API.
+   */
+  readonly validity: ValidityState | null;
+
+  /**
+   * An error associated with the field, or `null` if there's no error.
+   */
+  readonly error: string | null;
+
+  /**
+   * Associates an error with the field and notifies the subscribers.
+   *
+   * @param error The error to set.
+   */
+  setError(error: string): void;
+
+  /**
+   * Deletes an error associated with this field.
+   */
+  deleteError(): void;
+
+  /**
+   * Recursively deletes errors associated with this field and all of its derived fields.
+   */
+  clearErrors(): void;
+
+  /**
+   * Shows validation error using Constraint Validation API near the element.
+   *
+   * @returns `true` if the element's child controls satisfy their validation constraints, or `false` otherwise.
+   */
+  reportValidity(): boolean;
+}
+
+/**
+ * Enhances fields with Constraint Validation API methods.
+ */
+export function validityPlugin<T>(): Plugin<T, ValidityPlugin> {
+  let controllerMap: WeakMap<Field, FieldController> | undefined;
+
+  return field => {
+    controllerMap ||= new WeakMap();
+
+    if (!controllerMap.has(field)) {
+      enhanceField(field, controllerMap);
+    }
+  };
+}
+
+type ValidatableElement =
   | HTMLButtonElement
   | HTMLFieldSetElement
   | HTMLFormElement
@@ -10,78 +80,36 @@ export type ValidityElement =
   | HTMLSelectElement
   | HTMLTextAreaElement;
 
-/**
- * The mixin added to fields by {@link validityPlugin}.
- */
-export interface ValidityPlugin {
-  ref: { current: ValidityElement | null };
+interface EnhancedField extends Field {
+  ref?: { current: Element | null };
 
-  refCallback: (element: ValidityElement | null) => void;
-
-  isInvalid(): boolean;
-
-  getValidity(): ValidityState | null;
-
-  getError(): string;
-
-  setError(error: string): void;
-
-  validate(): void;
+  refCallback?(element: Element | null): void;
 }
 
-/**
- * Adds DOM-related methods to a field.
- */
-export function validityPlugin(): Plugin<any, ValidityPlugin> {
-  return field => {
-    enhanceField(field);
-  };
-}
-
-/**
- * @internal
- * The property that holds a controller instance.
- *
- * **Note:** Controller isn't intended to be accessed outside the plugin internal functions.
- */
-const CONTROLLER_SYMBOL = Symbol('validityPlugin.controller');
-
-/**
- * @internal
- * Retrieves a controller for the field instance.
- */
-function getController(field: any): FieldController {
-  return field[CONTROLLER_SYMBOL];
-}
-
-/**
- * @internal
- * The field controllers organise a tree that parallel to the tree of fields.
- */
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
   __field: Field;
-  __issueCount: number;
-  __ref: ValidityPlugin['ref'];
+  __ref: { current: Element | null };
   __invalid: boolean;
 }
 
-/**
- * @internal
- */
-function enhanceField(field: Field): void {
+function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldController>): void {
+  const ref = field.ref || { current: null };
+  const refCallback = field.refCallback;
+
   const controller: FieldController = {
     __parent: null,
     __children: null,
     __field: field,
-    __issueCount: 0,
-    __ref: { current: null },
+    __ref: ref,
     __invalid: false,
   };
 
+  controllerMap.set(field, controller);
+
   if (field.parent !== null) {
-    const parent = getController(field.parent);
+    const parent = controllerMap.get(field.parent)!;
 
     controller.__parent = parent;
 
@@ -89,67 +117,127 @@ function enhanceField(field: Field): void {
   }
 
   const listener = (event: Event): void => {
-    if (event.target !== controller.__ref.current) {
+    if (event.target != ref.current) {
       return;
     }
-    const invalid = isInvalid(controller);
 
-    if (controller.__invalid === invalid) {
-      return;
+    for (
+      let targetController = controller;
+      targetController.__parent !== null;
+      targetController = targetController.__parent
+    ) {
+      const invalid = !checkValidity(controller);
+
+      if (targetController.__invalid === invalid) {
+        break;
+      }
+      targetController.__invalid = invalid;
+      targetController.__field.notify();
     }
-    controller.__invalid = invalid;
-    controller.__field.notify();
   };
 
-  Object.defineProperty(field, CONTROLLER_SYMBOL, { value: controller, enumerable: true });
-
-  Object.assign<Field, ValidityPlugin>(field, {
-    ref: controller.__ref,
+  Object.assign<Field, Omit<ValidityPlugin, 'invalid' | 'validity' | 'error'>>(field, {
+    ref,
 
     refCallback(element) {
-      const prevElement = controller.__ref.current;
+      refCallback?.(element);
 
-      if (prevElement !== null && prevElement !== element) {
+      const prevElement = ref.current;
+
+      if (prevElement != null && prevElement != element) {
         prevElement.removeEventListener('input', listener);
         prevElement.removeEventListener('change', listener);
         prevElement.removeEventListener('invalid', listener);
       }
-      if (prevElement !== element && element !== null) {
+      if (prevElement != element && element != null) {
         element.addEventListener('input', listener);
         element.addEventListener('change', listener);
         element.addEventListener('invalid', listener);
       }
 
-      controller.__ref.current = element;
-    },
-    isInvalid() {
-      return controller.__invalid;
-    },
-    getValidity() {
-      return controller.__ref.current?.validity || null;
-    },
-    getError() {
-      return controller.__ref.current?.validationMessage;
+      ref.current = element;
     },
     setError(error) {
-      controller.__ref.current?.setCustomValidity(error);
+      setError(controller, error);
     },
-    validate() {
-      controller.__ref.current?.checkValidity();
+    deleteError() {
+      setError(controller, '');
+    },
+    clearErrors() {
+      clearErrors(controller);
+    },
+    reportValidity() {
+      return reportValidity(controller);
+    },
+  });
+
+  Object.defineProperties(field, {
+    invalid: {
+      get() {
+        return !checkValidity(controller);
+      },
+      enumerable: true,
+      configurable: true,
+    },
+    validity: {
+      get() {
+        return isValidatableElement(ref.current) ? ref.current.validity : null;
+      },
+      enumerable: true,
+      configurable: true,
+    },
+    error: {
+      get() {
+        return isValidatableElement(ref.current) ? ref.current.validationMessage : null;
+      },
+      enumerable: true,
+      configurable: true,
     },
   });
 }
 
-function isInvalid(controller: FieldController): boolean {
-  if (controller.__ref.current !== null && controller.__ref.current.validationMessage !== '') {
-    return true;
+function setError(controller: FieldController, error: string): void {
+  const element = controller.__ref.current;
+
+  if (isValidatableElement(element)) {
+    element.setCustomValidity(error);
   }
+}
+
+function clearErrors(controller: FieldController): void {
+  setError(controller, '');
+
   if (controller.__children !== null) {
     for (const child of controller.__children) {
-      if (isInvalid(child)) {
-        return true;
+      clearErrors(child);
+    }
+  }
+}
+
+function checkValidity(controller: FieldController): boolean {
+  if (controller.__children !== null) {
+    for (const child of controller.__children) {
+      if (!checkValidity(child)) {
+        return false;
       }
     }
   }
-  return false;
+  const element = controller.__ref.current;
+  return isValidatableElement(element) && element.checkValidity();
+}
+
+function reportValidity(controller: FieldController): boolean {
+  if (controller.__children !== null) {
+    for (const child of controller.__children) {
+      if (!reportValidity(child)) {
+        return false;
+      }
+    }
+  }
+  const element = controller.__ref.current;
+  return isValidatableElement(element) && element.reportValidity();
+}
+
+function isValidatableElement(element: Element | null): element is ValidatableElement {
+  return element != null && 'validationMessage' in element && typeof element.validationMessage === 'string';
 }
