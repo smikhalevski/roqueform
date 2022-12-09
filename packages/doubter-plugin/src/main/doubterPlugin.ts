@@ -18,7 +18,7 @@ export interface DoubterPlugin extends ValidationPlugin<Partial<Issue>, ParseOpt
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
  *
  * @param shape The shape that parses the field value.
- * @template S The shape that parses the field value.
+ * @template T The value controlled by the enhanced field.
  * @returns The validation plugin.
  */
 export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, DoubterPlugin> {

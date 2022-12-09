@@ -14,7 +14,7 @@ export interface ZodPlugin extends ValidationPlugin<ZodIssue, ZodPluginOptions> 
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
  *
  * @param type The shape that parses the field value.
- * @template S The shape that parses the field value.
+ * @template T The value controlled by the enhanced field.
  * @returns The validation plugin.
  */
 export function zodPlugin<T>(type: ZodType<any, any, T>): Plugin<T, ZodPlugin> {
