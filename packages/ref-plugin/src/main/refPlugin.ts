@@ -3,16 +3,16 @@ import { Field, Plugin } from 'roqueform';
 /**
  * The enhancement added to fields by the {@linkcode refPlugin}.
  */
-export interface RefPlugin<E extends Element> {
+export interface RefPlugin {
   /**
-   * The ref object that should be passed to the `ref` property of a DOM element.
+   * The object that holds the reference to the current DOM element.
    */
-  readonly ref: { current: E | null };
+  readonly ref: { current: Element | null };
 
   /**
    * The callback that updates {@linkcode ref}.
    */
-  readonly refCallback: (element: E | null) => void;
+  refCallback(element: Element | null): void;
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -43,6 +43,12 @@ export interface RefPlugin<E extends Element> {
   blur(): void;
 }
 
+interface EnhancedField extends Field {
+  ref?: { current: Element | null };
+
+  refCallback?(element: Element | null): void;
+}
+
 /**
  * Enhances fields with DOM-related methods.
  *
@@ -50,29 +56,35 @@ export interface RefPlugin<E extends Element> {
  * @template E The element type stored by ref.
  * @returns The plugin.
  */
-export function refPlugin<T, E extends Element = Element>(): Plugin<T, RefPlugin<E>> {
-  return field => {
-    const ref: RefPlugin<E>['ref'] = { current: null };
+export function refPlugin<T>(): Plugin<T, RefPlugin> {
+  return (field: EnhancedField) => {
+    const ref = field.ref || { current: null };
+    const refCallback = field.refCallback;
 
-    Object.assign<Field, RefPlugin<E>>(field, {
+    Object.assign<Field, RefPlugin>(field, {
       ref,
 
       refCallback(element) {
+        refCallback?.(element);
         ref.current = element;
       },
-      scrollIntoView(options?: ScrollIntoViewOptions | boolean) {
+      scrollIntoView(options) {
         ref.current?.scrollIntoView(options);
       },
       focus(options) {
-        if (ref.current instanceof HTMLElement) {
+        if (isHTMLOrSVGElement(ref.current)) {
           ref.current.focus(options);
         }
       },
       blur() {
-        if (ref.current instanceof HTMLElement) {
+        if (isHTMLOrSVGElement(ref.current)) {
           ref.current.blur();
         }
       },
     });
   };
+}
+
+function isHTMLOrSVGElement(element: Element | null): element is Element & HTMLOrSVGElement {
+  return element != null && 'tabIndex' in element && typeof element.tabIndex === 'number';
 }
