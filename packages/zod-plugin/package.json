@@ -1,0 +1,45 @@
+{
+  "name": "@roqueform/zod-plugin",
+  "version": "1.0.0",
+  "description": "Zod validation plugin for Roqueform.",
+  "main": "./lib/index-cjs.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "typedoc": {
+    "entryPoint": "./src/main/index.ts"
+  },
+  "sideEffects": false,
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --project ./tsconfig.build.json && npm run build:rollup && npm run build:terser && prettier --loglevel warn --write './lib/*.js'",
+    "build:rollup": "rollup --external roqueform,zod --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "build:terser": "TEMP=$(mktemp) && rm $TEMP && for FILE in $(find ./lib -name '*.js'); do terser --name-cache $TEMP --compress --mangle-props reserved=[__esModule],regex=/^__/ --output $FILE -- $FILE; done && rm $TEMP || exit 1",
+    "clean": "rimraf './lib'",
+    "test": "jest --config ../../jest.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikhalevski/roqueform.git"
+  },
+  "keywords": [
+    "roqueform",
+    "react",
+    "form",
+    "field",
+    "plugin",
+    "validation",
+    "zod"
+  ],
+  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smikhalevski/roqueform/issues"
+  },
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/zod-plugin#readme",
+  "peerDependencies": {
+    "roqueform": "^3.0.0",
+    "zod": "^3.19.1"
+  }
+}
