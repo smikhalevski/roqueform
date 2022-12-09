@@ -1,6 +1,7 @@
 import { AnyShape, Issue, ParseOptions, Shape } from 'doubter';
 import { Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
-import { Writable } from './utils';
+
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 const anyShape = new Shape();
 
@@ -18,14 +19,14 @@ export interface DoubterPlugin extends ValidationPlugin<Partial<Issue>, ParseOpt
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
  *
  * @param shape The shape that parses the field value.
- * @template S The shape that parses the field value.
+ * @template T The value controlled by the enhanced field.
  * @returns The validation plugin.
  */
 export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, DoubterPlugin> {
-  let proxyPlugin: Plugin<any, ValidationPlugin<Partial<Issue>, ParseOptions>> | undefined;
+  let basePlugin: Plugin<any, ValidationPlugin<Partial<Issue>, ParseOptions>> | undefined;
 
   return (field, accessor) => {
-    proxyPlugin ||= validationPlugin({
+    basePlugin ||= validationPlugin({
       validate(field: Field & DoubterPlugin, setInternalError, options) {
         const result = field.shape.try(field.value, Object.assign({ verbose: true }, options));
 
@@ -43,9 +44,9 @@ export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<T, DoubterPlugin>
       },
     });
 
-    field = proxyPlugin(field, accessor) || field;
+    field = basePlugin(field, accessor) || field;
 
-    (field as Field & Writable<DoubterPlugin>).shape =
+    (field as Field & Mutable<DoubterPlugin>).shape =
       field.parent === null ? shape : (field.parent as Field & DoubterPlugin).shape.at(field.key) || anyShape;
   };
 }

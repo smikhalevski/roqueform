@@ -1,6 +1,5 @@
 import { Accessor, callAll, Field, isEqual, Plugin } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
-import { Writable } from './utils';
 
 /**
  * The enhancement added to fields by the {@linkcode resetPlugin}.
@@ -54,10 +53,12 @@ export function resetPlugin<T>(
   };
 }
 
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field & Writable<ResetPlugin>;
+  __field: Field & Mutable<ResetPlugin>;
   __key: unknown;
   __initialValue: unknown;
   __accessor: Accessor;
@@ -73,7 +74,7 @@ function enhanceField(
   const controller: FieldController = {
     __parent: null,
     __children: null,
-    __field: field as Field & Writable<ResetPlugin>,
+    __field: field as Field & Mutable<ResetPlugin>,
     __key: field.key,
     __initialValue: field.value,
     __accessor: accessor,

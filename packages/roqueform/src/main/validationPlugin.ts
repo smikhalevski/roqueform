@@ -1,5 +1,5 @@
 import { Field, Plugin } from './public-types';
-import { Writable } from './utils';
+import { Mutable } from './utils';
 import { callAll, isEqual } from './public-utils';
 
 /**
@@ -133,7 +133,7 @@ export function validationPlugin<T, E, O>(
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field & Writable<ValidationPlugin<unknown, unknown>>;
+  __field: Field & Mutable<ValidationPlugin<unknown, unknown>>;
 
   /**
    * The total number of errors associated with the field and its derived fields.
@@ -182,7 +182,7 @@ function enhanceField(
   const controller: FieldController = {
     __parent: null,
     __children: null,
-    __field: field as Field & Writable<ValidationPlugin<unknown, unknown>>,
+    __field: field as Field & Mutable<ValidationPlugin<unknown, unknown>>,
     __errorCount: 0,
     __errored: false,
     __error: null,

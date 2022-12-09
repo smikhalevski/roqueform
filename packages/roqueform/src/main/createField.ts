@@ -1,5 +1,5 @@
 import { Accessor, Field, Plugin } from './public-types';
-import { Writable } from './utils';
+import { Mutable } from './utils';
 import { callAll, callOrGet, isEqual } from './public-utils';
 
 /**
@@ -41,7 +41,7 @@ interface FieldController {
    */
   __childrenMap: Map<unknown, FieldController> | null;
   __children: FieldController[] | null;
-  __field: Writable<Field>;
+  __field: Mutable<Field>;
   __key: unknown;
   __value: unknown;
   __transient: boolean;

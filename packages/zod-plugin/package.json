@@ -1,7 +1,7 @@
 {
-  "name": "@roqueform/doubter-plugin",
+  "name": "@roqueform/zod-plugin",
   "version": "1.0.0",
-  "description": "Doubter validation plugin for Roqueform.",
+  "description": "Zod validation plugin for Roqueform.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./tsconfig.build.json && npm run build:rollup",
-    "build:rollup": "rollup --external roqueform,doubter --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
+    "build:rollup": "rollup --external roqueform,zod --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
     "clean": "rimraf './lib'",
     "test": "jest --config ../../jest.config.js"
   },
@@ -29,16 +29,16 @@
     "field",
     "plugin",
     "validation",
-    "doubter"
+    "zod"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/doubter-plugin#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/zod-plugin#readme",
   "peerDependencies": {
-    "doubter": "^1.0.0",
-    "roqueform": "^3.0.0"
+    "roqueform": "^3.0.1",
+    "zod": "^3.19.1"
   }
 }
