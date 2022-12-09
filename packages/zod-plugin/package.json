@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/zod-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^3.0.0",
+    "roqueform": "^3.0.1",
     "zod": "^3.19.1"
   }
 }
