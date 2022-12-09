@@ -1,6 +1,5 @@
 import { createElement, Fragment, ReactElement, ReactNode, useEffect, useReducer, useRef } from 'react';
-import { callOrGet, isEqual } from './public-utils';
-import { Field } from './public-types';
+import { callOrGet, Field, isEqual } from 'roqueform';
 
 /**
  * Properties of the {@linkcode FieldRenderer} component.

@@ -1,8 +1,6 @@
 import { DependencyList, useContext, useMemo } from 'react';
+import { callOrGet, createField, Field, Plugin } from 'roqueform';
 import { AccessorContext } from './AccessorContext';
-import { createField } from './createField';
-import { Field, Plugin } from './public-types';
-import { callOrGet } from './public-utils';
 
 /**
  * Creates the new field.

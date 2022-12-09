@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
-import { Field, FieldRenderer, useField } from '../main';
+import { FieldRenderer, useField } from '../main';
+import { Field } from 'roqueform';
 
 describe('FieldRenderer', () => {
   test('passes the field as an argument', () => {
@@ -17,7 +18,7 @@ describe('FieldRenderer', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
   });
 
   test('re-renders if field value is changed externally', async () => {
@@ -37,7 +38,7 @@ describe('FieldRenderer', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
 
     await act(() => rootField.setValue(111));
 
@@ -61,7 +62,7 @@ describe('FieldRenderer', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
 
     await act(() => rootField.notify());
 
@@ -85,7 +86,7 @@ describe('FieldRenderer', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
 
     await act(() => rootField.at('foo').setValue(222));
 
@@ -112,7 +113,7 @@ describe('FieldRenderer', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
 
     await act(() => rootField.at('foo').setValue(222));
 
@@ -136,7 +137,7 @@ describe('FieldRenderer', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
 
     await act(() => rootField.at('foo').setValue(222));
 
@@ -161,7 +162,7 @@ describe('FieldRenderer', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
 
     await act(() => {
       rootField.at('foo').setTransientValue(222);

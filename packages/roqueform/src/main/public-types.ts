@@ -1,5 +1,3 @@
-import { SetStateAction } from 'react';
-
 /**
  * The callback that modifies the given field enhancing it with the additional functionality.
  *
@@ -67,14 +65,14 @@ export interface Field<T = any, P = unknown> {
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
-  setValue(value: SetStateAction<T>): void;
+  setValue(value: T | ((prevValue: T) => T)): void;
 
   /**
    * Updates the value of the field and notifies only derived fields and marks value as {@linkcode transient}.
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
-  setTransientValue(value: SetStateAction<T>): void;
+  setTransientValue(value: T | ((prevValue: T) => T)): void;
 
   /**
    * If the current value is {@linkcode transient} then notifies parent about this value and marks value as

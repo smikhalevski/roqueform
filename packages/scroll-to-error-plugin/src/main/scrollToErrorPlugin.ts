@@ -1,5 +1,4 @@
 import { Field, Plugin } from 'roqueform';
-import { RefObject } from 'react';
 
 /**
  * The enhancement added to fields by the {@linkcode scrollToErrorPlugin}.
@@ -56,7 +55,7 @@ export function scrollToErrorPlugin<T>(): Plugin<T, ScrollToErrorPlugin> {
 }
 
 interface EnhancedField extends Field {
-  ref?: RefObject<Element>;
+  ref?: { current: Element | null };
   error?: unknown;
 }
 

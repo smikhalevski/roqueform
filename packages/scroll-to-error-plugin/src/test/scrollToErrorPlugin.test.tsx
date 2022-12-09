@@ -4,12 +4,12 @@ import {
   applyPlugins,
   createField,
   Field,
-  FieldRenderer,
   objectAccessor,
   Plugin,
   validationPlugin,
-  ValidationPlugin
+  ValidationPlugin,
 } from 'roqueform';
+import { FieldRenderer } from '@roqueform/react';
 import { RefPlugin, refPlugin } from '@roqueform/ref-plugin';
 import { ScrollToErrorPlugin, scrollToErrorPlugin } from '../main';
 
@@ -29,8 +29,10 @@ describe('scrollToErrorPlugin', () => {
   });
 
   test('scrolls to error at index', async () => {
-    let rootField!: Field<{ foo: number; bar: string },
-      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<string, never>> &
+    let rootField!: Field<
+      { foo: number; bar: string },
+      ScrollToErrorPlugin & RefPlugin<Element> & ValidationPlugin<string, never>
+    > &
       ScrollToErrorPlugin &
       RefPlugin<Element> &
       ValidationPlugin<string, never>;
@@ -74,7 +76,7 @@ describe('scrollToErrorPlugin', () => {
       );
     };
 
-    render(<Test/>);
+    render(<Test />);
 
     const fooElement = document.getElementById('foo')!;
     const barElement = document.getElementById('bar')!;

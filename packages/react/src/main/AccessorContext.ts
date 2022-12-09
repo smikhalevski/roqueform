@@ -1,6 +1,5 @@
 import { createContext } from 'react';
-import { Accessor } from './public-types';
-import { objectAccessor } from './objectAccessor';
+import { Accessor, objectAccessor } from 'roqueform';
 
 /**
  * The context that is used by {@linkcode useField} to retrieve an accessor.
