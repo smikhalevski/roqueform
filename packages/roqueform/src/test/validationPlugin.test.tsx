@@ -156,14 +156,18 @@ describe('validationPlugin', () => {
   });
 
   test('clears errors from nested fields', () => {
-    const field = createField(objectAccessor, {
-      foo: {
-        bar: {
-          baz: 'aaa',
-          qux: 'bbb'
-        }
-      }
-    }, validationPlugin(noopValidator));
+    const field = createField(
+      objectAccessor,
+      {
+        foo: {
+          bar: {
+            baz: 'aaa',
+            qux: 'bbb',
+          },
+        },
+      },
+      validationPlugin(noopValidator)
+    );
 
     field.at('foo').at('bar').at('baz').setError(111);
     field.at('foo').at('bar').at('qux').setError(111);

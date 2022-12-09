@@ -1,7 +1,7 @@
 import * as d from 'doubter';
+import { Shape } from 'doubter';
 import { doubterPlugin } from '../main';
 import { createField, objectAccessor } from 'roqueform';
-import { Shape } from 'doubter';
 
 describe('doubterPlugin', () => {
   const fooShape = d.object({

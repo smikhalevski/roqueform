@@ -34,7 +34,7 @@ export const App = () => {
 
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
-    
+
     if (rootField.validate()) {
       // Errors are associated with fields automatically
       return;

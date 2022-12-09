@@ -40,7 +40,7 @@ export const App = () => {
 
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
-    
+
     if (rootField.validate()) {
       // Scroll to the error that is closest to the top left conrner of the document 
       rootField.scrollToError(0, { behavior: 'smooth' });
