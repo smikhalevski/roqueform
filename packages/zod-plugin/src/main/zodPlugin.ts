@@ -1,29 +1,26 @@
-import { ZodErrorMap, ZodIssue, ZodType } from 'zod';
+import { ParseParams, ZodErrorMap, ZodIssue, ZodType } from 'zod';
 import { Accessor, Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
-
-export interface ZodPluginOptions {
-  errorMap?: ZodErrorMap;
-}
 
 /**
  * The enhancement added to fields by the {@linkcode zodPlugin}.
  */
-export interface ZodPlugin extends ValidationPlugin<ZodIssue, ZodPluginOptions> {}
+export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParams>> {}
 
 /**
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
  *
  * @param type The shape that parses the field value.
+ * @param errorMap [The Zod error customizer.](https://github.com/colinhacks/zod/blob/master/ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
  * @template T The value controlled by the enhanced field.
  * @returns The validation plugin.
  */
-export function zodPlugin<T>(type: ZodType<any, any, T>): Plugin<T, ZodPlugin> {
-  let basePlugin: Plugin<any, ValidationPlugin<ZodIssue, ZodPluginOptions>> | undefined;
+export function zodPlugin<T>(type: ZodType<any, any, T>, errorMap?: ZodErrorMap): Plugin<T, ZodPlugin> {
+  let basePlugin: Plugin<any, ValidationPlugin<ZodIssue, Partial<ParseParams>>> | undefined;
 
   return (field, accessor) => {
     basePlugin ||= validationPlugin({
       validate(field, setInternalError, options) {
-        const result = type.safeParse(getEffectiveValue(field, accessor), options);
+        const result = type.safeParse(getValue(field, accessor), Object.assign({ errorMap }, options));
 
         if (!result.success) {
           setIssues(field, result.error.issues, setInternalError);
@@ -31,7 +28,7 @@ export function zodPlugin<T>(type: ZodType<any, any, T>): Plugin<T, ZodPlugin> {
       },
 
       validateAsync(field, setInternalError, options) {
-        return type.safeParseAsync(getEffectiveValue(field, accessor), options).then(result => {
+        return type.safeParseAsync(getValue(field, accessor), Object.assign({ errorMap }, options)).then(result => {
           if (!result.success) {
             setIssues(field, result.error.issues, setInternalError);
           }
@@ -46,7 +43,7 @@ export function zodPlugin<T>(type: ZodType<any, any, T>): Plugin<T, ZodPlugin> {
 /**
  * Returns the value of the root field that contains a transient value of the target field.
  */
-function getEffectiveValue(field: Field, accessor: Accessor): unknown {
+function getValue(field: Field, accessor: Accessor): unknown {
   let value = field.value;
 
   while (field.parent !== null) {

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z, ZodErrorMap } from 'zod';
 import { zodPlugin } from '../main';
 import { createField, objectAccessor } from 'roqueform';
 
@@ -131,6 +131,50 @@ describe('zodPlugin', () => {
       message: 'String must contain at most 2 character(s)',
       path: ['bar'],
       type: 'string',
+    });
+  });
+
+  test('uses errorMap passed to createField', () => {
+    const errorMapMock: ZodErrorMap = jest.fn(() => {
+      return { message: 'aaa' };
+    });
+
+    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType, errorMapMock));
+
+    field.validate();
+
+    expect(errorMapMock).toHaveBeenCalledTimes(1);
+
+    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').error).toEqual({
+      code: 'too_small',
+      inclusive: true,
+      message: 'aaa',
+      minimum: 3,
+      path: ['foo'],
+      type: 'number',
+    });
+  });
+
+  test('uses errorMap passed to validate method', () => {
+    const errorMapMock: ZodErrorMap = jest.fn(() => {
+      return { message: 'aaa' };
+    });
+
+    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType));
+
+    field.validate({ errorMap: errorMapMock });
+
+    expect(errorMapMock).toHaveBeenCalledTimes(1);
+
+    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').error).toEqual({
+      code: 'too_small',
+      inclusive: true,
+      message: 'aaa',
+      minimum: 3,
+      path: ['foo'],
+      type: 'number',
     });
   });
 });
