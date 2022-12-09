@@ -25,7 +25,7 @@ export interface ValidationPlugin<E, O> {
   readonly error: E | null;
 
   /**
-   * Associates an error to the field and notifies the subscribers.
+   * Associates an error with the field and notifies the subscribers.
    *
    * @param error The error to set.
    */
