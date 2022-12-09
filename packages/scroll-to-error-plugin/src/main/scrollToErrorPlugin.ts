@@ -1,5 +1,12 @@
 import { Field, Plugin } from 'roqueform';
 
+export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
+  /**
+   * The sorting order for elements.
+   */
+  direction?: 'rtl' | 'ltr';
+}
+
 /**
  * The enhancement added to fields by the {@linkcode scrollToErrorPlugin}.
  */
@@ -32,7 +39,7 @@ export interface ScrollToErrorPlugin {
    * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
    * @returns `true` if there's an error to scroll to, or `false` otherwise.
    */
-  scrollToError(index?: number, options?: ScrollIntoViewOptions): boolean;
+  scrollToError(index?: number, options?: ScrollToErrorOptions): boolean;
 }
 
 /**
@@ -83,9 +90,10 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
   }
 
   Object.assign<Field, ScrollToErrorPlugin>(field, {
-    scrollToError(index = 0, options?: ScrollIntoViewOptions | boolean) {
+    scrollToError(index = 0, options) {
+      const rtl = options === null || typeof options !== 'object' || options.direction !== 'ltr';
       const controllers = controller.__targetControllers.filter(hasVisibleError);
-      const targetController = sortByBoundingRect(controllers)[index < 0 ? controllers.length + index : index];
+      const targetController = sortByBoundingRect(controllers, rtl)[index < 0 ? controllers.length + index : index];
 
       if (targetController === undefined) {
         return false;
@@ -110,9 +118,12 @@ function hasVisibleError(controller: FieldController): boolean {
 }
 
 /**
- * Sorts controllers by their visual position left-to-right and top-to-bottom.
+ * Sorts controllers by their visual position.
+ *
+ * @param controllers The controllers to sort. All controllers must have a ref with an element.
+ * @param rtl The sorting order for elements.
  */
-function sortByBoundingRect(controllers: FieldController[]): FieldController[] {
+function sortByBoundingRect(controllers: FieldController[], rtl: boolean): FieldController[] {
   const { body, documentElement } = document;
 
   const scrollY = window.pageYOffset || documentElement.scrollTop || body.scrollTop;
@@ -131,6 +142,6 @@ function sortByBoundingRect(controllers: FieldController[]): FieldController[] {
     const x1 = Math.round(rect1.left + scrollX - clientX);
     const x2 = Math.round(rect2.left + scrollX - clientX);
 
-    return y1 - y2 || x1 - x2;
+    return y1 - y2 || (rtl ? x1 - x2 : x2 - x1);
   });
 }
