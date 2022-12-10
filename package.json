@@ -9,12 +9,12 @@
   },
   "workspaces": [
     "./packages/roqueform",
+    "./packages/constraint-validation-plugin",
     "./packages/doubter-plugin",
     "./packages/react",
     "./packages/ref-plugin",
     "./packages/reset-plugin",
     "./packages/scroll-to-error-plugin",
-    "./packages/validity-plugin",
     "./packages/zod-plugin"
   ],
   "devDependencies": {

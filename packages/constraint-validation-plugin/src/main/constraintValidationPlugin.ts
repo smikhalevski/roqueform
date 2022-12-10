@@ -1,9 +1,9 @@
 import { Field, Plugin } from 'roqueform';
 
 /**
- * The enhancement added to fields by the {@linkcode validityPlugin}.
+ * The enhancement added to fields by the {@linkcode constraintValidationPlugin}.
  */
-export interface ValidityPlugin {
+export interface ConstraintValidationPlugin {
   /**
    * The object that holds the reference to the current DOM element.
    */
@@ -58,7 +58,7 @@ export interface ValidityPlugin {
 /**
  * Enhances fields with Constraint Validation API methods.
  */
-export function validityPlugin<T>(): Plugin<T, ValidityPlugin> {
+export function constraintValidationPlugin<T>(): Plugin<T, ConstraintValidationPlugin> {
   let controllerMap: WeakMap<Field, FieldController> | undefined;
 
   return field => {
@@ -136,7 +136,7 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
     }
   };
 
-  Object.assign<Field, Omit<ValidityPlugin, 'invalid' | 'validity' | 'error'>>(field, {
+  Object.assign<Field, Omit<ConstraintValidationPlugin, 'invalid' | 'validity' | 'error'>>(field, {
     ref,
 
     refCallback(element) {

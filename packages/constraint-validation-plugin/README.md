@@ -4,7 +4,7 @@ Plugin that enhances [Roqueform](https://github.com/smikhalevski/roqueform#readm
 that use [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
 
 ```sh
-npm install --save-prod @roqueform/validity-plugin
+npm install --save-prod @roqueform/constraint-validation-plugin
 ```
 
 # Usage example
@@ -14,27 +14,26 @@ npm install --save-prod @roqueform/validity-plugin
 ```tsx
 import { useEffect } from 'react';
 import { useField } from 'roqueform';
-import { validityPlugin } from '@roqueform/validity-plugin';
+import { constraintValidationPlugin } from '@roqueform/constraint-validation-plugin';
 
 export const App = () => {
-
-  const rootField = useField({ bar: 'qux' }, validityPlugin());
+  const rootField = useField({ bar: 'qux' }, constraintValidationPlugin());
 
   useEffect(() => {
-    rootField.validate();
+    rootField.reportValidity();
   }, []);
 
   return (
     <Field field={rootField.at('bar')}>
       {barField => (
         <input
+          type="email"
+          required={true}
           ref={barField.refCallback}
-          value={barField.getValue()}
+          value={barField.value}
           onChange={event => {
             barField.dispatchValue(event.target.value);
           }}
-          aria-invalid={barField.isInvalid()}
-          aria-errormessage={barField.getError()}
         />
       )}
     </Field>

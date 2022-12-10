@@ -1,5 +1,5 @@
 {
-  "name": "@roqueform/validity-plugin",
+  "name": "@roqueform/constraint-validation-plugin",
   "version": "1.0.0",
   "description": "DOM reference plugin for Roqueform.",
   "main": "./lib/index-cjs.js",
@@ -31,7 +31,7 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/validity-plugin#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/constraint-validation-plugin#readme",
   "peerDependencies": {
     "roqueform": "^3.0.1"
   }
