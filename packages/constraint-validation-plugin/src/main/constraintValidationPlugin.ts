@@ -7,7 +7,7 @@ export interface ConstraintValidationPlugin {
   /**
    * The object that holds the reference to the current DOM element.
    */
-  readonly ref: { current: Element | null };
+  readonly ref: { readonly current: Element | null };
 
   /**
    * The callback that updates {@linkcode ref}.

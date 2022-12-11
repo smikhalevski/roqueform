@@ -7,7 +7,7 @@ export interface RefPlugin {
   /**
    * The object that holds the reference to the current DOM element.
    */
-  readonly ref: { current: Element | null };
+  readonly ref: { readonly current: Element | null };
 
   /**
    * The callback that updates {@linkcode ref}.
@@ -65,8 +65,8 @@ export function refPlugin<T>(): Plugin<T, RefPlugin> {
       ref,
 
       refCallback(element) {
-        refCallback?.(element);
         ref.current = element;
+        refCallback?.(element);
       },
       scrollIntoView(options) {
         ref.current?.scrollIntoView(options);
