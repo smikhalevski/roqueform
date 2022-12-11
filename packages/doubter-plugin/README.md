@@ -1,7 +1,7 @@
 # Doubter plugin for Roqueform
 
-Plugin that enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with validation methods
-powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
+Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with validation methods powered by
+[Doubter](https://github.com/smikhalevski/doubter#readme).
 
 🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-doubter-plugin-example-74hkgw)
 
@@ -16,7 +16,7 @@ npm install --save-prod @roqueform/doubter-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_doubter_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/Doubter_plugin.html)
 
 ```tsx
 import { SyntheticEvent } from 'react';

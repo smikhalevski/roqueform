@@ -1,12 +1,13 @@
 {
   "name": "@roqueform/ref-plugin",
   "version": "3.0.0",
-  "description": "DOM reference plugin for Roqueform.",
+  "description": "Enhances Roqueform fields with DOM-related methods.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "typedoc": {
-    "entryPoint": "./src/main/index.ts"
+    "entryPoint": "./src/main/index.ts",
+    "displayName": "DOM reference plugin"
   },
   "sideEffects": false,
   "files": [

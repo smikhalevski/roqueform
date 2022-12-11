@@ -9,7 +9,7 @@ npm install --save-prod @roqueform/scroll-to-error-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_scroll_to_error_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/Scroll_to_error_plugin.html)
 
 Scroll plugin assumes that the field is enhanced with `ref` and `error` properties. The `ref` property should be a Rect
 reference object that points to the `Element`, and `error` holds a validation error. If an element is displayed and an
