@@ -31,24 +31,33 @@ export interface ConstraintValidationPlugin {
   readonly error: string | null;
 
   /**
-   * Associates an error with the field and notifies the subscribers.
+   * Associates an error with the field, calls
+   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}.
+   *
+   * If an underlying field doesn't satisfy validation constraints this method is no-op.
    *
    * @param error The error to set.
    */
   setError(error: string): void;
 
   /**
-   * Deletes an error associated with this field.
+   * Deletes an error associated with this field, calls
+   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}.
+   *
+   * If an underlying field doesn't satisfy validation constraints this method is no-op.
    */
   deleteError(): void;
 
   /**
-   * Recursively deletes errors associated with this field and all of its derived fields.
+   * Recursively deletes errors associated with this field and all of its derived fields, calls
+   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}.
    */
   clearErrors(): void;
 
   /**
-   * Shows validation error using Constraint Validation API near the element.
+   * Shows error message balloon for the first element that is referenced by this field or any of its derived fields,
+   * that has an associated error, calls
+   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/reportValidity reportValidity}.
    *
    * @returns `true` if the element's child controls satisfy their validation constraints, or `false` otherwise.
    */
@@ -89,8 +98,12 @@ interface EnhancedField extends Field {
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field;
+  __field: EnhancedField;
   __ref: { current: Element | null };
+
+  /**
+   * The invalid status for which the field was notified the last time.
+   */
   __invalid: boolean;
 }
 
@@ -117,16 +130,16 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
   }
 
   const listener = (event: Event): void => {
-    if (event.target != ref.current) {
+    if (ref.current == null || event.target != ref.current) {
       return;
     }
 
     for (
-      let targetController = controller;
+      let invalid = false, targetController = controller;
       targetController.__parent !== null;
       targetController = targetController.__parent
     ) {
-      const invalid = !checkValidity(controller);
+      invalid ||= isInvalid(controller);
 
       if (targetController.__invalid === invalid) {
         break;
@@ -144,12 +157,12 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
 
       const prevElement = ref.current;
 
-      if (prevElement != null && prevElement != element) {
+      if (prevElement != element && prevElement != null) {
         prevElement.removeEventListener('input', listener);
         prevElement.removeEventListener('change', listener);
         prevElement.removeEventListener('invalid', listener);
       }
-      if (prevElement != element && element != null) {
+      if (prevElement != element && isValidatableElement(element)) {
         element.addEventListener('input', listener);
         element.addEventListener('change', listener);
         element.addEventListener('invalid', listener);
@@ -174,7 +187,7 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
   Object.defineProperties(field, {
     invalid: {
       get() {
-        return !checkValidity(controller);
+        return isInvalid(controller);
       },
       enumerable: true,
       configurable: true,
@@ -196,11 +209,15 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
   });
 }
 
+/**
+ * Sets a validation error to the field and notifies it.
+ */
 function setError(controller: FieldController, error: string): void {
   const element = controller.__ref.current;
 
-  if (isValidatableElement(element)) {
+  if (isValidatableElement(element) && element.validationMessage !== error) {
     element.setCustomValidity(error);
+    element.checkValidity();
   }
 }
 
@@ -214,16 +231,16 @@ function clearErrors(controller: FieldController): void {
   }
 }
 
-function checkValidity(controller: FieldController): boolean {
+function isInvalid(controller: FieldController): boolean {
   if (controller.__children !== null) {
     for (const child of controller.__children) {
-      if (!checkValidity(child)) {
-        return false;
+      if (isInvalid(child)) {
+        return true;
       }
     }
   }
   const element = controller.__ref.current;
-  return isValidatableElement(element) && element.checkValidity();
+  return isValidatableElement(element) && element.validationMessage !== '';
 }
 
 function reportValidity(controller: FieldController): boolean {
@@ -238,6 +255,9 @@ function reportValidity(controller: FieldController): boolean {
   return isValidatableElement(element) && element.reportValidity();
 }
 
+/**
+ * Returns `true` if an element supports Constraint Validation API, or `false` otherwise.
+ */
 function isValidatableElement(element: Element | null): element is ValidatableElement {
-  return element != null && 'validationMessage' in element && typeof element.validationMessage === 'string';
+  return element != null && 'validity' in element && element.validity instanceof ValidityState;
 }
