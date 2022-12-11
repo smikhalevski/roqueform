@@ -31,8 +31,9 @@ export interface ConstraintValidationPlugin {
   readonly error: string | null;
 
   /**
-   * Associates an error with the field, calls
-   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}.
+   * Associates an error with the field. Calls
+   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
+   * if the field has an associated element.
    *
    * If an underlying field doesn't satisfy validation constraints this method is no-op.
    *
@@ -41,25 +42,29 @@ export interface ConstraintValidationPlugin {
   setError(error: string): void;
 
   /**
-   * Deletes an error associated with this field, calls
-   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}.
+   * Deletes an error associated with this field. Calls
+   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
+   * if the field has an associated element.
    *
-   * If an underlying field doesn't satisfy validation constraints this method is no-op.
+   * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
    */
   deleteError(): void;
 
   /**
-   * Recursively deletes errors associated with this field and all of its derived fields, calls
-   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}.
+   * Recursively deletes errors associated with this field and all of its derived fields. Calls
+   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
+   * if the field has an associated element.
+   *
+   * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
    */
   clearErrors(): void;
 
   /**
    * Shows error message balloon for the first element that is referenced by this field or any of its derived fields,
-   * that has an associated error, calls
+   * that has an associated error via calling
    * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/reportValidity reportValidity}.
    *
-   * @returns `true` if the element's child controls satisfy their validation constraints, or `false` otherwise.
+   * @returns `true` if a field doesn't have an error, or `false` otherwise.
    */
   reportValidity(): boolean;
 }
@@ -105,6 +110,16 @@ interface FieldController {
    * The invalid status for which the field was notified the last time.
    */
   __invalid: boolean;
+
+  /**
+   * An error that is used if the field doesn't have an associated element.
+   */
+  __error: string;
+
+  /**
+   * Notifies the field about changes.
+   */
+  __notify(): void;
 }
 
 function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldController>): void {
@@ -117,6 +132,23 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
     __field: field,
     __ref: ref,
     __invalid: false,
+    __error: '',
+
+    __notify() {
+      for (
+        let invalid = false, targetController: FieldController | null = controller;
+        targetController !== null;
+        targetController = targetController.__parent
+      ) {
+        invalid ||= isInvalid(controller);
+
+        if (targetController.__invalid === invalid) {
+          break;
+        }
+        targetController.__invalid = invalid;
+        targetController.__field.notify();
+      }
+    },
   };
 
   controllerMap.set(field, controller);
@@ -130,22 +162,8 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
   }
 
   const listener = (event: Event): void => {
-    if (ref.current == null || event.target != ref.current) {
-      return;
-    }
-
-    for (
-      let invalid = false, targetController = controller;
-      targetController.__parent !== null;
-      targetController = targetController.__parent
-    ) {
-      invalid ||= isInvalid(controller);
-
-      if (targetController.__invalid === invalid) {
-        break;
-      }
-      targetController.__invalid = invalid;
-      targetController.__field.notify();
+    if (ref.current != null && event.target === ref.current) {
+      controller.__notify();
     }
   };
 
@@ -153,9 +171,10 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
     ref,
 
     refCallback(element) {
-      refCallback?.(element);
-
       const prevElement = ref.current;
+
+      ref.current = element;
+      controller.__error = '';
 
       if (prevElement != element && prevElement != null) {
         prevElement.removeEventListener('input', listener);
@@ -168,7 +187,8 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
         element.addEventListener('invalid', listener);
       }
 
-      ref.current = element;
+      refCallback?.(element);
+      controller.__notify();
     },
     setError(error) {
       setError(controller, error);
@@ -201,7 +221,7 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
     },
     error: {
       get() {
-        return isValidatableElement(ref.current) ? ref.current.validationMessage : null;
+        return getError(controller);
       },
       enumerable: true,
       configurable: true,
@@ -215,10 +235,20 @@ function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldC
 function setError(controller: FieldController, error: string): void {
   const element = controller.__ref.current;
 
-  if (isValidatableElement(element) && element.validationMessage !== error) {
-    element.setCustomValidity(error);
-    element.checkValidity();
+  if (isValidatableElement(element)) {
+    if (element.validationMessage !== error) {
+      element.setCustomValidity(error);
+      controller.__notify();
+    }
+  } else if (controller.__error !== error) {
+    controller.__error = error;
+    controller.__notify();
   }
+}
+
+function getError(controller: FieldController): string | null {
+  const element = controller.__ref.current;
+  return (isValidatableElement(element) ? element.validationMessage : controller.__error) || null;
 }
 
 function clearErrors(controller: FieldController): void {
@@ -239,8 +269,7 @@ function isInvalid(controller: FieldController): boolean {
       }
     }
   }
-  const element = controller.__ref.current;
-  return isValidatableElement(element) && element.validationMessage !== '';
+  return getError(controller) !== null;
 }
 
 function reportValidity(controller: FieldController): boolean {
@@ -252,7 +281,7 @@ function reportValidity(controller: FieldController): boolean {
     }
   }
   const element = controller.__ref.current;
-  return isValidatableElement(element) && element.reportValidity();
+  return isValidatableElement(element) ? element.reportValidity() : getError(controller) === null;
 }
 
 /**
