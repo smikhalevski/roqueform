@@ -1,13 +1,13 @@
 {
-  "name": "@roqueform/ref-plugin",
-  "version": "3.0.0",
-  "description": "Enhances Roqueform fields with DOM-related methods.",
+  "name": "@roqueform/constraint-validation-plugin",
+  "version": "1.0.0",
+  "description": "Enhances Roqueform fields with validation methods that use Constraint validation API.",
   "main": "./lib/index-cjs.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
-    "displayName": "DOM reference plugin"
+    "displayName": "Constraint validation plugin"
   },
   "sideEffects": false,
   "files": [
@@ -28,15 +28,14 @@
     "form",
     "field",
     "plugin",
-    "dom",
-    "ref"
+    "constraint-validation"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/ref-plugin#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/constraint-validation-plugin#readme",
   "peerDependencies": {
     "roqueform": "^3.0.1"
   }

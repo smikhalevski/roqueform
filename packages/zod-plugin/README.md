@@ -1,7 +1,7 @@
 # Zod plugin for Roqueform
 
-Plugin that enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with validation methods
-powered by [Zod](https://zod.dev/).
+Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with validation methods powered by
+[Zod](https://zod.dev/).
 
 ```sh
 npm install --save-prod @roqueform/zod-plugin
@@ -9,7 +9,7 @@ npm install --save-prod @roqueform/zod-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_zod_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/Zod_plugin.html)
 
 ```tsx
 import { SyntheticEvent } from 'react';

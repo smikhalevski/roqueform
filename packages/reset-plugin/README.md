@@ -1,7 +1,6 @@
 # Reset plugin for Roqueform
 
-Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with methods that manage the initial
-value.
+Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with methods that manage the initial value.
 
 ```sh
 npm install --save-prod @roqueform/reset-plugin
@@ -9,7 +8,7 @@ npm install --save-prod @roqueform/reset-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_reset_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/Reset_Plugin.html)
 
 The field is considered dirty when its value differs from the initial value. Values are compared using an equality
 checker function passed to the `resetPlugin`. By default, values are compared using
