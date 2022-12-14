@@ -1,20 +1,6 @@
 import { createField, objectAccessor } from '../main';
 
 describe('createField', () => {
-  test('infers type of nested field with nullable parent', () => {
-    const field = createField<{ foo: { bar?: string } | null }>(objectAccessor, { foo: null });
-
-    const aaa = field.at('foo').value;
-
-    const value: string | undefined = field.at('foo').at('bar').value;
-  });
-
-  test('infers type of nested field with optional parent', () => {
-    const field = createField<{ foo?: { bar?: string } }>(objectAccessor, {});
-
-    const value: string | undefined = field.at('foo').at('bar').value;
-  });
-
   test('creates a field without an initial value', () => {
     const field = createField(objectAccessor);
 
@@ -249,12 +235,9 @@ describe('createField', () => {
   });
 
   test('applies a plugin to the root field', () => {
-    let fieldClone;
-    const pluginMock = jest.fn(field => (fieldClone = Object.assign({}, field)));
+    const pluginMock = jest.fn();
 
     const field = createField(objectAccessor, 111, pluginMock);
-
-    expect(field).toBe(fieldClone);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
     expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor);
@@ -272,14 +255,15 @@ describe('createField', () => {
   });
 
   test('applies a plugin to the derived field', () => {
-    let fieldClone;
-    const pluginMock = jest.fn(field => (fieldClone = Object.assign({}, field)));
+    const pluginMock = jest.fn();
 
     const field = createField(objectAccessor, { foo: 111 }, pluginMock);
 
-    expect(field.at('foo')).toBe(fieldClone);
+    const fooField = field.at('foo');
 
     expect(pluginMock).toHaveBeenCalledTimes(2);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor);
+    expect(pluginMock).toHaveBeenNthCalledWith(2, fooField, objectAccessor);
   });
 
   test('actual parent value in derived field listener', done => {
@@ -293,5 +277,21 @@ describe('createField', () => {
     });
 
     field.setValue(newValue);
+  });
+
+  test('does not cache a derived field for which the plugin has thrown an error', () => {
+    const pluginMock = jest.fn();
+    pluginMock.mockImplementationOnce(() => undefined);
+    pluginMock.mockImplementationOnce(() => {
+      throw new Error('expected1');
+    });
+    pluginMock.mockImplementationOnce(() => {
+      throw new Error('expected2');
+    });
+
+    const field = createField(objectAccessor, { foo: 111 }, pluginMock);
+
+    expect(() => field.at('foo')).toThrow(new Error('expected1'));
+    expect(() => field.at('foo')).toThrow(new Error('expected2'));
   });
 });

@@ -18,7 +18,7 @@
     "build:rollup": "rollup --external roqueform --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
     "build:terser": "TEMP=$(mktemp) && rm $TEMP && for FILE in $(find ./lib -name '*.js'); do terser --comments all --name-cache $TEMP --compress --mangle-props reserved=[__esModule],regex=/^__/ --output $FILE -- $FILE; done && rm $TEMP || exit 1",
     "clean": "rimraf './lib'",
-    "test": "jest --config ../../jest.config.js"
+    "test": "jest"
   },
   "repository": {
     "type": "git",

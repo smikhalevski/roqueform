@@ -1,16 +1,16 @@
-import { Field, Plugin } from 'roqueform';
+import { Plugin } from 'roqueform';
 
 /**
- * The enhancement added to fields by the {@linkcode refPlugin}.
+ * The mixin added to fields by the {@linkcode refPlugin}.
  */
-export interface RefPlugin {
+export interface RefMixin {
   /**
-   * The object that holds the reference to the current DOM element.
+   * The DOM element associated with the field.
    */
-  readonly ref: { readonly current: Element | null };
+  readonly element: Element | null;
 
   /**
-   * The callback that updates {@linkcode ref}.
+   * The callback that associates the field with the {@link element DOM element}.
    */
   refCallback(element: Element | null): void;
 
@@ -43,48 +43,40 @@ export interface RefPlugin {
   blur(): void;
 }
 
-interface EnhancedField extends Field {
-  ref?: { current: Element | null };
-
-  refCallback?(element: Element | null): void;
-}
-
 /**
- * Enhances fields with DOM-related methods.
- *
- * @template T The field value.
- * @template E The element type stored by ref.
- * @returns The plugin.
+ * Enables field-element association and simplifies focus control.
  */
-export function refPlugin<T>(): Plugin<T, RefPlugin> {
-  return (field: EnhancedField) => {
-    const ref = field.ref || { current: null };
-    const refCallback = field.refCallback;
+export function refPlugin(): Plugin<RefMixin> {
+  return field => {
+    const { refCallback } = field;
 
-    Object.assign<Field, RefPlugin>(field, {
-      ref,
+    let targetElement: Element | null = null;
 
-      refCallback(element) {
-        ref.current = element;
-        refCallback?.(element);
-      },
-      scrollIntoView(options) {
-        ref.current?.scrollIntoView(options);
-      },
-      focus(options) {
-        if (isHTMLOrSVGElement(ref.current)) {
-          ref.current.focus(options);
-        }
-      },
-      blur() {
-        if (isHTMLOrSVGElement(ref.current)) {
-          ref.current.blur();
-        }
-      },
-    });
+    Object.defineProperty(field, 'element', { enumerable: true, get: () => targetElement });
+
+    field.refCallback = element => {
+      targetElement = element instanceof Element ? element : null;
+      refCallback?.(element);
+    };
+
+    field.scrollIntoView = options => {
+      targetElement?.scrollIntoView(options);
+    };
+
+    field.focus = options => {
+      if (isFocusable(targetElement)) {
+        targetElement.focus(options);
+      }
+    };
+
+    field.blur = () => {
+      if (isFocusable(targetElement)) {
+        targetElement.blur();
+      }
+    };
   };
 }
 
-function isHTMLOrSVGElement(element: Element | null): element is Element & HTMLOrSVGElement {
-  return element != null && 'tabIndex' in element && typeof element.tabIndex === 'number';
+function isFocusable(element: Element | null): element is HTMLElement | SVGElement {
+  return element !== null && 'tabIndex' in element && typeof element.tabIndex === 'number';
 }

@@ -423,7 +423,7 @@ Let's enhance the field with the `ref` property that would hold the `RefObject`:
 import { createRef, RefObject } from 'react';
 import { Plugin, useField } from 'roqueform';
 
-function refPlugin<T>(): Plugin<T, { ref: RefObject<HTMLInputElement> }> {
+function refPlugin(): Plugin<{ ref: RefObject<HTMLInputElement> }> {
   return field => {
     Object.assign(field, { ref: createRef() });
   };
@@ -543,20 +543,24 @@ rootField.at('bar').error;
 Roqueform a shipped with validation scaffolding plugin `validatePlugin`, so you can build your validation on top of it.
 
 ```ts
-import { Plugin, useField, validationPlugin, ValidationPlugin } from 'roqueform';
+import { Plugin, useField, validationPlugin, ValidationMixin } from 'roqueform';
 
-function fooValidationPlugin<T>(): Plugin<T, ValidationPlugin<string, never>> {
-  return validationPlugin((field, setInternalError, options) => {
-    if (field.at('foo').value === null) {
-      setInternalError(field.at('foo'), 'Must not be null');
-    }
-  });
-}
+const plugin = validationPlugin((field, setInternalError, options) => {
+  if (field.at('foo').value === null) {
+    setInternalError(field.at('foo'), 'Must not be null');
+  }
+});
 
-const field = useField({ foo: 'bar' }, fooValidationPlugin());
+const field = useField({ foo: 'bar' }, plugin);
 
 // Manually set an error for a field
-field.at('foo').setError('Some useful message');
+field.setError('Some useful message');
+
+field.error;
+// → 'Some useful message'
+
+field.at('foo').error;
+// → 'Must not be null'
 
 // Clear all errors of the field and its derived fields
 field.clearErrors();

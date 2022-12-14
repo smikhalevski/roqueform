@@ -1,14 +1,30 @@
 /**
- * The callback that modifies the given field enhancing it with the additional functionality.
+ * Defers type inference.
  *
- * If plugin returns `undefined`, then it's implied that the passed field object was extended.
+ * @see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types Type inference in conditional types
+ */
+export type NoInfer<T> = T extends infer T ? T : never;
+
+declare const rootValue: unique symbol;
+
+/**
+ * The callback that enhances the field.
+ *
+ * The plugin should mutate the passed field instance.
  *
  * @param field The field that must be enhanced.
  * @param accessor The accessor that reads and writes object properties.
- * @template T The value controlled by the enhanced field.
- * @template P The enhancement added by the plugin.
+ * @template M The mixin added by the plugin.
+ * @template T The root field value.
  */
-export type Plugin<T, P> = (field: Field<T>, accessor: Accessor) => (Field<T, P> & P) | undefined | void;
+export interface Plugin<M = unknown, T = any> {
+  /**
+   * @internal
+   */
+  [rootValue]?: T;
+
+  (field: Field & M, accessor: Accessor): void;
+}
 
 /**
  * The abstraction used by the {@linkcode Field} to read and write object properties.
@@ -35,14 +51,14 @@ export interface Accessor {
 }
 
 /**
- * @template T The value controlled by the field.
- * @template P The enhancement added by the plugin.
+ * @template T The root field value.
+ * @template M The mixin added by the plugin.
  */
-export interface Field<T = any, P = unknown> {
+export interface Field<T = any, M = unknown> {
   /**
    * The parent field from which this one was derived, or `null` if there's no parent.
    */
-  readonly parent: (Field<any, P> & P) | null;
+  readonly parent: (Field<any, M> & M) | null;
 
   /**
    * The key in the parent value that corresponds to the value controlled by the field, or `null` if there's no parent.
@@ -89,7 +105,7 @@ export interface Field<T = any, P = unknown> {
    */
   at<K extends keyof NonNullable<T>>(
     key: K
-  ): Field<T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K], P> & P;
+  ): Field<T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K], M> & M;
 
   /**
    * Subscribes the listener to the field updates.
@@ -104,7 +120,7 @@ export interface Field<T = any, P = unknown> {
      * @param targetField The field that was the origin of the update, or where {@linkcode Field.notify} was called.
      * @param currentField The field to which the listener is subscribed.
      */
-    listener: (targetField: Field<any, P> & P, currentField: Field<T, P> & P) => void
+    listener: (targetField: Field<any, M> & M, currentField: Field<T, M> & M) => void
   ): () => void;
 
   /**

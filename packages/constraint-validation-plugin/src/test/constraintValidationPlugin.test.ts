@@ -148,8 +148,6 @@ describe('constraintValidationPlugin', () => {
 
     field.at('foo').refCallback(element);
 
-    expect(field.at('foo').ref.current).toBe(element);
-
     expect(field.invalid).toBe(true);
     expect(field.error).toBe(null);
 

@@ -3,7 +3,7 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "clean": "rimraf './docs' && npm run clean --workspaces",
-    "test": "jest",
+    "test": "npm t --workspaces",
     "docs:build": "typedoc",
     "docs:release": "npm run docs:build && SHA=$(git rev-parse --short HEAD) && ORIGIN=$(git config --get remote.origin.url) && TEMP=$(mktemp -d) && FROM=$(pwd) && git clone -b ghpages --single-branch $ORIGIN $TEMP && cd $TEMP && ls -A | grep -wv .git | xargs rm -rf && cp -R $FROM/docs/ $TEMP && git add . && git commit -m \"Updated docs ($SHA)\" && git push && rm -rf $TEMP"
   },
@@ -30,6 +30,7 @@
     "rollup": "^3.7.2",
     "terser": "^5.16.1",
     "ts-jest": "^29.0.3",
+    "tsd": "^0.25.0",
     "typedoc": "^0.23.21",
     "typescript": "^4.9.4"
   }

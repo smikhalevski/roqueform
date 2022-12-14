@@ -8,9 +8,19 @@ export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
 }
 
 /**
- * The enhancement added to fields by the {@linkcode scrollToErrorPlugin}.
+ * The mixin added to fields by the {@linkcode scrollToErrorPlugin}.
  */
-export interface ScrollToErrorPlugin {
+export interface ScrollToErrorMixin {
+  /**
+   * @internal
+   */
+  readonly error: unknown;
+
+  /**
+   * The callback that associates the field with the DOM element.
+   */
+  refCallback(element: Element | null): void;
+
   /**
    * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
    * ancestor containers such that the field element is visible to the user.
@@ -43,27 +53,51 @@ export interface ScrollToErrorPlugin {
 }
 
 /**
- * Enhances the field with methods to scroll to a field that has an associated validation error. This plugin should be
- * used in conjunction with a plugin (or multiple plugins) that adds `ref` and `error` properties to a field.
+ * Enhances the field with methods to scroll to a field that has an associated validation error.
  *
- * @template T The root field value.
- * @returns The plugin.
+ * Use this plugin in conjunction with another plugin that adds validation methods and manages `error` property of each
+ * field.
  */
-export function scrollToErrorPlugin<T>(): Plugin<T, ScrollToErrorPlugin> {
-  let controllerMap: WeakMap<Field, FieldController> | undefined;
+export function scrollToErrorPlugin(): Plugin<ScrollToErrorMixin> {
+  const controllerMap = new WeakMap<Field, FieldController>();
 
   return field => {
-    controllerMap ||= new WeakMap();
-
-    if (!controllerMap.has(field)) {
-      enhanceField(field, controllerMap);
+    if (controllerMap.has(field)) {
+      return;
     }
-  };
-}
 
-interface EnhancedField extends Field {
-  ref?: { current: Element | null };
-  error?: unknown;
+    const controller: FieldController = {
+      __parent: field.parent !== null ? controllerMap.get(field.parent)! : null,
+      __targetControllers: [],
+      __field: field,
+      __element: null,
+    };
+
+    controllerMap.set(field, controller);
+
+    for (let ancestor: FieldController | null = controller; ancestor !== null; ancestor = ancestor.__parent) {
+      ancestor.__targetControllers!.push(controller);
+    }
+
+    const { refCallback } = field;
+
+    field.refCallback = element => {
+      controller.__element = element;
+      refCallback?.(element);
+    };
+
+    field.scrollToError = (index = 0, options) => {
+      const rtl = options === null || typeof options !== 'object' || options.direction !== 'ltr';
+      const controllers = controller.__targetControllers.filter(hasVisibleError);
+      const targetController = sortByBoundingRect(controllers, rtl)[index < 0 ? controllers.length + index : index];
+
+      if (targetController === undefined) {
+        return false;
+      }
+      targetController.__element!.scrollIntoView(options);
+      return true;
+    };
+  };
 }
 
 interface FieldController {
@@ -73,45 +107,16 @@ interface FieldController {
    * The list of controllers that can be scrolled to.
    */
   __targetControllers: FieldController[];
-  __field: EnhancedField;
-}
-
-function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldController>): void {
-  const controller: FieldController = {
-    __parent: field.parent !== null ? controllerMap.get(field.parent)! : null,
-    __targetControllers: [],
-    __field: field,
-  };
-
-  controllerMap.set(field, controller);
-
-  for (let parent: FieldController | null = controller; parent !== null; parent = parent.__parent) {
-    parent.__targetControllers!.push(controller);
-  }
-
-  Object.assign<Field, ScrollToErrorPlugin>(field, {
-    scrollToError(index = 0, options) {
-      const rtl = options === null || typeof options !== 'object' || options.direction !== 'ltr';
-      const controllers = controller.__targetControllers.filter(hasVisibleError);
-      const targetController = sortByBoundingRect(controllers, rtl)[index < 0 ? controllers.length + index : index];
-
-      if (targetController === undefined) {
-        return false;
-      }
-      targetController.__field.ref!.current!.scrollIntoView(options);
-      return true;
-    },
-  });
+  __field: Field & ScrollToErrorMixin;
+  __element: Element | null;
 }
 
 function hasVisibleError(controller: FieldController): boolean {
-  const { ref } = controller.__field;
-
-  if (ref == null || !(ref.current instanceof Element) || controller.__field.error == null) {
+  if (controller.__element === null || controller.__field.error === null) {
     return false;
   }
 
-  const rect = ref.current.getBoundingClientRect();
+  const rect = controller.__element.getBoundingClientRect();
 
   // Exclude non-displayed elements
   return rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0;
@@ -133,8 +138,8 @@ function sortByBoundingRect(controllers: FieldController[], rtl: boolean): Field
   const clientX = documentElement.clientLeft || body.clientLeft || 0;
 
   return controllers.sort((controller1, controller2) => {
-    const rect1 = controller1.__field.ref!.current!.getBoundingClientRect();
-    const rect2 = controller2.__field.ref!.current!.getBoundingClientRect();
+    const rect1 = controller1.__element!.getBoundingClientRect();
+    const rect2 = controller2.__element!.getBoundingClientRect();
 
     const y1 = Math.round(rect1.top + scrollY - clientY);
     const y2 = Math.round(rect2.top + scrollY - clientY);

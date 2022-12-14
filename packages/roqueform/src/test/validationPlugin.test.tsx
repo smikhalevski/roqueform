@@ -543,7 +543,7 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(field, setInternalError, context, signal) {
+        async validateAsync(_field, _setInternalError, _context, signal) {
           lastSignal = signal;
         },
       })
@@ -560,7 +560,7 @@ describe('validationPlugin', () => {
     expect(field.validating).toBe(false);
     expect(field.at('foo').validating).toBe(false);
 
-    await expect(promise).rejects.toEqual(new Error('Aborted'));
+    await expect(promise).rejects.toEqual(new Error('Validation aborted'));
   });
 
   test('validation aborts pending validation when invoked on the same field', async () => {
@@ -572,7 +572,7 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(field, setInternalError, context, signal) {
+        async validateAsync(_field, _setInternalError, _context, signal) {
           signals.push(signal);
         },
       })
@@ -585,7 +585,7 @@ describe('validationPlugin', () => {
     expect(signals[0].aborted).toBe(true);
     expect(signals[1].aborted).toBe(false);
 
-    await expect(promise).rejects.toEqual(new Error('Aborted'));
+    await expect(promise).rejects.toEqual(new Error('Validation aborted'));
   });
 
   test('derived field validation does not abort the parent validation', () => {
@@ -597,7 +597,7 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(field, setInternalError, context, signal) {
+        async validateAsync(_field, _setInternalError, _context, signal) {
           signals.push(signal);
         },
       })
@@ -637,6 +637,6 @@ describe('validationPlugin', () => {
     expect(field.at('foo').error).toBe(null);
     expect(field.at('bar').error).toBe(222);
 
-    await expect(promise).rejects.toEqual(new Error('Aborted'));
+    await expect(promise).rejects.toEqual(new Error('Validation aborted'));
   });
 });
