@@ -8,7 +8,7 @@ describe('useField', () => {
     expect(hook.result.current.value).toBe(undefined);
   });
 
-  test('returns a filed with a literal initial value', () => {
+  test('returns a field with a literal initial value', () => {
     const hook = renderHook(() => useField(111));
 
     expect(hook.result.current.value).toBe(111);
@@ -24,19 +24,17 @@ describe('useField', () => {
     expect(hook.result.current).toBe(field);
   });
 
-  test('returns a filed with an initial value provider', () => {
+  test('returns a field with an initial value provider', () => {
     const hook = renderHook(() => useField(() => 111));
 
     expect(hook.result.current.value).toBe(111);
   });
 
   test('enhances a field', () => {
-    let fieldClone;
-    const pluginMock = jest.fn(field => (fieldClone = Object.assign({}, field)));
+    const pluginMock = jest.fn();
 
-    const hook = renderHook(() => useField(111, pluginMock));
+    renderHook(() => useField(111, pluginMock));
 
-    expect(hook.result.current).toBe(fieldClone);
     expect(pluginMock).toHaveBeenCalledTimes(1);
   });
 

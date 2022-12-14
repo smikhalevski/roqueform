@@ -2,11 +2,11 @@ import { Accessor, callAll, Field, isEqual, Plugin } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 
 /**
- * The enhancement added to fields by the {@linkcode resetPlugin}.
+ * The mixin added to fields by the {@linkcode resetPlugin}.
  */
-export interface ResetPlugin {
+export interface ResetMixin {
   /**
-   * The current value of the field.
+   * @internal
    */
   readonly value: unknown;
 
@@ -36,83 +36,75 @@ export interface ResetPlugin {
 /**
  * Enhances fields with methods that manage the initial value.
  *
- * @template T The root field value.
- * @returns The plugin.
+ * @param equalityChecker The callback that compares initial value and the current value of the field. By default, the
+ * deep comparison is used.
  */
-export function resetPlugin<T>(
-  equalityChecker: (initialValue: T, value: T) => boolean = isDeepEqual
-): Plugin<T, ResetPlugin> {
-  let controllerMap: WeakMap<Field, FieldController> | undefined;
+export function resetPlugin(
+  equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
+): Plugin<ResetMixin> {
+  const controllerMap = new WeakMap<Field, FieldController>();
 
   return (field, accessor) => {
-    controllerMap ||= new WeakMap();
-
-    if (!controllerMap.has(field)) {
-      enhanceField(field, accessor, equalityChecker, controllerMap);
+    if (controllerMap.has(field)) {
+      return;
     }
+
+    const controller: FieldController = {
+      __parent: null,
+      __children: null,
+      __field: field,
+      __key: field.key,
+      __dirty: false,
+      __initialValue: field.value,
+      __accessor: accessor,
+      __equalityChecker: equalityChecker,
+    };
+
+    controllerMap.set(field, controller);
+
+    if (field.parent !== null) {
+      const parent = controllerMap.get(field.parent)!;
+
+      controller.__parent = parent;
+      controller.__initialValue = accessor.get(parent.__initialValue, controller.__key);
+
+      (parent.__children ||= []).push(controller);
+    }
+
+    Object.defineProperties(field, {
+      dirty: { enumerable: true, get: () => controller.__dirty },
+      initialValue: { enumerable: true, get: () => controller.__initialValue },
+    });
+
+    field.setInitialValue = value => {
+      applyInitialValue(controller, value);
+    };
+
+    field.reset = () => {
+      controller.__field.setValue(controller.__initialValue);
+    };
+
+    field.subscribe(() => {
+      applyDirty(controller);
+    });
+
+    applyDirty(controller);
   };
 }
-
-type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: Field & Mutable<ResetPlugin>;
+  __field: Field;
   __key: unknown;
+  __dirty: boolean;
   __initialValue: unknown;
   __accessor: Accessor;
   __equalityChecker: (initialValue: any, value: any) => boolean;
 }
 
-function enhanceField(
-  field: Field,
-  accessor: Accessor,
-  equalityChecker: (initialValue: any, value: any) => boolean,
-  controllerMap: WeakMap<Field, FieldController>
-): void {
-  const controller: FieldController = {
-    __parent: null,
-    __children: null,
-    __field: field as Field & Mutable<ResetPlugin>,
-    __key: field.key,
-    __initialValue: field.value,
-    __accessor: accessor,
-    __equalityChecker: equalityChecker,
-  };
-
-  controllerMap.set(field, controller);
-
-  if (field.parent !== null) {
-    const parent = controllerMap.get(field.parent)!;
-
-    controller.__parent = parent;
-    controller.__initialValue = accessor.get(parent.__initialValue, controller.__key);
-
-    (parent.__children ||= []).push(controller);
-  }
-
-  Object.assign<Field, Omit<ResetPlugin, 'value'>>(field, {
-    dirty: false,
-    initialValue: controller.__initialValue,
-
-    setInitialValue(value: any) {
-      applyInitialValue(controller, value);
-    },
-    reset() {
-      controller.__field.setValue(controller.__initialValue);
-    },
-  });
-
-  field.subscribe(() => {
-    updateDirty(controller);
-  });
-
-  updateDirty(controller);
-}
-
-function updateDirty(controller: FieldController): void {
-  controller.__field.dirty = !controller.__equalityChecker(controller.__initialValue, controller.__field.value);
+function applyDirty(controller: FieldController): void {
+  controller.__dirty = !controller.__equalityChecker(controller.__initialValue, controller.__field.value);
 }
 
 function applyInitialValue(controller: FieldController, initialValue: unknown): void {
@@ -139,9 +131,9 @@ function propagateInitialValue(
 ): Field['notify'][] {
   notifyCallbacks.push(controller.__field.notify);
 
-  controller.__field.initialValue = controller.__initialValue = initialValue;
+  controller.__initialValue = initialValue;
 
-  updateDirty(controller);
+  applyDirty(controller);
 
   if (controller.__children !== null) {
     for (const child of controller.__children) {

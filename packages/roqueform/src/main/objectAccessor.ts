@@ -1,5 +1,5 @@
-import { Accessor } from './public-types';
-import { isEqual } from './public-utils';
+import { Accessor } from './shared-types';
+import { isEqual } from './utils';
 
 /**
  * The accessor that reads and writes key-value pairs to object and arrays.

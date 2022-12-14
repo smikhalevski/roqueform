@@ -1,18 +1,13 @@
 import { Field, Plugin } from 'roqueform';
 
 /**
- * The enhancement added to fields by the {@linkcode constraintValidationPlugin}.
+ * The mixin added to fields by the {@linkcode constraintValidationPlugin}.
  */
-export interface ConstraintValidationPlugin {
+export interface ConstraintValidationMixin {
   /**
-   * The object that holds the reference to the current DOM element.
+   * An error associated with the field, en empty string if there's no error.
    */
-  readonly ref: { readonly current: Element | null };
-
-  /**
-   * The callback that updates {@linkcode ref}.
-   */
-  refCallback(element: Element | null): void;
+  readonly error: string | null;
 
   /**
    * `true` if the field or any of its derived fields have an associated error, or `false` otherwise.
@@ -20,22 +15,22 @@ export interface ConstraintValidationPlugin {
   readonly invalid: boolean;
 
   /**
-   * The [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState) or `null` if ref isn't set or
-   * an element doesn't support Constraint Validation API.
+   * The [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState), or `null` if there's no
+   * associated element, or it doesn't support Constraint Validation API.
    */
   readonly validity: ValidityState | null;
 
   /**
-   * An error associated with the field, or `null` if there's no error.
+   * The callback that associates the field with the DOM element.
    */
-  readonly error: string | null;
+  refCallback(element: Element | null): void;
 
   /**
    * Associates an error with the field. Calls
    * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
    * if the field has an associated element.
    *
-   * If an underlying field doesn't satisfy validation constraints this method is no-op.
+   * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
    *
    * @param error The error to set.
    */
@@ -60,7 +55,7 @@ export interface ConstraintValidationPlugin {
   clearErrors(): void;
 
   /**
-   * Shows error message balloon for the first element that is referenced by this field or any of its derived fields,
+   * Shows error message balloon for the first element that is associated with this field or any of its derived fields,
    * that has an associated error via calling
    * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/reportValidity reportValidity}.
    *
@@ -72,15 +67,107 @@ export interface ConstraintValidationPlugin {
 /**
  * Enhances fields with Constraint Validation API methods.
  */
-export function constraintValidationPlugin<T>(): Plugin<T, ConstraintValidationPlugin> {
-  let controllerMap: WeakMap<Field, FieldController> | undefined;
+export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> {
+  const controllerMap = new WeakMap<Field, FieldController>();
 
   return field => {
-    controllerMap ||= new WeakMap();
-
-    if (!controllerMap.has(field)) {
-      enhanceField(field, controllerMap);
+    if (controllerMap.has(field)) {
+      return;
     }
+
+    const notify = () => {
+      for (
+        let invalid = false, ancestor: FieldController | null = controller;
+        ancestor !== null;
+        ancestor = ancestor.__parent
+      ) {
+        invalid ||= isInvalid(controller);
+
+        if (ancestor.__invalid === invalid) {
+          break;
+        }
+        ancestor.__invalid = invalid;
+        ancestor.__field.notify();
+      }
+    };
+
+    const controller: FieldController = {
+      __parent: null,
+      __children: null,
+      __field: field,
+      __element: null,
+      __validity: null,
+      __invalid: false,
+      __error: '',
+      __notify: notify,
+    };
+
+    controllerMap.set(field, controller);
+
+    if (field.parent !== null) {
+      const parent = controllerMap.get(field.parent)!;
+
+      controller.__parent = parent;
+
+      (parent.__children ||= []).push(controller);
+    }
+
+    const { refCallback } = field;
+
+    const listener = (event: Event): void => {
+      if (controller.__element !== null && controller.__element === event.target) {
+        notify();
+      }
+    };
+
+    Object.defineProperties(field, {
+      invalid: { enumerable: true, get: () => isInvalid(controller) },
+      error: { enumerable: true, get: () => getError(controller) },
+      validity: { enumerable: true, get: () => controller.__validity },
+    });
+
+    field.refCallback = element => {
+      const { __element } = controller;
+
+      if (__element === element) {
+        refCallback?.(element);
+        return;
+      }
+
+      if (__element !== null) {
+        __element.removeEventListener('input', listener);
+        __element.removeEventListener('change', listener);
+        __element.removeEventListener('invalid', listener);
+
+        controller.__element = controller.__validity = null;
+        controller.__error = '';
+      }
+      if (isValidatable(element)) {
+        element.addEventListener('input', listener);
+        element.addEventListener('change', listener);
+        element.addEventListener('invalid', listener);
+
+        controller.__element = element;
+        controller.__validity = element.validity;
+      }
+
+      refCallback?.(element);
+      notify();
+    };
+
+    field.setError = error => {
+      setError(controller, error);
+    };
+
+    field.deleteError = () => {
+      setError(controller, '');
+    };
+
+    field.clearErrors = () => {
+      clearErrors(controller);
+    };
+
+    field.reportValidity = () => reportValidity(controller);
   };
 }
 
@@ -94,17 +181,12 @@ type ValidatableElement =
   | HTMLSelectElement
   | HTMLTextAreaElement;
 
-interface EnhancedField extends Field {
-  ref?: { current: Element | null };
-
-  refCallback?(element: Element | null): void;
-}
-
 interface FieldController {
   __parent: FieldController | null;
   __children: FieldController[] | null;
-  __field: EnhancedField;
-  __ref: { current: Element | null };
+  __field: Field;
+  __element: ValidatableElement | null;
+  __validity: ValidityState | null;
 
   /**
    * The invalid status for which the field was notified the last time.
@@ -122,133 +204,28 @@ interface FieldController {
   __notify(): void;
 }
 
-function enhanceField(field: EnhancedField, controllerMap: WeakMap<Field, FieldController>): void {
-  const ref = field.ref || { current: null };
-  const refCallback = field.refCallback;
-
-  const controller: FieldController = {
-    __parent: null,
-    __children: null,
-    __field: field,
-    __ref: ref,
-    __invalid: false,
-    __error: '',
-
-    __notify() {
-      for (
-        let invalid = false, targetController: FieldController | null = controller;
-        targetController !== null;
-        targetController = targetController.__parent
-      ) {
-        invalid ||= isInvalid(controller);
-
-        if (targetController.__invalid === invalid) {
-          break;
-        }
-        targetController.__invalid = invalid;
-        targetController.__field.notify();
-      }
-    },
-  };
-
-  controllerMap.set(field, controller);
-
-  if (field.parent !== null) {
-    const parent = controllerMap.get(field.parent)!;
-
-    controller.__parent = parent;
-
-    (parent.__children ||= []).push(controller);
-  }
-
-  const listener = (event: Event): void => {
-    if (ref.current != null && event.target === ref.current) {
-      controller.__notify();
-    }
-  };
-
-  Object.assign<Field, Omit<ConstraintValidationPlugin, 'invalid' | 'validity' | 'error'>>(field, {
-    ref,
-
-    refCallback(element) {
-      const prevElement = ref.current;
-
-      ref.current = element;
-      controller.__error = '';
-
-      if (prevElement != element && prevElement != null) {
-        prevElement.removeEventListener('input', listener);
-        prevElement.removeEventListener('change', listener);
-        prevElement.removeEventListener('invalid', listener);
-      }
-      if (prevElement != element && isValidatableElement(element)) {
-        element.addEventListener('input', listener);
-        element.addEventListener('change', listener);
-        element.addEventListener('invalid', listener);
-      }
-
-      refCallback?.(element);
-      controller.__notify();
-    },
-    setError(error) {
-      setError(controller, error);
-    },
-    deleteError() {
-      setError(controller, '');
-    },
-    clearErrors() {
-      clearErrors(controller);
-    },
-    reportValidity() {
-      return reportValidity(controller);
-    },
-  });
-
-  Object.defineProperties(field, {
-    invalid: {
-      get() {
-        return isInvalid(controller);
-      },
-      enumerable: true,
-      configurable: true,
-    },
-    validity: {
-      get() {
-        return isValidatableElement(ref.current) ? ref.current.validity : null;
-      },
-      enumerable: true,
-      configurable: true,
-    },
-    error: {
-      get() {
-        return getError(controller);
-      },
-      enumerable: true,
-      configurable: true,
-    },
-  });
-}
-
 /**
  * Sets a validation error to the field and notifies it.
  */
 function setError(controller: FieldController, error: string): void {
-  const element = controller.__ref.current;
+  const { __element } = controller;
 
-  if (isValidatableElement(element)) {
-    if (element.validationMessage !== error) {
-      element.setCustomValidity(error);
+  if (__element !== null) {
+    if (__element.validationMessage !== error) {
+      __element.setCustomValidity(error);
       controller.__notify();
     }
-  } else if (controller.__error !== error) {
+    return;
+  }
+
+  if (controller.__error !== error) {
     controller.__error = error;
     controller.__notify();
   }
 }
 
-function getError(controller: FieldController): string | null {
-  const element = controller.__ref.current;
-  return (isValidatableElement(element) ? element.validationMessage : controller.__error) || null;
+function getError(controller: FieldController): string {
+  return (controller.__element !== null ? controller.__element.validationMessage : controller.__error) || null;
 }
 
 function clearErrors(controller: FieldController): void {
@@ -280,13 +257,9 @@ function reportValidity(controller: FieldController): boolean {
       }
     }
   }
-  const element = controller.__ref.current;
-  return isValidatableElement(element) ? element.reportValidity() : getError(controller) === null;
+  return controller.__element !== null ? controller.__element.reportValidity() : getError(controller) === null;
 }
 
-/**
- * Returns `true` if an element supports Constraint Validation API, or `false` otherwise.
- */
-function isValidatableElement(element: Element | null): element is ValidatableElement {
-  return element != null && 'validity' in element && element.validity instanceof ValidityState;
+function isValidatable(element: Element | null): element is ValidatableElement {
+  return element instanceof Element && 'validity' in element && element.validity instanceof ValidityState;
 }

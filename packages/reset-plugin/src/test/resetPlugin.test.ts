@@ -2,14 +2,6 @@ import { createField, objectAccessor } from 'roqueform';
 import { resetPlugin } from '../main';
 
 describe('resetPlugin', () => {
-  test('infers initial value type for derived fields', () => {
-    const field = createField(objectAccessor, { foo: 111 }, resetPlugin());
-
-    const fooInitialValue: number = field.at('foo').initialValue;
-
-    expect(fooInitialValue).toBe(111);
-  });
-
   test('field is dirty if the field value is not equal to an initial value', () => {
     const initialValue = { foo: 111 };
 

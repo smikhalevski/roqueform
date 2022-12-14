@@ -1,4 +1,4 @@
-import { z, ZodErrorMap } from 'zod';
+import { z, ZodErrorMap, ZodIssue, ZodIssueCode } from 'zod';
 import { zodPlugin } from '../main';
 import { createField, objectAccessor } from 'roqueform';
 
@@ -22,6 +22,25 @@ describe('zodPlugin', () => {
     expect(field.at('foo').error).toBe(null);
   });
 
+  test('converts string errors to issue messages', () => {
+    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+
+    field.setError('aaa');
+
+    expect(field.error).toEqual({ code: ZodIssueCode.custom, message: 'aaa', path: [] });
+  });
+
+  test('sets issue as an error', () => {
+    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+
+    const issue: ZodIssue = { code: ZodIssueCode.custom, path: ['bbb'], message: 'aaa' };
+
+    field.at('foo').setError(issue);
+
+    expect(field.at('foo').error).toBe(issue);
+    expect(field.at('foo').error).toEqual({ code: ZodIssueCode.custom, message: 'aaa', path: ['bbb'] });
+  });
+
   test('validates the root field', () => {
     const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
 
@@ -33,6 +52,7 @@ describe('zodPlugin', () => {
     expect(field.at('foo').invalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
+      exact: false,
       inclusive: true,
       message: 'Number must be greater than or equal to 3',
       minimum: 3,
@@ -52,6 +72,7 @@ describe('zodPlugin', () => {
     expect(field.at('foo').invalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
+      exact: false,
       inclusive: true,
       message: 'Number must be greater than or equal to 3',
       minimum: 3,
@@ -71,6 +92,7 @@ describe('zodPlugin', () => {
     expect(field.at('foo').invalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
+      exact: false,
       inclusive: true,
       message: 'Number must be greater than or equal to 3',
       minimum: 3,
@@ -81,6 +103,7 @@ describe('zodPlugin', () => {
     expect(field.at('bar').invalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
+      exact: false,
       inclusive: true,
       maximum: 2,
       message: 'String must contain at most 2 character(s)',
@@ -103,6 +126,7 @@ describe('zodPlugin', () => {
     expect(field.at('bar').invalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
+      exact: false,
       inclusive: true,
       maximum: 2,
       message: 'String must contain at most 2 character(s)',
@@ -126,6 +150,7 @@ describe('zodPlugin', () => {
     expect(field.at('bar').invalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
+      exact: false,
       inclusive: true,
       maximum: 2,
       message: 'String must contain at most 2 character(s)',
@@ -148,6 +173,7 @@ describe('zodPlugin', () => {
     expect(field.at('foo').invalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
+      exact: false,
       inclusive: true,
       message: 'aaa',
       minimum: 3,
@@ -170,6 +196,7 @@ describe('zodPlugin', () => {
     expect(field.at('foo').invalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
+      exact: false,
       inclusive: true,
       message: 'aaa',
       minimum: 3,

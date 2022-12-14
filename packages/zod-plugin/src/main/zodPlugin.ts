@@ -1,43 +1,59 @@
-import { ParseParams, ZodErrorMap, ZodIssue, ZodType } from 'zod';
-import { Accessor, Field, Plugin, validationPlugin, ValidationPlugin } from 'roqueform';
+import { ParseParams, ZodErrorMap, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
+import { Accessor, Field, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
 
 /**
- * The enhancement added to fields by the {@linkcode zodPlugin}.
+ * The mixin added to fields by the {@linkcode zodPlugin}.
  */
-export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParams>> {}
+export interface ZodMixin extends ValidationMixin<ZodIssue, Partial<ParseParams>> {
+  setError(error: ZodIssue | string): void;
+}
 
 /**
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
  *
  * @param type The shape that parses the field value.
  * @param errorMap [The Zod error customizer.](https://github.com/colinhacks/zod/blob/master/ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
- * @template T The value controlled by the enhanced field.
+ * @template T The root field value.
  * @returns The validation plugin.
  */
-export function zodPlugin<T>(type: ZodType<any, any, T>, errorMap?: ZodErrorMap): Plugin<T, ZodPlugin> {
-  let basePlugin: Plugin<any, ValidationPlugin<ZodIssue, Partial<ParseParams>>> | undefined;
+export function zodPlugin<T>(type: ZodType<any, any, T>, errorMap?: ZodErrorMap): Plugin<ZodMixin, T> {
+  let plugin: Plugin<any>;
 
   return (field, accessor) => {
-    basePlugin ||= validationPlugin({
-      validate(field, setInternalError, options) {
-        const result = type.safeParse(getValue(field, accessor), Object.assign({ errorMap }, options));
+    plugin ||= createValidationPlugin(type, errorMap, accessor);
 
+    plugin(field, accessor);
+
+    const { setError } = field;
+
+    field.setError = error => {
+      setError(typeof error !== 'string' ? error : { code: ZodIssueCode.custom, path: getPath(field), message: error });
+    };
+  };
+}
+
+function createValidationPlugin(type: ZodTypeAny, errorMap: ZodErrorMap | undefined, accessor: Accessor) {
+  return validationPlugin<ZodIssue, Partial<ParseParams>>({
+    validate(field, setInternalError, options) {
+      options = Object.assign({ errorMap }, options);
+
+      const result = type.safeParse(getValue(field, accessor), options);
+
+      if (!result.success) {
+        setIssues(field, result.error.issues, setInternalError);
+      }
+    },
+
+    validateAsync(field, setInternalError, options) {
+      options = Object.assign({ errorMap }, options);
+
+      return type.safeParseAsync(getValue(field, accessor), options).then(result => {
         if (!result.success) {
           setIssues(field, result.error.issues, setInternalError);
         }
-      },
-
-      validateAsync(field, setInternalError, options) {
-        return type.safeParseAsync(getValue(field, accessor), Object.assign({ errorMap }, options)).then(result => {
-          if (!result.success) {
-            setIssues(field, result.error.issues, setInternalError);
-          }
-        });
-      },
-    });
-
-    basePlugin(field, accessor);
-  };
+      });
+    },
+  });
 }
 
 /**
@@ -53,34 +69,34 @@ function getValue(field: Field, accessor: Accessor): unknown {
   return value;
 }
 
-function setIssues(
-  targetField: Field,
-  issues: ZodIssue[],
-  setInternalError: (field: Field, error: ZodIssue) => void
-): void {
-  let prefix: unknown[] = [];
+function getPath(field: Field): Array<string | number> {
+  const path: Array<string | number> = [];
 
-  for (let field = targetField; field.parent !== null; field = field.parent) {
-    prefix.unshift(field.key);
+  for (let ancestor = field; ancestor.parent !== null; ancestor = ancestor.parent) {
+    path.unshift(ancestor.key);
   }
+  return path;
+}
 
-  nextIssue: for (const issue of issues) {
+function setIssues(field: Field, issues: ZodIssue[], setInternalError: (field: Field, error: ZodIssue) => void): void {
+  let prefix = getPath(field);
+
+  issues: for (const issue of issues) {
     const { path } = issue;
 
-    let field = targetField;
+    let targetField = field;
 
     if (path.length < prefix.length) {
       continue;
     }
     for (let i = 0; i < prefix.length; ++i) {
       if (path[i] !== prefix[i]) {
-        continue nextIssue;
+        continue issues;
       }
     }
     for (let i = prefix.length; i < path.length; ++i) {
-      field = field.at(path[i]);
+      targetField = targetField.at(path[i]);
     }
-
-    setInternalError(field, issue);
+    setInternalError(targetField, issue);
   }
 }

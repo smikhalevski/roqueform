@@ -1,5 +1,4 @@
 import * as d from 'doubter';
-import { Shape } from 'doubter';
 import { doubterPlugin } from '../main';
 import { createField, objectAccessor } from 'roqueform';
 
@@ -18,17 +17,9 @@ describe('doubterPlugin', () => {
 
     expect(field.invalid).toBe(false);
     expect(field.error).toBe(null);
-    expect(field.shape).toBe(fooShape);
 
     expect(field.at('foo').invalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
-    expect(field.at('foo').shape).toBe(fooShape.at('foo'));
-  });
-
-  test('field with unknown fields have a shape', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
-
-    expect(field.at('unknown' as any).shape).toBeInstanceOf(Shape);
   });
 
   test('sets an issue to the root field', () => {
@@ -40,6 +31,7 @@ describe('doubterPlugin', () => {
 
     expect(field.invalid).toBe(true);
     expect(field.error).toBe(issue);
+    expect(field.error).toEqual({ code: 'aaa', input: { foo: 0 }, path: [] });
 
     expect(field.at('foo').invalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
@@ -57,6 +49,19 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').invalid).toBe(true);
     expect(field.at('foo').error).toBe(issue);
+    expect(field.at('foo').error).toEqual({ code: 'aaa', input: 0, path: ['foo'] });
+  });
+
+  test('converts string errors to issue messages', () => {
+    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+
+    field.at('foo').setError('aaa');
+
+    expect(field.invalid).toBe(true);
+    expect(field.error).toBe(null);
+
+    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').error).toEqual({ code: 'unknown', message: 'aaa', input: 0, path: ['foo'] });
   });
 
   test('deletes an issue from the root field', () => {
