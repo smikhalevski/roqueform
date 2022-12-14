@@ -13,6 +13,7 @@ export const App = () => {
   const handleSubmit = (event: SyntheticEvent): void => {
     event.preventDefault();
 
+    // The value is always in sync with input
     field.value;
     // → { bar: 'qux' }
   };
