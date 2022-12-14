@@ -15,6 +15,7 @@
     "./packages/ref-plugin",
     "./packages/reset-plugin",
     "./packages/scroll-to-error-plugin",
+    "./packages/uncontrolled-plugin",
     "./packages/zod-plugin"
   ],
   "devDependencies": {
