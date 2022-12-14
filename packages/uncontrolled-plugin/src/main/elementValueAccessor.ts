@@ -41,7 +41,7 @@ export const elementValueAccessor: ElementValueAccessor = {
       return valueAsNumber !== valueAsNumber ? null : valueAsNumber;
     }
     if (type === 'date') {
-      return valueAsNumber !== valueAsNumber ? null : new Date(valueAsNumber).toISOString();
+      return valueAsNumber !== valueAsNumber ? null : (element.valueAsDate || new Date(valueAsNumber)).toISOString();
     }
     if (type === 'image') {
       return element.src;

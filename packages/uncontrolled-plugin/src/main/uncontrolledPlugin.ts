@@ -18,21 +18,29 @@ export interface UncontrolledMixin {
  */
 export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<UncontrolledMixin> {
   return field => {
-    const { refCallback } = field;
+    const { setValue, setTransientValue, refCallback } = field;
 
     let targetElement: Element | null = null;
 
     const listener = (event: Event): void => {
       if (targetElement !== null && event.target === targetElement) {
-        field.setValue(accessor.get(targetElement));
+        setValue(accessor.get(targetElement));
       }
     };
 
-    field.subscribe(targetField => {
-      if (targetElement !== null && field === targetField) {
-        accessor.set(targetElement, field.value);
+    field.setValue = value => {
+      if (targetElement !== null) {
+        accessor.set(targetElement, value);
       }
-    });
+      setValue(value);
+    };
+
+    field.setTransientValue = value => {
+      if (targetElement !== null) {
+        accessor.set(targetElement, value);
+      }
+      setTransientValue(value);
+    };
 
     field.refCallback = element => {
       if (targetElement === element) {
