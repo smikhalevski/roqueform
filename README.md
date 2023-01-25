@@ -1,7 +1,7 @@
 <p align="center">
   <br/>
   <br/>
-  <img src="./images/logo.png" alt="Roqueform" width="400"/>
+  <img src="./images/logo.png" alt="Roqueform" width="500"/>
   <br/>
   <br/>
   <a href="https://github.com/smikhalevski/roqueform/actions/workflows/master.yml">
