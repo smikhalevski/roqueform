@@ -1,4 +1,15 @@
-# Roqueform&ensp;🧀&ensp;[![build](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push)](https://github.com/smikhalevski/roqueform/actions/workflows/master.yml)
+<p align="center">
+  <br/>
+  <br/>
+  <img src="./images/logo.png" alt="Roqueform" width="500"/>
+  <br/>
+  <br/>
+  <a href="https://github.com/smikhalevski/roqueform/actions/workflows/master.yml">
+    <img src="https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push" alt="build"/>
+  </a>
+</p>
+
+<br/>
 
 The form state management library that can handle hundreds of fields without breaking a sweat.
 
