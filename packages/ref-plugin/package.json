@@ -2,8 +2,8 @@
   "name": "@roqueform/ref-plugin",
   "version": "3.0.0",
   "description": "Enhances Roqueform fields with DOM-related methods.",
-  "main": "./lib/index-cjs.js",
-  "module": "./lib/index.js",
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
