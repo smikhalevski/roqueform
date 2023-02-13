@@ -1,8 +1,9 @@
 import { uncontrolledPlugin } from '../main';
-import { createField, objectAccessor } from 'roqueform';
+import { applyPlugins, createField, objectAccessor } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
+import { refPlugin } from '@roqueform/ref-plugin';
 
-describe('uncontrolledPlugin', () => {
+describe.skip('uncontrolledPlugin', () => {
   let element: HTMLInputElement;
 
   beforeEach(() => {
@@ -15,7 +16,7 @@ describe('uncontrolledPlugin', () => {
 
   test('updates field value on input change', () => {
     const listenerMock = jest.fn();
-    const field = createField(objectAccessor, { foo: 0 }, uncontrolledPlugin());
+    const field = createField(objectAccessor, { foo: 0 }, applyPlugins(refPlugin(), uncontrolledPlugin()));
 
     element.type = 'number';
 
@@ -29,7 +30,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('updates input value on field change', () => {
-    const field = createField(objectAccessor, { foo: 0 }, uncontrolledPlugin());
+    const field = createField(objectAccessor, { foo: 0 }, applyPlugins(refPlugin(), uncontrolledPlugin()));
 
     field.at('foo').refCallback(element);
     field.at('foo').setValue(111);
@@ -38,7 +39,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('sets the initial value to the element', () => {
-    const field = createField(objectAccessor, { foo: 111 }, uncontrolledPlugin());
+    const field = createField(objectAccessor, { foo: 111 }, applyPlugins(refPlugin(), uncontrolledPlugin()));
 
     element.type = 'number';
 

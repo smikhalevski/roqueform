@@ -14,10 +14,9 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --project ./tsconfig.build.json && npm run build:rollup",
-    "build:rollup": "rollup --external roqueform,zod --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "clean": "rimraf './lib'",
-    "test": "jest"
+    "build": "rollup --config ../../rollup.config.mjs",
+    "clean": "rimraf ./lib",
+    "test": "jest --config ../../jest.config.js"
   },
   "repository": {
     "type": "git",

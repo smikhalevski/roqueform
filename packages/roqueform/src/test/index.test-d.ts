@@ -1,5 +1,5 @@
 import { expectType } from 'tsd';
-import { applyPlugins, createField, objectAccessor, Plugin, ValidationMixin, validationPlugin } from '../main';
+import { applyPlugins, createField, objectAccessor, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
 
 const field1 = createField<{ foo: { bar?: string } | null }>(objectAccessor, { foo: null });
 

@@ -1,18 +1,8 @@
 {
   "name": "Roqueform",
   "out": "./docs",
-  "includeVersion": false,
-  "cleanOutputDir": true,
   "entryPoints": [
     "./packages/*"
   ],
-  "entryPointStrategy": "packages",
-  "visibilityFilters": {
-    "protected": false,
-    "private": false,
-    "inherited": true,
-    "external": false,
-    "@alpha": false,
-    "@beta": false
-  }
+  "entryPointStrategy": "packages"
 }
