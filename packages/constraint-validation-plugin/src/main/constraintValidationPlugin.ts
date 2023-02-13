@@ -79,27 +79,27 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
       for (
         let invalid = false, ancestor: FieldController | null = controller;
         ancestor !== null;
-        ancestor = ancestor.__parent
+        ancestor = ancestor._parent
       ) {
         invalid ||= isInvalid(controller);
 
-        if (ancestor.__invalid === invalid) {
+        if (ancestor._invalid === invalid) {
           break;
         }
-        ancestor.__invalid = invalid;
-        ancestor.__field.notify();
+        ancestor._invalid = invalid;
+        ancestor._field.notify();
       }
     };
 
     const controller: FieldController = {
-      __parent: null,
-      __children: null,
-      __field: field,
-      __element: null,
-      __validity: null,
-      __invalid: false,
-      __error: '',
-      __notify: notify,
+      _parent: null,
+      _children: null,
+      _field: field,
+      _element: null,
+      _validity: null,
+      _invalid: false,
+      _error: '',
+      _notify: notify,
     };
 
     controllerMap.set(field, controller);
@@ -107,15 +107,15 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
     if (field.parent !== null) {
       const parent = controllerMap.get(field.parent)!;
 
-      controller.__parent = parent;
+      controller._parent = parent;
 
-      (parent.__children ||= []).push(controller);
+      (parent._children ||= []).push(controller);
     }
 
     const { refCallback } = field;
 
     const listener = (event: Event): void => {
-      if (controller.__element !== null && controller.__element === event.target) {
+      if (controller._element !== null && controller._element === event.target) {
         notify();
       }
     };
@@ -123,32 +123,32 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
     Object.defineProperties(field, {
       invalid: { enumerable: true, get: () => isInvalid(controller) },
       error: { enumerable: true, get: () => getError(controller) },
-      validity: { enumerable: true, get: () => controller.__validity },
+      validity: { enumerable: true, get: () => controller._validity },
     });
 
     field.refCallback = element => {
-      const { __element } = controller;
+      const { _element } = controller;
 
-      if (__element === element) {
+      if (_element === element) {
         refCallback?.(element);
         return;
       }
 
-      if (__element !== null) {
-        __element.removeEventListener('input', listener);
-        __element.removeEventListener('change', listener);
-        __element.removeEventListener('invalid', listener);
+      if (_element !== null) {
+        _element.removeEventListener('input', listener);
+        _element.removeEventListener('change', listener);
+        _element.removeEventListener('invalid', listener);
 
-        controller.__element = controller.__validity = null;
-        controller.__error = '';
+        controller._element = controller._validity = null;
+        controller._error = '';
       }
       if (isValidatable(element)) {
         element.addEventListener('input', listener);
         element.addEventListener('change', listener);
         element.addEventListener('invalid', listener);
 
-        controller.__element = element;
-        controller.__validity = element.validity;
+        controller._element = element;
+        controller._validity = element.validity;
       }
 
       refCallback?.(element);
@@ -182,65 +182,65 @@ type ValidatableElement =
   | HTMLTextAreaElement;
 
 interface FieldController {
-  __parent: FieldController | null;
-  __children: FieldController[] | null;
-  __field: Field;
-  __element: ValidatableElement | null;
-  __validity: ValidityState | null;
+  _parent: FieldController | null;
+  _children: FieldController[] | null;
+  _field: Field;
+  _element: ValidatableElement | null;
+  _validity: ValidityState | null;
 
   /**
    * The invalid status for which the field was notified the last time.
    */
-  __invalid: boolean;
+  _invalid: boolean;
 
   /**
    * An error that is used if the field doesn't have an associated element.
    */
-  __error: string;
+  _error: string;
 
   /**
    * Notifies the field about changes.
    */
-  __notify(): void;
+  _notify(): void;
 }
 
 /**
  * Sets a validation error to the field and notifies it.
  */
 function setError(controller: FieldController, error: string): void {
-  const { __element } = controller;
+  const { _element } = controller;
 
-  if (__element !== null) {
-    if (__element.validationMessage !== error) {
-      __element.setCustomValidity(error);
-      controller.__notify();
+  if (_element !== null) {
+    if (_element.validationMessage !== error) {
+      _element.setCustomValidity(error);
+      controller._notify();
     }
     return;
   }
 
-  if (controller.__error !== error) {
-    controller.__error = error;
-    controller.__notify();
+  if (controller._error !== error) {
+    controller._error = error;
+    controller._notify();
   }
 }
 
 function getError(controller: FieldController): string {
-  return (controller.__element !== null ? controller.__element.validationMessage : controller.__error) || null;
+  return (controller._element !== null ? controller._element.validationMessage : controller._error) || null;
 }
 
 function clearErrors(controller: FieldController): void {
   setError(controller, '');
 
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
+  if (controller._children !== null) {
+    for (const child of controller._children) {
       clearErrors(child);
     }
   }
 }
 
 function isInvalid(controller: FieldController): boolean {
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
+  if (controller._children !== null) {
+    for (const child of controller._children) {
       if (isInvalid(child)) {
         return true;
       }
@@ -250,14 +250,14 @@ function isInvalid(controller: FieldController): boolean {
 }
 
 function reportValidity(controller: FieldController): boolean {
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
+  if (controller._children !== null) {
+    for (const child of controller._children) {
       if (!reportValidity(child)) {
         return false;
       }
     }
   }
-  return controller.__element !== null ? controller.__element.reportValidity() : getError(controller) === null;
+  return controller._element !== null ? controller._element.reportValidity() : getError(controller) === null;
 }
 
 function isValidatable(element: Element | null): element is ValidatableElement {

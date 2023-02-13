@@ -67,56 +67,56 @@ export function scrollToErrorPlugin(): Plugin<ScrollToErrorMixin> {
     }
 
     const controller: FieldController = {
-      __parent: field.parent !== null ? controllerMap.get(field.parent)! : null,
-      __targetControllers: [],
-      __field: field,
-      __element: null,
+      _parent: field.parent !== null ? controllerMap.get(field.parent)! : null,
+      _targetControllers: [],
+      _field: field,
+      _element: null,
     };
 
     controllerMap.set(field, controller);
 
-    for (let ancestor: FieldController | null = controller; ancestor !== null; ancestor = ancestor.__parent) {
-      ancestor.__targetControllers!.push(controller);
+    for (let ancestor: FieldController | null = controller; ancestor !== null; ancestor = ancestor._parent) {
+      ancestor._targetControllers!.push(controller);
     }
 
     const { refCallback } = field;
 
     field.refCallback = element => {
-      controller.__element = element;
+      controller._element = element;
       refCallback?.(element);
     };
 
     field.scrollToError = (index = 0, options) => {
       const rtl = options === null || typeof options !== 'object' || options.direction !== 'ltr';
-      const controllers = controller.__targetControllers.filter(hasVisibleError);
+      const controllers = controller._targetControllers.filter(hasVisibleError);
       const targetController = sortByBoundingRect(controllers, rtl)[index < 0 ? controllers.length + index : index];
 
       if (targetController === undefined) {
         return false;
       }
-      targetController.__element!.scrollIntoView(options);
+      targetController._element!.scrollIntoView(options);
       return true;
     };
   };
 }
 
 interface FieldController {
-  __parent: FieldController | null;
+  _parent: FieldController | null;
 
   /**
    * The list of controllers that can be scrolled to.
    */
-  __targetControllers: FieldController[];
-  __field: Field & ScrollToErrorMixin;
-  __element: Element | null;
+  _targetControllers: FieldController[];
+  _field: Field & ScrollToErrorMixin;
+  _element: Element | null;
 }
 
 function hasVisibleError(controller: FieldController): boolean {
-  if (controller.__element === null || controller.__field.error === null) {
+  if (controller._element === null || controller._field.error === null) {
     return false;
   }
 
-  const rect = controller.__element.getBoundingClientRect();
+  const rect = controller._element.getBoundingClientRect();
 
   // Exclude non-displayed elements
   return rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0;
@@ -138,8 +138,8 @@ function sortByBoundingRect(controllers: FieldController[], rtl: boolean): Field
   const clientX = documentElement.clientLeft || body.clientLeft || 0;
 
   return controllers.sort((controller1, controller2) => {
-    const rect1 = controller1.__element!.getBoundingClientRect();
-    const rect2 = controller2.__element!.getBoundingClientRect();
+    const rect1 = controller1._element!.getBoundingClientRect();
+    const rect2 = controller2._element!.getBoundingClientRect();
 
     const y1 = Math.round(rect1.top + scrollY - clientY);
     const y2 = Math.round(rect2.top + scrollY - clientY);

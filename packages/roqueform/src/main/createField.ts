@@ -29,24 +29,24 @@ export function createField<T>(accessor: Accessor, initialValue: T): Field<T>;
 export function createField<T, M>(accessor: Accessor, initialValue: T, plugin: Plugin<M, NoInfer<T>>): Field<T, M> & M;
 
 export function createField(accessor: Accessor, initialValue?: unknown, plugin?: Plugin) {
-  return getOrCreateFieldController(accessor, null, null, initialValue, plugin).__field;
+  return getOrCreateFieldController(accessor, null, null, initialValue, plugin)._field;
 }
 
 interface FieldController {
-  __parent: FieldController | null;
+  _parent: FieldController | null;
 
   /**
    * The map from a child key to a corresponding controller.
    */
-  __childrenMap: Map<unknown, FieldController> | null;
-  __children: FieldController[] | null;
-  __field: Field;
-  __key: unknown;
-  __value: unknown;
-  __transient: boolean;
-  __accessor: Accessor;
+  _childrenMap: Map<unknown, FieldController> | null;
+  _children: FieldController[] | null;
+  _field: Field;
+  _key: unknown;
+  _value: unknown;
+  _transient: boolean;
+  _accessor: Accessor;
 
-  __notify(targetField: Field): void;
+  _notify(targetField: Field): void;
 }
 
 function getOrCreateFieldController(
@@ -59,34 +59,34 @@ function getOrCreateFieldController(
   let parent: Field | null = null;
 
   if (parentController !== null) {
-    const child = parentController.__childrenMap?.get(key);
+    const child = parentController._childrenMap?.get(key);
 
     if (child !== undefined) {
       return child;
     }
 
-    parent = parentController.__field;
-    initialValue = accessor.get(parentController.__value, key);
+    parent = parentController._field;
+    initialValue = accessor.get(parentController._value, key);
   }
 
   const listeners: Array<(targetField: Field, currentField: Field) => void> = [];
 
   const notify = (targetField: Field): void => {
-    callAll(listeners, targetField, controller.__field);
+    callAll(listeners, targetField, controller._field);
   };
 
   const field = {
     setValue(value) {
-      applyValue(controller, callOrGet(value, controller.__value), false);
+      applyValue(controller, callOrGet(value, controller._value), false);
     },
     setTransientValue(value) {
-      applyValue(controller, callOrGet(value, controller.__value), true);
+      applyValue(controller, callOrGet(value, controller._value), true);
     },
     dispatch() {
-      applyValue(controller, controller.__value, false);
+      applyValue(controller, controller._value, false);
     },
     at(key) {
-      return getOrCreateFieldController(controller.__accessor, controller, key, null, plugin).__field;
+      return getOrCreateFieldController(controller._accessor, controller, key, null, plugin)._field;
     },
     subscribe(listener) {
       if (typeof listener === 'function') {
@@ -97,75 +97,75 @@ function getOrCreateFieldController(
       };
     },
     notify() {
-      notify(controller.__field);
+      notify(controller._field);
     },
   } as Field;
 
   Object.defineProperties(field, {
     parent: { enumerable: true, value: parent },
     key: { enumerable: true, value: key },
-    value: { enumerable: true, get: () => controller.__value },
-    transient: { enumerable: true, get: () => controller.__transient },
+    value: { enumerable: true, get: () => controller._value },
+    transient: { enumerable: true, get: () => controller._transient },
   });
 
   const controller: FieldController = {
-    __parent: parentController,
-    __childrenMap: null,
-    __children: null,
-    __field: field,
-    __key: key,
-    __value: initialValue,
-    __transient: false,
-    __notify: notify,
-    __accessor: accessor,
+    _parent: parentController,
+    _childrenMap: null,
+    _children: null,
+    _field: field,
+    _key: key,
+    _value: initialValue,
+    _transient: false,
+    _notify: notify,
+    _accessor: accessor,
   };
 
   plugin?.(field, accessor);
 
   if (parentController !== null) {
-    (parentController.__childrenMap ||= new Map()).set(key, controller);
-    (parentController.__children ||= []).push(controller);
+    (parentController._childrenMap ||= new Map()).set(key, controller);
+    (parentController._children ||= []).push(controller);
   }
 
   return controller;
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-  if (isEqual(controller.__value, value) && controller.__transient === transient) {
+  if (isEqual(controller._value, value) && controller._transient === transient) {
     return;
   }
 
-  controller.__transient = transient;
+  controller._transient = transient;
 
   let rootController = controller;
 
-  while (rootController.__parent !== null && !rootController.__transient) {
-    const { __key } = rootController;
-    rootController = rootController.__parent;
-    value = controller.__accessor.set(rootController.__value, __key, value);
+  while (rootController._parent !== null && !rootController._transient) {
+    const { _key } = rootController;
+    rootController = rootController._parent;
+    value = controller._accessor.set(rootController._value, _key, value);
   }
 
-  callAll(propagateValue(controller, rootController, value, []), controller.__field);
+  callAll(propagateValue(controller, rootController, value, []), controller._field);
 }
 
 function propagateValue(
   targetController: FieldController,
   controller: FieldController,
   value: unknown,
-  notifyCallbacks: FieldController['__notify'][]
-): FieldController['__notify'][] {
-  notifyCallbacks.push(controller.__notify);
+  notifyCallbacks: FieldController['_notify'][]
+): FieldController['_notify'][] {
+  notifyCallbacks.push(controller._notify);
 
-  controller.__value = value;
+  controller._value = value;
 
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
-      if (child.__transient) {
+  if (controller._children !== null) {
+    for (const child of controller._children) {
+      if (child._transient) {
         continue;
       }
 
-      const childValue = controller.__accessor.get(value, child.__key);
-      if (child !== targetController && isEqual(child.__value, childValue)) {
+      const childValue = controller._accessor.get(value, child._key);
+      if (child !== targetController && isEqual(child._value, childValue)) {
         continue;
       }
       propagateValue(targetController, child, childValue, notifyCallbacks);
