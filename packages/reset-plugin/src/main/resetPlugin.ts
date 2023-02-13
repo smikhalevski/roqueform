@@ -44,7 +44,7 @@ export function resetPlugin(
 ): Plugin<ResetMixin> {
   const controllerMap = new WeakMap<Field, FieldController>();
 
-  return (field, accessor) => {
+  return (field, accessor, notify) => {
     if (controllerMap.has(field)) {
       return;
     }
@@ -58,6 +58,7 @@ export function resetPlugin(
       _initialValue: field.value,
       _accessor: accessor,
       _equalityChecker: equalityChecker,
+      _notify: notify,
     };
 
     controllerMap.set(field, controller);
@@ -101,6 +102,7 @@ interface FieldController {
   _initialValue: unknown;
   _accessor: Accessor;
   _equalityChecker: (initialValue: any, value: any) => boolean;
+  _notify: () => void;
 }
 
 function applyDirty(controller: FieldController): void {
@@ -127,9 +129,9 @@ function propagateInitialValue(
   targetController: FieldController,
   controller: FieldController,
   initialValue: unknown,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
-  notifyCallbacks.push(controller._field.notify);
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
+  notifyCallbacks.push(controller._notify);
 
   controller._initialValue = initialValue;
 

@@ -259,12 +259,6 @@ of its ancestors (if `field` is also a derived field).
 
 `currentField` is the field to which the listener is subscribed, so in this case it is `field`.
 
-You can trigger all listeners that are subscribed to the field with `notify`:
-
-```ts
-field.notify();
-```
-
 # `FieldRenderer`
 
 The `FieldRenderer` component subscribes to the given field instance and re-renders its children when the field is

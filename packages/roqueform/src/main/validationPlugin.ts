@@ -119,7 +119,7 @@ export function validationPlugin<E = any, O = void, T = any>(
 ): Plugin<ValidationMixin<E, O>, T> {
   const controllerMap = new WeakMap<Field, FieldController>();
 
-  return field => {
+  return (field, _accessor, notify) => {
     if (controllerMap.has(field)) {
       return;
     }
@@ -137,6 +137,7 @@ export function validationPlugin<E = any, O = void, T = any>(
       _validationNonce: 0,
       _abortController: null,
       _controllerMap: controllerMap,
+      _notify: notify,
     };
 
     controllerMap.set(field, controller);
@@ -242,6 +243,11 @@ interface FieldController {
    * The controller map that maps all fields to a corresponding controller.
    */
   _controllerMap: WeakMap<Field, FieldController>;
+
+  /**
+   * Synchronously notifies listeners of the field.
+   */
+  _notify: () => void;
 }
 
 /**
@@ -258,8 +264,8 @@ function setError(
   controller: FieldController,
   error: unknown,
   internal: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
   if (controller._errored && isEqual(controller._error, error) && controller._internal === internal) {
     return notifyCallbacks;
   }
@@ -267,7 +273,7 @@ function setError(
   controller._error = error;
   controller._internal = internal;
 
-  notifyCallbacks.push(controller._field.notify);
+  notifyCallbacks.push(controller._notify);
 
   if (controller._errored) {
     return notifyCallbacks;
@@ -278,7 +284,7 @@ function setError(
 
   for (let ancestor = controller._parent; ancestor !== null; ancestor = ancestor._parent) {
     if (ancestor._errorCount++ === 0) {
-      notifyCallbacks.push(ancestor._field.notify);
+      notifyCallbacks.push(ancestor._notify);
     }
   }
 
@@ -297,8 +303,8 @@ function setError(
 function deleteError(
   controller: FieldController,
   internal: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
   if (!controller._errored || (internal && !controller._internal)) {
     return notifyCallbacks;
   }
@@ -307,11 +313,11 @@ function deleteError(
   controller._errorCount--;
   controller._internal = controller._errored = false;
 
-  notifyCallbacks.push(controller._field.notify);
+  notifyCallbacks.push(controller._notify);
 
   for (let ancestor = controller._parent; ancestor !== null; ancestor = ancestor._parent) {
     if (--ancestor._errorCount === 0) {
-      notifyCallbacks.push(ancestor._field.notify);
+      notifyCallbacks.push(ancestor._notify);
     }
   }
 
@@ -330,8 +336,8 @@ function deleteError(
 function clearErrors(
   controller: FieldController,
   internal: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
   deleteError(controller, internal, notifyCallbacks);
 
   if (controller._children !== null) {
@@ -353,11 +359,11 @@ function clearErrors(
 function beginValidation(
   controller: FieldController,
   initiator: FieldController,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
   controller._initiator = initiator;
 
-  notifyCallbacks.push(controller._field.notify);
+  notifyCallbacks.push(controller._notify);
 
   if (controller._children !== null) {
     for (const child of controller._children) {
@@ -382,8 +388,8 @@ function endValidation(
   controller: FieldController,
   initiator: FieldController,
   aborted: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
   if (controller._initiator !== initiator) {
     return notifyCallbacks;
   }
@@ -397,7 +403,7 @@ function endValidation(
 
   controller._initiator = null;
 
-  notifyCallbacks.push(controller._field.notify);
+  notifyCallbacks.push(controller._notify);
 
   if (controller._children !== null) {
     for (const child of controller._children) {
@@ -415,7 +421,7 @@ function endValidation(
  * @returns The list of validation errors, or `null` if there are no errors.
  */
 function validate(controller: FieldController, options: unknown): any[] | null {
-  const notifyCallbacks: Field['notify'][] = [];
+  const notifyCallbacks: Array<() => void> = [];
 
   if (controller._initiator === controller) {
     endValidation(controller, controller, true, notifyCallbacks);
@@ -461,7 +467,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
  * @returns The list of validation errors, or `null` if there are no errors.
  */
 function validateAsync(controller: FieldController, options: unknown): Promise<any[] | null> {
-  const notifyCallbacks: Field['notify'][] = [];
+  const notifyCallbacks: Array<() => void> = [];
 
   if (controller._initiator === controller) {
     endValidation(controller, controller, true, notifyCallbacks);

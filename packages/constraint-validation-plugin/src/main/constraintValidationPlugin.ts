@@ -70,12 +70,12 @@ export interface ConstraintValidationMixin {
 export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> {
   const controllerMap = new WeakMap<Field, FieldController>();
 
-  return field => {
+  return (field, _accessor, notify) => {
     if (controllerMap.has(field)) {
       return;
     }
 
-    const notify = () => {
+    const notifyAncestors = () => {
       for (
         let invalid = false, ancestor: FieldController | null = controller;
         ancestor !== null;
@@ -87,7 +87,7 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
           break;
         }
         ancestor._invalid = invalid;
-        ancestor._field.notify();
+        ancestor._notify();
       }
     };
 
@@ -100,6 +100,7 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
       _invalid: false,
       _error: '',
       _notify: notify,
+      _notifyAncestors: notifyAncestors,
     };
 
     controllerMap.set(field, controller);
@@ -116,7 +117,7 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
 
     const listener = (event: Event): void => {
       if (controller._element !== null && controller._element === event.target) {
-        notify();
+        notifyAncestors();
       }
     };
 
@@ -152,7 +153,7 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
       }
 
       refCallback?.(element);
-      notify();
+      notifyAncestors();
     };
 
     field.setError = error => {
@@ -199,9 +200,14 @@ interface FieldController {
   _error: string;
 
   /**
-   * Notifies the field about changes.
+   * Synchronously notifies listeners of the field.
    */
-  _notify(): void;
+  _notify: () => void;
+
+  /**
+   * Notifies the field and its ancestors about changes.
+   */
+  _notifyAncestors: () => void;
 }
 
 /**
@@ -213,14 +219,14 @@ function setError(controller: FieldController, error: string): void {
   if (_element !== null) {
     if (_element.validationMessage !== error) {
       _element.setCustomValidity(error);
-      controller._notify();
+      controller._notifyAncestors();
     }
     return;
   }
 
   if (controller._error !== error) {
     controller._error = error;
-    controller._notify();
+    controller._notifyAncestors();
   }
 }
 

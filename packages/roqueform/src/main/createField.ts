@@ -45,8 +45,7 @@ interface FieldController {
   _value: unknown;
   _transient: boolean;
   _accessor: Accessor;
-
-  _notify(targetField: Field): void;
+  _notify: (targetField: Field) => void;
 }
 
 function getOrCreateFieldController(
@@ -96,9 +95,6 @@ function getOrCreateFieldController(
         listeners.splice(listeners.indexOf(listener), 1);
       };
     },
-    notify() {
-      notify(controller._field);
-    },
   } as Field;
 
   Object.defineProperties(field, {
@@ -120,7 +116,7 @@ function getOrCreateFieldController(
     _accessor: accessor,
   };
 
-  plugin?.(field, accessor);
+  plugin?.(field, accessor, () => notify(controller._field));
 
   if (parentController !== null) {
     (parentController._childrenMap ||= new Map()).set(key, controller);

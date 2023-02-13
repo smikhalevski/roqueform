@@ -1,4 +1,4 @@
-import { createField, objectAccessor } from '../main';
+import { createField, objectAccessor, Plugin } from '../main';
 
 describe('createField', () => {
   test('creates a field without an initial value', () => {
@@ -223,24 +223,13 @@ describe('createField', () => {
     expect(fooListenerMock).toHaveBeenCalledTimes(0);
   });
 
-  test('notifies subscribers', () => {
-    const listenerMock = jest.fn();
-
-    const field = createField(objectAccessor);
-    field.subscribe(listenerMock);
-
-    field.notify();
-
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-  });
-
   test('applies a plugin to the root field', () => {
     const pluginMock = jest.fn();
 
     const field = createField(objectAccessor, 111, pluginMock);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
   });
 
   test('returns a field if plugin returns undefined', () => {
@@ -251,7 +240,7 @@ describe('createField', () => {
     expect(field.value).toBe(111);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
   });
 
   test('applies a plugin to the derived field', () => {
@@ -262,11 +251,61 @@ describe('createField', () => {
     const fooField = field.at('foo');
 
     expect(pluginMock).toHaveBeenCalledTimes(2);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor);
-    expect(pluginMock).toHaveBeenNthCalledWith(2, fooField, objectAccessor);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(2, fooField, objectAccessor, expect.any(Function));
   });
 
-  test('actual parent value in derived field listener', done => {
+  test('plugin notifies field subscribers', () => {
+    let notifyCallback1!: () => void;
+
+    const plugin: Plugin = jest.fn().mockImplementationOnce((_field, _accessor, notify) => {
+      notifyCallback1 = notify;
+    });
+    const listenerMock1 = jest.fn();
+    const listenerMock2 = jest.fn();
+
+    const field = createField(objectAccessor, { foo: 111 }, plugin);
+
+    field.subscribe(listenerMock1);
+    field.at('foo').subscribe(listenerMock2);
+
+    expect(listenerMock1).not.toHaveBeenCalled();
+    expect(listenerMock2).not.toHaveBeenCalled();
+
+    notifyCallback1();
+
+    expect(listenerMock1).toHaveBeenCalledTimes(1);
+    expect(listenerMock2).not.toHaveBeenCalled();
+  });
+
+  test('plugin notifies derived field subscribers', () => {
+    let notifyCallback1!: () => void;
+
+    const plugin: Plugin = jest
+      .fn()
+      .mockImplementationOnce(() => undefined)
+      .mockImplementationOnce((_field, _accessor, notify) => {
+        notifyCallback1 = notify;
+      });
+
+    const listenerMock1 = jest.fn();
+    const listenerMock2 = jest.fn();
+
+    const field = createField(objectAccessor, { foo: 111 }, plugin);
+
+    field.subscribe(listenerMock1);
+    field.at('foo').subscribe(listenerMock2);
+
+    expect(listenerMock1).not.toHaveBeenCalled();
+    expect(listenerMock2).not.toHaveBeenCalled();
+
+    notifyCallback1();
+
+    expect(listenerMock1).not.toHaveBeenCalled();
+    expect(listenerMock2).toHaveBeenCalledTimes(1);
+  });
+
+  test('an actual parent value is visible in the derived field listener', done => {
     const field = createField(objectAccessor, { foo: 111 });
     const newValue = { foo: 222 };
 

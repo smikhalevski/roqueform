@@ -46,7 +46,7 @@ export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, 
 }
 
 /**
- * Referential equality checker that treats two `NaN` values as equal.
+ * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
  *
  * @param a The first value.
  * @param b The second value.

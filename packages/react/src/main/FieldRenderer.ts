@@ -18,9 +18,10 @@ export interface FieldRendererProps<F extends Field> {
   children: ((field: F) => ReactNode) | ReactNode;
 
   /**
-   * If set to `true` then `Field` is re-rendered whenever the {@linkcode field} is notified, so updates from ancestors
-   * and derived fields would trigger re-render, as well as {@linkcode Field.notify} calls on any of those. Otherwise,
-   * re-rendered only if field is notified explicitly, so the `targetField` is set to this field.
+   * If set to `true` then {@linkcode FieldRenderer} is re-rendered whenever the {@linkcode field} itself, its parent
+   * fields or descendant fields are updated. If set to `false` then {@linkcode FieldRenderer} re-rendered only if the
+   * field was directly changed (updates from parent and descendants are ignored, even if they affect the value of the
+   * field).
    *
    * @default false
    */

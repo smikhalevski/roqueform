@@ -1,143 +1,128 @@
-import React from 'react';
+import React, { createElement } from 'react';
 import { act, render } from '@testing-library/react';
 import { FieldRenderer, useField } from '../main';
-import { Field } from 'roqueform';
+import { Field, Plugin } from 'roqueform';
 
 describe('FieldRenderer', () => {
   test('passes the field as an argument', () => {
-    const Test = () => {
-      const rootField = useField({ foo: 'bar' });
+    render(
+      createElement(() => {
+        const rootField = useField({ foo: 'bar' });
 
-      return (
-        <FieldRenderer field={rootField.at('foo')}>
-          {field => {
-            expect(field).toBe(rootField.at('foo'));
-            return null;
-          }}
-        </FieldRenderer>
-      );
-    };
-
-    render(<Test />);
+        return (
+          <FieldRenderer field={rootField.at('foo')}>
+            {field => {
+              expect(field).toBe(rootField.at('foo'));
+              return null;
+            }}
+          </FieldRenderer>
+        );
+      })
+    );
   });
 
   test('re-renders if field value is changed externally', async () => {
-    let renderCount = 0;
+    const renderMock = jest.fn();
+
     let rootField!: Field;
 
-    const Test = () => {
-      rootField = useField();
+    render(
+      createElement(() => {
+        rootField = useField();
 
-      return (
-        <FieldRenderer field={rootField}>
-          {() => {
-            renderCount++;
-            return null;
-          }}
-        </FieldRenderer>
-      );
-    };
-
-    render(<Test />);
+        return <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>;
+      })
+    );
 
     await act(() => rootField.setValue(111));
 
-    expect(renderCount).toBe(2);
+    expect(renderMock).toHaveBeenCalledTimes(2);
   });
 
   test('re-renders if field is notified', async () => {
-    let renderCount = 0;
-    let rootField!: Field;
-
-    const Test = () => {
-      rootField = useField();
-
-      return (
-        <FieldRenderer field={rootField}>
-          {() => {
-            renderCount++;
-            return null;
-          }}
-        </FieldRenderer>
-      );
+    const renderMock = jest.fn();
+    const plugin: Plugin = (_field, _accessor, notify) => {
+      notifyCallback = notify;
     };
 
-    render(<Test />);
+    let rootField!: Field;
+    let notifyCallback!: () => void;
 
-    await act(() => rootField.notify());
+    render(
+      createElement(() => {
+        rootField = useField(undefined, plugin);
 
-    expect(renderCount).toBe(2);
+        return <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>;
+      })
+    );
+
+    await act(() => notifyCallback());
+
+    expect(renderMock).toHaveBeenCalledTimes(2);
   });
 
   test('does not re-render if derived field value is changed externally', async () => {
-    let renderCount = 0;
+    const renderMock = jest.fn();
+
     let rootField!: Field<{ foo: number }>;
 
-    const Test = () => {
-      rootField = useField({ foo: 111 });
+    render(
+      createElement(() => {
+        rootField = useField({ foo: 111 });
 
-      return (
-        <FieldRenderer field={rootField}>
-          {() => {
-            renderCount++;
-            return null;
-          }}
-        </FieldRenderer>
-      );
-    };
-
-    render(<Test />);
+        return <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>;
+      })
+    );
 
     await act(() => rootField.at('foo').setValue(222));
 
-    expect(renderCount).toBe(1);
+    expect(renderMock).toHaveBeenCalledTimes(1);
   });
 
   test('does not re-render if eagerlyUpdated and derived field value is changed externally', async () => {
-    let renderCount = 0;
+    const renderMock = jest.fn();
+
     let rootField!: Field<{ foo: number }>;
 
-    const Test = () => {
-      rootField = useField({ foo: 111 });
+    render(
+      createElement(() => {
+        rootField = useField({ foo: 111 });
 
-      return (
-        <FieldRenderer
-          field={rootField}
-          eagerlyUpdated={true}
-        >
-          {() => {
-            renderCount++;
-            return null;
-          }}
-        </FieldRenderer>
-      );
-    };
-
-    render(<Test />);
+        return (
+          <FieldRenderer
+            field={rootField}
+            eagerlyUpdated={true}
+          >
+            {renderMock}
+          </FieldRenderer>
+        );
+      })
+    );
 
     await act(() => rootField.at('foo').setValue(222));
 
-    expect(renderCount).toBe(2);
+    expect(renderMock).toHaveBeenCalledTimes(2);
   });
 
   test('triggers onChange handler when value is changed non-transiently', async () => {
-    let handleChangeMock = jest.fn();
+    const handleChangeMock = jest.fn();
+
     let rootField!: Field<{ foo: number }>;
 
-    const Test = () => {
-      rootField = useField({ foo: 111 });
+    render(
+      createElement(() => {
+        rootField = useField({ foo: 111 });
 
-      return (
-        <FieldRenderer
-          field={rootField.at('foo')}
-          onChange={handleChangeMock}
-        >
-          {() => null}
-        </FieldRenderer>
-      );
-    };
-
-    render(<Test />);
+        return (
+          <FieldRenderer
+            field={rootField.at('foo')}
+            onChange={handleChangeMock}
+          >
+            {() => null}
+          </FieldRenderer>
+        );
+      })
+    );
 
     await act(() => rootField.at('foo').setValue(222));
 
@@ -146,23 +131,24 @@ describe('FieldRenderer', () => {
   });
 
   test('triggers onChange handler when value is changed transiently', async () => {
-    let handleChangeMock = jest.fn();
+    const handleChangeMock = jest.fn();
+
     let rootField!: Field<{ foo: number }>;
 
-    const Test = () => {
-      rootField = useField({ foo: 111 });
+    render(
+      createElement(() => {
+        rootField = useField({ foo: 111 });
 
-      return (
-        <FieldRenderer
-          field={rootField.at('foo')}
-          onChange={handleChangeMock}
-        >
-          {() => null}
-        </FieldRenderer>
-      );
-    };
-
-    render(<Test />);
+        return (
+          <FieldRenderer
+            field={rootField.at('foo')}
+            onChange={handleChangeMock}
+          >
+            {() => null}
+          </FieldRenderer>
+        );
+      })
+    );
 
     await act(() => {
       rootField.at('foo').setTransientValue(222);
