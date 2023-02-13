@@ -3,27 +3,27 @@ import { applyPlugins, createField, objectAccessor } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
 import { refPlugin } from '@roqueform/ref-plugin';
 
-describe.skip('uncontrolledPlugin', () => {
-  let element: HTMLInputElement;
+describe('uncontrolledPlugin', () => {
+  let inputElement: HTMLInputElement;
 
   beforeEach(() => {
-    element = document.body.appendChild(document.createElement('input'));
+    inputElement = document.body.appendChild(document.createElement('input'));
   });
 
   afterEach(() => {
-    element.remove();
+    inputElement.remove();
   });
 
   test('updates field value on input change', () => {
     const listenerMock = jest.fn();
     const field = createField(objectAccessor, { foo: 0 }, applyPlugins(refPlugin(), uncontrolledPlugin()));
 
-    element.type = 'number';
+    inputElement.type = 'number';
 
     field.subscribe(listenerMock);
-    field.at('foo').refCallback(element);
+    field.at('foo').refCallback(inputElement);
 
-    fireEvent.change(element, { target: { value: '111' } });
+    fireEvent.change(inputElement, { target: { value: '111' } });
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
     expect(field.value).toEqual({ foo: 111 });
@@ -32,19 +32,19 @@ describe.skip('uncontrolledPlugin', () => {
   test('updates input value on field change', () => {
     const field = createField(objectAccessor, { foo: 0 }, applyPlugins(refPlugin(), uncontrolledPlugin()));
 
-    field.at('foo').refCallback(element);
+    field.at('foo').refCallback(inputElement);
     field.at('foo').setValue(111);
 
-    expect(element.value).toBe('111');
+    expect(inputElement.value).toBe('111');
   });
 
   test('sets the initial value to the element', () => {
     const field = createField(objectAccessor, { foo: 111 }, applyPlugins(refPlugin(), uncontrolledPlugin()));
 
-    element.type = 'number';
+    inputElement.type = 'number';
 
-    field.at('foo').refCallback(element);
+    field.at('foo').refCallback(inputElement);
 
-    expect(element.value).toBe('111');
+    expect(inputElement.value).toBe('111');
   });
 });
