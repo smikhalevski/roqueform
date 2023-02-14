@@ -3,12 +3,18 @@
  */
 export interface ElementValueAccessor {
   /**
-   * Retrieves value from the element.
+   * Retrieves value from elements that produce value for the field.
+   *
+   * @param elements The list of referenced elements, never empty.
+   * @return The value that elements represent.
    */
   get(elements: readonly Element[]): any;
 
   /**
-   * Sets value to the element.
+   * Sets value to elements controlled by the field.
+   *
+   * @param elements The list of referenced elements, never empty.
+   * @param value The value to assign to elements.
    */
   set(elements: readonly Element[], value: any): void;
 }
@@ -16,40 +22,38 @@ export interface ElementValueAccessor {
 /**
  * The opinionated element value accessor that applies following coercion rules:
  *
- * - Checkbox and radio inputs → boolean;
- * - Number → number, or `null` if empty;
- * - Range inputs → number;
- * - Date inputs → ISO formatted date, or `null` if empty;
+ * - Single checkboxes → boolean;
+ * - Multiple checkboxes → array of values of `value` attributes of checked checkboxes;
+ * - Radio buttons → `value` attribute of a radio button that is checked or `null` if no radio buttons are checked;
+ * - Number input → number, or `null` if empty;
+ * - Range input → number;
+ * - Date input → ISO formatted date, or `null` if empty;
  * - Image input → string value of the `src` attribute;
- * - File input → `File` or `null` if no file selected;
- * - Multi-file input → `FileList`;
+ * - File input → `File` or `null` if no file selected, file inputs are read-only;
+ * - Multi-file input → array of `File`;
  * - Others → `value` attribute, or `null` if element doesn't support it;
  * - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
  */
 export const elementValueAccessor: ElementValueAccessor = {
   get(elements: any[]): any {
-    if (elements.length === 0) {
-      return undefined;
-    }
-
     const element = elements[0];
+    const { type, valueAsNumber } = element;
 
     if (element.tagName !== 'INPUT') {
       return 'value' in element ? element.value : null;
     }
 
-    const { type, valueAsNumber } = element;
-
     if (type === 'checkbox') {
       if (elements.length === 1) {
         return element.checked;
       }
-      return elements.reduce<any[]>((values, element) => {
+      const values = [];
+      for (const element of elements) {
         if (element.tagName === 'INPUT' && element.type === 'checkbox' && element.checked) {
           values.push(element.value);
         }
-        return values;
-      }, []);
+      }
+      return values;
     }
 
     if (type === 'radio') {
@@ -71,7 +75,7 @@ export const elementValueAccessor: ElementValueAccessor = {
       return element.src;
     }
     if (type === 'file') {
-      return element.multiple ? element.files : element.files.length === 1 ? element.files.item(0) : null;
+      return element.multiple ? toArray(element.files) : element.files.length === 1 ? element.files.item(0) : null;
     }
 
     return element.value;
@@ -79,24 +83,24 @@ export const elementValueAccessor: ElementValueAccessor = {
 
   set(elements: any[], value: any): void {
     const element = elements[0];
+    const { type } = element;
 
     if (element.tagName !== 'INPUT') {
       if ('value' in element) {
-        element.value = toSafeString(value);
+        element.value = toString(value);
       }
       return;
     }
 
-    const { type } = element;
-
     if (type === 'checkbox') {
       for (const element of elements) {
         if (element.tagName === 'INPUT' && element.type === 'checkbox') {
-          if (Array.isArray(value)) {
-            element.checked = value.indexOf(element.value) !== -1;
-          } else {
-            element.checked = typeof value === 'boolean' ? value : element.value === value;
-          }
+          // prettier-ignore
+          element.checked =
+            Array.isArray(value) ? value.indexOf(element.value) !== -1 :
+            typeof value === 'boolean' ? value :
+            typeof value === 'string' ? element.value === value :
+            false;
         }
       }
       return;
@@ -120,14 +124,18 @@ export const elementValueAccessor: ElementValueAccessor = {
       return;
     }
     if (type === 'image') {
-      element.src = toSafeString(value);
+      element.src = toString(value);
+      return;
+    }
+    if (type === 'file') {
       return;
     }
     if (type !== 'date') {
-      element.value = toSafeString(value);
+      element.value = toString(value);
       return;
     }
 
+    // Date input
     if (typeof value === 'string') {
       value = new Date(value);
     }
@@ -139,9 +147,17 @@ export const elementValueAccessor: ElementValueAccessor = {
   },
 };
 
-function toSafeString(value: any): string {
+function toString(value: any): string {
   if (value === null || value === undefined || value !== value || value === Infinity || value === -Infinity) {
     return '';
   }
   return value;
+}
+
+function toArray(values: ArrayLike<any>): any[] {
+  const arr = [];
+  for (let i = 0; i < values.length; ++i) {
+    arr.push(values[i]);
+  }
+  return arr;
 }

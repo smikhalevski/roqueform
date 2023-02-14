@@ -1,4 +1,5 @@
 import { Plugin } from 'roqueform';
+import isDeepEqual from 'fast-deep-equal';
 import { elementValueAccessor } from './elementValueAccessor';
 
 /**
@@ -53,8 +54,12 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
     });
 
     const changeListener = (event: Event): void => {
-      if (elements.indexOf(event.target as Element) !== -1) {
-        setValue(accessor.get(elements));
+      let value;
+      if (
+        elements.indexOf(event.target as Element) !== -1 &&
+        !isDeepEqual((value = accessor.get(elements)), field.value)
+      ) {
+        setValue(value);
       }
     };
 
