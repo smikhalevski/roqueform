@@ -5,12 +5,12 @@ export interface ElementValueAccessor {
   /**
    * Retrieves value from the element.
    */
-  get(element: Element): any;
+  get(elements: readonly Element[]): any;
 
   /**
    * Sets value to the element.
    */
-  set(element: Element, value: any): void;
+  set(elements: readonly Element[], value: any): void;
 }
 
 /**
@@ -27,16 +27,40 @@ export interface ElementValueAccessor {
  * - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
  */
 export const elementValueAccessor: ElementValueAccessor = {
-  get(element: any): any {
+  get(elements: any[]): any {
+    if (elements.length === 0) {
+      return undefined;
+    }
+
+    const element = elements[0];
+
     if (element.tagName !== 'INPUT') {
       return 'value' in element ? element.value : null;
     }
 
     const { type, valueAsNumber } = element;
 
-    if (type === 'checkbox' || type === 'radio') {
-      return element.checked;
+    if (type === 'checkbox') {
+      if (elements.length === 1) {
+        return element.checked;
+      }
+      return elements.reduce<any[]>((values, element) => {
+        if (element.tagName === 'INPUT' && element.type === 'checkbox' && element.checked) {
+          values.push(element.value);
+        }
+        return values;
+      }, []);
     }
+
+    if (type === 'radio') {
+      for (const element of elements) {
+        if (element.tagName === 'INPUT' && element.type === 'radio' && element.checked) {
+          return element.value;
+        }
+      }
+      return null;
+    }
+
     if (type === 'number' || type === 'range') {
       return valueAsNumber !== valueAsNumber ? null : valueAsNumber;
     }
@@ -53,7 +77,9 @@ export const elementValueAccessor: ElementValueAccessor = {
     return element.value;
   },
 
-  set(element: any, value: any): void {
+  set(elements: any[], value: any): void {
+    const element = elements[0];
+
     if (element.tagName !== 'INPUT') {
       if ('value' in element) {
         element.value = toSafeString(value);
@@ -63,10 +89,28 @@ export const elementValueAccessor: ElementValueAccessor = {
 
     const { type } = element;
 
-    if (type === 'checkbox' || type === 'radio') {
-      element.checked = value;
+    if (type === 'checkbox') {
+      for (const element of elements) {
+        if (element.tagName === 'INPUT' && element.type === 'checkbox') {
+          if (Array.isArray(value)) {
+            element.checked = value.indexOf(element.value) !== -1;
+          } else {
+            element.checked = typeof value === 'boolean' ? value : element.value === value;
+          }
+        }
+      }
       return;
     }
+
+    if (type === 'radio') {
+      for (const element of elements) {
+        if (element.tagName === 'INPUT' && element.type === 'radio') {
+          element.checked = element.value === value;
+        }
+      }
+      return;
+    }
+
     if (type === 'number' || type === 'range') {
       if (isFinite(value)) {
         element.valueAsNumber = value;
@@ -95,6 +139,9 @@ export const elementValueAccessor: ElementValueAccessor = {
   },
 };
 
-function toSafeString(value: any): boolean {
-  return value == null || value !== value || value === Infinity || value === -Infinity ? '' : value;
+function toSafeString(value: any): string {
+  if (value === null || value === undefined || value !== value || value === Infinity || value === -Infinity) {
+    return '';
+  }
+  return value;
 }

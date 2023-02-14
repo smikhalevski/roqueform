@@ -14,55 +14,84 @@ export interface UncontrolledMixin {
 /**
  * Updates field value when the DOM element value is changed and vice versa.
  *
- * @param accessor The accessor that reads and writes value to and from the DOM element.
+ * @param accessor The accessor that reads and writes value to and from the DOM elements managed by the filed.
  */
 export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<UncontrolledMixin> {
   return field => {
     const { setValue, setTransientValue, refCallback } = field;
 
+    const elements: Element[] = [];
+
     let targetElement: Element | null = null;
 
-    const listener = (event: Event): void => {
-      if (targetElement !== null && event.target === targetElement) {
-        setValue(accessor.get(targetElement));
+    const mutationObserver = new MutationObserver((mutations: MutationRecord[]) => {
+      for (const mutation of mutations) {
+        for (let i = 0; i < mutation.removedNodes.length; ++i) {
+          const j = elements.indexOf(mutation.removedNodes.item(i) as Element);
+          if (j === -1) {
+            continue;
+          }
+
+          elements[j].removeEventListener('input', changeListener);
+          elements[j].removeEventListener('change', changeListener);
+
+          elements.splice(j, 1);
+        }
+      }
+
+      if (elements.length === 0) {
+        mutationObserver.disconnect();
+        targetElement = null;
+        refCallback?.(targetElement);
+        return;
+      }
+
+      if (targetElement !== elements[0]) {
+        targetElement = elements[0];
+        refCallback?.(targetElement);
+      }
+    });
+
+    const changeListener = (event: Event): void => {
+      if (elements.indexOf(event.target as Element) !== -1) {
+        setValue(accessor.get(elements));
+      }
+    };
+
+    field.refCallback = element => {
+      if (element === null || elements.indexOf(element) !== -1) {
+        return;
+      }
+
+      element.addEventListener('input', changeListener);
+      element.addEventListener('change', changeListener);
+
+      elements.push(element);
+
+      accessor.set(elements, field.value);
+
+      if (element.parentNode) {
+        mutationObserver.observe(element.parentNode, { childList: true });
+      }
+
+      if (elements.length === 0) {
+        targetElement = elements[0];
+        refCallback?.(targetElement);
       }
     };
 
     field.setValue = value => {
-      if (targetElement !== null) {
-        accessor.set(targetElement, value);
+      if (elements.length !== 0) {
+        accessor.set(elements, value);
       }
       setValue(value);
     };
 
     field.setTransientValue = value => {
-      if (targetElement !== null) {
-        accessor.set(targetElement, value);
+      if (elements.length !== 0) {
+        accessor.set(elements, value);
       }
       setTransientValue(value);
-    };
-
-    field.refCallback = element => {
-      if (targetElement === element) {
-        refCallback?.(targetElement);
-        return;
-      }
-
-      if (targetElement !== null) {
-        targetElement.removeEventListener('input', listener);
-        targetElement.removeEventListener('change', listener);
-
-        targetElement = null;
-      }
-      if (element instanceof Element) {
-        element.addEventListener('input', listener);
-        element.addEventListener('change', listener);
-
-        targetElement = element;
-        accessor.set(targetElement, field.value);
-      }
-
-      refCallback?.(targetElement);
     };
   };
 }
