@@ -122,8 +122,8 @@ export interface Field<T = any, M = unknown> {
   subscribe(
     /**
      * @param targetField The field that triggered the update. This can be ancestor ot descendant field.
-     * @param currentField The field to which this listener is subscribed.
+     * @param field The field to which this listener is subscribed.
      */
-    listener: (updatedField: Field<any, M> & M, currentField: Field<T, M> & M) => void
+    listener: (targetField: Field<any, M> & M, field: Field<T, M> & M) => void
   ): () => void;
 }

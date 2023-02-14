@@ -19,7 +19,7 @@ export interface UncontrolledMixin {
  */
 export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<UncontrolledMixin> {
   return field => {
-    const { setValue, setTransientValue, refCallback } = field;
+    const { refCallback } = field;
 
     const elements: Element[] = [];
 
@@ -59,7 +59,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
         elements.indexOf(event.target as Element) !== -1 &&
         !isDeepEqual((value = accessor.get(elements)), field.value)
       ) {
-        setValue(value);
+        field.setValue(value);
       }
     };
 
@@ -85,18 +85,10 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
       }
     };
 
-    field.setValue = value => {
+    field.subscribe(() => {
       if (elements.length !== 0) {
-        accessor.set(elements, value);
+        accessor.set(elements, field.value);
       }
-      setValue(value);
-    };
-
-    field.setTransientValue = value => {
-      if (elements.length !== 0) {
-        accessor.set(elements, value);
-      }
-      setTransientValue(value);
-    };
+    });
   };
 }
