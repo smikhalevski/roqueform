@@ -79,7 +79,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
         mutationObserver.observe(element.parentNode, { childList: true });
       }
 
-      if (elements.length === 0) {
+      if (elements.length === 1) {
         targetElement = elements[0];
         refCallback?.(targetElement);
       }
