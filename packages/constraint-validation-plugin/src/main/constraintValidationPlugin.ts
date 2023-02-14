@@ -5,7 +5,7 @@ import { Field, Plugin } from 'roqueform';
  */
 export interface ConstraintValidationMixin {
   /**
-   * An error associated with the field, en empty string if there's no error.
+   * An error associated with the field, or `null` if there's no error.
    */
   readonly error: string | null;
 
