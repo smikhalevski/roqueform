@@ -1,6 +1,7 @@
 # Reset plugin for Roqueform
 
-Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with methods that manage the initial value.
+Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with methods that manage the initial
+value.
 
 ```sh
 npm install --save-prod @roqueform/reset-plugin

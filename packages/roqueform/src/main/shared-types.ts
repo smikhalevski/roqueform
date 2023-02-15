@@ -5,15 +5,19 @@
  */
 export type NoInfer<T> = T extends infer T ? T : never;
 
-declare const rootValue: unique symbol;
+/**
+ * @internal
+ */
+declare const ROOT_VALUE: unique symbol;
 
 /**
  * The callback that enhances the field.
  *
- * The plugin should mutate the passed field instance.
+ * The plugin should _mutate_ the passed field instance.
  *
  * @param field The field that must be enhanced.
  * @param accessor The accessor that reads and writes object properties.
+ * @param notify Synchronously notifies listeners of the field.
  * @template M The mixin added by the plugin.
  * @template T The root field value.
  */
@@ -21,9 +25,9 @@ export interface Plugin<M = unknown, T = any> {
   /**
    * @internal
    */
-  [rootValue]?: T;
+  [ROOT_VALUE]?: T;
 
-  (field: Field & M, accessor: Accessor): void;
+  (field: Field & M, accessor: Accessor, notify: () => void): void;
 }
 
 /**
@@ -117,14 +121,9 @@ export interface Field<T = any, M = unknown> {
    */
   subscribe(
     /**
-     * @param targetField The field that was the origin of the update, or where {@linkcode Field.notify} was called.
-     * @param currentField The field to which the listener is subscribed.
+     * @param targetField The field that triggered the update. This can be ancestor ot descendant field.
+     * @param field The field to which this listener is subscribed.
      */
-    listener: (targetField: Field<any, M> & M, currentField: Field<T, M> & M) => void
+    listener: (targetField: Field<any, M> & M, field: Field<T, M> & M) => void
   ): () => void;
-
-  /**
-   * Triggers listeners of the field.
-   */
-  notify(): void;
 }

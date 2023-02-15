@@ -45,9 +45,9 @@ export function applyPlugins<T, A, B, C, D, E, F>(
 ): Plugin<A & B & C & D & E & F, T>;
 
 export function applyPlugins(...plugins: Plugin[]): Plugin {
-  return (field, accessor) => {
+  return (field, accessor, notify) => {
     for (const plugin of plugins) {
-      plugin(field, accessor);
+      plugin(field, accessor, notify);
     }
     return field;
   };

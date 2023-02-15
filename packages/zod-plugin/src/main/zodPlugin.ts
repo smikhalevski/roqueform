@@ -19,10 +19,10 @@ export interface ZodMixin extends ValidationMixin<ZodIssue, Partial<ParseParams>
 export function zodPlugin<T>(type: ZodType<any, any, T>, errorMap?: ZodErrorMap): Plugin<ZodMixin, T> {
   let plugin: Plugin<any>;
 
-  return (field, accessor) => {
+  return (field, accessor, notify) => {
     plugin ||= createValidationPlugin(type, errorMap, accessor);
 
-    plugin(field, accessor);
+    plugin(field, accessor, notify);
 
     const { setError } = field;
 

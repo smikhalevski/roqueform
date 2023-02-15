@@ -2,8 +2,8 @@
   "name": "@roqueform/doubter-plugin",
   "version": "1.0.0",
   "description": "Enhances Roqueform fields with validation methods powered by Doubter.",
-  "main": "./lib/index-cjs.js",
-  "module": "./lib/index.js",
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
@@ -14,10 +14,10 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --project ./tsconfig.build.json && npm run build:rollup",
-    "build:rollup": "rollup --external roqueform,doubter --input ./lib/index.js --file ./lib/index-cjs.js --format cjs --plugin @rollup/plugin-node-resolve",
-    "clean": "rimraf './lib'",
-    "test": "tsd --files './src/test/**/*.test-d.ts' && jest"
+    "build": "rollup --config ../../rollup.config.mjs",
+    "clean": "rimraf ./lib",
+    "test": "jest --config ../../jest.config.js",
+    "test:definitions": "tsd --files './src/test/**/*.test-d.ts'"
   },
   "repository": {
     "type": "git",

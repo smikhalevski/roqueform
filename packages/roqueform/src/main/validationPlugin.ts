@@ -119,24 +119,25 @@ export function validationPlugin<E = any, O = void, T = any>(
 ): Plugin<ValidationMixin<E, O>, T> {
   const controllerMap = new WeakMap<Field, FieldController>();
 
-  return field => {
+  return (field, _accessor, notify) => {
     if (controllerMap.has(field)) {
       return;
     }
 
     const controller: FieldController = {
-      __parent: null,
-      __children: null,
-      __field: field,
-      __errorCount: 0,
-      __errored: false,
-      __error: null,
-      __internal: false,
-      __validator: typeof validator === 'function' ? { validate: validator } : validator,
-      __initiator: null,
-      __validationNonce: 0,
-      __abortController: null,
-      __controllerMap: controllerMap,
+      _parent: null,
+      _children: null,
+      _field: field,
+      _errorCount: 0,
+      _errored: false,
+      _error: null,
+      _internal: false,
+      _validator: typeof validator === 'function' ? { validate: validator } : validator,
+      _initiator: null,
+      _validationNonce: 0,
+      _abortController: null,
+      _controllerMap: controllerMap,
+      _notify: notify,
     };
 
     controllerMap.set(field, controller);
@@ -144,24 +145,24 @@ export function validationPlugin<E = any, O = void, T = any>(
     if (field.parent !== null) {
       const parent = controllerMap.get(field.parent)!;
 
-      controller.__parent = parent;
-      controller.__initiator = parent.__initiator;
+      controller._parent = parent;
+      controller._initiator = parent._initiator;
 
-      (parent.__children ||= []).push(controller);
+      (parent._children ||= []).push(controller);
     }
 
     const { setTransientValue, setValue } = field;
 
     Object.defineProperties(field, {
-      error: { enumerable: true, get: () => controller.__error },
-      invalid: { enumerable: true, get: () => controller.__errorCount !== 0 },
-      validating: { enumerable: true, get: () => controller.__initiator !== null },
+      error: { enumerable: true, get: () => controller._error },
+      invalid: { enumerable: true, get: () => controller._errorCount !== 0 },
+      validating: { enumerable: true, get: () => controller._initiator !== null },
     });
 
     field.setTransientValue = value => {
       try {
-        if (controller.__initiator !== null) {
-          callAll(endValidation(controller, controller.__initiator, true, []));
+        if (controller._initiator !== null) {
+          callAll(endValidation(controller, controller._initiator, true, []));
         }
       } finally {
         setTransientValue(value);
@@ -170,8 +171,8 @@ export function validationPlugin<E = any, O = void, T = any>(
 
     field.setValue = value => {
       try {
-        if (controller.__initiator !== null) {
-          callAll(endValidation(controller, controller.__initiator, true, []));
+        if (controller._initiator !== null) {
+          callAll(endValidation(controller, controller._initiator, true, []));
         }
       } finally {
         setValue(value);
@@ -201,47 +202,52 @@ export function validationPlugin<E = any, O = void, T = any>(
 }
 
 interface FieldController {
-  __parent: FieldController | null;
-  __children: FieldController[] | null;
-  __field: Field;
+  _parent: FieldController | null;
+  _children: FieldController[] | null;
+  _field: Field;
 
   /**
    * The total number of errors associated with the field and its derived fields.
    */
-  __errorCount: number;
+  _errorCount: number;
 
   /**
    * `true` if this field has an associated error, or `false` otherwise.
    */
-  __errored: boolean;
-  __error: unknown | null;
+  _errored: boolean;
+  _error: unknown | null;
 
   /**
    * `true` if an error was set internally by {@linkcode ValidationMixin.validate}, or `false` if an issue was set by
    * the user through {@linkcode ValidationMixin.setError}.
    */
-  __internal: boolean;
-  __validator: Validator<unknown, unknown>;
+  _internal: boolean;
+  _validator: Validator<unknown, unknown>;
 
   /**
    * The controller that initiated the subtree validation, or `null` if there's no pending validation.
    */
-  __initiator: FieldController | null;
+  _initiator: FieldController | null;
 
   /**
-   * The number that is incremented every time a validation is started for {@linkcode __field}.
+   * The number that is incremented every time a validation is started for {@linkcode _field}.
    */
-  __validationNonce: number;
+  _validationNonce: number;
 
   /**
    * The abort controller that aborts the signal passed to {@linkcode Validator.validateAsync}.
    */
-  __abortController: AbortController | null;
+  _abortController: AbortController | null;
 
   /**
    * The controller map that maps all fields to a corresponding controller.
    */
-  __controllerMap: WeakMap<Field, FieldController>;
+  _controllerMap: WeakMap<Field, FieldController>;
+
+  /**
+   * Synchronously notifies listeners of the field.
+   */
+  _notify: () => void;
 }
 
 /**
@@ -258,27 +264,27 @@ function setError(
   controller: FieldController,
   error: unknown,
   internal: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
-  if (controller.__errored && isEqual(controller.__error, error) && controller.__internal === internal) {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
+  if (controller._errored && isEqual(controller._error, error) && controller._internal === internal) {
     return notifyCallbacks;
   }
 
-  controller.__error = error;
-  controller.__internal = internal;
+  controller._error = error;
+  controller._internal = internal;
 
-  notifyCallbacks.push(controller.__field.notify);
+  notifyCallbacks.push(controller._notify);
 
-  if (controller.__errored) {
+  if (controller._errored) {
     return notifyCallbacks;
   }
 
-  controller.__errorCount++;
-  controller.__errored = true;
+  controller._errorCount++;
+  controller._errored = true;
 
-  for (let ancestor = controller.__parent; ancestor !== null; ancestor = ancestor.__parent) {
-    if (ancestor.__errorCount++ === 0) {
-      notifyCallbacks.push(ancestor.__field.notify);
+  for (let ancestor = controller._parent; ancestor !== null; ancestor = ancestor._parent) {
+    if (ancestor._errorCount++ === 0) {
+      notifyCallbacks.push(ancestor._notify);
     }
   }
 
@@ -297,21 +303,21 @@ function setError(
 function deleteError(
   controller: FieldController,
   internal: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
-  if (!controller.__errored || (internal && !controller.__internal)) {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
+  if (!controller._errored || (internal && !controller._internal)) {
     return notifyCallbacks;
   }
 
-  controller.__error = null;
-  controller.__errorCount--;
-  controller.__internal = controller.__errored = false;
+  controller._error = null;
+  controller._errorCount--;
+  controller._internal = controller._errored = false;
 
-  notifyCallbacks.push(controller.__field.notify);
+  notifyCallbacks.push(controller._notify);
 
-  for (let ancestor = controller.__parent; ancestor !== null; ancestor = ancestor.__parent) {
-    if (--ancestor.__errorCount === 0) {
-      notifyCallbacks.push(ancestor.__field.notify);
+  for (let ancestor = controller._parent; ancestor !== null; ancestor = ancestor._parent) {
+    if (--ancestor._errorCount === 0) {
+      notifyCallbacks.push(ancestor._notify);
     }
   }
 
@@ -330,12 +336,12 @@ function deleteError(
 function clearErrors(
   controller: FieldController,
   internal: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
   deleteError(controller, internal, notifyCallbacks);
 
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
+  if (controller._children !== null) {
+    for (const child of controller._children) {
       clearErrors(child, internal, notifyCallbacks);
     }
   }
@@ -353,15 +359,15 @@ function clearErrors(
 function beginValidation(
   controller: FieldController,
   initiator: FieldController,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
-  controller.__initiator = initiator;
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
+  controller._initiator = initiator;
 
-  notifyCallbacks.push(controller.__field.notify);
+  notifyCallbacks.push(controller._notify);
 
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
-      if (!child.__field.transient) {
+  if (controller._children !== null) {
+    for (const child of controller._children) {
+      if (!child._field.transient) {
         beginValidation(child, initiator, notifyCallbacks);
       }
     }
@@ -382,25 +388,25 @@ function endValidation(
   controller: FieldController,
   initiator: FieldController,
   aborted: boolean,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
-  if (controller.__initiator !== initiator) {
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
+  if (controller._initiator !== initiator) {
     return notifyCallbacks;
   }
 
-  if (controller.__abortController !== null) {
+  if (controller._abortController !== null) {
     if (aborted) {
-      controller.__abortController.abort();
+      controller._abortController.abort();
     }
-    controller.__abortController = null;
+    controller._abortController = null;
   }
 
-  controller.__initiator = null;
+  controller._initiator = null;
 
-  notifyCallbacks.push(controller.__field.notify);
+  notifyCallbacks.push(controller._notify);
 
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
+  if (controller._children !== null) {
+    for (const child of controller._children) {
       endValidation(child, initiator, aborted, notifyCallbacks);
     }
   }
@@ -415,25 +421,25 @@ function endValidation(
  * @returns The list of validation errors, or `null` if there are no errors.
  */
 function validate(controller: FieldController, options: unknown): any[] | null {
-  const notifyCallbacks: Field['notify'][] = [];
+  const notifyCallbacks: Array<() => void> = [];
 
-  if (controller.__initiator === controller) {
+  if (controller._initiator === controller) {
     endValidation(controller, controller, true, notifyCallbacks);
   }
 
   clearErrors(controller, true, notifyCallbacks);
   beginValidation(controller, controller, notifyCallbacks);
 
-  const validationNonce = ++controller.__validationNonce;
+  const validationNonce = ++controller._validationNonce;
 
   let errors: unknown[] | null = null;
 
   const setInternalError = (targetField: Field, error: unknown): void => {
-    const targetController = controller.__controllerMap.get(targetField);
+    const targetController = controller._controllerMap.get(targetField);
     if (
       targetController !== undefined &&
-      targetController.__initiator === controller &&
-      controller.__validationNonce === validationNonce
+      targetController._initiator === controller &&
+      controller._validationNonce === validationNonce
     ) {
       (errors ||= []).push(error);
       setError(targetController, error, true, notifyCallbacks);
@@ -441,7 +447,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
   };
 
   try {
-    controller.__validator.validate(controller.__field, setInternalError, options);
+    controller._validator.validate(controller._field, setInternalError, options);
   } catch (e) {
     try {
       callAll(endValidation(controller, controller, false, notifyCallbacks));
@@ -461,42 +467,42 @@ function validate(controller: FieldController, options: unknown): any[] | null {
  * @returns The list of validation errors, or `null` if there are no errors.
  */
 function validateAsync(controller: FieldController, options: unknown): Promise<any[] | null> {
-  const notifyCallbacks: Field['notify'][] = [];
+  const notifyCallbacks: Array<() => void> = [];
 
-  if (controller.__initiator === controller) {
+  if (controller._initiator === controller) {
     endValidation(controller, controller, true, notifyCallbacks);
   }
 
   clearErrors(controller, true, notifyCallbacks);
   beginValidation(controller, controller, notifyCallbacks);
 
-  controller.__abortController = new AbortController();
+  controller._abortController = new AbortController();
 
-  const abortSignal = controller.__abortController.signal;
-  const validationNonce = ++controller.__validationNonce;
+  const abortSignal = controller._abortController.signal;
+  const validationNonce = ++controller._validationNonce;
 
   callAll(notifyCallbacks);
 
   let errors: unknown[] | null = null;
 
   const setInternalError = (targetField: Field, error: unknown): void => {
-    const targetController = controller.__controllerMap.get(targetField);
+    const targetController = controller._controllerMap.get(targetField);
     if (
       targetController !== undefined &&
-      targetController.__initiator === controller &&
-      controller.__validationNonce === validationNonce
+      targetController._initiator === controller &&
+      controller._validationNonce === validationNonce
     ) {
       (errors ||= []).push(error);
       callAll(setError(targetController, error, true, []));
     }
   };
 
-  const { validate, validateAsync = validate } = controller.__validator;
+  const { validate, validateAsync = validate } = controller._validator;
 
   return Promise.race([
     new Promise(resolve => {
       // noinspection JSVoidFunctionReturnValueUsed
-      resolve(validateAsync(controller.__field, setInternalError, options, abortSignal));
+      resolve(validateAsync(controller._field, setInternalError, options, abortSignal));
     }),
     new Promise((_resolve, reject) => {
       abortSignal.addEventListener('abort', () => reject(new Error('Validation aborted')));

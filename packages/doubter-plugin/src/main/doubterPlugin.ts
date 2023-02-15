@@ -19,8 +19,8 @@ export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
 export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<DoubterMixin, T> {
   const plugin = createValidationPlugin(shape);
 
-  return (field, accessor) => {
-    plugin(field, accessor);
+  return (field, accessor, notify) => {
+    plugin(field, accessor, notify);
 
     const { setError } = field;
 

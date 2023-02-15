@@ -44,20 +44,21 @@ export function resetPlugin(
 ): Plugin<ResetMixin> {
   const controllerMap = new WeakMap<Field, FieldController>();
 
-  return (field, accessor) => {
+  return (field, accessor, notify) => {
     if (controllerMap.has(field)) {
       return;
     }
 
     const controller: FieldController = {
-      __parent: null,
-      __children: null,
-      __field: field,
-      __key: field.key,
-      __dirty: false,
-      __initialValue: field.value,
-      __accessor: accessor,
-      __equalityChecker: equalityChecker,
+      _parent: null,
+      _children: null,
+      _field: field,
+      _key: field.key,
+      _dirty: false,
+      _initialValue: field.value,
+      _accessor: accessor,
+      _equalityChecker: equalityChecker,
+      _notify: notify,
     };
 
     controllerMap.set(field, controller);
@@ -65,15 +66,15 @@ export function resetPlugin(
     if (field.parent !== null) {
       const parent = controllerMap.get(field.parent)!;
 
-      controller.__parent = parent;
-      controller.__initialValue = accessor.get(parent.__initialValue, controller.__key);
+      controller._parent = parent;
+      controller._initialValue = accessor.get(parent._initialValue, controller._key);
 
-      (parent.__children ||= []).push(controller);
+      (parent._children ||= []).push(controller);
     }
 
     Object.defineProperties(field, {
-      dirty: { enumerable: true, get: () => controller.__dirty },
-      initialValue: { enumerable: true, get: () => controller.__initialValue },
+      dirty: { enumerable: true, get: () => controller._dirty },
+      initialValue: { enumerable: true, get: () => controller._initialValue },
     });
 
     field.setInitialValue = value => {
@@ -81,7 +82,7 @@ export function resetPlugin(
     };
 
     field.reset = () => {
-      controller.__field.setValue(controller.__initialValue);
+      controller._field.setValue(controller._initialValue);
     };
 
     field.subscribe(() => {
@@ -93,31 +94,32 @@ export function resetPlugin(
 }
 
 interface FieldController {
-  __parent: FieldController | null;
-  __children: FieldController[] | null;
-  __field: Field;
-  __key: unknown;
-  __dirty: boolean;
-  __initialValue: unknown;
-  __accessor: Accessor;
-  __equalityChecker: (initialValue: any, value: any) => boolean;
+  _parent: FieldController | null;
+  _children: FieldController[] | null;
+  _field: Field;
+  _key: unknown;
+  _dirty: boolean;
+  _initialValue: unknown;
+  _accessor: Accessor;
+  _equalityChecker: (initialValue: any, value: any) => boolean;
+  _notify: () => void;
 }
 
 function applyDirty(controller: FieldController): void {
-  controller.__dirty = !controller.__equalityChecker(controller.__initialValue, controller.__field.value);
+  controller._dirty = !controller._equalityChecker(controller._initialValue, controller._field.value);
 }
 
 function applyInitialValue(controller: FieldController, initialValue: unknown): void {
-  if (isEqual(controller.__initialValue, initialValue)) {
+  if (isEqual(controller._initialValue, initialValue)) {
     return;
   }
 
   let rootController = controller;
 
-  while (rootController.__parent !== null) {
-    const { __key } = rootController;
-    rootController = rootController.__parent;
-    initialValue = controller.__accessor.set(rootController.__initialValue, __key, initialValue);
+  while (rootController._parent !== null) {
+    const { _key } = rootController;
+    rootController = rootController._parent;
+    initialValue = controller._accessor.set(rootController._initialValue, _key, initialValue);
   }
 
   callAll(propagateInitialValue(controller, rootController, initialValue, []));
@@ -127,19 +129,19 @@ function propagateInitialValue(
   targetController: FieldController,
   controller: FieldController,
   initialValue: unknown,
-  notifyCallbacks: Field['notify'][]
-): Field['notify'][] {
-  notifyCallbacks.push(controller.__field.notify);
+  notifyCallbacks: Array<() => void>
+): Array<() => void> {
+  notifyCallbacks.push(controller._notify);
 
-  controller.__initialValue = initialValue;
+  controller._initialValue = initialValue;
 
   applyDirty(controller);
 
-  if (controller.__children !== null) {
-    for (const child of controller.__children) {
-      const childInitialValue = controller.__accessor.get(initialValue, child.__key);
+  if (controller._children !== null) {
+    for (const child of controller._children) {
+      const childInitialValue = controller._accessor.get(initialValue, child._key);
 
-      if (child !== targetController && isEqual(child.__initialValue, childInitialValue)) {
+      if (child !== targetController && isEqual(child._initialValue, childInitialValue)) {
         continue;
       }
       propagateInitialValue(targetController, child, childInitialValue, notifyCallbacks);
