@@ -1,6 +1,11 @@
 import { Plugin } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
-import { elementValueAccessor } from './elementValueAccessor';
+import { createElementValueAccessor, ElementValueAccessor } from './createElementValueAccessor';
+
+/**
+ * The default value accessor.
+ */
+const elementValueAccessor = createElementValueAccessor();
 
 /**
  * The mixin added to fields by the {@linkcode uncontrolledPlugin}.
@@ -10,6 +15,13 @@ export interface UncontrolledMixin {
    * The callback that associates the field with the DOM element.
    */
   refCallback(element: Element | null): void;
+
+  /**
+   * Overrides the element value accessor for the field.
+   *
+   * @param accessor The accessor to use for this filed.
+   */
+  setAccessor(accessor: Partial<ElementValueAccessor>): this;
 }
 
 /**
@@ -21,9 +33,11 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
   return field => {
     const { refCallback } = field;
 
-    const elements: Element[] = [];
-
+    let elements: readonly Element[] = Object.freeze([]);
     let targetElement: Element | null = null;
+
+    let getElementValue = accessor.get;
+    let setElementValue = accessor.set;
 
     const mutationObserver = new MutationObserver((mutations: MutationRecord[]) => {
       for (const mutation of mutations) {
@@ -36,7 +50,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
           elements[j].removeEventListener('input', changeListener);
           elements[j].removeEventListener('change', changeListener);
 
-          elements.splice(j, 1);
+          elements = Object.freeze(elements.slice(0).splice(j, 1));
         }
       }
 
@@ -57,23 +71,29 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
       let value;
       if (
         elements.indexOf(event.target as Element) !== -1 &&
-        !isDeepEqual((value = accessor.get(elements)), field.value)
+        !isDeepEqual((value = getElementValue(elements)), field.value)
       ) {
         field.setValue(value);
       }
     };
 
+    field.subscribe(() => {
+      if (elements.length !== 0) {
+        setElementValue(elements, field.value);
+      }
+    });
+
     field.refCallback = element => {
-      if (element === null || elements.indexOf(element) !== -1) {
+      if (element === null || !(element instanceof Element) || elements.indexOf(element) !== -1) {
         return;
       }
 
       element.addEventListener('input', changeListener);
       element.addEventListener('change', changeListener);
 
-      elements.push(element);
+      elements = Object.freeze(elements.concat(element));
 
-      accessor.set(elements, field.value);
+      setElementValue(elements, field.value);
 
       if (element.parentNode) {
         mutationObserver.observe(element.parentNode, { childList: true });
@@ -85,10 +105,10 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
       }
     };
 
-    field.subscribe(() => {
-      if (elements.length !== 0) {
-        accessor.set(elements, field.value);
-      }
-    });
+    field.setAccessor = accessor => {
+      getElementValue = accessor.get || getElementValue;
+      setElementValue = accessor.set || setElementValue;
+      return field;
+    };
   };
 }

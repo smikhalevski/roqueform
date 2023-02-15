@@ -1,2 +1,2 @@
-export * from './elementValueAccessor';
+export * from './createElementValueAccessor';
 export * from './uncontrolledPlugin';
