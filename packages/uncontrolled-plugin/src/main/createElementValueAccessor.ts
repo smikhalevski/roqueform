@@ -24,20 +24,6 @@ export interface ElementValueAccessor {
  */
 export interface ElementValueAccessorOptions {
   /**
-   * The date format read from input elements.
-   *
-   * @default "iso"
-   */
-  dateFormat?: 'timestamp' | 'iso' | 'utc' | 'gmt' | 'object';
-
-  /**
-   * The time format read from input elements.
-   *
-   * @default "string"
-   */
-  timeFormat?: 'number' | 'string';
-
-  /**
    * The format of checkbox values.
    *
    * - `"boolean"` a single checkbox is a boolean, multiple checkboxes are an array of booleans.
@@ -50,6 +36,20 @@ export interface ElementValueAccessorOptions {
    * @default "auto"
    */
   checkboxFormat?: 'boolean' | 'booleanArray' | 'value' | 'valueArray' | 'auto';
+
+  /**
+   * The date format read from input elements.
+   *
+   * @default "value"
+   */
+  dateFormat?: 'object' | 'timestamp' | 'value' | 'iso' | 'utc' | 'gmt';
+
+  /**
+   * The time format read from input elements.
+   *
+   * @default "value"
+   */
+  timeFormat?: 'number' | 'value';
 }
 
 /**
@@ -115,10 +115,11 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
       return valueAsNumber !== valueAsNumber ? null : valueAsNumber;
     }
 
-    if (type === 'date') {
+    if (type === 'date' || type === 'datetime-local') {
       if (valueAsNumber !== valueAsNumber) {
         return null;
       }
+
       const date = element.valueAsDate || new Date(valueAsNumber);
       const dateFormat = options?.dateFormat;
 
@@ -126,9 +127,10 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
       return (
         dateFormat === 'object' ? date :
         dateFormat === 'timestamp' ? valueAsNumber :
+        dateFormat === 'iso' ? date.toISOString() :
         dateFormat === 'utc' ? date.toUTCString() :
         dateFormat === 'gmt' ? date.toGMTString() :
-        date.toISOString()
+        element.value
       );
     }
 
@@ -139,7 +141,7 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
       return element.src;
     }
     if (type === 'file') {
-      return element.multiple ? toArray(element.files) : element.files.length === 1 ? element.files.item(0) : null;
+      return element.multiple ? toArray(element.files) : element.files.length !== 0 ? element.files.item(0) : null;
     }
 
     return element.value;
@@ -163,12 +165,10 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
         if (element.tagName !== 'INPUT' || element.type !== 'checkbox') {
           continue;
         }
-
         if (Array.isArray(value)) {
           element.checked = typeof value[i] === 'boolean' ? value[i] : value.indexOf(element.value) !== -1;
           continue;
         }
-
         element.checked =
           typeof value === 'boolean' ? value : typeof value === 'string' ? element.value === value : false;
       }
@@ -192,13 +192,21 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
       }
       return;
     }
-    if (type === 'image') {
-      element.src = toString(value);
+
+    if (type === 'date' || type === 'datetime-local') {
+      let valueAsNumber;
+
+      if (typeof value === 'string') {
+        value = (valueAsNumber = +value) === valueAsNumber ? valueAsNumber : new Date(value).getTime();
+      }
+      if (isFinite(value)) {
+        element.valueAsNumber = +value;
+        return;
+      }
+      element.value = '';
       return;
     }
-    if (type === 'file') {
-      return;
-    }
+
     if (type === 'time') {
       if (isFinite(value)) {
         element.valueAsNumber = +value;
@@ -207,20 +215,15 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
       }
       return;
     }
-    if (type !== 'date') {
-      element.value = toString(value);
+    if (type === 'image') {
+      element.src = toString(value);
+      return;
+    }
+    if (type === 'file') {
       return;
     }
 
-    // Date input
-    if (typeof value === 'string') {
-      value = new Date(value);
-    }
-    if (isFinite(value)) {
-      element.valueAsNumber = +value;
-      return;
-    }
-    element.value = '';
+    element.value = toString(value);
   };
 
   return { get, set };
