@@ -33,7 +33,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
   return field => {
     const { refCallback } = field;
 
-    let elements: readonly Element[] = Object.freeze([]);
+    let elements: Element[] = [];
     let targetElement: Element | null = null;
 
     let getElementValue = accessor.get;
@@ -50,7 +50,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
           elements[j].removeEventListener('input', changeListener);
           elements[j].removeEventListener('change', changeListener);
 
-          elements = Object.freeze(elements.slice(0).splice(j, 1));
+          elements.splice(j, 1);
         }
       }
 
@@ -71,7 +71,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
       let value;
       if (
         elements.indexOf(event.target as Element) !== -1 &&
-        !isDeepEqual((value = getElementValue(elements)), field.value)
+        !isDeepEqual((value = getElementValue(elements.slice(0))), field.value)
       ) {
         field.setValue(value);
       }
@@ -79,25 +79,28 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<Unco
 
     field.subscribe(() => {
       if (elements.length !== 0) {
-        setElementValue(elements, field.value);
+        setElementValue(elements.slice(0), field.value);
       }
     });
 
     field.refCallback = element => {
-      if (element === null || !(element instanceof Element) || elements.indexOf(element) !== -1) {
+      if (
+        element === null ||
+        !(element instanceof Element) ||
+        !element.isConnected ||
+        elements.indexOf(element) !== -1
+      ) {
         return;
       }
+
+      mutationObserver.observe(element.parentNode!, { childList: true });
 
       element.addEventListener('input', changeListener);
       element.addEventListener('change', changeListener);
 
-      elements = Object.freeze(elements.concat(element));
+      elements.push(element);
 
-      setElementValue(elements, field.value);
-
-      if (element.parentNode) {
-        mutationObserver.observe(element.parentNode, { childList: true });
-      }
+      setElementValue(elements.slice(0), field.value);
 
       if (elements.length === 1) {
         targetElement = elements[0];
