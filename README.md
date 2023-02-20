@@ -1,29 +1,168 @@
 <p align="center">
-  <br/>
-  <br/>
-  <img src="./images/logo.png" alt="Roqueform" width="500"/>
-  <br/>
-  <br/>
-  <a href="https://github.com/smikhalevski/roqueform/actions/workflows/master.yml">
-    <img src="https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push" alt="build"/>
+  <a href="#readme">
+    <img src="./images/logo.png" alt="Roqueform" width="500"/>
   </a>
 </p>
-
-<br/>
 
 The form state management library that can handle hundreds of fields without breaking a sweat.
 
 - Extremely fast, re-renders only updated fields;
-- Laconic API with strict typings;
-- [Pluggable architecture and great extensibility](#plugins);
-- [Just 2 kB gzipped](https://bundlephobia.com/result?p=roqueform);
-- [Custom validation support](#validation).
+- Expressive and concise API with strict typings;
+- Controlled and uncontrolled inputs;
+- Not tied to any rendering library; 
+- [Works with any validation library;](#validation)
+- [Extensible with plugins;](#plugins)
+- [Just 2 kB gzipped.](https://bundlephobia.com/result?p=roqueform)
 
 🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-example-2evfif)
 
 ```sh
 npm install --save-prod roqueform
 ```
+
+# Basics
+
+The central piece of Roqueform is the concept of a field. A field holds a value and provides a couple of ways to update
+it. Fields can be enhanced by plugins that provide such things as integration with rendering and validation libraries.
+
+Let's start by creating a filed:
+
+```ts
+import { createField } from 'roqueform';
+
+const field = createField();
+// ⮕ Field<any>
+```
+
+A value can be set to and retrieved from the field:
+
+```ts
+field.setValue('Pluto');
+
+field.value;
+// ⮕ 'Pluto'
+```
+
+Provide the initial value for a field:
+
+```ts
+const ageField = createField(42);
+
+ageField.value;
+// ⮕ 42
+```
+
+Derive a new field from the existing one:
+
+```ts
+const universeField = createField();
+
+const planetsField = universeField.at('planets');
+```
+
+`planetsField` is a derived field, and it is linked to its parent `universeField`.
+
+```ts
+planetsField.key;
+// ⮕ 'planets'
+
+planetsField.parent;
+// ⮕ universeField
+```
+
+Fields returned by the `at` method have a stable identity. This means that you can invoke `at` with the same key
+multiple times and the same field instance would be returned:
+
+```ts
+universeField.at('planets');
+// ⮕ planetsField
+```
+
+Most of the time you don't need to store a reference to a derived field in a variable if you already have a reference
+to a parent field.
+
+The derived field has all the same functionality as its parent, so you can derive a new field from it as well:
+
+```ts
+planetsField.at(0).at('name');
+```
+
+When a value is set to a derived field, a parent field value is also updated. Roqueform would infer the type of the
+parent field value depending on the derived field key.
+
+```ts
+universeField.at('planets').at(0).at('name').setValue('Mars')
+
+universeField.value;
+// ⮕ { planets: [{ name: 'Mars' }] }
+```
+
+By default, for a string key a parent object is created, and for number key a parent array is created. You can change
+this behaviour with [Accessors](#accessors).
+
+# Transient updates
+
+When a derived field is updated transiently, the value of its parent isn't updated.
+
+```ts
+const avatarField = createField();
+
+avatarField.at('eyeColor').setTransientValue('green');
+
+avatarField.at('eyeColor').value;
+// ⮕ 'green'
+
+avatarField.value;
+// ⮕ undefined
+```
+
+To propagate the value of the transiently updated derived field to the parent, use `dispatch`:
+
+```ts
+avatarField.at('eyeColor').dispatch();
+
+avatarField.value;
+// ⮕ { eyeColor: 'green' }
+```
+
+`setTransientValue` can be called multiple times, but only the most recent update would be propagated to the parent
+field after the `dispatch` call.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Subscribe to a field to receive a notification when a field is changed
+
+Fields are updated synchronouly
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 - [Foreword](#foreword)
 - [`useField`](#usefield)
@@ -89,38 +228,14 @@ tree of form input controllers:
 import { useField } from 'roqueform';
 
 const field = useField();
-// → Field<any>
+// ⮕ Field<any>
 ```
 
 You can provide an initial value to a field (a field value type would is automatically inferred):
 
 ```ts
 const field = useField({ foo: 'bar' });
-// → Field<{ foo: string }>
-```
-
-You can derive new fields from the existing ones using `at` method:
-
-```ts
-const fooField = field.at('foo');
-// → Field<string>
-```
-
-`fooField` is a derived field, it is linked to the parent `field`. Fields returned by the `at` method have a stable
-identity, so you can invoke `at` with the same key multiple times and the same field instance would be returned:
-
-```ts
-field.at('foo') === field.at('foo')
-// → true
-```
-
-Fields can be derived at any depth:
-
-```ts
-const field = useField({ foo: [{ bar: 'qux' }] });
-
-field.at('foo').at(0).at('bar');
-// → Field<string>
+// ⮕ Field<{ foo: string }>
 ```
 
 ## Field value updates
@@ -132,13 +247,13 @@ the `setValue` method that updates the field value:
 const field = useField({ foo: 'bar' });
 
 field.value;
-// → { foo: 'bar' }
+// ⮕ { foo: 'bar' }
 
 field.setValue({ foo: 'qux' });
 
 // 🟡 The field value was updated
 field.value;
-// → { foo: 'qux' }
+// ⮕ { foo: 'qux' }
 ```
 
 `useField` doesn't trigger re-renders of the enclosing component. Navigate to
@@ -151,20 +266,20 @@ const field = useField({ foo: 'bar' });
 const fooField = field.at('foo');
 
 field.value;
-// → { foo: 'bar' }
+// ⮕ { foo: 'bar' }
 
 fooField.value;
-// → 'bar'
+// ⮕ 'bar'
 
 // Updating the root field
 field.setValue({ foo: 'qux' });
 
 // 🟡 The update was propagated to the derived field
 field.value;
-// → { foo: 'qux' }
+// ⮕ { foo: 'qux' }
 
 fooField.value;
-// → 'qux'
+// ⮕ 'qux'
 ```
 
 The same is valid for updating derived fields: when the derived field is updated using `setValue`, the update is
@@ -179,10 +294,10 @@ fooField.setValue('qux');
 
 // The update was propagated to the parent field
 field.value;
-// → { foo: 'qux' }
+// ⮕ { foo: 'qux' }
 
 fooField.value;
-// → 'qux'
+// ⮕ 'qux'
 ```
 
 `setValue` also has a callback signature:
@@ -207,21 +322,21 @@ const fooField = field.at('foo');
 fooField.setTransientValue('qux');
 
 field.value;
-// → { foo: 'bar' }
+// ⮕ { foo: 'bar' }
 
 // 🟡 Notice that fooField was updated but field wasn't
 fooField.value;
-// → 'qux'
+// ⮕ 'qux'
 
 // Notify the parent, "git commit"
 fooField.dispatch();
 
 // Now both fields are in sync
 field.value;
-// → { foo: 'qux' }
+// ⮕ { foo: 'qux' }
 
 fooField.value;
-// → 'qux'
+// ⮕ 'qux'
 ```
 
 `setTransientValue` can be called multiple times, but the most recent update would be propagated to the parent only
@@ -236,12 +351,12 @@ const fooField = field.at('foo');
 fooField.setTransientValue('qux');
 
 fooField.transient;
-// → true
+// ⮕ true
 
 fooField.dispatch();
 
 fooField.transient;
-// → false
+// ⮕ false
 ```
 
 ## Field observability
@@ -435,7 +550,7 @@ function refPlugin(): Plugin<{ ref: RefObject<HTMLInputElement> }> {
 }
 
 const rootField = useField({ bar: 'qux' }, refPlugin());
-// → Field<{ bar: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
+// ⮕ Field<{ bar: string }, { ref: RefObject<HTMLInputElement> }> & { ref: RefObject<HTMLInputElement> }
 ```
 
 The second argument of the `useField` hook is the plugin function that accepts a field instance and enriches it with
@@ -535,10 +650,10 @@ const valueShape = d.object({
 const rootField = useField({ bar: 'qux' }, doubterPlugin(valueShape));
 
 rootField.validate();
-// → [{ message'Must have the minimum length of 5', … }]
+// ⮕ [{ message'Must have the minimum length of 5', … }]
 
 rootField.at('bar').error;
-// → { message: 'Must have the minimum length of 5', … }
+// ⮕ { message: 'Must have the minimum length of 5', … }
 ```
 
 [Plugin usage details can be found here.](./packages/doubter-plugin#readme)
@@ -562,10 +677,10 @@ const field = useField({ foo: 'bar' }, plugin);
 field.setError('Some useful message');
 
 field.error;
-// → 'Some useful message'
+// ⮕ 'Some useful message'
 
 field.at('foo').error;
-// → 'Must not be null'
+// ⮕ 'Must not be null'
 
 // Clear all errors of the field and its derived fields
 field.clearErrors();

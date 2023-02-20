@@ -3,7 +3,7 @@
 Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with validation methods powered by
 [Doubter](https://github.com/smikhalevski/doubter#readme).
 
-🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/roqueform-doubter-plugin-example-74hkgw)
+🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/doubter-plugin-example-74hkgw)
 
 ```sh
 npm install --save-prod @roqueform/doubter-plugin
@@ -83,7 +83,7 @@ import * as d from 'doubter';
 const valueShape = d.object({
   bar: d.string().min(5)
 });
-// → Shape<{ bar: string }>
+// ⮕ Shape<{ bar: string }>
 ```
 
 Then you can create a new field and enhance it with validation methods:
@@ -102,7 +102,7 @@ When you call the `validate` method it triggers validation of the field and all 
 
 ```ts
 rootField.at('bar').validate();
-// → [{ message: 'Must have the minimum length of 5', … }]
+// ⮕ [{ message: 'Must have the minimum length of 5', … }]
 ```
 
 In this example, `rootField.value` isn't validated, but `rootField.at('bar').value` is validated.
@@ -114,14 +114,14 @@ To detect whether the field, or any of its derived fields contain a validation e
 
 ```ts
 rootField.invalid;
-// → true
+// ⮕ true
 ```
 
 To retrieve an error associated with a particular field:
 
 ```ts
 rootField.at('bar').error;
-// → { message: 'Must have the minimum length of 5', … }
+// ⮕ { message: 'Must have the minimum length of 5', … }
 ```
 
 # Managing errors manually
@@ -162,5 +162,5 @@ const rootField = useField([], doubterPlugin(valueShape));
 rootField.validate();
 
 rootField.error;
-// → { message: 'Not enough elements', … }
+// ⮕ { message: 'Not enough elements', … }
 ```
