@@ -26,12 +26,23 @@ export interface ElementValueAccessorOptions {
   /**
    * The format of checkbox values.
    *
-   * - `"boolean"` a single checkbox is a boolean, multiple checkboxes are an array of booleans.
-   * - `"booleanArray"` an array of booleans.
-   * - `"value"` a single checkbox is a `value` attribute if checked, or `null` if unchecked, multiple checkboxes are an
-   * array of checked values.
-   * - `"valueArray"` an array of `value` attributes.
-   * - `"auto"` a single checkbox is a boolean, multiple checkboxes are an array of checked values.
+   * <dl>
+   *   <dt><code>boolean</code></dt>
+   *   <dd>A single checkbox is a boolean, multiple checkboxes are an array of booleans.</dd>
+   *
+   *   <dt><code>booleanArray</code></dt>
+   *   <dd>An array of booleans.</dd>
+   *
+   *   <dt><code>value</code></dt>
+   *   <dd>A single checkbox is a <code>value</code> attribute if checked, or <code>null</code> if unchecked, multiple
+   *   checkboxes are an array of checked values.</dd>
+   *
+   *   <dt><code>valueArray</code></dt>
+   *   <dd>An array of <code>value</code> attributes.</dd>
+   *
+   *   <dt><code>auto</code></dt>
+   *   <dd>A single checkbox is a boolean, multiple checkboxes are an array of checked values.</dd>
+   * </dl>
    *
    * @default "auto"
    */
@@ -40,12 +51,40 @@ export interface ElementValueAccessorOptions {
   /**
    * The date format read from input elements.
    *
+   * <dl>
+   *   <dt><code>object</code></dt>
+   *   <dd>A valid <code>Date</code> instance, or <code>null</code> if empty.</dd>
+   *
+   *   <dt><code>timestamp</code></dt>
+   *   <dd>A timestamp number.</dd>
+   *
+   *   <dt><code>value</code></dt>
+   *   <dd>The <code>value</code> attribute, or <code>null</code> if empty.</dd>
+   *
+   *   <dt><code>iso</code></dt>
+   *   <dd>An ISO date string.</dd>
+   *
+   *   <dt><code>utc</code></dt>
+   *   <dd>A UTC date string.</dd>
+   *
+   *   <dt><code>gmt</code></dt>
+   *   <dd>A GMT date string.</dd>
+   * </dl>
+   *
    * @default "value"
    */
   dateFormat?: 'object' | 'timestamp' | 'value' | 'iso' | 'utc' | 'gmt';
 
   /**
    * The time format read from input elements.
+   *
+   * <dl>
+   *   <dt><code>number</code></dt>
+   *   <dd>The number of milliseconds passed from the start of the day.</dd>
+   *
+   *   <dt><code>value</code></dt>
+   *   <dd>The <code>value</code> attribute, or <code>null</code> if empty.</dd>
+   * </dl>
    *
    * @default "value"
    */
@@ -58,10 +97,10 @@ export interface ElementValueAccessorOptions {
  * - Single checkboxes → boolean, see {@linkcode ElementValueAccessorOptions.checkboxFormat};
  * - Multiple checkboxes → an array of `value` attributes of checked checkboxes, see
  * {@linkcode ElementValueAccessorOptions.checkboxFormat};
- * - Radio buttons → `value` attribute of a radio button that is checked or `null` if no radio buttons are checked;
+ * - Radio buttons → the `value` attribute of a radio button that is checked or `null` if no radio buttons are checked;
  * - Number input → number, or `null` if empty;
  * - Range input → number;
- * - Date input → a valid `Date` object, or `null` if empty, see {@linkcode ElementValueAccessorOptions.dateFormat};
+ * - Date input → the `value` attribute, or `null` if empty, see {@linkcode ElementValueAccessorOptions.dateFormat};
  * - Time input → a time string, or `null` if empty, see {@linkcode ElementValueAccessorOptions.timeFormat};
  * - Image input → string value of the `src` attribute;
  * - File input → `File` or `null` if no file selected, file inputs are read-only;
