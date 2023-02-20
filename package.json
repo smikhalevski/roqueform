@@ -5,7 +5,7 @@
     "clean": "rimraf ./docs && npm run clean --workspaces",
     "test": "jest",
     "test:definitions": "npm run test:definitions --if-present --workspaces",
-    "docs": "typedoc && cp -R ./images ./docs"
+    "docs": "node --max_old_space_size=4096 ./node_modules/.bin/typedoc && cp -R ./images ./docs"
   },
   "workspaces": [
     "./packages/roqueform",
