@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react';
-import { applyPlugins, createField, objectAccessor, validationPlugin } from 'roqueform';
+import { applyPlugins, createField, validationPlugin } from 'roqueform';
 import { scrollToErrorPlugin } from '../main';
 
 class DOMRect {
@@ -21,7 +21,6 @@ class DOMRect {
 describe('scrollToErrorPlugin', () => {
   test('returns false if there are no errors', () => {
     const field = createField(
-      objectAccessor,
       { foo: 111 },
       applyPlugins(
         validationPlugin(() => undefined),
@@ -34,7 +33,6 @@ describe('scrollToErrorPlugin', () => {
 
   test('scrolls to error at index with RTL text direction', async () => {
     const rootField = createField(
-      objectAccessor,
       { foo: 111, bar: 'aaa' },
       applyPlugins(
         validationPlugin(() => undefined),
@@ -111,7 +109,6 @@ describe('scrollToErrorPlugin', () => {
 
   test('scrolls to error at index with LTR text direction', async () => {
     const rootField = createField(
-      objectAccessor,
       { foo: 111, bar: 'aaa' },
       applyPlugins(
         validationPlugin(() => undefined),

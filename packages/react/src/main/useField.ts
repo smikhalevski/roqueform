@@ -38,11 +38,11 @@ export function useField<T, M>(
   deps?: DependencyList
 ): Field<T, M> & M;
 
-export function useField(initialValue?: unknown, plugin?: Plugin<unknown, unknown>, deps?: DependencyList) {
+export function useField(initialValue?: unknown, plugin?: Plugin, deps?: DependencyList) {
   const accessor = useContext(AccessorContext);
 
   return useMemo(
-    () => createField(accessor, callOrGet(initialValue), plugin!),
+    () => createField(callOrGet(initialValue), plugin!, accessor),
     Array.isArray(deps) ? deps.concat(accessor) : [accessor]
   );
 }

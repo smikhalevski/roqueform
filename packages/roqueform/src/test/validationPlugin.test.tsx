@@ -1,4 +1,4 @@
-import { createField, objectAccessor, validationPlugin, Validator } from '../main';
+import { createField, validationPlugin, Validator } from '../main';
 
 describe('validationPlugin', () => {
   const noopValidator: Validator<unknown, unknown> = {
@@ -6,7 +6,7 @@ describe('validationPlugin', () => {
   };
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     expect(field.validating).toBe(false);
     expect(field.invalid).toBe(false);
@@ -18,7 +18,7 @@ describe('validationPlugin', () => {
   });
 
   test('sets an error to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -39,7 +39,7 @@ describe('validationPlugin', () => {
   });
 
   test('sets an error to the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -60,7 +60,7 @@ describe('validationPlugin', () => {
   });
 
   test('sets null as an error to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     field.setError(null);
 
@@ -72,7 +72,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -94,7 +94,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -116,7 +116,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the child field but parent remains invalid', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -146,7 +146,7 @@ describe('validationPlugin', () => {
   });
 
   test('clears all errors', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -177,7 +177,6 @@ describe('validationPlugin', () => {
 
   test('clears errors from nested fields', () => {
     const field = createField(
-      objectAccessor,
       {
         foo: {
           bar: {
@@ -205,7 +204,6 @@ describe('validationPlugin', () => {
 
   test('synchronously validates the root field', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate(field, setInternalError) {
@@ -236,7 +234,6 @@ describe('validationPlugin', () => {
 
   test('synchronously validates the root field with a callback validator', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin((field, setInternalError) => {
         setInternalError(field.at('foo'), 111);
@@ -265,7 +262,6 @@ describe('validationPlugin', () => {
 
   test('synchronously validates the child field', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate(field, setInternalError) {
@@ -296,7 +292,6 @@ describe('validationPlugin', () => {
 
   test('synchronously validates multiple fields', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate(field, setInternalError) {
@@ -331,7 +326,6 @@ describe('validationPlugin', () => {
     });
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: validateMock,
@@ -355,7 +349,6 @@ describe('validationPlugin', () => {
 
   test('does not clear an error set by the user before validation', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate(field, setInternalError) {
@@ -380,7 +373,6 @@ describe('validationPlugin', () => {
 
   test('does not raise validation errors for transient fields', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate(field, setInternalError) {
@@ -406,7 +398,6 @@ describe('validationPlugin', () => {
 
   test('asynchronously validates the root field', async () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate: () => undefined,
@@ -446,7 +437,6 @@ describe('validationPlugin', () => {
 
   test('asynchronously validates the child field', async () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate: () => undefined,
@@ -484,7 +474,6 @@ describe('validationPlugin', () => {
 
   test('cleans up validation if a sync error is thrown', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate() {
@@ -508,7 +497,6 @@ describe('validationPlugin', () => {
 
   test('cleans up validation if an async error is thrown', async () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -538,7 +526,6 @@ describe('validationPlugin', () => {
     let lastSignal: AbortSignal | undefined;
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -567,7 +554,6 @@ describe('validationPlugin', () => {
     const signals: AbortSignal[] = [];
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -592,7 +578,6 @@ describe('validationPlugin', () => {
     const signals: AbortSignal[] = [];
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -622,7 +607,6 @@ describe('validationPlugin', () => {
     });
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,

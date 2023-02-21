@@ -15,7 +15,7 @@ describe('uncontrolledPlugin', () => {
 
   test('updates field value on input change', () => {
     const listenerMock = jest.fn();
-    const field = createField(objectAccessor, { foo: 0 }, uncontrolledPlugin());
+    const field = createField({ foo: 0 }, uncontrolledPlugin());
 
     element.type = 'number';
 
@@ -29,7 +29,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('updates input value on field change', () => {
-    const field = createField(objectAccessor, { foo: 0 }, uncontrolledPlugin());
+    const field = createField({ foo: 0 }, uncontrolledPlugin());
 
     field.at('foo').refCallback(element);
     field.at('foo').setValue(111);
@@ -38,7 +38,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('sets the initial value to the element', () => {
-    const field = createField(objectAccessor, { foo: 111 }, uncontrolledPlugin());
+    const field = createField({ foo: 111 }, uncontrolledPlugin());
 
     element.type = 'number';
 
@@ -53,7 +53,7 @@ describe('uncontrolledPlugin', () => {
       field.refCallback = refCallbackMock;
     });
 
-    const field = createField(objectAccessor, { foo: 111 }, applyPlugins(pluginMock, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, applyPlugins(pluginMock, uncontrolledPlugin()));
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
     expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
@@ -75,7 +75,7 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('input'));
 
-    const field = createField(objectAccessor, { foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(element1);
     field.at('foo').refCallback(element2);
@@ -93,7 +93,7 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('textarea'));
 
-    const field = createField(objectAccessor, { foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(element1);
     field.at('foo').refCallback(element2);
@@ -116,7 +116,7 @@ describe('uncontrolledPlugin', () => {
       field.refCallback = refCallbackMock;
     };
 
-    const field = createField(objectAccessor, { foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(element);
 
@@ -136,7 +136,7 @@ describe('uncontrolledPlugin', () => {
       field.refCallback = refCallbackMock;
     };
 
-    const field = createField(objectAccessor, { foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(null);
 
@@ -149,7 +149,7 @@ describe('uncontrolledPlugin', () => {
       set: jest.fn(),
     };
 
-    const field = createField(objectAccessor, 'aaa', uncontrolledPlugin(accessorMock));
+    const field = createField('aaa', uncontrolledPlugin(accessorMock));
 
     const setValueMock = (field.setValue = jest.fn(field.setValue));
 
@@ -176,7 +176,7 @@ describe('uncontrolledPlugin', () => {
       set: jest.fn(),
     };
 
-    const field = createField(objectAccessor, { foo: 'aaa' }, uncontrolledPlugin(accessorMock));
+    const field = createField({ foo: 'aaa' }, uncontrolledPlugin(accessorMock));
 
     field.at('foo').refCallback(element);
 
@@ -195,7 +195,7 @@ describe('uncontrolledPlugin', () => {
       set: jest.fn(),
     };
 
-    const field = createField(objectAccessor, { foo: 'aaa' }, uncontrolledPlugin(accessorMock));
+    const field = createField({ foo: 'aaa' }, uncontrolledPlugin(accessorMock));
 
     field.at('foo').setValue('bbb');
 
@@ -211,7 +211,7 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('textarea'));
 
-    const field = createField(objectAccessor, { foo: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
 
     field.at('foo').refCallback(element1);
 
@@ -232,7 +232,7 @@ describe('uncontrolledPlugin', () => {
 
     const element = document.createElement('input');
 
-    const field = createField(objectAccessor, { foo: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
 
     field.at('foo').refCallback(element);
 
@@ -242,7 +242,7 @@ describe('uncontrolledPlugin', () => {
   test('mutation observer disconnects after last element is removed', done => {
     const disconnectMock = jest.spyOn(MutationObserver.prototype, 'disconnect');
 
-    const field = createField(objectAccessor, { foo: 111 }, uncontrolledPlugin());
+    const field = createField({ foo: 111 }, uncontrolledPlugin());
 
     field.at('foo').refCallback(element);
 

@@ -1,6 +1,6 @@
 import { z, ZodErrorMap, ZodIssue, ZodIssueCode } from 'zod';
 import { zodPlugin } from '../main';
-import { createField, objectAccessor } from 'roqueform';
+import { createField } from 'roqueform';
 
 describe('zodPlugin', () => {
   const fooType = z.object({
@@ -13,7 +13,7 @@ describe('zodPlugin', () => {
   });
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     expect(field.invalid).toBe(false);
     expect(field.error).toBe(null);
@@ -23,7 +23,7 @@ describe('zodPlugin', () => {
   });
 
   test('converts string errors to issue messages', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     field.setError('aaa');
 
@@ -31,7 +31,7 @@ describe('zodPlugin', () => {
   });
 
   test('sets issue as an error', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     const issue: ZodIssue = { code: ZodIssueCode.custom, path: ['bbb'], message: 'aaa' };
 
@@ -42,7 +42,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     field.validate();
 
@@ -62,7 +62,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     field.at('foo').validate();
 
@@ -82,7 +82,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates multiple fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
 
     field.validate();
 
@@ -113,7 +113,7 @@ describe('zodPlugin', () => {
   });
 
   test('does not validate sibling fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
 
     field.at('bar').validate();
 
@@ -136,7 +136,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates a transient value', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: '' }, zodPlugin(fooBarType));
 
     field.at('bar').setTransientValue('qux');
     field.at('bar').validate();
@@ -164,7 +164,7 @@ describe('zodPlugin', () => {
       return { message: 'aaa' };
     });
 
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType, errorMapMock));
+    const field = createField({ foo: 0, bar: '' }, zodPlugin(fooBarType, errorMapMock));
 
     field.validate();
 
@@ -187,7 +187,7 @@ describe('zodPlugin', () => {
       return { message: 'aaa' };
     });
 
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: '' }, zodPlugin(fooBarType));
 
     field.validate({ errorMap: errorMapMock });
 

@@ -1,5 +1,6 @@
 import { Accessor, Field, Plugin } from './shared-types';
 import { callAll, callOrGet, isEqual } from './utils';
+import { objectAccessor } from './objectAccessor';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
 type NoInfer<T> = T extends infer T ? T : never;
@@ -7,32 +8,36 @@ type NoInfer<T> = T extends infer T ? T : never;
 /**
  * Creates the new field instance.
  *
- * @param accessor Resolves values for derived fields.
- */
-export function createField(accessor: Accessor): Field;
-
-/**
- * Creates the new field instance.
- *
- * @param accessor Resolves values for derived fields.
- * @param initialValue The initial value assigned to the field.
  * @template T The root field value.
  */
-export function createField<T>(accessor: Accessor, initialValue: T): Field<T>;
+export function createField<T>(): Field<T | undefined>;
 
 /**
  * Creates the new field instance.
  *
+ * @param initialValue The initial value assigned to the field.
  * @param accessor Resolves values for derived fields.
+ * @template T The root field value.
+ */
+export function createField<T>(initialValue: T, accessor?: Accessor): Field<T>;
+
+/**
+ * Creates the new field instance.
+ *
  * @param initialValue The initial value assigned to the field.
  * @param plugin The plugin that enhances the field.
+ * @param accessor Resolves values for derived fields.
  * @template T The root field value.
  * @template M The mixin added by the plugin.
  */
-export function createField<T, M>(accessor: Accessor, initialValue: T, plugin: Plugin<M, NoInfer<T>>): Field<T, M> & M;
+export function createField<T, M>(initialValue: T, plugin: Plugin<M, NoInfer<T>>, accessor?: Accessor): Field<T, M> & M;
 
-export function createField(accessor: Accessor, initialValue?: unknown, plugin?: Plugin) {
-  return getOrCreateFieldController(accessor, null, null, initialValue, plugin)._field;
+export function createField(initialValue?: unknown, plugin?: Plugin | Accessor, accessor?: Accessor) {
+  if (typeof plugin !== 'function') {
+    plugin = undefined;
+    accessor = plugin;
+  }
+  return getOrCreateFieldController(accessor || objectAccessor, null, null, initialValue, plugin)._field;
 }
 
 interface FieldController {

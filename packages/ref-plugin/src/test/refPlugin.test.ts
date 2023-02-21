@@ -1,16 +1,16 @@
-import { applyPlugins, createField, objectAccessor } from 'roqueform';
+import { applyPlugins, createField } from 'roqueform';
 import { refPlugin } from '../main';
 
 describe('refPlugin', () => {
   test('adds an element property to the field', () => {
-    const field = createField(objectAccessor, { bar: 111 }, refPlugin());
+    const field = createField({ bar: 111 }, refPlugin());
 
     expect(field.element).toBe(null);
     expect(field.at('bar').element).toBe(null);
   });
 
   test('refCallback updates an element property', () => {
-    const field = createField(objectAccessor, { bar: 111 }, refPlugin());
+    const field = createField({ bar: 111 }, refPlugin());
     const element = document.createElement('input');
 
     field.refCallback(element);
@@ -22,7 +22,6 @@ describe('refPlugin', () => {
     const refCallbackMock = jest.fn(() => undefined);
 
     const field = createField(
-      objectAccessor,
       { bar: 111 },
       applyPlugins(field => Object.assign(field, { refCallback: refCallbackMock }), refPlugin())
     );
