@@ -1,5 +1,8 @@
-import { Accessor, Field, NoInfer, Plugin } from './shared-types';
+import { Accessor, Field, Plugin } from './shared-types';
 import { callAll, callOrGet, isEqual } from './utils';
+
+// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
+type NoInfer<T> = T extends infer T ? T : never;
 
 /**
  * Creates the new field instance.

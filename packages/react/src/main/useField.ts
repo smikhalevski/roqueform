@@ -1,6 +1,9 @@
 import { DependencyList, useContext, useMemo } from 'react';
-import { callOrGet, createField, Field, NoInfer, Plugin } from 'roqueform';
+import { callOrGet, createField, Field, Plugin } from 'roqueform';
 import { AccessorContext } from './AccessorContext';
+
+// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
+type NoInfer<T> = T extends infer T ? T : never;
 
 /**
  * Creates the new field.

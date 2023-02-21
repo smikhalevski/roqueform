@@ -1,12 +1,21 @@
 /**
- * Defers type inference.
+ * Consolidates properties of all objects in union into a single object.
  *
- * @see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types Type inference in conditional types
+ * ```
+ * ConsolidateUnion<{ a: X, b: B } | { a: Y, b: B, c: C }> → { a: X | Y, b: B, c: C | undefined }
+ * ```
  */
-export type NoInfer<T> = T extends infer T ? T : never;
+type ConsolidateUnion<T> = {
+  [K in T extends infer P ? keyof P : never]: T extends infer P ? (K extends keyof P ? P[K] : undefined) : never;
+};
 
 /**
- * @internal
+ * Extracts objects and excludes functions.
+ */
+type ExtractObjects<T> = T extends object ? (T extends (...args: any[]) => any ? never : T) : never;
+
+/**
+ * The key in {@linkcode Plugin} that stores the root field value type.
  */
 declare const ROOT_VALUE: unique symbol;
 
@@ -22,12 +31,13 @@ declare const ROOT_VALUE: unique symbol;
  * @template T The root field value.
  */
 export interface Plugin<M = unknown, T = any> {
+  (field: Field & M, accessor: Accessor, notify: () => void): void;
+
   /**
+   * Prevents root value type erasure.
    * @internal
    */
   [ROOT_VALUE]?: T;
-
-  (field: Field & M, accessor: Accessor, notify: () => void): void;
 }
 
 /**
@@ -107,9 +117,9 @@ export interface Field<T = any, M = unknown> {
    * @returns The derived `Field` instance.
    * @template K The key of the object value controlled by the field.
    */
-  at<K extends keyof NonNullable<T>>(
+  at<K extends keyof ConsolidateUnion<ExtractObjects<T>>>(
     key: K
-  ): Field<T extends null | undefined ? NonNullable<T>[K] | undefined : NonNullable<T>[K], M> & M;
+  ): Field<ConsolidateUnion<ExtractObjects<T>>[K] | (T extends null | undefined ? undefined : never), M> & M;
 
   /**
    * Subscribes the listener to the field updates.
