@@ -1,13 +1,14 @@
 {
   "name": "@roqueform/reset-plugin",
   "version": "2.0.0",
-  "description": "Enhances Roqueform fields with methods that manage the initial value.",
+  "description": "Manages Roqueform field initial value and dirty status.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
-    "displayName": "Reset plugin"
+    "displayName": "reset-plugin",
+    "readmeFile": "none"
   },
   "sideEffects": false,
   "files": [

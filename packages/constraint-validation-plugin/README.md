@@ -1,6 +1,6 @@
 # Constraint validation API plugin for Roqueform
 
-Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with validation methods that use
+Integrates [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with
 [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
 
 ```sh
@@ -9,34 +9,34 @@ npm install --save-prod @roqueform/constraint-validation-plugin
 
 # Usage example
 
-🔎[API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/Constraint_Validation_Plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/constraint_validation_plugin.html)
 
 ```tsx
 import { useEffect } from 'react';
-import { useField } from 'roqueform';
+import { FieldRenderer, useField } from '@roqueform/react';
 import { constraintValidationPlugin } from '@roqueform/constraint-validation-plugin';
 
 export const App = () => {
-  const rootField = useField({ bar: 'qux' }, constraintValidationPlugin());
+  const planetField = useField({ name: 'Mars' }, constraintValidationPlugin());
 
   useEffect(() => {
-    rootField.reportValidity();
+    planetField.reportValidity();
   }, []);
 
   return (
-    <Field field={rootField.at('bar')}>
-      {barField => (
+    <FieldRenderer field={planetField.at('name')}>
+      {nameField => (
         <input
-          type="email"
-          required={true}
-          ref={barField.refCallback}
-          value={barField.value}
+          type="text"
+          pattern="Venus"
+          ref={nameField.refCallback}
+          value={nameField.value}
           onChange={event => {
-            barField.dispatchValue(event.target.value);
+            nameField.dispatchValue(event.target.value);
           }}
         />
       )}
-    </Field>
+    </FieldRenderer>
   );
 };
 ```

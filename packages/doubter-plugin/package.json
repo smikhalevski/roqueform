@@ -1,13 +1,14 @@
 {
   "name": "@roqueform/doubter-plugin",
   "version": "1.0.0",
-  "description": "Enhances Roqueform fields with validation methods powered by Doubter.",
+  "description": "Validates Roqueform fields with Doubter shapes.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
-    "displayName": "Doubter plugin"
+    "displayName": "doubter-plugin",
+    "readmeFile": "none"
   },
   "sideEffects": false,
   "files": [

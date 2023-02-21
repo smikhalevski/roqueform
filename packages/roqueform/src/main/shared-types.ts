@@ -14,6 +14,8 @@ type ConsolidateUnion<T> = {
  */
 type ExtractObjects<T> = T extends object ? (T extends (...args: any[]) => any ? never : T) : never;
 
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
 /**
  * The key in {@linkcode Plugin} that stores the root field value type.
  */
@@ -31,7 +33,7 @@ declare const ROOT_VALUE: unique symbol;
  * @template T The root field value.
  */
 export interface Plugin<M = unknown, T = any> {
-  (field: Field & M, accessor: Accessor, notify: () => void): void;
+  (field: Field & Mutable<M>, accessor: Accessor, notify: () => void): void;
 
   /**
    * Prevents root value type erasure.

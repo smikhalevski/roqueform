@@ -1,13 +1,14 @@
 {
   "name": "@roqueform/react",
   "version": "1.0.0",
-  "description": "Hooks and components that integrate Roqueform into a React app.",
+  "description": "Hooks and components to integrate Roqueform with React.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
-    "displayName": "React integration"
+    "displayName": "react",
+    "readmeFile": "none"
   },
   "sideEffects": false,
   "files": [

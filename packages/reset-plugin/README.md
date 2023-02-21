@@ -1,7 +1,6 @@
 # Reset plugin for Roqueform
 
-Enhances [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with methods that manage the initial
-value.
+Manages [Roqueform](https://github.com/smikhalevski/roqueform#readme) field initial value and dirty status.
 
 ```sh
 npm install --save-prod @roqueform/reset-plugin
@@ -9,28 +8,28 @@ npm install --save-prod @roqueform/reset-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/Reset_Plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/reset_plugin.html)
 
 The field is considered dirty when its value differs from the initial value. Values are compared using an equality
 checker function passed to the `resetPlugin`. By default, values are compared using
 [fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal).
 
 ```tsx
-import { FieldRenderer, useField } from 'roqueform';
+import { FieldRenderer, useField } from '@roqueform/react';
 import { resetPlugin } from '@roqueform/reset-plugin';
 
 export const App = () => {
-  const rootField = useField({ bar: '' }, resetPlugin());
+  const planetField = useField({ name: 'Pluto' }, resetPlugin());
 
   return (
     <form>
 
-      <FieldRenderer field={rootField.at('bar')}>
-        {barField => (
+      <FieldRenderer field={planetField.at('name')}>
+        {nameField => (
           <input
-            value={barField.value}
+            value={nameField.value}
             onChange={event => {
-              barField.setValue(event.target.value);
+              nameField.setValue(event.target.value);
             }}
           />
         )}
@@ -38,7 +37,7 @@ export const App = () => {
 
       <button
         type="submit"
-        disabled={!rootField.dirty}
+        disabled={!planetField.dirty}
       >
         {'Submit'}
       </button>
@@ -46,7 +45,7 @@ export const App = () => {
       <button
         type="button"
         // Reset the field to its initial value 
-        onClick={rootField.reset}
+        onClick={planetField.reset}
       >
         {'Reset'}
       </button>

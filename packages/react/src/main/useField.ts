@@ -1,6 +1,7 @@
-import { DependencyList, useContext, useMemo } from 'react';
+import { DependencyList, useContext } from 'react';
 import { callOrGet, createField, Field, Plugin } from 'roqueform';
 import { AccessorContext } from './AccessorContext';
+import { useSemanticMemo } from './useSemanticMemo';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
 type NoInfer<T> = T extends infer T ? T : never;
@@ -41,7 +42,7 @@ export function useField<T, M>(
 export function useField(initialValue?: unknown, plugin?: Plugin, deps?: DependencyList) {
   const accessor = useContext(AccessorContext);
 
-  return useMemo(
+  return useSemanticMemo(
     () => createField(callOrGet(initialValue), plugin!, accessor),
     Array.isArray(deps) ? deps.concat(accessor) : [accessor]
   );
