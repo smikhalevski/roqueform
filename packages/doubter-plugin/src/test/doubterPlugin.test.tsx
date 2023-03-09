@@ -31,7 +31,7 @@ describe('doubterPlugin', () => {
 
     expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(issue);
-    expect(field.error).toEqual({ code: 'aaa', input: { foo: 0 }, path: [] });
+    expect(field.error).toEqual({ code: 'aaa', input: { foo: 0 } });
 
     expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
@@ -61,7 +61,7 @@ describe('doubterPlugin', () => {
     expect(field.error).toBe(null);
 
     expect(field.at('foo').isInvalid).toBe(true);
-    expect(field.at('foo').error).toEqual({ code: 'unknown', message: 'aaa', input: 0, path: ['foo'] });
+    expect(field.at('foo').error).toEqual({ message: 'aaa', input: 0, path: ['foo'] });
   });
 
   test('deletes an issue from the root field', () => {

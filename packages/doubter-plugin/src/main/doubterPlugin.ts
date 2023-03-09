@@ -7,7 +7,7 @@ const anyShape = new Shape();
  * The mixin added to fields by the {@linkcode doubterPlugin}.
  */
 export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
-  setError(error: Partial<Issue> | string): void;
+  setError(error: Issue | string): void;
 }
 
 /**
@@ -28,12 +28,7 @@ export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<DoubterMixin, T> 
       if (typeof error === 'string') {
         error = { message: error };
       }
-      if (error.code == null) {
-        error.code = 'unknown';
-      }
-      if (error.path == null) {
-        error.path = prependPath(field, []);
-      }
+      error.path = prependPath(field, error.path);
       error.input = field.value;
 
       setError(error);
@@ -79,23 +74,24 @@ function getShape(field: Field, shapeCache: WeakMap<Field, AnyShape>, rootShape:
   return shape;
 }
 
-function prependPath(field: Field, path: unknown[]): unknown[] {
+function prependPath(field: Field, path: unknown[] | undefined): unknown[] | undefined {
   for (let ancestor = field; ancestor.parent !== null; ancestor = ancestor.parent) {
-    path.unshift(ancestor.key);
+    (path ||= []).unshift(ancestor.key);
   }
   return path;
 }
 
 function setIssues(field: Field, issues: Issue[], setInternalError: (field: Field, error: Issue) => void): void {
   for (const issue of issues) {
-    const { path } = issue;
-
     let targetField = field;
 
-    for (let i = 0; i < path.length; ++i) {
-      targetField = targetField.at(path[i]);
+    if (Array.isArray(issue.path)) {
+      for (const key of issue.path) {
+        targetField = targetField.at(key);
+      }
     }
-    prependPath(field, path);
+
+    issue.path = prependPath(field, issue.path);
     setInternalError(targetField, issue);
   }
 }
