@@ -1,5 +1,7 @@
 import { callAll, callOrGet } from '../main';
 
+jest.useFakeTimers();
+
 describe('callOrGet', () => {
   test('returns non function value as is', () => {
     const obj = {};
@@ -35,7 +37,7 @@ describe('callAll', () => {
     expect(cbMock3).toHaveBeenNthCalledWith(1, 'foo', 'bar');
   });
 
-  test('throws the first captured error', () => {
+  test('throws errors asynchronously', () => {
     const cbMock1 = jest.fn(() => {});
     const cbMock2 = jest.fn(() => {
       throw new Error('expected2');
@@ -44,10 +46,13 @@ describe('callAll', () => {
       throw new Error('expected3');
     });
 
-    expect(() => callAll([cbMock1, cbMock2, cbMock3])).toThrow(new Error('expected2'));
+    callAll([cbMock1, cbMock2, cbMock3]);
+
     expect(cbMock1).toHaveBeenCalledTimes(1);
     expect(cbMock2).toHaveBeenCalledTimes(1);
     expect(cbMock3).toHaveBeenCalledTimes(1);
+
+    expect(() => jest.runAllTimers()).toThrow();
   });
 
   test('does not call the same callback twice', () => {

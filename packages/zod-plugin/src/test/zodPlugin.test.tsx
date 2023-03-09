@@ -15,10 +15,10 @@ describe('zodPlugin', () => {
   test('enhances the field', () => {
     const field = createField({ foo: 0 }, zodPlugin(fooType));
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -46,10 +46,10 @@ describe('zodPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -66,10 +66,10 @@ describe('zodPlugin', () => {
 
     field.at('foo').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -86,10 +86,10 @@ describe('zodPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -100,7 +100,7 @@ describe('zodPlugin', () => {
       type: 'number',
     });
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
       exact: false,
@@ -117,13 +117,13 @@ describe('zodPlugin', () => {
 
     field.at('bar').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toEqual(null);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
       exact: false,
@@ -141,13 +141,13 @@ describe('zodPlugin', () => {
     field.at('bar').setTransientValue('qux');
     field.at('bar').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toEqual(null);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
       exact: false,
@@ -170,7 +170,7 @@ describe('zodPlugin', () => {
 
     expect(errorMapMock).toHaveBeenCalledTimes(1);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -193,7 +193,7 @@ describe('zodPlugin', () => {
 
     expect(errorMapMock).toHaveBeenCalledTimes(1);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,

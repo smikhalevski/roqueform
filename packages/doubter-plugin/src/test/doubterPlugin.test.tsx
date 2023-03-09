@@ -15,10 +15,10 @@ describe('doubterPlugin', () => {
   test('enhances the field', () => {
     const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -29,11 +29,11 @@ describe('doubterPlugin', () => {
 
     field.setError(issue);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(issue);
     expect(field.error).toEqual({ code: 'aaa', input: { foo: 0 }, path: [] });
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -44,10 +44,10 @@ describe('doubterPlugin', () => {
 
     field.at('foo').setError(issue);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(issue);
     expect(field.at('foo').error).toEqual({ code: 'aaa', input: 0, path: ['foo'] });
   });
@@ -57,10 +57,10 @@ describe('doubterPlugin', () => {
 
     field.at('foo').setError('aaa');
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({ code: 'unknown', message: 'aaa', input: 0, path: ['foo'] });
   });
 
@@ -70,10 +70,10 @@ describe('doubterPlugin', () => {
     field.setError({ code: 'aaa' });
     field.deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -83,10 +83,10 @@ describe('doubterPlugin', () => {
     field.at('foo').setError({ code: 'aaa' });
     field.at('foo').deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -101,13 +101,13 @@ describe('doubterPlugin', () => {
 
     field.at('bar').deleteError();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(issue1);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
@@ -122,13 +122,13 @@ describe('doubterPlugin', () => {
 
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
@@ -137,10 +137,10 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -156,10 +156,10 @@ describe('doubterPlugin', () => {
 
     field.at('foo').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -175,10 +175,10 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -188,7 +188,7 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'stringMaxLength',
       path: ['bar'],
@@ -208,10 +208,10 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -221,7 +221,7 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
@@ -234,10 +234,10 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -247,7 +247,7 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toBe(issue);
   });
 
@@ -258,10 +258,10 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -271,7 +271,7 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 });

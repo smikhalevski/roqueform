@@ -50,7 +50,7 @@ export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): Re
   handleChangeRef.current = props.onChange;
 
   useEffect(() => {
-    let prevValue: F['value'] | undefined;
+    let prevValue: unknown;
 
     return field.subscribe(targetField => {
       const { value } = field;
@@ -58,7 +58,7 @@ export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): Re
       if (eagerlyUpdated || field === targetField) {
         rerender();
       }
-      if (field.transient || isEqual(value, prevValue)) {
+      if (field.isTransient || isEqual(value, prevValue)) {
         return;
       }
 

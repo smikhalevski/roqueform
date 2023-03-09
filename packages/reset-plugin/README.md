@@ -37,7 +37,7 @@ export const App = () => {
 
       <button
         type="submit"
-        disabled={!planetField.dirty}
+        disabled={!planetField.isDirty}
       >
         {'Submit'}
       </button>

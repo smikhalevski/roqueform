@@ -3,7 +3,7 @@
 Updates [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields by listening to change events of associated
 DOM elements.
 
-🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/uncontrolled-elements-plugin-example-fsdshx)
+🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/fsdshx)
 
 ```sh
 npm install --save-prod @roqueform/uncontrolled-plugin
@@ -57,7 +57,7 @@ If you have a set of radio buttons, or checkboxes that update a single field, pr
 inputs, `uncontrolledPlugin` would use them a source of values.
 
 ```ts
-const planetsField = useField(['Mars'], uncontrolledPlugin());
+const namesField = useField(['Mars', 'Pluto'], uncontrolledPlugin());
 ```
 
 The plugin relies only on `value` attribute, so `name` and other attributes are optional:
@@ -67,13 +67,13 @@ The plugin relies only on `value` attribute, so `name` and other attributes are 
   <input
     type="checkbox"
     value="Mars"
-    ref={planetsField.refCallback}
+    ref={namesField.refCallback}
   />
   <input
     type="checkbox"
     value="Pluto"
     // 🟡 Note that the same refCallback is passed to two inputs
-    ref={planetsField.refCallback}
+    ref={namesField.refCallback}
   />
 </form>
 ```
@@ -107,7 +107,9 @@ values of form elements:
 
 This behaviour can be changed by passing a custom
 [`ElementValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementValueAccessor.html)
-implementation to a plugin. Or you can use a `createElementValueAccessor` factory to customise the default behaviour:
+implementation to a plugin. Or you can use a
+[`createElementValueAccessor`](https://smikhalevski.github.io/roqueform/functions/uncontrolled_plugin.createElementValueAccessor.html)
+factory to customise the default behaviour:
 
 ```ts
 import { useField } from '@roqueform/react';

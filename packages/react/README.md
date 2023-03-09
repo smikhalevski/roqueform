@@ -10,6 +10,44 @@ npm install --save-prod @roqueform/react
 
 🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/react.html)
 
+```tsx
+import { SyntheticEvent } from 'react';
+import { FieldRenderer, useField } from '@roqueform/react';
+
+export const App = () => {
+  const planetField = useField({ name: 'Mars' });
+
+  const handleSubmit = (event: SyntheticEvent) => {
+    event.preventDefault();
+
+    // Submit the field value
+    planetField.value;
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+
+      <FieldRenderer field={planetField.at('name')}>
+        {nameField => (
+          <input
+            type="text"
+            value={nameField.value}
+            onChange={event => {
+              nameField.setValue(event.target.value);
+            }}
+          />
+        )}
+      </FieldRenderer>
+
+      <button type="submit">
+        {'Submit'}
+      </button>
+
+    </form>
+  );
+};
+```
+
 # `useField`
 
 `useField` is hook that returns a [`Field`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html)
@@ -33,7 +71,7 @@ If you pass a callback as an initial value, it would be invoked when the field i
 useField(() => getInitialValue());
 ```
 
-Pass the plugin as the second argument of `useField` hook.
+Pass [a plugin](../../#plugins-and-integrations) as the second argument of the `useField` hook.
 
 ```ts
 import { useField } from '@roqueform/react';
@@ -44,8 +82,7 @@ useField({ planet: 'Pluto' }, uncontrolledPlugin());
 
 # `FieldRenderer`
 
-The `FieldRenderer` component subscribes to the given field instance and re-renders its children when the field is
-notified:
+The `FieldRenderer` component subscribes to the given field instance and re-renders children when the field is notified:
 
 ```tsx
 import { FieldRenderer, useField } from '@roqueform/react';
@@ -57,6 +94,7 @@ const App = () => {
     <FieldRenderer field={planetField.at('name')}>
       {nameField => (
         <input
+          type="text"
           value={nameField.value}
           onChange={event => {
             nameField.setValue(event.target.value);
@@ -78,20 +116,20 @@ one renders an input that updates the derived field:
 
 ```tsx
 const App = () => {
-  const rootField = useField({ bar: 'qux' });
+  const planetField = useField({ name: 'Mars' });
 
   return <>
-    <FieldRenderer field={rootField}>
-      {rootField => JSON.stringify(rootField.value)}
+    <FieldRenderer field={planetField}>
+      {() => JSON.stringify(planetField.value)}
     </FieldRenderer>
 
-    <FieldRenderer field={rootField.at('bar')}>
-      {barField => (
+    <FieldRenderer field={planetField.at('name')}>
+      {nameField => (
         <input
           type="text"
-          value={barField.value}
+          value={nameField.value}
           onChange={event => {
-            barField.setValue(event.target.value);
+            nameField.setValue(event.target.value);
           }}
         />
       )}
@@ -105,12 +143,12 @@ ancestors or derived fields would be ignored. Add the `eagerlyUpdated` property 
 whenever its value was affected.
 
 ```diff
-- <FieldRenderer field={rootField}>
+- <FieldRenderer field={planetField}>
 + <FieldRenderer
-+   field={rootField}
++   field={planetField}
 +   eagerlyUpdated={true}
 + >
-    {rootField => JSON.stringify(rootField.value)}
+    {() => JSON.stringify(planetField.value)}
   </FieldRenderer>
 ```
 
@@ -118,8 +156,8 @@ Now both fields are re-rendered when user edits the input text.
 
 ## Reacting to changes
 
-[Subscribing to a field](#field-observability) isn't always convenient. Instead, you can use an `onChange` handler that
-is triggered only when the field value was updated [non-transiently](#transient-updates).
+You can use an `onChange` handler that is triggered only when the field value was updated
+[non-transiently](../../#transient-updates).
 
 ```tsx
 <FieldRenderer

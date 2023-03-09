@@ -12,7 +12,7 @@ export interface ConstraintValidationMixin {
   /**
    * `true` if the field or any of its derived fields have an associated error, or `false` otherwise.
    */
-  readonly invalid: boolean;
+  readonly isInvalid: boolean;
 
   /**
    * The [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState), or `null` if there's no
@@ -83,10 +83,10 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
       ) {
         invalid ||= isInvalid(controller);
 
-        if (ancestor._invalid === invalid) {
+        if (ancestor._isInvalid === invalid) {
           break;
         }
-        ancestor._invalid = invalid;
+        ancestor._isInvalid = invalid;
         ancestor._notify();
       }
     };
@@ -97,7 +97,7 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
       _field: field,
       _element: null,
       _validity: null,
-      _invalid: false,
+      _isInvalid: false,
       _error: '',
       _notify: notify,
       _notifyAncestors: notifyAncestors,
@@ -122,8 +122,8 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
     };
 
     Object.defineProperties(field, {
-      invalid: { enumerable: true, get: () => isInvalid(controller) },
       error: { enumerable: true, get: () => getError(controller) },
+      isInvalid: { enumerable: true, get: () => isInvalid(controller) },
       validity: { enumerable: true, get: () => controller._validity },
     });
 
@@ -192,7 +192,7 @@ interface FieldController {
   /**
    * The invalid status for which the field was notified the last time.
    */
-  _invalid: boolean;
+  _isInvalid: boolean;
 
   /**
    * An error that is used if the field doesn't have an associated element.

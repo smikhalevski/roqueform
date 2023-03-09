@@ -3,7 +3,7 @@
 Validates [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with
 [Doubter](https://github.com/smikhalevski/doubter#readme) shapes.
 
-🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/doubter-plugin-example-74hkgw)
+🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/74hkgw)
 
 ```sh
 npm install --save-prod @roqueform/doubter-plugin
@@ -41,7 +41,7 @@ export const App = () => {
 
     // If your shapes have transformations or refinements, you can safely parse
     // the field value after it was successfully validated
-    const value = planetField.shape.parse(planetField.value);
+    const value = planetShape.parse(planetField.value);
   };
 
   return (
@@ -55,7 +55,7 @@ export const App = () => {
               onChange={event => {
                 nameField.setValue(event.target.value);
               }}
-              aria-invalid={nameField.invalid}
+              aria-invalid={nameField.isInvalid}
             />
 
             {nameField.error?.message}
@@ -96,7 +96,7 @@ const planetField = useField({ name: 'Mars' }, doubterPlugin(planetShape));
 
 The type of the field value is inferred from the provided shape, so the field value is statically checked.
 
-When you call the `validate` method it triggers validation of the field and all of its derived fields. So if you call
+When you call the `validate` method, it triggers validation of the field and all of its derived fields. So if you call
 `validate` on the derived field, it won't validate the parent field:
 
 ```ts
@@ -112,7 +112,7 @@ In this example, `planetField.value` _is not_ validated, and `planetField.at('na
 To detect whether the field, or any of its derived fields contain a validation error:
 
 ```ts
-planetField.invalid;
+planetField.isInvalid;
 // ⮕ true
 ```
 

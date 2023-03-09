@@ -51,7 +51,7 @@ interface FieldController {
   _field: Field;
   _key: unknown;
   _value: unknown;
-  _transient: boolean;
+  _isTransient: boolean;
   _accessor: Accessor;
   _notify: (targetField: Field) => void;
 }
@@ -109,7 +109,7 @@ function getOrCreateFieldController(
     parent: { enumerable: true, value: parent },
     key: { enumerable: true, value: key },
     value: { enumerable: true, get: () => controller._value },
-    transient: { enumerable: true, get: () => controller._transient },
+    isTransient: { enumerable: true, get: () => controller._isTransient },
   });
 
   const controller: FieldController = {
@@ -119,7 +119,7 @@ function getOrCreateFieldController(
     _field: field,
     _key: key,
     _value: initialValue,
-    _transient: false,
+    _isTransient: false,
     _notify: notify,
     _accessor: accessor,
   };
@@ -135,15 +135,15 @@ function getOrCreateFieldController(
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-  if (isEqual(controller._value, value) && controller._transient === transient) {
+  if (isEqual(controller._value, value) && controller._isTransient === transient) {
     return;
   }
 
-  controller._transient = transient;
+  controller._isTransient = transient;
 
   let rootController = controller;
 
-  while (rootController._parent !== null && !rootController._transient) {
+  while (rootController._parent !== null && !rootController._isTransient) {
     const { _key } = rootController;
     rootController = rootController._parent;
     value = controller._accessor.set(rootController._value, _key, value);
@@ -164,7 +164,7 @@ function propagateValue(
 
   if (controller._children !== null) {
     for (const child of controller._children) {
-      if (child._transient) {
+      if (child._isTransient) {
         continue;
       }
 

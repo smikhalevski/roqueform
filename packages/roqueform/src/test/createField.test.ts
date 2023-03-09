@@ -1,5 +1,11 @@
 import { createField, objectAccessor, Plugin } from '../main';
 
+jest.useFakeTimers();
+
+beforeEach(() => {
+  jest.clearAllTimers();
+});
+
 describe('createField', () => {
   test('creates a field without an initial value', () => {
     const field = createField();
@@ -7,7 +13,7 @@ describe('createField', () => {
     expect(field.parent).toBe(null);
     expect(field.key).toBe(null);
     expect(field.value).toBe(undefined);
-    expect(field.transient).toBe(false);
+    expect(field.isTransient).toBe(false);
   });
 
   test('creates a field with the initial value', () => {
@@ -36,7 +42,7 @@ describe('createField', () => {
     field.setValue(222);
 
     expect(field.value).toBe(222);
-    expect(field.transient).toBe(false);
+    expect(field.isTransient).toBe(false);
   });
 
   test('dispatches a value to a derived field', () => {
@@ -45,10 +51,10 @@ describe('createField', () => {
     field.at('foo').setValue(222);
 
     expect(field.value).toEqual({ foo: 222 });
-    expect(field.transient).toBe(false);
+    expect(field.isTransient).toBe(false);
 
     expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').transient).toBe(false);
+    expect(field.at('foo').isTransient).toBe(false);
   });
 
   test('invokes a subscriber during value dispatch', () => {
@@ -75,7 +81,7 @@ describe('createField', () => {
     field.setTransientValue(222);
 
     expect(field.value).toBe(222);
-    expect(field.transient).toBe(true);
+    expect(field.isTransient).toBe(true);
   });
 
   test('sets a value to a derived field', () => {
@@ -86,10 +92,10 @@ describe('createField', () => {
     field.at('foo').setTransientValue(222);
 
     expect(field.value).toBe(initialValue);
-    expect(field.transient).toBe(false);
+    expect(field.isTransient).toBe(false);
 
     expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').transient).toBe(true);
+    expect(field.at('foo').isTransient).toBe(true);
   });
 
   test('dispatches a value after it was set to a derived field', () => {
@@ -99,10 +105,10 @@ describe('createField', () => {
     field.at('foo').dispatch();
 
     expect(field.value).toEqual({ foo: 222 });
-    expect(field.transient).toBe(false);
+    expect(field.isTransient).toBe(false);
 
     expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').transient).toBe(false);
+    expect(field.at('foo').isTransient).toBe(false);
   });
 
   test('invokes a subscriber during value set', () => {
@@ -134,12 +140,15 @@ describe('createField', () => {
     field.at('foo').subscribe(fooListenerMock);
     field.at('bar').subscribe(barListenerMock);
 
-    expect(() => field.setValue({ foo: 333, bar: 444 })).toThrow(new Error('fooExpected'));
+    field.setValue({ foo: 333, bar: 444 });
 
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
     expect(barListenerMock).toHaveBeenCalledTimes(1);
     expect(field.at('foo').value).toBe(333);
     expect(field.at('bar').value).toBe(444);
+
+    expect(() => jest.runAllTimers()).toThrow(new Error('fooExpected'));
+    expect(() => jest.runAllTimers()).toThrow(new Error('barExpected'));
   });
 
   test('calls all listeners and throws the first caught error', () => {
@@ -155,12 +164,15 @@ describe('createField', () => {
     field.at('foo').subscribe(listenerMock1);
     field.at('foo').subscribe(listenerMock2);
 
-    expect(() => field.setValue({ foo: 333, bar: 444 })).toThrow(new Error('expected1'));
+    field.setValue({ foo: 333, bar: 444 });
 
     expect(listenerMock1).toHaveBeenCalledTimes(1);
     expect(listenerMock2).toHaveBeenCalledTimes(1);
     expect(field.at('foo').value).toBe(333);
     expect(field.at('bar').value).toBe(444);
+
+    expect(() => jest.runAllTimers()).toThrow(new Error('expected1'));
+    expect(() => jest.runAllTimers()).toThrow(new Error('expected2'));
   });
 
   test('propagates a new value to the derived field', () => {
@@ -179,10 +191,10 @@ describe('createField', () => {
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
 
     expect(field.value).toBe(nextValue);
-    expect(field.transient).toBe(false);
+    expect(field.isTransient).toBe(false);
 
     expect(field.at('foo').value).toBe(333);
-    expect(field.at('foo').transient).toBe(false);
+    expect(field.at('foo').isTransient).toBe(false);
   });
 
   test('does not propagate a new value to the transient derived field', () => {
@@ -201,7 +213,7 @@ describe('createField', () => {
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
 
     expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').transient).toBe(true);
+    expect(field.at('foo').isTransient).toBe(true);
   });
 
   test('does not notify subscribers if a value of the derived field did not change', () => {

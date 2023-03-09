@@ -33,10 +33,11 @@ declare const ROOT_VALUE: unique symbol;
  * @template T The root field value.
  */
 export interface Plugin<M = unknown, T = any> {
-  (field: Field & Mutable<M>, accessor: Accessor, notify: () => void): void;
+  (field: Mutable<Field & M>, accessor: Accessor, notify: () => void): void;
 
   /**
-   * Prevents root value type erasure.
+   * Prevents root field value type erasure.
+   *
    * @internal
    */
   [ROOT_VALUE]?: T;
@@ -89,26 +90,26 @@ export interface Field<T = any, M = unknown> {
   /**
    * `true` if the value was last updated using {@linkcode setTransientValue}, or `false` otherwise.
    */
-  readonly transient: boolean;
+  readonly isTransient: boolean;
 
   /**
    * Updates the value of the field and notifies both ancestors and derived fields. If field withholds a
-   * {@linkcode transient} value then it becomes non-transient.
+   * {@linkcode isTransient} value then it becomes non-isTransient.
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
   setValue(value: T | ((prevValue: T) => T)): void;
 
   /**
-   * Updates the value of the field and notifies only derived fields and marks value as {@linkcode transient}.
+   * Updates the value of the field and notifies only derived fields and marks value as {@link isTransient transient}.
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
   setTransientValue(value: T | ((prevValue: T) => T)): void;
 
   /**
-   * If the current value is {@linkcode transient} then notifies parent about this value and marks value as
-   * non-transient.
+   * If the current value {@link isTransient is transient} then `dispatch` notifies the parent about this value and
+   * marks value as non-transient. No-op otherwise.
    */
   dispatch(): void;
 
@@ -124,7 +125,7 @@ export interface Field<T = any, M = unknown> {
   ): Field<ConsolidateUnion<ExtractObjects<T>>[K] | (T extends null | undefined ? undefined : never), M> & M;
 
   /**
-   * Subscribes the listener to the field updates.
+   * Subscribes the listener to field updates.
    *
    * Listeners are guaranteed to be called once when {@linkcode notify} is called.
    *
@@ -134,8 +135,8 @@ export interface Field<T = any, M = unknown> {
   subscribe(
     /**
      * @param targetField The field that triggered the update. This can be ancestor ot descendant field.
-     * @param field The field to which this listener is subscribed.
+     * @param currentField The field to which this listener is subscribed.
      */
-    listener: (targetField: Field<any, M> & M, field: Field<T, M> & M) => void
+    listener: (targetField: Field<any, M> & M, currentField: Field<T, M> & M) => void
   ): () => void;
 }

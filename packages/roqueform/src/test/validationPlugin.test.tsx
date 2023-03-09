@@ -8,12 +8,12 @@ describe('validationPlugin', () => {
   test('enhances the field', () => {
     const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -28,10 +28,10 @@ describe('validationPlugin', () => {
 
     field.setError(111);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(111);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -49,10 +49,10 @@ describe('validationPlugin', () => {
 
     field.at('foo').setError(111);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -64,10 +64,10 @@ describe('validationPlugin', () => {
 
     field.setError(null);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -83,10 +83,10 @@ describe('validationPlugin', () => {
     field.setError(111);
     field.deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -105,10 +105,10 @@ describe('validationPlugin', () => {
     field.at('foo').setError(111);
     field.at('foo').deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -131,13 +131,13 @@ describe('validationPlugin', () => {
 
     field.at('bar').deleteError();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -161,13 +161,13 @@ describe('validationPlugin', () => {
 
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -193,13 +193,13 @@ describe('validationPlugin', () => {
 
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
-    expect(field.at('foo').at('bar').invalid).toBe(false);
-    expect(field.at('foo').at('bar').at('baz').invalid).toBe(false);
-    expect(field.at('foo').at('bar').at('qux').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
+    expect(field.at('foo').at('bar').isInvalid).toBe(false);
+    expect(field.at('foo').at('bar').at('baz').isInvalid).toBe(false);
+    expect(field.at('foo').at('bar').at('qux').isInvalid).toBe(false);
   });
 
   test('synchronously validates the root field', () => {
@@ -220,12 +220,12 @@ describe('validationPlugin', () => {
 
     expect(field.validate()).toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -248,12 +248,12 @@ describe('validationPlugin', () => {
 
     expect(field.validate()).toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -278,12 +278,12 @@ describe('validationPlugin', () => {
 
     field.at('foo').validate();
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -303,13 +303,13 @@ describe('validationPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toBe(222);
   });
 
@@ -337,13 +337,13 @@ describe('validationPlugin', () => {
 
     expect(validateMock).toHaveBeenCalledTimes(2);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
@@ -361,13 +361,13 @@ describe('validationPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual(111);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toBe(222);
   });
 
@@ -386,13 +386,13 @@ describe('validationPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
@@ -418,17 +418,17 @@ describe('validationPlugin', () => {
 
     expect(promise).toBeInstanceOf(Promise);
 
-    expect(field.validating).toBe(true);
-    expect(field.at('foo').validating).toBe(true);
+    expect(field.isValidating).toBe(true);
+    expect(field.at('foo').isValidating).toBe(true);
 
     await expect(promise).resolves.toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(3);
@@ -455,17 +455,17 @@ describe('validationPlugin', () => {
 
     const promise = field.at('foo').validateAsync();
 
-    expect(field.validating).toBe(false);
-    expect(field.at('foo').validating).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.at('foo').isValidating).toBe(true);
 
     await expect(promise).resolves.toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -486,12 +486,12 @@ describe('validationPlugin', () => {
 
     expect(() => field.validate()).toThrow(new Error('expected'));
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -513,12 +513,12 @@ describe('validationPlugin', () => {
 
     await expect(promise).rejects.toEqual(new Error('expected'));
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -538,14 +538,14 @@ describe('validationPlugin', () => {
 
     const promise = field.validateAsync();
 
-    expect(field.validating).toBe(true);
-    expect(field.at('foo').validating).toBe(true);
+    expect(field.isValidating).toBe(true);
+    expect(field.at('foo').isValidating).toBe(true);
 
     field.abortValidation();
 
     expect(lastSignal!.aborted).toBe(true);
-    expect(field.validating).toBe(false);
-    expect(field.at('foo').validating).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
 
     await expect(promise).rejects.toEqual(new Error('Validation aborted'));
   });

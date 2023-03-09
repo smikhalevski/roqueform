@@ -15,7 +15,7 @@ This plugin works in conjunction with [a validation plugin](../../#plugins-and-i
 and an error not `null` than `scrollToError()` would reveal this element on the screen.
 
 The example below uses [Doubter](https://github.com/smikhalevski/doubter#readme) shapes and
-[Doubter plugin](../doubter-plugin#readme).
+[Doubter plugin](../doubter-plugin#readme) for validation.
 
 ```tsx
 import { SyntheticEvent, useEffect } from 'react';

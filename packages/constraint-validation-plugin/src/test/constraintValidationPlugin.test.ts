@@ -16,10 +16,10 @@ describe('constraintValidationPlugin', () => {
   test('enhances the field', () => {
     const field = createField({ foo: 0 }, constraintValidationPlugin());
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -34,9 +34,9 @@ describe('constraintValidationPlugin', () => {
 
     field.at('foo').setError('aaa');
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe('aaa');
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -54,9 +54,9 @@ describe('constraintValidationPlugin', () => {
 
     field.setError('aaa');
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe('aaa');
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -86,7 +86,7 @@ describe('constraintValidationPlugin', () => {
     field.setError('aaa');
     field.deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
     expect(listenerMock).toHaveBeenCalledTimes(2);
   });
@@ -103,10 +103,10 @@ describe('constraintValidationPlugin', () => {
     field.at('foo').setError('aaa');
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -148,10 +148,10 @@ describe('constraintValidationPlugin', () => {
 
     field.at('foo').refCallback(element);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual('Constraints not satisfied');
   });
 
@@ -166,13 +166,13 @@ describe('constraintValidationPlugin', () => {
 
     field.refCallback(element);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toEqual('Constraints not satisfied');
     expect(listenerMock).toHaveBeenCalledTimes(1);
 
     field.refCallback(null);
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
     expect(listenerMock).toHaveBeenCalledTimes(2);
   });
@@ -195,7 +195,7 @@ describe('constraintValidationPlugin', () => {
     field.at('foo').refCallback(element);
 
     expect(listenerMock).toHaveBeenCalledTimes(0);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
 
     fireEvent.change(element, { target: { value: '' } });
 
@@ -221,7 +221,7 @@ describe('constraintValidationPlugin', () => {
     field.at('foo').refCallback(element);
 
     expect(listenerMock).toHaveBeenCalledTimes(0);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
 
     fireEvent.change(element, { target: { value: '' } });
 

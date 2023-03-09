@@ -1,7 +1,7 @@
 # Constraint validation API plugin for Roqueform
 
 Integrates [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields with
-[Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
+[Constraint validation API.](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation)
 
 ```sh
 npm install --save-prod @roqueform/constraint-validation-plugin
@@ -32,7 +32,7 @@ export const App = () => {
           ref={nameField.refCallback}
           value={nameField.value}
           onChange={event => {
-            nameField.dispatchValue(event.target.value);
+            nameField.setValue(event.target.value);
           }}
         />
       )}

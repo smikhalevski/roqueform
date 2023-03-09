@@ -16,8 +16,8 @@ import { FieldRenderer, useField } from '@roqueform/react';
 import { zodPlugin } from '@roqueform/zod-plugin';
 import { z } from 'zod';
 
-const planetSchema = d.object({
-  name: d.string().min(1),
+const planetSchema = z.object({
+  name: z.string().min(1),
 });
 
 export const App = () => {

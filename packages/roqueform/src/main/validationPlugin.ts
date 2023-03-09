@@ -16,12 +16,12 @@ export interface ValidationMixin<E, O> {
   /**
    * `true` if the field or any of its derived fields have an associated error, or `false` otherwise.
    */
-  readonly invalid: boolean;
+  readonly isInvalid: boolean;
 
   /**
    * `true` if an async validation is pending, or `false` otherwise.
    */
-  readonly validating: boolean;
+  readonly isValidating: boolean;
 
   /**
    * Associates an error with the field and notifies the subscribers.
@@ -129,9 +129,9 @@ export function validationPlugin<E = any, O = void, T = any>(
       _children: null,
       _field: field,
       _errorCount: 0,
-      _errored: false,
+      _isErrored: false,
       _error: null,
-      _internal: false,
+      _isInternal: false,
       _validator: typeof validator === 'function' ? { validate: validator } : validator,
       _initiator: null,
       _validationNonce: 0,
@@ -155,28 +155,22 @@ export function validationPlugin<E = any, O = void, T = any>(
 
     Object.defineProperties(field, {
       error: { enumerable: true, get: () => controller._error },
-      invalid: { enumerable: true, get: () => controller._errorCount !== 0 },
-      validating: { enumerable: true, get: () => controller._initiator !== null },
+      isInvalid: { enumerable: true, get: () => controller._errorCount !== 0 },
+      isValidating: { enumerable: true, get: () => controller._initiator !== null },
     });
 
     field.setTransientValue = value => {
-      try {
-        if (controller._initiator !== null) {
-          callAll(endValidation(controller, controller._initiator, true, []));
-        }
-      } finally {
-        setTransientValue(value);
+      if (controller._initiator !== null) {
+        callAll(endValidation(controller, controller._initiator, true, []));
       }
+      setTransientValue(value);
     };
 
     field.setValue = value => {
-      try {
-        if (controller._initiator !== null) {
-          callAll(endValidation(controller, controller._initiator, true, []));
-        }
-      } finally {
-        setValue(value);
+      if (controller._initiator !== null) {
+        callAll(endValidation(controller, controller._initiator, true, []));
       }
+      setValue(value);
     };
 
     field.setError = error => {
@@ -214,14 +208,14 @@ interface FieldController {
   /**
    * `true` if this field has an associated error, or `false` otherwise.
    */
-  _errored: boolean;
+  _isErrored: boolean;
   _error: unknown | null;
 
   /**
    * `true` if an error was set internally by {@linkcode ValidationMixin.validate}, or `false` if an issue was set by
    * the user through {@linkcode ValidationMixin.setError}.
    */
-  _internal: boolean;
+  _isInternal: boolean;
   _validator: Validator<unknown, unknown>;
 
   /**
@@ -266,21 +260,21 @@ function setError(
   internal: boolean,
   notifyCallbacks: Array<() => void>
 ): Array<() => void> {
-  if (controller._errored && isEqual(controller._error, error) && controller._internal === internal) {
+  if (controller._isErrored && isEqual(controller._error, error) && controller._isInternal === internal) {
     return notifyCallbacks;
   }
 
   controller._error = error;
-  controller._internal = internal;
+  controller._isInternal = internal;
 
   notifyCallbacks.push(controller._notify);
 
-  if (controller._errored) {
+  if (controller._isErrored) {
     return notifyCallbacks;
   }
 
   controller._errorCount++;
-  controller._errored = true;
+  controller._isErrored = true;
 
   for (let ancestor = controller._parent; ancestor !== null; ancestor = ancestor._parent) {
     if (ancestor._errorCount++ === 0) {
@@ -305,13 +299,13 @@ function deleteError(
   internal: boolean,
   notifyCallbacks: Array<() => void>
 ): Array<() => void> {
-  if (!controller._errored || (internal && !controller._internal)) {
+  if (!controller._isErrored || (internal && !controller._isInternal)) {
     return notifyCallbacks;
   }
 
   controller._error = null;
   controller._errorCount--;
-  controller._internal = controller._errored = false;
+  controller._isInternal = controller._isErrored = false;
 
   notifyCallbacks.push(controller._notify);
 
@@ -367,7 +361,7 @@ function beginValidation(
 
   if (controller._children !== null) {
     for (const child of controller._children) {
-      if (!child._field.transient) {
+      if (!child._field.isTransient) {
         beginValidation(child, initiator, notifyCallbacks);
       }
     }
@@ -448,11 +442,9 @@ function validate(controller: FieldController, options: unknown): any[] | null {
 
   try {
     controller._validator.validate(controller._field, setInternalError, options);
-  } catch (e) {
-    try {
-      callAll(endValidation(controller, controller, false, notifyCallbacks));
-    } catch {}
-    throw e;
+  } catch (error) {
+    callAll(endValidation(controller, controller, false, notifyCallbacks));
+    throw error;
   }
 
   callAll(endValidation(controller, controller, false, notifyCallbacks));
@@ -513,9 +505,7 @@ function validateAsync(controller: FieldController, options: unknown): Promise<a
       return errors;
     },
     error => {
-      try {
-        callAll(endValidation(controller, controller, false, []));
-      } catch {}
+      callAll(endValidation(controller, controller, false, []));
       throw error;
     }
   );
