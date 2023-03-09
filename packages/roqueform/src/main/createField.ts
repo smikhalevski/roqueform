@@ -10,7 +10,7 @@ type NoInfer<T> = T extends infer T ? T : never;
  *
  * @template T The root field value.
  */
-export function createField<T>(): Field<T | undefined>;
+export function createField<T = any>(): Field<T | undefined>;
 
 /**
  * Creates the new field instance.
