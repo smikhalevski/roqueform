@@ -57,7 +57,7 @@ describe('createField', () => {
     expect(field.at('foo').isTransient).toBe(false);
   });
 
-  test('invokes a subscriber during value dispatch', () => {
+  test('invokes a subscriber when value is updated', () => {
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
 
@@ -73,6 +73,40 @@ describe('createField', () => {
 
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field.at('foo'));
+  });
+
+  test('does not invoke the subscriber of the unchanged sibling field', () => {
+    const fooListenerMock = jest.fn();
+    const barListenerMock = jest.fn();
+
+    const field = createField({ foo: 111, bar: 'aaa' });
+
+    field.at('foo').subscribe(fooListenerMock);
+    field.at('bar').subscribe(barListenerMock);
+
+    field.at('foo').setValue(222);
+
+    expect(barListenerMock).not.toHaveBeenCalled();
+
+    expect(fooListenerMock).toHaveBeenCalledTimes(1);
+    expect(fooListenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field.at('foo'));
+  });
+
+  test('does not invoke the subscriber of the unchanged derived field', () => {
+    const fooListenerMock = jest.fn();
+    const barListenerMock = jest.fn();
+
+    const field = createField({ foo: 111, bar: 'aaa' });
+
+    field.at('foo').subscribe(fooListenerMock);
+    field.at('bar').subscribe(barListenerMock);
+
+    field.setValue({ foo: 222, bar: 'aaa' });
+
+    expect(barListenerMock).not.toHaveBeenCalled();
+
+    expect(fooListenerMock).toHaveBeenCalledTimes(1);
+    expect(fooListenerMock).toHaveBeenNthCalledWith(1, field, field.at('foo'));
   });
 
   test('sets a value to a root field', () => {
@@ -111,7 +145,7 @@ describe('createField', () => {
     expect(field.at('foo').isTransient).toBe(false);
   });
 
-  test('invokes a subscriber during value set', () => {
+  test('invokes a subscriber when a value is updated transiently', () => {
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
 
@@ -151,7 +185,7 @@ describe('createField', () => {
     expect(() => jest.runAllTimers()).toThrow(new Error('barExpected'));
   });
 
-  test('calls all listeners and throws the first caught error', () => {
+  test('calls all listeners and throws error asynchronously', () => {
     const listenerMock1 = jest.fn(() => {
       throw new Error('expected1');
     });
