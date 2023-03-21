@@ -12,284 +12,21 @@
 <div class="col-8 col-content">
 <div class="tsd-page-title">
 <h2>Roqueform</h2></div>
-<div class="tsd-panel tsd-typography">
-<a href="#roqueformensp🧀ensp" id="roqueformensp🧀ensp" style="color: inherit; text-decoration: none;">
-  <h1>Roqueform&ensp;🧀&ensp;<a href="https://github.com/smikhalevski/roqueform/actions/workflows/master.yml"><img src="https://github.com/smikhalevski/roqueform/actions/workflows/master.yml/badge.svg?branch=master&event=push" alt="build"></a></h1>
-</a>
-<p>The form state management library that can handle hundreds of fields without breaking a sweat.</p>
-<ul>
-<li>Extremely fast, re-renders only updated fields;</li>
-<li>Laconic API with strict typings;</li>
-<li><a href="#plugins">Pluggable architecture and great extensibility</a>;</li>
-<li><a href="https://bundlephobia.com/result?p=roqueform">Just 2 kB gzipped</a>;</li>
-<li><a href="#validation">Custom validation support</a>.</li>
-</ul>
-<p>🔥&ensp;<a href="https://codesandbox.io/s/roqueform-example-2evfif"><strong>Try it on CodeSandbox</strong></a></p>
-<pre><code class="language-sh"><span class="hl-0">npm install --save-prod roqueform</span>
-</code></pre>
-<ul>
-<li><a href="#foreword">Foreword</a></li>
-<li><a href="#usefield"><code>useField</code></a><ul>
-<li><a href="#field-value-updates">Field value updates</a></li>
-<li><a href="#transient-updates">Transient updates</a></li>
-<li><a href="#field-observability">Field observability</a></li>
-</ul>
-</li>
-<li><a href="#fieldrenderer"><code>FieldRenderer</code></a><ul>
-<li><a href="#eager-and-lazy-re-renders">Eager and lazy re-renders</a></li>
-<li><a href="#reacting-to-changes">Reacting to changes</a></li>
-</ul>
-</li>
-<li><a href="#plugins">Plugins</a><ul>
-<li><a href="#authoring-a-plugin">Authoring a plugin</a></li>
-<li><a href="#composing-plugins">Composing plugins</a></li>
-</ul>
-</li>
-<li><a href="#form-submission">Form submission</a></li>
-<li><a href="#validation">Validation</a><ul>
-<li><a href="#validation-scaffolding-plugin">Validation scaffolding plugin</a></li>
-</ul>
-</li>
-<li><a href="#accessors">Accessors</a></li>
-</ul>
-
-<a href="#foreword" id="foreword" style="color: inherit; text-decoration: none;">
-  <h1>Foreword</h1>
-</a>
-<p>Form lifecycle consists of four separate phases: Input, Validate, Display errors, and Submit. These phases can be
-represented as non-intersecting processes. The result obtained during one phase may be used as an input for another
-phase. For example, let&#39;s consider the following set of actions:</p>
-<ul>
-<li>The user inputs form values;</li>
-<li>The input is validated;</li>
-<li>Validation errors are displayed;</li>
-<li>Input is submitted;</li>
-<li>Errors received from the backend are displayed.</li>
-</ul>
-<p>These actions are non-intersecting and can happen in an arbitrary order, or even in parallel. The form management
-library should allow to tap in (or at least not constrain the ability to do so) at any particular phase to tweak the
-data flow.</p>
-<p>So the Roqueform was built to satisfy the following requirements:</p>
-<ul>
-<li><p>No excessive re-renders of unchanged fields.</p>
-</li>
-<li><p>Everything should be statically and strictly typed up to the very field value setter. So there must be a compilation
-error if the string value from the silly input is assigned to the number-typed value in the form state object.</p>
-</li>
-<li><p><strong>Use the platform!</strong> The form state management library must not constrain the use of the <code>form</code> submit behavior,
-browser-based validation, and other related browser-native features.</p>
-</li>
-<li><p>There should be no restrictions on how and when the form input is submitted because data submission is generally
-an application-specific process.</p>
-</li>
-<li><p>There are many approaches to validation, and a great number of awesome validation libraries. The form library must
-be agnostic to where (client-side, server-side, or both), how (on a field or on a form level), and when (sync, or
-async) the validation is handled.</p>
-</li>
-<li><p>Validation errors aren&#39;t standardized, so an arbitrary error object shape must be allowed and related typings must be
-seamlessly propagated to the error consumers/renderers.</p>
-</li>
-<li><p>The library API must be simple.</p>
-</li>
-</ul>
-
-<a href="#usefield" id="usefield" style="color: inherit; text-decoration: none;">
-  <h1><code>useField</code></h1>
-</a>
-<p>The central piece of Roqueform is a <code>useField</code> hook that returns a
-<a href="https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html"><code>Field</code></a> object that represents a node in a
-tree of form input controllers:</p>
-<pre><code class="language-ts"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">useField</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">();</span><br/><span class="hl-7">// → Field&lt;any&gt;</span>
-</code></pre>
-<p>You can provide an initial value to a field (a field value type would is automatically inferred):</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0"> });</span><br/><span class="hl-7">// → Field&lt;{ foo: string }&gt;</span>
-</code></pre>
-<p>You can derive new fields from the existing ones using <code>at</code> method:</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">fooField</span><span class="hl-0"> = </span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">);</span><br/><span class="hl-7">// → Field&lt;string&gt;</span>
-</code></pre>
-<p><code>fooField</code> is a derived field, it is linked to the parent <code>field</code>. Fields returned by the <code>at</code> method have a stable
-identity, so you can invoke <code>at</code> with the same key multiple times and the same field instance would be returned:</p>
-<pre><code class="language-ts"><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">) === </span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">)</span><br/><span class="hl-7">// → true</span>
-</code></pre>
-<p>Fields can be derived at any depth:</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> [{ </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> }] });</span><br/><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">).</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-8">0</span><span class="hl-0">).</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0">);</span><br/><span class="hl-7">// → Field&lt;string&gt;</span>
-</code></pre>
-
-<a href="#field-value-updates" id="field-value-updates" style="color: inherit; text-decoration: none;">
-  <h2>Field value updates</h2>
-</a>
-<p>The field is essentially a container that encapsulates the value and provides methods to update it. Let&#39;s have a look at
-the <code>setValue</code> method that updates the field value:</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0"> });</span><br/><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → { foo: &#39;bar&#39; }</span><br/><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">setValue</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> });</span><br/><br/><span class="hl-7">// 🟡 The field value was updated</span><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → { foo: &#39;qux&#39; }</span>
-</code></pre>
-<p><code>useField</code> doesn&#39;t trigger re-renders of the enclosing component. Navigate to
-<a href="#field-observability">Field observability</a> section for more details.</p>
-<p>When the parent field is updated using <code>setValue</code>, all of the affected derived fields also receive an update:</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0"> });</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">fooField</span><span class="hl-0"> = </span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → { foo: &#39;bar&#39; }</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → &#39;bar&#39;</span><br/><br/><span class="hl-7">// Updating the root field</span><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">setValue</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> });</span><br/><br/><span class="hl-7">// 🟡 The update was propagated to the derived field</span><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → { foo: &#39;qux&#39; }</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → &#39;qux&#39;</span>
-</code></pre>
-<p>The same is valid for updating derived fields: when the derived field is updated using <code>setValue</code>, the update is
-propagated to the parent field.</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0"> });</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">fooField</span><span class="hl-0"> = </span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-7">// Updating the derived field</span><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-6">setValue</span><span class="hl-0">(</span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-7">// The update was propagated to the parent field</span><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → { foo: &#39;qux&#39; }</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → &#39;qux&#39;</span>
-</code></pre>
-<p><code>setValue</code> also has a callback signature:</p>
-<pre><code class="language-ts"><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-6">setValue</span><span class="hl-0">(</span><span class="hl-2">prevValue</span><span class="hl-0"> </span><span class="hl-4">=&gt;</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0">);</span>
-</code></pre>
-
-<a href="#transient-updates" id="transient-updates" style="color: inherit; text-decoration: none;">
-  <h2>Transient updates</h2>
-</a>
-<p>The field update can be done transiently, so the parent won&#39;t be notified. You can think about this as a commit in git:
-you first stage your changes with <code>git add</code> and then commit them with <code>git commit</code>.</p>
-<p>To achieve this behavior we&#39;re going to use <code>setTransientValue</code>/<code>dispatch</code> instead of <code>setValue</code> that we discussed in
-<a href="#field-value-updates">Field value updates</a> section:</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0"> });</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">fooField</span><span class="hl-0"> = </span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-7">// Set the transient value, &quot;git add&quot;</span><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-6">setTransientValue</span><span class="hl-0">(</span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → { foo: &#39;bar&#39; }</span><br/><br/><span class="hl-7">// 🟡 Notice that fooField was updated but field wasn&#39;t</span><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → &#39;qux&#39;</span><br/><br/><span class="hl-7">// Notify the parent, &quot;git commit&quot;</span><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-6">dispatch</span><span class="hl-0">();</span><br/><br/><span class="hl-7">// Now both fields are in sync</span><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → { foo: &#39;qux&#39; }</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-7">// → &#39;qux&#39;</span>
-</code></pre>
-<p><code>setTransientValue</code> can be called multiple times, but the most recent update would be propagated to the parent only
-after the <code>dispatch</code> call.</p>
-<p>You can check that the field has a transient value using <code>transient</code> property:</p>
-<pre><code class="language-ts"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0"> });</span><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">fooField</span><span class="hl-0"> = </span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-6">setTransientValue</span><span class="hl-0">(</span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-2">transient</span><span class="hl-0">;</span><br/><span class="hl-7">// → true</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-6">dispatch</span><span class="hl-0">();</span><br/><br/><span class="hl-2">fooField</span><span class="hl-0">.</span><span class="hl-2">transient</span><span class="hl-0">;</span><br/><span class="hl-7">// → false</span>
-</code></pre>
-
-<a href="#field-observability" id="field-observability" style="color: inherit; text-decoration: none;">
-  <h2>Field observability</h2>
-</a>
-<p>Fields are observable, you can subscribe to them and receive a callback whenever the field state is updated:</p>
-<pre><code class="language-ts"><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">subscribe</span><span class="hl-0">((</span><span class="hl-2">targetField</span><span class="hl-0">, </span><span class="hl-2">currentField</span><span class="hl-0">) </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-7">// Handle the update here</span><br/><span class="hl-0">});</span>
-</code></pre>
-<p><code>targetField</code> is a field that initiated the update, so this can be the <code>field</code> itself, any of its derived fields, or any
-of its ancestors (if <code>field</code> is also a derived field).</p>
-<p><code>currentField</code> is the field to which the listener is subscribed, so in this case it is <code>field</code>.</p>
-<p>You can trigger all listeners that are subscribed to the field with <code>notify</code>:</p>
-<pre><code class="language-ts"><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">notify</span><span class="hl-0">();</span>
-</code></pre>
-
-<a href="#fieldrenderer" id="fieldrenderer" style="color: inherit; text-decoration: none;">
-  <h1><code>FieldRenderer</code></h1>
-</a>
-<p>The <code>FieldRenderer</code> component subscribes to the given field instance and re-renders its children when the field is
-notified:</p>
-<pre><code class="language-tsx"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">FieldRenderer</span><span class="hl-0">, </span><span class="hl-2">useField</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-6">App</span><span class="hl-0"> = () </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rootField</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> (</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><span class="hl-0"> </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">      </span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> (</span><br/><span class="hl-12">        </span><span class="hl-9">&lt;</span><span class="hl-13">input</span><br/><span class="hl-12">          </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-4">}</span><br/><span class="hl-12">          </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">event</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">            </span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-6">setValue</span><span class="hl-12">(</span><span class="hl-2">event</span><span class="hl-12">.</span><span class="hl-2">target</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-12">);</span><br/><span class="hl-12">          }</span><span class="hl-4">}</span><br/><span class="hl-12">        </span><span class="hl-9">/&gt;</span><br/><span class="hl-12">      )</span><span class="hl-4">}</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span><br/><span class="hl-0">  );</span><br/><span class="hl-0">};</span>
-</code></pre>
-<p>When a user updates the input value, the <code>rootField</code> is updated and <code>FieldRenderer</code> component is re-rendered. The single
-argument of the <code>children</code> render function is the field passed as a <code>field</code> prop to the <code>FieldRenderer</code> component.</p>
-<p>It is unlikely that you would use a form with a single literal field. Most of the time multiple derived fields are
-required:</p>
-<pre><code class="language-tsx"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-6">App</span><span class="hl-0"> = () </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rootField</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0">, </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-8">123</span><span class="hl-0"> });</span><br/><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-9">&lt;&gt;</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><span class="hl-0"> </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-6">at</span><span class="hl-12">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-12">)</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">      </span><span class="hl-4">{</span><span class="hl-2">fooField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> (</span><br/><span class="hl-12">        </span><span class="hl-9">&lt;</span><span class="hl-13">input</span><br/><span class="hl-12">          </span><span class="hl-11">type</span><span class="hl-0">=</span><span class="hl-3">&quot;text&quot;</span><br/><span class="hl-12">          </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">fooField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-4">}</span><br/><span class="hl-12">          </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">event</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">            </span><span class="hl-2">fooField</span><span class="hl-12">.</span><span class="hl-6">setValue</span><span class="hl-12">(</span><span class="hl-2">event</span><span class="hl-12">.</span><span class="hl-2">target</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-12">);</span><br/><span class="hl-12">          }</span><span class="hl-4">}</span><br/><span class="hl-12">        </span><span class="hl-9">/&gt;</span><br/><span class="hl-12">      )</span><span class="hl-4">}</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span><br/><br/><span class="hl-0">    </span><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><span class="hl-0"> </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-6">at</span><span class="hl-12">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-12">)</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">      </span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> (</span><br/><span class="hl-12">        </span><span class="hl-9">&lt;</span><span class="hl-13">input</span><br/><span class="hl-12">          </span><span class="hl-11">type</span><span class="hl-0">=</span><span class="hl-3">&quot;number&quot;</span><br/><span class="hl-12">          </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-4">}</span><br/><span class="hl-12">          </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">event</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">            </span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-6">setValue</span><span class="hl-12">(</span><span class="hl-2">event</span><span class="hl-12">.</span><span class="hl-2">target</span><span class="hl-12">.</span><span class="hl-2">valueAsNumber</span><span class="hl-12">);</span><br/><span class="hl-12">          }</span><span class="hl-4">}</span><br/><span class="hl-12">        </span><span class="hl-9">/&gt;</span><br/><span class="hl-12">      )</span><span class="hl-4">}</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span><br/><span class="hl-0">  </span><span class="hl-9">&lt;/&gt;</span><span class="hl-0">;</span><br/><span class="hl-0">};</span>
-</code></pre>
-<p>You may have noticed that even though we didn&#39;t specify any types yet, our fields are strictly typed. You can check this
-by replacing the value dispatched to <code>barField</code>:</p>
-<pre><code class="language-diff"><span class="hl-3">- barField.setValue(event.target.valueAsNumber);</span><br/><span class="hl-8">+ barField.setValue(event.target.value);</span>
-</code></pre>
-<p>This would cause TypeScript to show an error that <code>barField</code> value must be of a number type.</p>
-
-<a href="#eager-and-lazy-re-renders" id="eager-and-lazy-re-renders" style="color: inherit; text-decoration: none;">
-  <h2>Eager and lazy re-renders</h2>
-</a>
-<p>Let&#39;s consider the form with two <code>FieldRenderer</code> elements. One of them renders the value of the root field and the other
-one renders an input that updates the derived field:</p>
-<pre><code class="language-tsx"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-6">App</span><span class="hl-0"> = () </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rootField</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> });</span><br/><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-9">&lt;&gt;</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><span class="hl-0"> </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">      </span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> </span><span class="hl-5">JSON</span><span class="hl-12">.</span><span class="hl-6">stringify</span><span class="hl-12">(</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-12">)</span><span class="hl-4">}</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span><br/><br/><span class="hl-0">    </span><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><span class="hl-0"> </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-6">at</span><span class="hl-12">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-12">)</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">      </span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> (</span><br/><span class="hl-12">        </span><span class="hl-9">&lt;</span><span class="hl-13">input</span><br/><span class="hl-12">          </span><span class="hl-11">type</span><span class="hl-0">=</span><span class="hl-3">&quot;text&quot;</span><br/><span class="hl-12">          </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-4">}</span><br/><span class="hl-12">          </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">event</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">            </span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-6">setValue</span><span class="hl-12">(</span><span class="hl-2">event</span><span class="hl-12">.</span><span class="hl-2">target</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-12">);</span><br/><span class="hl-12">          }</span><span class="hl-4">}</span><br/><span class="hl-12">        </span><span class="hl-9">/&gt;</span><br/><span class="hl-12">      )</span><span class="hl-4">}</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span><br/><span class="hl-0">  </span><span class="hl-9">&lt;/&gt;</span><span class="hl-0">;</span><br/><span class="hl-0">};</span>
-</code></pre>
-<p>By default, <code>FieldRenderer</code> component re-renders only when the provided field was updated directly, so updates from
-ancestors or derived fields would be ignored. Add the <code>eagerlyUpdated</code> property to force <code>FieldRenderer</code> to re-render
-whenever its value was affected.</p>
-<pre><code class="language-diff"><span class="hl-3">- &lt;FieldRenderer field={rootField}&gt;</span><br/><span class="hl-8">+ &lt;FieldRenderer</span><br/><span class="hl-8">+   field={rootField}</span><br/><span class="hl-8">+   eagerlyUpdated={true}</span><br/><span class="hl-8">+ &gt;</span><br/><span class="hl-0">    {rootField =&gt; JSON.stringify(rootField.value)}</span><br/><span class="hl-0">  &lt;/FieldRenderer&gt;</span>
-</code></pre>
-<p>Now both fields are re-rendered when user edits the input text.</p>
-
-<a href="#reacting-to-changes" id="reacting-to-changes" style="color: inherit; text-decoration: none;">
-  <h2>Reacting to changes</h2>
-</a>
-<p><a href="#field-observability">Subscribing to a field</a> isn&#39;t always convenient. Instead, you can use an <code>onChange</code> handler that
-is triggered only when the field value was updated <a href="#transient-updates">non-transiently</a>.</p>
-<pre><code class="language-tsx"><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><br/><span class="hl-0">  </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-6">at</span><span class="hl-12">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-12">)</span><span class="hl-4">}</span><br/><span class="hl-0">  </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">value</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">    </span><span class="hl-7">// Handle the value change</span><br/><span class="hl-12">  }</span><span class="hl-4">}</span><br/><span class="hl-9">&gt;</span><br/><span class="hl-0">  </span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> (</span><br/><span class="hl-12">    </span><span class="hl-9">&lt;</span><span class="hl-13">input</span><br/><span class="hl-12">      </span><span class="hl-11">type</span><span class="hl-0">=</span><span class="hl-3">&quot;text&quot;</span><br/><span class="hl-12">      </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-4">}</span><br/><span class="hl-12">      </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">event</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">        </span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-6">setValue</span><span class="hl-12">(</span><span class="hl-2">event</span><span class="hl-12">.</span><span class="hl-2">target</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-12">);</span><br/><span class="hl-12">      }</span><span class="hl-4">}</span><br/><span class="hl-12">    </span><span class="hl-9">/&gt;</span><br/><span class="hl-12">  )</span><span class="hl-4">}</span><br/><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span>
-</code></pre>
-
-<a href="#plugins" id="plugins" style="color: inherit; text-decoration: none;">
-  <h1>Plugins</h1>
-</a>
-<p>Plugins are a very powerful mechanism that allows enriching fields with a custom functionality.</p>
-<p>There&#39;s a set of plugins available in this repo:</p>
-<ul>
-<li><p><a href="./packages/doubter-plugin#readme">@roqueform/doubter-plugin</a><br>
-Enhances fields with validation methods powered by <a href="https://github.com/smikhalevski/doubter#readme">Doubter</a>.</p>
-</li>
-<li><p><a href="./packages/ref-plugin#readme">@roqueform/ref-plugin</a><br>
-Enhances fields with DOM-related methods.</p>
-</li>
-<li><p><a href="./packages/reset-plugin#readme">@roqueform/reset-plugin</a><br>
-Enhances fields with methods that manage the initial value.</p>
-</li>
-<li><p><a href="./packages/scroll-to-error-plugin#readme">@roqueform/scroll-to-error-plugin</a><br>
-Enables scrolling to a field that has an associated validation error.</p>
-</li>
-</ul>
-
-<a href="#authoring-a-plugin" id="authoring-a-plugin" style="color: inherit; text-decoration: none;">
-  <h2>Authoring a plugin</h2>
-</a>
-<p>Let&#39;s enhance the field with the <code>ref</code> property that would hold the <code>RefObject</code>:</p>
-<pre><code class="language-ts"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">createRef</span><span class="hl-0">, </span><span class="hl-2">RefObject</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;react&#39;</span><span class="hl-0">;</span><br/><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">Plugin</span><span class="hl-0">, </span><span class="hl-2">useField</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">function</span><span class="hl-0"> </span><span class="hl-6">refPlugin</span><span class="hl-0">&lt;</span><span class="hl-10">T</span><span class="hl-0">&gt;(): </span><span class="hl-10">Plugin</span><span class="hl-0">&lt;</span><span class="hl-10">T</span><span class="hl-0">, { </span><span class="hl-2">ref</span><span class="hl-0">: </span><span class="hl-10">RefObject</span><span class="hl-0">&lt;</span><span class="hl-10">HTMLInputElement</span><span class="hl-0">&gt; }&gt; {</span><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-2">field</span><span class="hl-0"> </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-2">Object</span><span class="hl-0">.</span><span class="hl-6">assign</span><span class="hl-0">(</span><span class="hl-2">field</span><span class="hl-0">, { </span><span class="hl-2">ref:</span><span class="hl-0"> </span><span class="hl-6">createRef</span><span class="hl-0">() });</span><br/><span class="hl-0">  };</span><br/><span class="hl-0">}</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rootField</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> }, </span><span class="hl-6">refPlugin</span><span class="hl-0">());</span><br/><span class="hl-7">// → Field&lt;{ bar: string }, { ref: RefObject&lt;HTMLInputElement&gt; }&gt; &amp; { ref: RefObject&lt;HTMLInputElement&gt; }</span>
-</code></pre>
-<p>The second argument of the <code>useField</code> hook is the plugin function that accepts a field instance and enriches it with
-the new functionality. In our case it adds the <code>ref</code> to each field derived from the <code>rootField</code> and to the <code>rootField</code>
-itself.</p>
-<pre><code class="language-tsx"><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><span class="hl-0"> </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-6">at</span><span class="hl-12">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-12">)</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">  </span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> (</span><br/><span class="hl-12">    </span><span class="hl-9">&lt;</span><span class="hl-13">input</span><br/><span class="hl-12">      </span><span class="hl-7">// 🟡 Notice the ref property</span><br/><span class="hl-12">      </span><span class="hl-11">ref</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-2">ref</span><span class="hl-4">}</span><br/><span class="hl-12">      </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-4">}</span><br/><span class="hl-12">      </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">event</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">        </span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-6">setValue</span><span class="hl-12">(</span><span class="hl-2">event</span><span class="hl-12">.</span><span class="hl-2">target</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-12">);</span><br/><span class="hl-12">      }</span><span class="hl-4">}</span><br/><span class="hl-12">    </span><span class="hl-9">/&gt;</span><br/><span class="hl-12">  )</span><span class="hl-4">}</span><br/><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span>
-</code></pre>
-<p>After the <code>FieldRenderer</code> is mounted we can use ref to imperatively scroll the input element into view:</p>
-<pre><code class="language-ts"><span class="hl-2">rootField</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0">).</span><span class="hl-2">ref</span><span class="hl-0">.</span><span class="hl-2">current</span><span class="hl-0">?.</span><span class="hl-6">scrollIntoView</span><span class="hl-0">();</span>
-</code></pre>
-
-<a href="#composing-plugins" id="composing-plugins" style="color: inherit; text-decoration: none;">
-  <h2>Composing plugins</h2>
-</a>
-<p>To combine multiple plugins into one, use <code>applyPlugins</code> helper function:</p>
-<pre><code class="language-ts"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">applyPlugins</span><span class="hl-0">, </span><span class="hl-2">useField</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">refPlugin</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;@roqueform/ref-plugin&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> }, </span><span class="hl-6">applyPlugins</span><span class="hl-0">(</span><span class="hl-6">refPlugin</span><span class="hl-0">(), </span><span class="hl-6">anotherPlugin</span><span class="hl-0">()));</span>
-</code></pre>
-
-<a href="#form-submission" id="form-submission" style="color: inherit; text-decoration: none;">
-  <h1>Form submission</h1>
-</a>
-<p>Without plugins, Roqueform only manages the state of the form fields, and doesn&#39;t affect how the form is submitted. So
-you can use <code>form</code> tags and read input values from the <code>Field</code> object:</p>
-<pre><code class="language-tsx"><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-6">App</span><span class="hl-0"> = () </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rootField</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0"> });</span><br/><br/><span class="hl-0">  </span><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-6">handleSubmit</span><span class="hl-0"> = (</span><span class="hl-2">event</span><span class="hl-0">: </span><span class="hl-10">SyntheticEvent</span><span class="hl-0">): </span><span class="hl-10">void</span><span class="hl-0"> </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-2">event</span><span class="hl-0">.</span><span class="hl-6">preventDefault</span><span class="hl-0">();</span><br/><br/><span class="hl-0">    </span><span class="hl-7">// The form value to submit</span><br/><span class="hl-0">    </span><span class="hl-2">rootField</span><span class="hl-0">.</span><span class="hl-2">value</span><span class="hl-0">;</span><br/><span class="hl-0">  };</span><br/><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> (</span><br/><span class="hl-0">    </span><span class="hl-9">&lt;</span><span class="hl-13">form</span><span class="hl-0"> </span><span class="hl-11">onSubmit</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">handleSubmit</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><br/><span class="hl-0">      </span><span class="hl-9">&lt;</span><span class="hl-10">FieldRenderer</span><span class="hl-0"> </span><span class="hl-11">field</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">rootField</span><span class="hl-12">.</span><span class="hl-6">at</span><span class="hl-12">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-12">)</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">        </span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> (</span><br/><span class="hl-12">          </span><span class="hl-9">&lt;</span><span class="hl-13">input</span><br/><span class="hl-12">            </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-4">}</span><br/><span class="hl-12">            </span><span class="hl-11">onChange</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">event</span><span class="hl-12"> </span><span class="hl-4">=&gt;</span><span class="hl-12"> {</span><br/><span class="hl-12">              </span><span class="hl-2">barField</span><span class="hl-12">.</span><span class="hl-6">setValue</span><span class="hl-12">(</span><span class="hl-2">event</span><span class="hl-12">.</span><span class="hl-2">target</span><span class="hl-12">.</span><span class="hl-2">value</span><span class="hl-12">);</span><br/><span class="hl-12">            }</span><span class="hl-4">}</span><br/><span class="hl-12">          </span><span class="hl-9">/&gt;</span><br/><span class="hl-12">        )</span><span class="hl-4">}</span><br/><span class="hl-0">      </span><span class="hl-9">&lt;/</span><span class="hl-10">FieldRenderer</span><span class="hl-9">&gt;</span><br/><br/><span class="hl-0">      </span><span class="hl-9">&lt;</span><span class="hl-13">button</span><span class="hl-0"> </span><span class="hl-11">type</span><span class="hl-0">=</span><span class="hl-3">&quot;submit&quot;</span><span class="hl-9">&gt;</span><br/><span class="hl-0">        </span><span class="hl-4">{</span><span class="hl-3">&#39;Submit&#39;</span><span class="hl-4">}</span><br/><span class="hl-0">      </span><span class="hl-9">&lt;/</span><span class="hl-13">button</span><span class="hl-9">&gt;</span><br/><br/><span class="hl-0">    </span><span class="hl-9">&lt;/</span><span class="hl-13">form</span><span class="hl-9">&gt;</span><br/><span class="hl-0">  );</span><br/><span class="hl-0">};</span>
-</code></pre>
-<p>You can always <a href="#plugins">create a plugin</a> that would enhance the <code>Field</code> instance with custom submit mechanics.</p>
-
-<a href="#validation" id="validation" style="color: inherit; text-decoration: none;">
-  <h1>Validation</h1>
-</a>
-<p>Roqueform isn&#39;t tied to any validation library. You can use an existing plugin, or write your own to extend Roqueform
-with validation provided by an arbitrary library.</p>
-<p>Consider using <a href="./packages/doubter-plugin#readme">@roqueform/doubter-plugin</a> which relies on
-<a href="https://github.com/smikhalevski/doubter#readme">Doubter</a> under-the-hood.</p>
-<pre><code class="language-ts"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">useField</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">doubterPlugin</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;@roqueform/doubter-plugin&#39;</span><span class="hl-0">;</span><br/><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-4">*</span><span class="hl-0"> </span><span class="hl-1">as</span><span class="hl-0"> </span><span class="hl-2">d</span><span class="hl-0"> </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;doubter&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">valueShape</span><span class="hl-0"> = </span><span class="hl-2">d</span><span class="hl-0">.</span><span class="hl-6">object</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-2">d</span><span class="hl-0">.</span><span class="hl-6">string</span><span class="hl-0">().</span><span class="hl-6">min</span><span class="hl-0">(</span><span class="hl-8">5</span><span class="hl-0">)</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">rootField</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">bar:</span><span class="hl-0"> </span><span class="hl-3">&#39;qux&#39;</span><span class="hl-0"> }, </span><span class="hl-6">doubterPlugin</span><span class="hl-0">(</span><span class="hl-2">valueShape</span><span class="hl-0">));</span><br/><br/><span class="hl-2">rootField</span><span class="hl-0">.</span><span class="hl-6">validate</span><span class="hl-0">();</span><br/><span class="hl-7">// → [{ message&#39;Must have the minimum length of 5&#39;, … }]</span><br/><br/><span class="hl-2">rootField</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0">).</span><span class="hl-2">error</span><span class="hl-0">;</span><br/><span class="hl-7">// → { message: &#39;Must have the minimum length of 5&#39;, … }</span>
-</code></pre>
-<p><a href="./packages/doubter-plugin#readme">Plugin usage details can be found here.</a></p>
-
-<a href="#validation-scaffolding-plugin" id="validation-scaffolding-plugin" style="color: inherit; text-decoration: none;">
-  <h2>Validation scaffolding plugin</h2>
-</a>
-<p>Roqueform a shipped with validation scaffolding plugin <code>validatePlugin</code>, so you can build your validation on top of it.</p>
-<pre><code class="language-ts"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">Plugin</span><span class="hl-0">, </span><span class="hl-2">useField</span><span class="hl-0">, </span><span class="hl-2">validationPlugin</span><span class="hl-0">, </span><span class="hl-2">ValidationPlugin</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-4">function</span><span class="hl-0"> </span><span class="hl-6">fooValidationPlugin</span><span class="hl-0">&lt;</span><span class="hl-10">T</span><span class="hl-0">&gt;(): </span><span class="hl-10">Plugin</span><span class="hl-0">&lt;</span><span class="hl-10">T</span><span class="hl-0">, </span><span class="hl-10">ValidationPlugin</span><span class="hl-0">&lt;</span><span class="hl-10">string</span><span class="hl-0">, </span><span class="hl-10">never</span><span class="hl-0">&gt;&gt; {</span><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-6">validationPlugin</span><span class="hl-0">((</span><span class="hl-2">field</span><span class="hl-0">, </span><span class="hl-2">setInternalError</span><span class="hl-0">, </span><span class="hl-2">options</span><span class="hl-0">) </span><span class="hl-4">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">if</span><span class="hl-0"> (</span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">).</span><span class="hl-2">value</span><span class="hl-0"> === </span><span class="hl-4">null</span><span class="hl-0">) {</span><br/><span class="hl-0">      </span><span class="hl-6">setInternalError</span><span class="hl-0">(</span><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">), </span><span class="hl-3">&#39;Must not be null&#39;</span><span class="hl-0">);</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">  });</span><br/><span class="hl-0">}</span><br/><br/><span class="hl-4">const</span><span class="hl-0"> </span><span class="hl-5">field</span><span class="hl-0"> = </span><span class="hl-6">useField</span><span class="hl-0">({ </span><span class="hl-2">foo:</span><span class="hl-0"> </span><span class="hl-3">&#39;bar&#39;</span><span class="hl-0"> }, </span><span class="hl-6">fooValidationPlugin</span><span class="hl-0">());</span><br/><br/><span class="hl-7">// Manually set an error for a field</span><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">at</span><span class="hl-0">(</span><span class="hl-3">&#39;foo&#39;</span><span class="hl-0">).</span><span class="hl-6">setError</span><span class="hl-0">(</span><span class="hl-3">&#39;Some useful message&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-7">// Clear all errors of the field and its derived fields</span><br/><span class="hl-2">field</span><span class="hl-0">.</span><span class="hl-6">clearErrors</span><span class="hl-0">();</span>
-</code></pre>
-<p>This plugin makes all the heavy lifting related to field updates, manual validation error management, async validation
-abortions, etc. It takes a validator callback or an object that has a <code>validate</code> method and an optional <code>validateAsync</code>
-method. The validator receives a field that must be validated and a <code>setInternalError</code> callback that to notifies
-Roqueform that an error should be assigned to a particular field.</p>
-<p><code>validatePlugin</code> distinguishes internal errors (those set via <code>setInternalError</code>) and external errors (those set via
-<code>field.setError</code>). Internal errors are automatically cleared when the <code>field.validate</code> or <code>field.validateAsync</code>
-methods are called. External errors are preserved as is, and you should explicitly call <code>field.clearErrors</code> before
-validation to delete them.</p>
-
-<a href="#accessors" id="accessors" style="color: inherit; text-decoration: none;">
-  <h1>Accessors</h1>
-</a>
-<p>When you derive a new field or update a derived field, Roqueform uses an accessor to read and write a value to the
-parent field. You can alter the way field values are read and written by providing a custom implementation of <code>Accessor</code>
-interface to <code>AccessorContext</code>.</p>
-<pre><code class="language-tsx"><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">objectAccessor</span><span class="hl-0">, </span><span class="hl-2">AccessorContext</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;roqueform&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-9">&lt;</span><span class="hl-10">AccessorContext.Provider</span><span class="hl-0"> </span><span class="hl-11">value</span><span class="hl-0">=</span><span class="hl-4">{</span><span class="hl-2">objectAccessor</span><span class="hl-4">}</span><span class="hl-9">&gt;</span><br/><span class="hl-0">  </span><span class="hl-4">{</span><span class="hl-7">/* useField should go here */</span><span class="hl-4">}</span><br/><span class="hl-9">&lt;/</span><span class="hl-10">AccessorContext.Provider</span><span class="hl-9">&gt;</span>
-</code></pre>
-</div></div>
+<section class="tsd-panel-group tsd-index-group">
+<section class="tsd-panel tsd-index-panel">
+<h3 class="tsd-index-heading uppercase">Index</h3>
+<section class="tsd-index-section">
+<h3 class="tsd-index-heading">Modules</h3>
+<div class="tsd-index-list"><a href="modules/constraint_validation_plugin.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-namespace)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-4-path"></rect><path d="M9.33 16V7.24H10.77L13.446 14.74C13.43 14.54 13.41 14.296 13.386 14.008C13.37 13.712 13.354 13.404 13.338 13.084C13.33 12.756 13.326 12.448 13.326 12.16V7.24H14.37V16H12.93L10.266 8.5C10.282 8.692 10.298 8.936 10.314 9.232C10.33 9.52 10.342 9.828 10.35 10.156C10.366 10.476 10.374 10.784 10.374 11.08V16H9.33Z" fill="var(--color-text)" id="icon-4-text"></path></svg><span>constraint-<wbr/>validation-<wbr/>plugin</span></a>
+<a href="modules/doubter_plugin.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>doubter-<wbr/>plugin</span></a>
+<a href="modules/react.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>react</span></a>
+<a href="modules/ref_plugin.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>ref-<wbr/>plugin</span></a>
+<a href="modules/reset_plugin.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>reset-<wbr/>plugin</span></a>
+<a href="modules/roqueform.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>roqueform</span></a>
+<a href="modules/scroll_to_error_plugin.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>scroll-<wbr/>to-<wbr/>error-<wbr/>plugin</span></a>
+<a href="modules/uncontrolled_plugin.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>uncontrolled-<wbr/>plugin</span></a>
+<a href="modules/zod_plugin.html" class="tsd-index-link tsd-kind-module"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4-path"></use><use href="#icon-4-text"></use></svg><span>zod-<wbr/>plugin</span></a>
+</div></section></section></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
@@ -299,9 +36,7 @@ interface to <code>AccessorContext</code>.</p>
 <h4 class="uppercase">Member Visibility</h4><form>
 <ul id="tsd-filter-options">
 <li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li>
-<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-private" name="private"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Private</span></label></li>
-<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li>
-<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></form></div>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li></ul></form></div>
 <div class="tsd-theme-toggle">
 <h4 class="uppercase">Theme</h4><select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div>
 <nav class="tsd-navigation primary">
@@ -309,13 +44,17 @@ interface to <code>AccessorContext</code>.</p>
 <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg> Modules</h3></summary>
 <div class="tsd-accordion-details">
 <ul>
-<li class="current selected"><a href="modules.html">Roqueform</a>
+<li class="current selected"><a href="index.html">Roqueform</a>
 <ul>
-<li class="tsd-kind-module"><a href="modules/_roqueform_doubter_plugin.html">@roqueform/doubter-<wbr/>plugin -<wbr/> v1.0.0</a></li>
-<li class="tsd-kind-module"><a href="modules/_roqueform_ref_plugin.html">@roqueform/ref-<wbr/>plugin -<wbr/> v3.0.0</a></li>
-<li class="tsd-kind-module"><a href="modules/_roqueform_reset_plugin.html">@roqueform/reset-<wbr/>plugin -<wbr/> v2.0.0</a></li>
-<li class="tsd-kind-module"><a href="modules/_roqueform_scroll_to_error_plugin.html">@roqueform/scroll-<wbr/>to-<wbr/>error-<wbr/>plugin -<wbr/> v1.0.0</a></li>
-<li class="tsd-kind-module"><a href="modules/roqueform.html">roqueform -<wbr/> v3.0.0</a></li></ul></li></ul></div></details></nav></div></div>
+<li class="tsd-kind-module"><a href="modules/constraint_validation_plugin.html">constraint-<wbr/>validation-<wbr/>plugin</a></li>
+<li class="tsd-kind-module"><a href="modules/doubter_plugin.html">doubter-<wbr/>plugin</a></li>
+<li class="tsd-kind-module"><a href="modules/react.html">react</a></li>
+<li class="tsd-kind-module"><a href="modules/ref_plugin.html">ref-<wbr/>plugin</a></li>
+<li class="tsd-kind-module"><a href="modules/reset_plugin.html">reset-<wbr/>plugin</a></li>
+<li class="tsd-kind-module"><a href="modules/roqueform.html">roqueform</a></li>
+<li class="tsd-kind-module"><a href="modules/scroll_to_error_plugin.html">scroll-<wbr/>to-<wbr/>error-<wbr/>plugin</a></li>
+<li class="tsd-kind-module"><a href="modules/uncontrolled_plugin.html">uncontrolled-<wbr/>plugin</a></li>
+<li class="tsd-kind-module"><a href="modules/zod_plugin.html">zod-<wbr/>plugin</a></li></ul></li></ul></div></details></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
 <div class="overlay"></div><script src="assets/main.js"></script></body></html>
