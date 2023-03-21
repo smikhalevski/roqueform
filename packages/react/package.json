@@ -40,6 +40,6 @@
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/react#readme",
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
-    "roqueform": "^3.0.1"
+    "roqueform": "^4.0.0"
   }
 }

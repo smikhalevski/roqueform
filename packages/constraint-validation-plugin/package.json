@@ -37,6 +37,6 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/constraint-validation-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^3.0.1"
+    "roqueform": "^4.0.0"
   }
 }

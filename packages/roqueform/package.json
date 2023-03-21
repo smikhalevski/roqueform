@@ -1,6 +1,6 @@
 {
   "name": "roqueform",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "description": "The form state management library that can handle hundreds of fields without breaking a sweat.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
