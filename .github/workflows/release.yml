@@ -53,7 +53,9 @@ jobs:
 
           git add .
 
-          ! git diff --quiet --exit-code || exit 0
+          if git diff --quiet --exit-code; then
+            exit 0
+          fi
           
           git commit -m "Updated docs ($(git rev-parse --short $GITHUB_SHA))"
           git push origin ghpages
