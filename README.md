@@ -406,13 +406,13 @@ userField.clearErrors();
 
 # Motivation
 
-Form lifecycle consists of four separate phases: input, validate, display errors, and submit. The form state management
-library should allow to tap in (or at least not constrain the ability to do so) at any particular phase to tweak the
-data flow.
+Roqueform was built to satisfy the following requirements:
 
-So the Roqueform was built to satisfy the following requirements:
+- Since the form lifecycle consists of separate phases (input, validate, display errors, and submit), the form state
+  management library should allow to tap in (or at least not constrain the ability to do so) at any particular phase to 
+  tweak the data flow.
 
-- Everything should be statically and strictly typed up to the very field value setter. So there must be a compilation
+- Form data should be statically and strictly typed up to the very field value setter. So there must be a compilation
   error if the string value from the silly input is assigned to the number-typed value in the form state object.
 
 - **Use the platform!** The form state management library must not constrain the use of the `form` submit behavior,

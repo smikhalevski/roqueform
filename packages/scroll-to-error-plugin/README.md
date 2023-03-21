@@ -11,8 +11,9 @@ npm install --save-prod @roqueform/scroll-to-error-plugin
 
 🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin.html)
 
-This plugin works in conjunction with [a validation plugin](../../#plugins-and-integrations). If an element is displayed
-and an error not `null` than `scrollToError()` would reveal this element on the screen.
+This plugin works in conjunction with [a validation plugin](../../#plugins-and-integrations). If an element associated
+with the field is displayed and an `error` isn't `null` than `scrollToError()` would scroll the viewport, so the element
+is reveled on the screen.
 
 The example below uses [Doubter](https://github.com/smikhalevski/doubter#readme) shapes and
 [Doubter plugin](../doubter-plugin#readme) for validation.
