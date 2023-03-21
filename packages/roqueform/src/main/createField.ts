@@ -1,5 +1,6 @@
 import { Accessor, Field, Plugin } from './shared-types';
 import { callAll, callOrGet, isEqual } from './utils';
+import { objectAccessor } from './objectAccessor';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
 type NoInfer<T> = T extends infer T ? T : never;
@@ -7,32 +8,36 @@ type NoInfer<T> = T extends infer T ? T : never;
 /**
  * Creates the new field instance.
  *
- * @param accessor Resolves values for derived fields.
- */
-export function createField(accessor: Accessor): Field;
-
-/**
- * Creates the new field instance.
- *
- * @param accessor Resolves values for derived fields.
- * @param initialValue The initial value assigned to the field.
  * @template T The root field value.
  */
-export function createField<T>(accessor: Accessor, initialValue: T): Field<T>;
+export function createField<T = any>(): Field<T | undefined>;
 
 /**
  * Creates the new field instance.
  *
+ * @param initialValue The initial value assigned to the field.
  * @param accessor Resolves values for derived fields.
+ * @template T The root field value.
+ */
+export function createField<T>(initialValue: T, accessor?: Accessor): Field<T>;
+
+/**
+ * Creates the new field instance.
+ *
  * @param initialValue The initial value assigned to the field.
  * @param plugin The plugin that enhances the field.
+ * @param accessor Resolves values for derived fields.
  * @template T The root field value.
  * @template M The mixin added by the plugin.
  */
-export function createField<T, M>(accessor: Accessor, initialValue: T, plugin: Plugin<M, NoInfer<T>>): Field<T, M> & M;
+export function createField<T, M>(initialValue: T, plugin: Plugin<M, NoInfer<T>>, accessor?: Accessor): Field<T, M> & M;
 
-export function createField(accessor: Accessor, initialValue?: unknown, plugin?: Plugin) {
-  return getOrCreateFieldController(accessor, null, null, initialValue, plugin)._field;
+export function createField(initialValue?: unknown, plugin?: Plugin | Accessor, accessor?: Accessor) {
+  if (typeof plugin !== 'function') {
+    plugin = undefined;
+    accessor = plugin;
+  }
+  return getOrCreateFieldController(accessor || objectAccessor, null, null, initialValue, plugin)._field;
 }
 
 interface FieldController {
@@ -46,7 +51,7 @@ interface FieldController {
   _field: Field;
   _key: unknown;
   _value: unknown;
-  _transient: boolean;
+  _isTransient: boolean;
   _accessor: Accessor;
   _notify: (targetField: Field) => void;
 }
@@ -104,7 +109,7 @@ function getOrCreateFieldController(
     parent: { enumerable: true, value: parent },
     key: { enumerable: true, value: key },
     value: { enumerable: true, get: () => controller._value },
-    transient: { enumerable: true, get: () => controller._transient },
+    isTransient: { enumerable: true, get: () => controller._isTransient },
   });
 
   const controller: FieldController = {
@@ -114,7 +119,7 @@ function getOrCreateFieldController(
     _field: field,
     _key: key,
     _value: initialValue,
-    _transient: false,
+    _isTransient: false,
     _notify: notify,
     _accessor: accessor,
   };
@@ -130,15 +135,15 @@ function getOrCreateFieldController(
 }
 
 function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-  if (isEqual(controller._value, value) && controller._transient === transient) {
+  if (isEqual(controller._value, value) && controller._isTransient === transient) {
     return;
   }
 
-  controller._transient = transient;
+  controller._isTransient = transient;
 
   let rootController = controller;
 
-  while (rootController._parent !== null && !rootController._transient) {
+  while (rootController._parent !== null && !rootController._isTransient) {
     const { _key } = rootController;
     rootController = rootController._parent;
     value = controller._accessor.set(rootController._value, _key, value);
@@ -159,7 +164,7 @@ function propagateValue(
 
   if (controller._children !== null) {
     for (const child of controller._children) {
-      if (child._transient) {
+      if (child._isTransient) {
         continue;
       }
 

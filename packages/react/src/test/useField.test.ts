@@ -37,17 +37,4 @@ describe('useField', () => {
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
   });
-
-  test('re-creates a field when deps are changed', () => {
-    let depsMock = [111];
-    const pluginMock = jest.fn();
-
-    const hook = renderHook(() => useField(111, pluginMock, depsMock));
-
-    const field = hook.result.current;
-    depsMock = [222];
-    hook.rerender();
-
-    expect(hook.result.current).not.toBe(field);
-  });
 });

@@ -9,64 +9,65 @@ npm install --save-prod @roqueform/scroll-to-error-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/Scroll_to_error_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin.html)
 
-Scroll plugin assumes that the field is enhanced with `ref` and `error` properties. The `ref` property should be a Rect
-reference object that points to the `Element`, and `error` holds a validation error. If an element is displayed and an
-error is defined and not `null` than `scrollToError()` would reveal this element on the screen.
+This plugin works in conjunction with [a validation plugin](../../#plugins-and-integrations). If an element associated
+with the field is displayed and an `error` isn't `null` than `scrollToError()` would scroll the viewport, so the element
+is reveled on the screen.
+
+The example below uses [Doubter](https://github.com/smikhalevski/doubter#readme) shapes and
+[Doubter plugin](../doubter-plugin#readme) for validation.
 
 ```tsx
-import { useEffect } from 'react';
-import { FieldRenderer, useField } from 'roqueform';
+import { SyntheticEvent, useEffect } from 'react';
+import { applyPlugins } from 'roqueform';
+import { FieldRenderer, useField } from '@roqueform/react';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
-import { refPlugin } from '@roqueform/ref-plugin';
 import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
 import * as d from 'doubter';
 
-// Define a runtime type using Doubter
-const valueShape = d.object({
-  bar: d.string().min(1),
+const planetShape = d.object({
+  name: d.string().min(1),
 });
 
 export const App = () => {
-  const rootField = useField(
-    { bar: 'qux' },
+  const planetField = useField(
+    { name: '' },
     applyPlugins(
-      refPlugin(),
-      doubterPlugin(valueShape),
+      doubterPlugin(planetShape),
       scrollToErrorPlugin()
     )
   );
 
-  const handleSubmit = (event: SyntheticEvent): void => {
+  const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
 
-    if (rootField.validate()) {
+    if (planetField.validate()) {
       // Scroll to the error that is closest to the top left conrner of the document 
-      rootField.scrollToError(0, { behavior: 'smooth' });
+      planetField.scrollToError(0, { behavior: 'smooth' });
       return;
     }
 
     // The form value to submit
-    rootField.value;
+    planetField.value;
   };
 
   return (
     <form onSubmit={handleSubmit}>
 
-      <FieldRenderer field={rootField.at('bar')}>
-        {barField => (
+      <FieldRenderer field={planetField.at('name')}>
+        {nameField => (
           <>
             <input
               // 🟡 Note that the input element ref is populated
-              ref={barField.refCallback}
-              value={barField.value}
+              ref={nameField.refCallback}
+              value={nameField.value}
               onChange={event => {
-                barField.setValue(event.target.value);
+                nameField.setValue(event.target.value);
               }}
             />
 
-            {barField.error?.message}
+            {nameField.error?.message}
           </>
         )}
       </FieldRenderer>

@@ -1,6 +1,6 @@
 import * as d from 'doubter';
 import { doubterPlugin } from '../main';
-import { createField, objectAccessor } from 'roqueform';
+import { createField } from 'roqueform';
 
 describe('doubterPlugin', () => {
   const fooShape = d.object({
@@ -13,85 +13,85 @@ describe('doubterPlugin', () => {
   });
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('sets an issue to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
     const issue = { code: 'aaa' };
 
     field.setError(issue);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(issue);
-    expect(field.error).toEqual({ code: 'aaa', input: { foo: 0 }, path: [] });
+    expect(field.error).toEqual({ code: 'aaa', input: { foo: 0 } });
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('sets an issue to the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
     const issue = { code: 'aaa' };
 
     field.at('foo').setError(issue);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(issue);
     expect(field.at('foo').error).toEqual({ code: 'aaa', input: 0, path: ['foo'] });
   });
 
   test('converts string errors to issue messages', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
     field.at('foo').setError('aaa');
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
-    expect(field.at('foo').error).toEqual({ code: 'unknown', message: 'aaa', input: 0, path: ['foo'] });
+    expect(field.at('foo').isInvalid).toBe(true);
+    expect(field.at('foo').error).toEqual({ message: 'aaa', input: 0, path: ['foo'] });
   });
 
   test('deletes an issue from the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
     field.setError({ code: 'aaa' });
     field.deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('deletes an issue from the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
     field.at('foo').setError({ code: 'aaa' });
     field.at('foo').deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('deletes an issue from the child field but parent remains invalid', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
+    const field = createField({ foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     const issue1 = { code: 'aaa' };
     const issue2 = { code: 'bbb' };
@@ -101,18 +101,18 @@ describe('doubterPlugin', () => {
 
     field.at('bar').deleteError();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(issue1);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
   test('clears all issues', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
+    const field = createField({ foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     const issue1 = { code: 'aaa' };
     const issue2 = { code: 'bbb' };
@@ -122,25 +122,25 @@ describe('doubterPlugin', () => {
 
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
   test('validates the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -152,14 +152,14 @@ describe('doubterPlugin', () => {
   });
 
   test('validates the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, doubterPlugin(fooShape));
+    const field = createField({ foo: 0 }, doubterPlugin(fooShape));
 
     field.at('foo').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -171,14 +171,14 @@ describe('doubterPlugin', () => {
   });
 
   test('validates multiple fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
+    const field = createField({ foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -188,7 +188,7 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'stringMaxLength',
       path: ['bar'],
@@ -200,7 +200,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validate clears previous validation issues', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
+    const field = createField({ foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     field.validate();
 
@@ -208,10 +208,10 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -221,12 +221,12 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
   test('validate does not clear an issue set from userland', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, doubterPlugin(fooBarShape));
+    const field = createField({ foo: 0, bar: '' }, doubterPlugin(fooBarShape));
 
     const issue = { code: 'aaa' };
 
@@ -234,10 +234,10 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -247,21 +247,21 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toBe(issue);
   });
 
   test('validate does not raise issues for transient fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
+    const field = createField({ foo: 0, bar: 'qux' }, doubterPlugin(fooBarShape));
 
     field.at('bar').setTransientValue('aaabbb');
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'numberGreaterThanOrEqual',
       path: ['foo'],
@@ -271,7 +271,7 @@ describe('doubterPlugin', () => {
       meta: undefined,
     });
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 });

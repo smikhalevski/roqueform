@@ -15,16 +15,13 @@ export function callOrGet<T, A extends any[]>(value: T | ((...args: A) => T), ..
  * Calls each callback from the list once with given set of arguments.
  *
  * If the list contains the same callback multiple times then the callback is called only once. If a callback throws an
- * error, the remaining callbacks are still called and the first occurred error is re-thrown in the end.
+ * error, the remaining callbacks are still called and the error is re-thrown asynchronously.
  *
  * @param callbacks The list of callbacks.
  * @param args The list of arguments to pass to each callback.
  * @template A The list of callback arguments.
  */
 export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, ...args: A): void {
-  let errored = false;
-  let error;
-
   for (let i = 0; i < callbacks.length; ++i) {
     const cb = callbacks[i];
 
@@ -33,15 +30,11 @@ export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, 
     }
     try {
       cb.apply(undefined, args);
-    } catch (e) {
-      if (!errored) {
-        errored = true;
-        error = e;
-      }
+    } catch (error) {
+      setTimeout(() => {
+        throw error;
+      }, 0);
     }
-  }
-  if (errored) {
-    throw error;
   }
 }
 

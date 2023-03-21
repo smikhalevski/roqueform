@@ -7,7 +7,8 @@
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
-    "displayName": "Roqueform"
+    "displayName": "roqueform",
+    "readmeFile": "none"
   },
   "sideEffects": false,
   "files": [

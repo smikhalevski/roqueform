@@ -13,7 +13,7 @@ export interface ResetMixin {
   /**
    * `true` if the field value is different from its initial value, or `false` otherwise.
    */
-  readonly dirty: boolean;
+  readonly isDirty: boolean;
 
   /**
    * The initial field value.
@@ -54,7 +54,7 @@ export function resetPlugin(
       _children: null,
       _field: field,
       _key: field.key,
-      _dirty: false,
+      _isDirty: false,
       _initialValue: field.value,
       _accessor: accessor,
       _equalityChecker: equalityChecker,
@@ -73,7 +73,7 @@ export function resetPlugin(
     }
 
     Object.defineProperties(field, {
-      dirty: { enumerable: true, get: () => controller._dirty },
+      isDirty: { enumerable: true, get: () => controller._isDirty },
       initialValue: { enumerable: true, get: () => controller._initialValue },
     });
 
@@ -98,7 +98,7 @@ interface FieldController {
   _children: FieldController[] | null;
   _field: Field;
   _key: unknown;
-  _dirty: boolean;
+  _isDirty: boolean;
   _initialValue: unknown;
   _accessor: Accessor;
   _equalityChecker: (initialValue: any, value: any) => boolean;
@@ -106,7 +106,7 @@ interface FieldController {
 }
 
 function applyDirty(controller: FieldController): void {
-  controller._dirty = !controller._equalityChecker(controller._initialValue, controller._field.value);
+  controller._isDirty = !controller._equalityChecker(controller._initialValue, controller._field.value);
 }
 
 function applyInitialValue(controller: FieldController, initialValue: unknown): void {

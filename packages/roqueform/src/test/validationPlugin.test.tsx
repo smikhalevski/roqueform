@@ -1,4 +1,4 @@
-import { createField, objectAccessor, validationPlugin, Validator } from '../main';
+import { createField, validationPlugin, Validator } from '../main';
 
 describe('validationPlugin', () => {
   const noopValidator: Validator<unknown, unknown> = {
@@ -6,19 +6,19 @@ describe('validationPlugin', () => {
   };
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('sets an error to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -28,10 +28,10 @@ describe('validationPlugin', () => {
 
     field.setError(111);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(111);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -39,7 +39,7 @@ describe('validationPlugin', () => {
   });
 
   test('sets an error to the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -49,10 +49,10 @@ describe('validationPlugin', () => {
 
     field.at('foo').setError(111);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -60,19 +60,19 @@ describe('validationPlugin', () => {
   });
 
   test('sets null as an error to the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     field.setError(null);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('deletes an error from the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -83,10 +83,10 @@ describe('validationPlugin', () => {
     field.setError(111);
     field.deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -94,7 +94,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -105,10 +105,10 @@ describe('validationPlugin', () => {
     field.at('foo').setError(111);
     field.at('foo').deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -116,7 +116,7 @@ describe('validationPlugin', () => {
   });
 
   test('deletes an error from the child field but parent remains invalid', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -131,13 +131,13 @@ describe('validationPlugin', () => {
 
     field.at('bar').deleteError();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -146,7 +146,7 @@ describe('validationPlugin', () => {
   });
 
   test('clears all errors', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
+    const field = createField({ foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -161,13 +161,13 @@ describe('validationPlugin', () => {
 
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -177,7 +177,6 @@ describe('validationPlugin', () => {
 
   test('clears errors from nested fields', () => {
     const field = createField(
-      objectAccessor,
       {
         foo: {
           bar: {
@@ -194,18 +193,17 @@ describe('validationPlugin', () => {
 
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
-    expect(field.at('foo').at('bar').invalid).toBe(false);
-    expect(field.at('foo').at('bar').at('baz').invalid).toBe(false);
-    expect(field.at('foo').at('bar').at('qux').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
+    expect(field.at('foo').at('bar').isInvalid).toBe(false);
+    expect(field.at('foo').at('bar').at('baz').isInvalid).toBe(false);
+    expect(field.at('foo').at('bar').at('qux').isInvalid).toBe(false);
   });
 
   test('synchronously validates the root field', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate(field, setInternalError) {
@@ -222,12 +220,12 @@ describe('validationPlugin', () => {
 
     expect(field.validate()).toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -236,7 +234,6 @@ describe('validationPlugin', () => {
 
   test('synchronously validates the root field with a callback validator', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin((field, setInternalError) => {
         setInternalError(field.at('foo'), 111);
@@ -251,12 +248,12 @@ describe('validationPlugin', () => {
 
     expect(field.validate()).toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -265,7 +262,6 @@ describe('validationPlugin', () => {
 
   test('synchronously validates the child field', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate(field, setInternalError) {
@@ -282,12 +278,12 @@ describe('validationPlugin', () => {
 
     field.at('foo').validate();
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -296,7 +292,6 @@ describe('validationPlugin', () => {
 
   test('synchronously validates multiple fields', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate(field, setInternalError) {
@@ -308,13 +303,13 @@ describe('validationPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toBe(222);
   });
 
@@ -331,7 +326,6 @@ describe('validationPlugin', () => {
     });
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: validateMock,
@@ -343,19 +337,18 @@ describe('validationPlugin', () => {
 
     expect(validateMock).toHaveBeenCalledTimes(2);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
   test('does not clear an error set by the user before validation', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate(field, setInternalError) {
@@ -368,19 +361,18 @@ describe('validationPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual(111);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toBe(222);
   });
 
   test('does not raise validation errors for transient fields', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate(field, setInternalError) {
@@ -394,19 +386,18 @@ describe('validationPlugin', () => {
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(field.at('bar').invalid).toBe(false);
+    expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
   });
 
   test('asynchronously validates the root field', async () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate: () => undefined,
@@ -427,17 +418,17 @@ describe('validationPlugin', () => {
 
     expect(promise).toBeInstanceOf(Promise);
 
-    expect(field.validating).toBe(true);
-    expect(field.at('foo').validating).toBe(true);
+    expect(field.isValidating).toBe(true);
+    expect(field.at('foo').isValidating).toBe(true);
 
     await expect(promise).resolves.toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(3);
@@ -446,7 +437,6 @@ describe('validationPlugin', () => {
 
   test('asynchronously validates the child field', async () => {
     const field = createField(
-      objectAccessor,
       { foo: 0 },
       validationPlugin({
         validate: () => undefined,
@@ -465,17 +455,17 @@ describe('validationPlugin', () => {
 
     const promise = field.at('foo').validateAsync();
 
-    expect(field.validating).toBe(false);
-    expect(field.at('foo').validating).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.at('foo').isValidating).toBe(true);
 
     await expect(promise).resolves.toEqual([111]);
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(true);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -484,7 +474,6 @@ describe('validationPlugin', () => {
 
   test('cleans up validation if a sync error is thrown', () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate() {
@@ -497,18 +486,17 @@ describe('validationPlugin', () => {
 
     expect(() => field.validate()).toThrow(new Error('expected'));
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('cleans up validation if an async error is thrown', async () => {
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -525,12 +513,12 @@ describe('validationPlugin', () => {
 
     await expect(promise).rejects.toEqual(new Error('expected'));
 
-    expect(field.validating).toBe(false);
-    expect(field.invalid).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').validating).toBe(false);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
@@ -538,7 +526,6 @@ describe('validationPlugin', () => {
     let lastSignal: AbortSignal | undefined;
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -551,14 +538,14 @@ describe('validationPlugin', () => {
 
     const promise = field.validateAsync();
 
-    expect(field.validating).toBe(true);
-    expect(field.at('foo').validating).toBe(true);
+    expect(field.isValidating).toBe(true);
+    expect(field.at('foo').isValidating).toBe(true);
 
     field.abortValidation();
 
     expect(lastSignal!.aborted).toBe(true);
-    expect(field.validating).toBe(false);
-    expect(field.at('foo').validating).toBe(false);
+    expect(field.isValidating).toBe(false);
+    expect(field.at('foo').isValidating).toBe(false);
 
     await expect(promise).rejects.toEqual(new Error('Validation aborted'));
   });
@@ -567,7 +554,6 @@ describe('validationPlugin', () => {
     const signals: AbortSignal[] = [];
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -592,7 +578,6 @@ describe('validationPlugin', () => {
     const signals: AbortSignal[] = [];
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,
@@ -622,7 +607,6 @@ describe('validationPlugin', () => {
     });
 
     const field = createField(
-      objectAccessor,
       { foo: 0, bar: 'qux' },
       validationPlugin({
         validate: () => undefined,

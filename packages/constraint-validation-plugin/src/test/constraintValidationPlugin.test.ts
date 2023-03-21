@@ -1,4 +1,4 @@
-import { createField, objectAccessor } from 'roqueform';
+import { createField } from 'roqueform';
 import { constraintValidationPlugin } from '../main';
 import { fireEvent } from '@testing-library/dom';
 
@@ -14,17 +14,17 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('sets an error to the field that does not have an associated element', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -34,9 +34,9 @@ describe('constraintValidationPlugin', () => {
 
     field.at('foo').setError('aaa');
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe('aaa');
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -44,7 +44,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('setting an error to the parent field does not affect the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -54,9 +54,9 @@ describe('constraintValidationPlugin', () => {
 
     field.setError('aaa');
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe('aaa');
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
     expect(listenerMock).toHaveBeenCalledTimes(1);
@@ -64,7 +64,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('does not notify the field if the same error is set', () => {
-    const field = createField(objectAccessor, 0, constraintValidationPlugin());
+    const field = createField(0, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
 
@@ -77,7 +77,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('deletes an error from the field', () => {
-    const field = createField(objectAccessor, 0, constraintValidationPlugin());
+    const field = createField(0, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
 
@@ -86,13 +86,13 @@ describe('constraintValidationPlugin', () => {
     field.setError('aaa');
     field.deleteError();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
     expect(listenerMock).toHaveBeenCalledTimes(2);
   });
 
   test('clears an error of a derived field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -103,15 +103,15 @@ describe('constraintValidationPlugin', () => {
     field.at('foo').setError('aaa');
     field.clearErrors();
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('reports validity of the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     expect(field.reportValidity()).toBe(true);
     expect(field.at('foo').reportValidity()).toBe(true);
@@ -128,7 +128,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('reports validity of the derived field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     field.at('foo').setError('aaa');
 
@@ -142,21 +142,21 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('uses a validationMessage as an error', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     element.required = true;
 
     field.at('foo').refCallback(element);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual('Constraints not satisfied');
   });
 
   test('deletes an error when a ref is changed', () => {
-    const field = createField(objectAccessor, 0, constraintValidationPlugin());
+    const field = createField(0, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
 
@@ -166,19 +166,19 @@ describe('constraintValidationPlugin', () => {
 
     field.refCallback(element);
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toEqual('Constraints not satisfied');
     expect(listenerMock).toHaveBeenCalledTimes(1);
 
     field.refCallback(null);
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
     expect(listenerMock).toHaveBeenCalledTimes(2);
   });
 
   test('notifies the field when the value is changed', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -195,7 +195,7 @@ describe('constraintValidationPlugin', () => {
     field.at('foo').refCallback(element);
 
     expect(listenerMock).toHaveBeenCalledTimes(0);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
 
     fireEvent.change(element, { target: { value: '' } });
 
@@ -204,7 +204,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('does not notify an already invalid parent', () => {
-    const field = createField(objectAccessor, { foo: 0 }, constraintValidationPlugin());
+    const field = createField({ foo: 0 }, constraintValidationPlugin());
 
     const listenerMock = jest.fn();
     const fooListenerMock = jest.fn();
@@ -221,7 +221,7 @@ describe('constraintValidationPlugin', () => {
     field.at('foo').refCallback(element);
 
     expect(listenerMock).toHaveBeenCalledTimes(0);
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
 
     fireEvent.change(element, { target: { value: '' } });
 

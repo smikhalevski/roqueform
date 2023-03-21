@@ -1,6 +1,6 @@
 import { z, ZodErrorMap, ZodIssue, ZodIssueCode } from 'zod';
 import { zodPlugin } from '../main';
-import { createField, objectAccessor } from 'roqueform';
+import { createField } from 'roqueform';
 
 describe('zodPlugin', () => {
   const fooType = z.object({
@@ -13,17 +13,17 @@ describe('zodPlugin', () => {
   });
 
   test('enhances the field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
-    expect(field.invalid).toBe(false);
+    expect(field.isInvalid).toBe(false);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
   });
 
   test('converts string errors to issue messages', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     field.setError('aaa');
 
@@ -31,7 +31,7 @@ describe('zodPlugin', () => {
   });
 
   test('sets issue as an error', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     const issue: ZodIssue = { code: ZodIssueCode.custom, path: ['bbb'], message: 'aaa' };
 
@@ -42,14 +42,14 @@ describe('zodPlugin', () => {
   });
 
   test('validates the root field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -62,14 +62,14 @@ describe('zodPlugin', () => {
   });
 
   test('validates the child field', () => {
-    const field = createField(objectAccessor, { foo: 0 }, zodPlugin(fooType));
+    const field = createField({ foo: 0 }, zodPlugin(fooType));
 
     field.at('foo').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -82,14 +82,14 @@ describe('zodPlugin', () => {
   });
 
   test('validates multiple fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
 
     field.validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -100,7 +100,7 @@ describe('zodPlugin', () => {
       type: 'number',
     });
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
       exact: false,
@@ -113,17 +113,17 @@ describe('zodPlugin', () => {
   });
 
   test('does not validate sibling fields', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: 'qux' }, zodPlugin(fooBarType));
 
     field.at('bar').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toEqual(null);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
       exact: false,
@@ -136,18 +136,18 @@ describe('zodPlugin', () => {
   });
 
   test('validates a transient value', () => {
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: '' }, zodPlugin(fooBarType));
 
     field.at('bar').setTransientValue('qux');
     field.at('bar').validate();
 
-    expect(field.invalid).toBe(true);
+    expect(field.isInvalid).toBe(true);
     expect(field.error).toBe(null);
 
-    expect(field.at('foo').invalid).toBe(false);
+    expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toEqual(null);
 
-    expect(field.at('bar').invalid).toBe(true);
+    expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
       code: 'too_big',
       exact: false,
@@ -164,13 +164,13 @@ describe('zodPlugin', () => {
       return { message: 'aaa' };
     });
 
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType, errorMapMock));
+    const field = createField({ foo: 0, bar: '' }, zodPlugin(fooBarType, errorMapMock));
 
     field.validate();
 
     expect(errorMapMock).toHaveBeenCalledTimes(1);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,
@@ -187,13 +187,13 @@ describe('zodPlugin', () => {
       return { message: 'aaa' };
     });
 
-    const field = createField(objectAccessor, { foo: 0, bar: '' }, zodPlugin(fooBarType));
+    const field = createField({ foo: 0, bar: '' }, zodPlugin(fooBarType));
 
     field.validate({ errorMap: errorMapMock });
 
     expect(errorMapMock).toHaveBeenCalledTimes(1);
 
-    expect(field.at('foo').invalid).toBe(true);
+    expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
       code: 'too_small',
       exact: false,

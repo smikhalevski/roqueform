@@ -1,13 +1,14 @@
 {
   "name": "@roqueform/constraint-validation-plugin",
   "version": "1.0.0",
-  "description": "Enhances Roqueform fields with validation methods that use Constraint validation API.",
+  "description": "Integrates Roqueform fields with Constraint validation API.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
-    "displayName": "Constraint validation plugin"
+    "displayName": "constraint-validation-plugin",
+    "readmeFile": "none"
   },
   "sideEffects": false,
   "files": [

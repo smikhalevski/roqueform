@@ -7,7 +7,8 @@
   "types": "./lib/index.d.ts",
   "typedoc": {
     "entryPoint": "./src/main/index.ts",
-    "displayName": "Scroll to error plugin"
+    "displayName": "scroll-to-error-plugin",
+    "readmeFile": "none"
   },
   "sideEffects": false,
   "files": [
