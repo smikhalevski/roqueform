@@ -14,6 +14,14 @@ type ConsolidateUnion<T> = {
  */
 type ExtractObjects<T> = T extends object ? (T extends (...args: any[]) => any ? never : T) : never;
 
+/**
+ * Consolidates properties of all objects in union into a single object.
+ */
+type ConsolidateObject<T> = ConsolidateUnion<ExtractObjects<T>>;
+
+/**
+ * Makes all object properties mutable.
+ */
 type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 /**
@@ -125,10 +133,7 @@ export interface Field<Value = any, Mixin = unknown> {
    * @returns The derived {@link Field} instance.
    * @template Key The key of the object value controlled by the field.
    */
-  at<K extends keyof ConsolidateUnion<ExtractObjects<Value>>>(
-    key: K
-  ): Field<ConsolidateUnion<ExtractObjects<Value>>[K] | (Value extends null | undefined ? undefined : never), Mixin> &
-    Mixin;
+  at<Key extends keyof ConsolidateObject<Value>>(key: Key): Field<ConsolidateObject<Value>[Key], Mixin> & Mixin;
 
   /**
    * Subscribes the listener to field updates.

@@ -16,7 +16,7 @@ export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
  * @param shape The shape that parses the field value.
  * @template Value The root field value.
  */
-export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<DoubterMixin, T> {
+export function doubterPlugin<Value>(shape: Shape<Value, any>): Plugin<DoubterMixin, Value> {
   const plugin = createValidationPlugin(shape);
 
   return (field, accessor, notify) => {
