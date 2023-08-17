@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "noEmit": true,
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "noUnusedParameters": true,
@@ -20,6 +21,6 @@
     }
   },
   "include": [
-    "./packages/*/src/main/**/*"
+    "./packages/*/src/**/*"
   ]
 }
