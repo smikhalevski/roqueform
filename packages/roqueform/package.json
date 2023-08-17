@@ -13,22 +13,17 @@
     },
     "./package.json": "./package.json"
   },
-  "typedoc": {
-    "entryPoint": "./src/main/index.ts",
-    "displayName": "roqueform",
-    "readmeFile": "none"
-  },
   "sideEffects": false,
   "files": [
     "lib"
   ],
   "scripts": {
-    "build": "rollup --config ../../rollup.config.mjs",
-    "clean": "rimraf ./lib",
+    "build": "rollup --config ../../rollup.config.js",
+    "clean": "rimraf lib",
     "test": "jest --config ../../jest.config.js",
     "test:definitions": "tsd --files './src/test/**/*.test-d.ts'",
     "prepack": "cp ../../README.md .",
-    "postpack": "rimraf ./README.md"
+    "postpack": "rimraf README.md"
   },
   "repository": {
     "type": "git",

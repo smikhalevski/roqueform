@@ -26,13 +26,15 @@ declare const ROOT_VALUE: unique symbol;
  *
  * The plugin should _mutate_ the passed field instance.
  *
- * @param field The field that must be enhanced.
- * @param accessor The accessor that reads and writes object properties.
- * @param notify Synchronously notifies listeners of the field.
  * @template M The mixin added by the plugin.
  * @template T The root field value.
  */
 export interface Plugin<M = unknown, T = any> {
+  /**
+   * @param field The field that must be enhanced.
+   * @param accessor The accessor that reads and writes object properties.
+   * @param notify Synchronously notifies listeners of the field.
+   */
   (field: Mutable<Field & M>, accessor: Accessor, notify: () => void): void;
 
   /**
@@ -126,8 +128,6 @@ export interface Field<T = any, M = unknown> {
 
   /**
    * Subscribes the listener to field updates.
-   *
-   * Listeners are guaranteed to be called once when {@linkcode notify} is called.
    *
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.

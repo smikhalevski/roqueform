@@ -27,21 +27,21 @@ export interface ElementValueAccessorOptions {
    * The format of checkbox values.
    *
    * <dl>
-   *   <dt><code>boolean</code></dt>
-   *   <dd>A single checkbox is a boolean, multiple checkboxes are an array of booleans.</dd>
+   *   <dt><i>"boolean"</i></dt>
+   *   <dd><p>A single checkbox is a boolean, multiple checkboxes are an array of booleans.</p></dd>
    *
-   *   <dt><code>booleanArray</code></dt>
-   *   <dd>An array of booleans.</dd>
+   *   <dt><i>"booleanArray"</i></dt>
+   *   <dd><p>An array of booleans.</p></dd>
    *
-   *   <dt><code>value</code></dt>
-   *   <dd>A single checkbox is a <code>value</code> attribute if checked, or <code>null</code> if unchecked, multiple
-   *   checkboxes are an array of checked values.</dd>
+   *   <dt><i>"value"</i></dt>
+   *   <dd><p>A single checkbox is a <code>value</code> attribute if checked, or <code>null</code> if unchecked, multiple
+   *   checkboxes are an array of checked values.</p></dd>
    *
-   *   <dt><code>valueArray</code></dt>
-   *   <dd>An array of <code>value</code> attributes.</dd>
+   *   <dt><i>"valueArray"</i></dt>
+   *   <dd><p>An array of <code>value</code> attributes.</p></dd>
    *
-   *   <dt><code>auto</code></dt>
-   *   <dd>A single checkbox is a boolean, multiple checkboxes are an array of checked values.</dd>
+   *   <dt><i>"auto"</i></dt>
+   *   <dd><p>A single checkbox is a boolean, multiple checkboxes are an array of checked values.</p></dd>
    * </dl>
    *
    * @default "auto"
@@ -52,23 +52,23 @@ export interface ElementValueAccessorOptions {
    * The date format read from input elements.
    *
    * <dl>
-   *   <dt><code>object</code></dt>
-   *   <dd>A valid <code>Date</code> instance, or <code>null</code> if empty.</dd>
+   *   <dt><i>"object"</i></dt>
+   *   <dd><p>A valid <code>Date</code> instance, or <code>null</code> if empty.</p></dd>
    *
-   *   <dt><code>timestamp</code></dt>
-   *   <dd>A timestamp number.</dd>
+   *   <dt><i>"timestamp"</i></dt>
+   *   <dd><p>A timestamp number.</p></dd>
    *
-   *   <dt><code>value</code></dt>
-   *   <dd>The <code>value</code> attribute, or <code>null</code> if empty.</dd>
+   *   <dt><i>"value"</i></dt>
+   *   <dd><p>The <code>value</code> attribute, or <code>null</code> if empty.</p></dd>
    *
-   *   <dt><code>iso</code></dt>
-   *   <dd>An ISO date string.</dd>
+   *   <dt><i>"iso"</i></dt>
+   *   <dd><p>An ISO date string.</p></dd>
    *
-   *   <dt><code>utc</code></dt>
-   *   <dd>A UTC date string.</dd>
+   *   <dt><i>"utc"</i></dt>
+   *   <dd><p>A UTC date string.</p></dd>
    *
-   *   <dt><code>gmt</code></dt>
-   *   <dd>A GMT date string.</dd>
+   *   <dt><i>"gmt"</i></dt>
+   *   <dd><p>A GMT date string.</p></dd>
    * </dl>
    *
    * @default "value"
@@ -79,11 +79,11 @@ export interface ElementValueAccessorOptions {
    * The time format read from input elements.
    *
    * <dl>
-   *   <dt><code>number</code></dt>
-   *   <dd>The number of milliseconds passed from the start of the day.</dd>
+   *   <dt><i>"number"</i></dt>
+   *   <dd><p>The number of milliseconds passed from the start of the day.</p></dd>
    *
-   *   <dt><code>value</code></dt>
-   *   <dd>The <code>value</code> attribute, or <code>null</code> if empty.</dd>
+   *   <dt><i>"value"</i></dt>
+   *   <dd><p>The <code>value</code> attribute, or <code>null</code> if empty.</p></dd>
    * </dl>
    *
    * @default "value"
@@ -94,7 +94,7 @@ export interface ElementValueAccessorOptions {
 /**
  * The opinionated element value accessor that applies following coercion rules, by default:
  *
- * - Single checkboxes → boolean, see {@linkcode ElementValueAccessorOptions.checkboxFormat};
+ * - Single checkbox → boolean, see {@linkcode ElementValueAccessorOptions.checkboxFormat};
  * - Multiple checkboxes → an array of `value` attributes of checked checkboxes, see
  * {@linkcode ElementValueAccessorOptions.checkboxFormat};
  * - Radio buttons → the `value` attribute of a radio button that is checked or `null` if no radio buttons are checked;

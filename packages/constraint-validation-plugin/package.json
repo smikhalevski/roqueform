@@ -13,18 +13,13 @@
     },
     "./package.json": "./package.json"
   },
-  "typedoc": {
-    "entryPoint": "./src/main/index.ts",
-    "displayName": "constraint-validation-plugin",
-    "readmeFile": "none"
-  },
   "sideEffects": false,
   "files": [
     "lib"
   ],
   "scripts": {
-    "build": "rollup --config ../../rollup.config.mjs",
-    "clean": "rimraf ./lib",
+    "build": "rollup --config ../../rollup.config.js",
+    "clean": "rimraf lib",
     "test": "jest --config ../../jest.config.js"
   },
   "repository": {

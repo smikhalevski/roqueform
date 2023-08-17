@@ -1,3 +1,7 @@
+/**
+ * @module roqueform
+ */
+
 export * from './applyPlugins';
 export * from './createField';
 export * from './objectAccessor';

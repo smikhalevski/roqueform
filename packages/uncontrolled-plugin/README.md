@@ -81,7 +81,7 @@ The plugin relies only on `value` attribute, so `name` and other attributes are 
 By default, `uncontrolledPlugin` uses the opinionated element value accessor that applies following coercion rules to
 values of form elements:
 
-- Single checkboxes → boolean;
+- Single checkbox → boolean;
 
 - Multiple checkboxes → an array of `value` attributes of checked checkboxes;
 
