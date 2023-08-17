@@ -142,7 +142,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
-      code: 'numberGreaterThanOrEqual',
+      code: 'number.gte',
       path: ['foo'],
       input: 0,
       param: 3,
@@ -161,7 +161,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
-      code: 'numberGreaterThanOrEqual',
+      code: 'number.gte',
       path: ['foo'],
       input: 0,
       param: 3,
@@ -180,7 +180,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
-      code: 'numberGreaterThanOrEqual',
+      code: 'number.gte',
       path: ['foo'],
       input: 0,
       param: 3,
@@ -190,7 +190,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('bar').isInvalid).toBe(true);
     expect(field.at('bar').error).toEqual({
-      code: 'stringMaxLength',
+      code: 'string.max',
       path: ['bar'],
       input: 'qux',
       param: 2,
@@ -213,7 +213,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
-      code: 'numberGreaterThanOrEqual',
+      code: 'number.gte',
       path: ['foo'],
       input: 0,
       param: 3,
@@ -239,7 +239,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
-      code: 'numberGreaterThanOrEqual',
+      code: 'number.gte',
       path: ['foo'],
       input: 0,
       param: 3,
@@ -263,7 +263,7 @@ describe('doubterPlugin', () => {
 
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toEqual({
-      code: 'numberGreaterThanOrEqual',
+      code: 'number.gte',
       path: ['foo'],
       input: 0,
       param: 3,
