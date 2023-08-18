@@ -4,7 +4,7 @@ import { isEqual } from './utils';
 /**
  * The accessor that reads and writes key-value pairs to object and arrays.
  */
-export const objectAccessor: Accessor = {
+export const naturalAccessor: Accessor = {
   get(obj, key) {
     return obj?.[key];
   },

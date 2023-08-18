@@ -59,9 +59,11 @@ export interface ScrollToErrorMixin {
  * field.
  */
 export function scrollToErrorPlugin(): Plugin<ScrollToErrorMixin> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+  let controllerMap: WeakMap<Field, FieldController>;
 
   return field => {
+    controllerMap ||= new WeakMap();
+
     if (controllerMap.has(field)) {
       return;
     }

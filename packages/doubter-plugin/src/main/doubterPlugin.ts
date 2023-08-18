@@ -17,10 +17,10 @@ export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
  * @template Value The root field value.
  */
 export function doubterPlugin<Value>(shape: Shape<Value, any>): Plugin<DoubterMixin, Value> {
-  const plugin = createValidationPlugin(shape);
+  let plugin: Plugin<any>;
 
   return (field, accessor, notify) => {
-    plugin(field, accessor, notify);
+    (plugin ||= createValidationPlugin(shape))(field, accessor, notify);
 
     const { setError } = field;
 

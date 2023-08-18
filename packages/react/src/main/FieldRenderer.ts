@@ -69,7 +69,7 @@ export function FieldRenderer<RenderedField extends Field>(props: FieldRendererP
     });
   }, [field, eagerlyUpdated]);
 
-  return createElement(Fragment, null, callOrGet(props.children, field));
+  return createElement(Fragment, null, callOrGet(props.children, [field]));
 }
 
 function reduceCount(count: number): number {

@@ -42,9 +42,11 @@ export interface ResetMixin {
 export function resetPlugin(
   equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
 ): Plugin<ResetMixin> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+  let controllerMap: WeakMap<Field, FieldController>;
 
   return (field, accessor, notify) => {
+    controllerMap ||= new WeakMap();
+
     if (controllerMap.has(field)) {
       return;
     }

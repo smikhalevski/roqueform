@@ -1,4 +1,13 @@
 /**
+ * If value is a function then it is called, otherwise the value is returned as is.
+ *
+ * @param value The value to return or a callback to call.
+ * @returns The value or the call result.
+ * @template T The returned value.
+ */
+export function callOrGet<T>(value: T | (() => T)): T;
+
+/**
  * If value is a function then it is called with the given set of arguments, otherwise the value is returned as is.
  *
  * @param value The value to return or a callback to call.
@@ -7,12 +16,24 @@
  * @template T The returned value.
  * @template A The list of callback arguments.
  */
-export function callOrGet<T, A extends any[]>(value: T | ((...args: A) => T), ...args: A): T {
-  return typeof value === 'function' ? (value as Function)(...args) : value;
+export function callOrGet<T, A extends any[]>(value: T | ((...args: A) => T), args: A): T;
+
+export function callOrGet(value: unknown, args?: unknown[]) {
+  return typeof value === 'function' ? value.apply(undefined, args) : value;
 }
 
 /**
- * Calls each callback from the list once with given set of arguments.
+ * Calls each callback from the list.
+ *
+ * If the list contains the same callback multiple times then the callback is called only once. If a callback throws an
+ * error, the remaining callbacks are still called and the error is re-thrown asynchronously.
+ *
+ * @param callbacks The list of callbacks.
+ */
+export function callAll(callbacks: Array<() => any>): void;
+
+/**
+ * Calls each callback from the list with given set of arguments.
  *
  * If the list contains the same callback multiple times then the callback is called only once. If a callback throws an
  * error, the remaining callbacks are still called and the error is re-thrown asynchronously.
@@ -21,11 +42,13 @@ export function callOrGet<T, A extends any[]>(value: T | ((...args: A) => T), ..
  * @param args The list of arguments to pass to each callback.
  * @template A The list of callback arguments.
  */
-export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, ...args: A): void {
+export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, args: A): void;
+
+export function callAll(callbacks: Function[], args?: unknown[]): void {
   for (let i = 0; i < callbacks.length; ++i) {
     const cb = callbacks[i];
 
-    if (callbacks.indexOf(cb, i + 1) !== -1) {
+    if (callbacks.lastIndexOf(cb) !== i) {
       continue;
     }
     try {
