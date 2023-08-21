@@ -11,7 +11,7 @@ type KeyOf<T> =
 
 // prettier-ignore
 type ValueAt<T, Key> =
-  T extends Primitive ? never :
+  T extends Primitive ? undefined :
   T extends { set(key: any, value: any): any, get(key: infer K): infer V } ? Key extends K ? V : never :
   T extends { add(value: infer V): any, [Symbol.iterator]: Function } ? Key extends number ? V : never :
   T extends readonly any[] ? Key extends number ? T[Key] : never :
