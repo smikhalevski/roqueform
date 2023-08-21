@@ -1,19 +1,22 @@
+type Primitive = Function | Date | RegExp | string | number | boolean | bigint | symbol | undefined | null;
+
 // prettier-ignore
 type KeyOf<T> =
-  T extends Function | Date | RegExp | string | number | boolean | bigint | symbol | undefined | null ? never :
-  T extends { set(key: infer K, value: any): any, get(key: any): any } ? K :
+  T extends Primitive ? never :
+  T extends { set(key: any, value: any): any, get(key: infer K): any } ? K :
   T extends { add(value: any): any, [Symbol.iterator]: Function } ? number :
-  T extends any[] ? number :
+  T extends readonly any[] ? number :
   T extends object ? keyof T :
   never
 
 // prettier-ignore
 type ValueAt<T, Key> =
-  T extends { set(key: infer K, value: infer V): any, get(key: any): any } ? Key extends K ? V : never :
+  T extends Primitive ? never :
+  T extends { set(key: any, value: any): any, get(key: infer K): infer V } ? Key extends K ? V : never :
   T extends { add(value: infer V): any, [Symbol.iterator]: Function } ? Key extends number ? V : never :
-  T extends Array<infer V> ? Key extends number ? V : never :
+  T extends readonly any[] ? Key extends number ? T[Key] : never :
   Key extends keyof T ? T[Key] :
-  undefined
+  never
 
 /**
  * Makes all object properties mutable.
