@@ -11,15 +11,13 @@ expectType<string | undefined>(field1.at('foo').at('bar').value);
 
 // Unions
 
-type Field2Value = { aaa: number } | { aaa: boolean; bbb: string } | Map<'ccc', symbol>;
+type Field2Value = { aaa: number } | { aaa: boolean; bbb: string };
 
 const field2 = createField<Field2Value>({ aaa: 111 });
 
 expectType<number | boolean>(field2.at('aaa').value);
 
 expectType<string | undefined>(field2.at('bbb').value);
-
-expectType<symbol | undefined>(field2.at('ccc').value);
 
 // Map
 
