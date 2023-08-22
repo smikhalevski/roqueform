@@ -8,30 +8,33 @@ type NoInfer<T> = T extends infer T ? T : never;
 /**
  * Creates the new field.
  *
- * @returns The {@linkcode Field} instance.
- * @template T The root field value.
+ * @returns The {@link Field} instance.
+ * @template Value The root field value.
  */
-export function useField<T = any>(): Field<T | undefined>;
+export function useField<Value = any>(): Field<Value | undefined>;
 
 /**
  * Creates the new field.
  *
  * @param initialValue The initial value assigned to the field.
- * @returns The {@linkcode Field} instance.
- * @template T The root field value.
+ * @returns The {@link Field} instance.
+ * @template Value The root field value.
  */
-export function useField<T>(initialValue: T | (() => T)): Field<T>;
+export function useField<Value>(initialValue: Value | (() => Value)): Field<Value>;
 
 /**
  * Creates the new field enhanced by a plugin.
  *
  * @param initialValue The initial value assigned to the field.
  * @param plugin Enhances the field with additional functionality.
- * @returns The {@linkcode Field} instance.
- * @template T The root field value.
- * @template M The mixin added by the plugin.
+ * @returns The {@link Field} instance.
+ * @template Value The root field value.
+ * @template Mixin The mixin added by the plugin.
  */
-export function useField<T, M>(initialValue: T | (() => T), plugin: Plugin<M, NoInfer<T>>): Field<T, M> & M;
+export function useField<Value, Mixin>(
+  initialValue: Value | (() => Value),
+  plugin: Plugin<Mixin, NoInfer<Value>>
+): Field<Value, Mixin> & Mixin;
 
 export function useField(initialValue?: unknown, plugin?: Plugin) {
   const accessor = useContext(AccessorContext);

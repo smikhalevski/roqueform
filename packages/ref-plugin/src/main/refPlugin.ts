@@ -1,7 +1,7 @@
 import { Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by the {@linkcode refPlugin}.
+ * The mixin added to fields by the {@link refPlugin}.
  */
 export interface RefMixin {
   /**

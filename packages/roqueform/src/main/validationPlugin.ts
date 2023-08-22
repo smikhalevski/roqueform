@@ -2,16 +2,16 @@ import { Field, Plugin } from './shared-types';
 import { callAll, isEqual } from './utils';
 
 /**
- * The mixin added to fields by the {@linkcode validationPlugin}.
+ * The mixin added to fields by the {@link validationPlugin}.
  *
- * @template E The validation error.
- * @template O Options passed to the validator.
+ * @template Error The validation error.
+ * @template Options Options passed to the validator.
  */
-export interface ValidationMixin<E, O> {
+export interface ValidationMixin<Error, Options> {
   /**
    * A validation error associated with the field, or `null` if there's no error.
    */
-  readonly error: E | null;
+  readonly error: Error | null;
 
   /**
    * `true` if the field or any of its derived fields have an associated error, or `false` otherwise.
@@ -28,7 +28,7 @@ export interface ValidationMixin<E, O> {
    *
    * @param error The error to set.
    */
-  setError(error: E): void;
+  setError(error: Error): void;
 
   /**
    * Deletes an error associated with this field.
@@ -42,23 +42,23 @@ export interface ValidationMixin<E, O> {
 
   /**
    * Triggers a sync field validation. Starting a validation will clear errors that were set during the previous
-   * validation and preserve errors set manually by {@linkcode setError}. If you want to clear all errors before the
-   * validation, use {@linkcode clearErrors}.
+   * validation and preserve errors set manually by {@link setError}. If you want to clear all errors before the
+   * validation, use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
    * @returns The list of validation errors, or `null` if there are no errors.
    */
-  validate(options?: O): E[] | null;
+  validate(options?: Options): Error[] | null;
 
   /**
    * Triggers an async field validation. Starting a validation will clear errors that were set during the previous
-   * validation and preserve errors set manually by {@linkcode setError}. If you want to clear all errors before the
-   * validation, use {@linkcode clearErrors}.
+   * validation and preserve errors set manually by {@link setError}. If you want to clear all errors before the
+   * validation, use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
    * @returns The list of validation errors, or `null` if there are no errors.
    */
-  validateAsync(options?: O): Promise<E[] | null>;
+  validateAsync(options?: Options): Promise<Error[] | null>;
 
   /**
    * Aborts async validation of the field or no-op if there's no pending validation. If the field's parent is being
@@ -70,33 +70,31 @@ export interface ValidationMixin<E, O> {
 /**
  * The validator implements the library-specific validation logic.
  *
- * @template E The validation error.
- * @template O Options passed to the validator.
+ * @template Error The validation error.
+ * @template Options Options passed to the validator.
  */
-export interface Validator<E, O> {
+export interface Validator<Error, Options> {
   /**
    * The callback that applies validation rules to a field.
    *
-   * @param field The field where {@linkcode ValidationMixin.validate} was called.
-   * @param setInternalError The callback that sets an internal error to a field, so it can be cleared automatically if
-   * another validation is started.
-   * @param options The options passed to the {@linkcode ValidationMixin.validate} method.
+   * @param field The field where {@link ValidationMixin.validate} was called.
+   * @param setError The callback that associates an error with the field.
+   * @param options The options passed to the {@link ValidationMixin.validate} method.
    */
-  validate(field: Field, setInternalError: (field: Field, error: E) => void, options: O | undefined): void;
+  validate(field: Field, setError: (field: Field, error: Error) => void, options: Options | undefined): void;
 
   /**
    * The callback that applies validation rules to a field.
    *
-   * @param field The field where {@linkcode ValidationMixin.validate} was called.
-   * @param setInternalError The callback that sets an internal error to a field, so it can be cleared automatically if
-   * another validation is started.
-   * @param options The options passed to the {@linkcode ValidationMixin.validate} method.
+   * @param field The field where {@link ValidationMixin.validate} was called.
+   * @param setError The callback that associates an error with the field.
+   * @param options The options passed to the {@link ValidationMixin.validate} method.
    * @param signal The signal that is aborted if the validation process should be stopped.
    */
   validateAsync?(
     field: Field,
-    setInternalError: (field: Field, error: E) => void,
-    options: O | undefined,
+    setError: (field: Field, error: Error) => void,
+    options: Options | undefined,
     signal: AbortSignal
   ): Promise<void>;
 }
@@ -106,20 +104,22 @@ export interface Validator<E, O> {
  *
  * This plugin is a scaffold for implementing validation. If you don't know how to validate your fields then it is
  * highly likely that this is not the plugin you're looking for. Have a look at
- * [library-based validation plugins](https://github.com/smikhalevski/roqueform#validation) instead.
+ * [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) instead.
  *
  * @param validator The callback or an object with `validate` and optional `validateAsync` methods that applies
  * validation rules to a provided field.
- * @template E The validation error.
- * @template O Options passed to the validator.
- * @template T The root field value.
+ * @template Error The validation error.
+ * @template Options Options passed to the validator.
+ * @template Value The root field value.
  */
-export function validationPlugin<E = any, O = void, T = any>(
-  validator: Validator<E, O> | Validator<E, O>['validate']
-): Plugin<ValidationMixin<E, O>, T> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+export function validationPlugin<Error = any, Options = void, Value = any>(
+  validator: Validator<Error, Options> | Validator<Error, Options>['validate']
+): Plugin<ValidationMixin<Error, Options>, Value> {
+  let controllerMap: WeakMap<Field, FieldController>;
 
   return (field, _accessor, notify) => {
+    controllerMap ||= new WeakMap();
+
     if (controllerMap.has(field)) {
       return;
     }
@@ -212,8 +212,8 @@ interface FieldController {
   _error: unknown | null;
 
   /**
-   * `true` if an error was set internally by {@linkcode ValidationMixin.validate}, or `false` if an issue was set by
-   * the user through {@linkcode ValidationMixin.setError}.
+   * `true` if an error was set internally by {@link ValidationMixin.validate}, or `false` if an issue was set by
+   * the user through {@link ValidationMixin.setError}.
    */
   _isInternal: boolean;
   _validator: Validator<unknown, unknown>;
@@ -224,12 +224,12 @@ interface FieldController {
   _initiator: FieldController | null;
 
   /**
-   * The number that is incremented every time a validation is started for {@linkcode _field}.
+   * The number that is incremented every time a validation is started for {@link _field}.
    */
   _validationNonce: number;
 
   /**
-   * The abort controller that aborts the signal passed to {@linkcode Validator.validateAsync}.
+   * The abort controller that aborts the signal passed to {@link Validator.validateAsync}.
    */
   _abortController: AbortController | null;
 
@@ -249,8 +249,8 @@ interface FieldController {
  *
  * @param controller The controller for which an error is set.
  * @param error An error to set.
- * @param internal Must be `true` if an error is set internally (during {@linkcode ValidationMixin.validate} call), or
- * `false` if an error is set using {@linkcode ValidationMixin.setError} call.
+ * @param internal Must be `true` if an error is set internally (during {@link ValidationMixin.validate} call), or
+ * `false` if an error is set using {@link ValidationMixin.setError} call.
  * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
  * @returns An array of callbacks that notify affected fields.
  */
@@ -289,8 +289,8 @@ function setError(
  * Deletes a validation error from the field.
  *
  * @param controller The controller for which an error must be deleted.
- * @param internal If `true` then only errors set by {@linkcode ValidationMixin.validate} are deleted, otherwise all
- * errors are deleted.
+ * @param internal If `true` then only errors set by {@link ValidationMixin.validate} are deleted, otherwise all errors
+ * are deleted.
  * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
  * @returns An array of callbacks that notify affected fields.
  */
@@ -322,8 +322,8 @@ function deleteError(
  * Recursively deletes errors associated with the field and all of its derived fields.
  *
  * @param controller The controller tree root.
- * @param internal If `true` then only errors set by {@linkcode ValidationMixin.validate} are deleted, otherwise all
- * errors are deleted.
+ * @param internal If `true` then only errors set by {@link ValidationMixin.validate} are deleted, otherwise all errors
+ * are deleted.
  * @param notifyCallbacks The in-out array of callbacks that notify affected fields.
  * @returns An array of callbacks that notify affected fields.
  */
@@ -477,7 +477,7 @@ function validateAsync(controller: FieldController, options: unknown): Promise<a
 
   let errors: unknown[] | null = null;
 
-  const setInternalError = (targetField: Field, error: unknown): void => {
+  const setErrorCallback = (targetField: Field, error: unknown): void => {
     const targetController = controller._controllerMap.get(targetField);
     if (
       targetController !== undefined &&
@@ -494,7 +494,7 @@ function validateAsync(controller: FieldController, options: unknown): Promise<a
   return Promise.race([
     new Promise(resolve => {
       // noinspection JSVoidFunctionReturnValueUsed
-      resolve(validateAsync(controller._field, setInternalError, options, abortSignal));
+      resolve(validateAsync(controller._field, setErrorCallback, options, abortSignal));
     }),
     new Promise((_resolve, reject) => {
       abortSignal.addEventListener('abort', () => reject(new Error('Validation aborted')));

@@ -8,18 +8,18 @@ type NoInfer<T> = T extends infer T ? T : never;
 /**
  * Creates the new field instance.
  *
- * @template T The root field value.
+ * @template Value The root field value.
  */
-export function createField<T = any>(): Field<T | undefined>;
+export function createField<Value = any>(): Field<Value | undefined>;
 
 /**
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
  * @param accessor Resolves values for derived fields.
- * @template T The root field value.
+ * @template Value The root field value.
  */
-export function createField<T>(initialValue: T, accessor?: Accessor): Field<T>;
+export function createField<Value>(initialValue: Value, accessor?: Accessor): Field<Value>;
 
 /**
  * Creates the new field instance.
@@ -27,10 +27,14 @@ export function createField<T>(initialValue: T, accessor?: Accessor): Field<T>;
  * @param initialValue The initial value assigned to the field.
  * @param plugin The plugin that enhances the field.
  * @param accessor Resolves values for derived fields.
- * @template T The root field value.
- * @template M The mixin added by the plugin.
+ * @template Value The root field value.
+ * @template Mixin The mixin added by the plugin.
  */
-export function createField<T, M>(initialValue: T, plugin: Plugin<M, NoInfer<T>>, accessor?: Accessor): Field<T, M> & M;
+export function createField<Value, Mixin>(
+  initialValue: Value,
+  plugin: Plugin<Mixin, NoInfer<Value>>,
+  accessor?: Accessor
+): Field<Value, Mixin> & Mixin;
 
 export function createField(initialValue?: unknown, plugin?: Plugin | Accessor, accessor?: Accessor) {
   if (typeof plugin !== 'function') {
@@ -53,7 +57,7 @@ interface FieldController {
   _value: unknown;
   _isTransient: boolean;
   _accessor: Accessor;
-  _notify: (targetField: Field) => void;
+  _notify: (updatedField: Field) => void;
 }
 
 function getOrCreateFieldController(
@@ -76,7 +80,7 @@ function getOrCreateFieldController(
     initialValue = accessor.get(parentController._value, key);
   }
 
-  const listeners: Array<(targetField: Field, currentField: Field) => void> = [];
+  const listeners: Array<(updatedField: Field, currentField: Field) => void> = [];
 
   const notify = (targetField: Field): void => {
     callAll(listeners, targetField, controller._field);

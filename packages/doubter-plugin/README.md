@@ -39,7 +39,7 @@ export const App = () => {
       return;
     }
 
-    // If your shapes have transformations or refinements, you can safely parse
+    // If your shapes have transform the input, you can safely parse
     // the field value after it was successfully validated
     const value = planetShape.parse(planetField.value);
   };
@@ -106,8 +106,9 @@ planetField.at('name').validate();
 
 In this example, `planetField.value` _is not_ validated, and `planetField.at('name').value` _is_ validated.
 
-> **Note**&ensp;It's safe to trigger validation of a single text field on every keystroke, since validation doesn't have
-> to process the whole form state.
+> [!NOTE]\
+> It's safe to trigger validation of a single text field on every keystroke, since validation doesn't have to process
+> the whole form state.
 
 To detect whether the field, or any of its derived fields contain a validation error:
 

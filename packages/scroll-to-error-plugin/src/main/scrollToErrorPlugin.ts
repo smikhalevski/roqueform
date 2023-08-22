@@ -8,7 +8,7 @@ export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
 }
 
 /**
- * The mixin added to fields by the {@linkcode scrollToErrorPlugin}.
+ * The mixin added to fields by the {@link scrollToErrorPlugin}.
  */
 export interface ScrollToErrorMixin {
   /**

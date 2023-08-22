@@ -20,7 +20,7 @@ export interface ElementValueAccessor {
 }
 
 /**
- * Options applied to {@linkcode createElementValueAccessor}.
+ * Options applied to {@link createElementValueAccessor}.
  */
 export interface ElementValueAccessorOptions {
   /**
@@ -34,11 +34,15 @@ export interface ElementValueAccessorOptions {
    *   <dd><p>An array of booleans.</p></dd>
    *
    *   <dt><i>"value"</i></dt>
-   *   <dd><p>A single checkbox is a <code>value</code> attribute if checked, or <code>null</code> if unchecked, multiple
-   *   checkboxes are an array of checked values.</p></dd>
+   *   <dd><p>A single checkbox is a
+   *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value">value</a>
+   *   attribute if checked, or <code>null</code> if unchecked, multiple checkboxes are an array of checked values.
+   *   </p></dd>
    *
    *   <dt><i>"valueArray"</i></dt>
-   *   <dd><p>An array of <code>value</code> attributes.</p></dd>
+   *   <dd><p>An array of
+   *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value">value</a>
+   *   attributes.</p></dd>
    *
    *   <dt><i>"auto"</i></dt>
    *   <dd><p>A single checkbox is a boolean, multiple checkboxes are an array of checked values.</p></dd>
@@ -53,13 +57,15 @@ export interface ElementValueAccessorOptions {
    *
    * <dl>
    *   <dt><i>"object"</i></dt>
-   *   <dd><p>A valid <code>Date</code> instance, or <code>null</code> if empty.</p></dd>
+   *   <dd><p>A valid {@link !Date Date} instance, or <code>null</code> if empty.</p></dd>
    *
    *   <dt><i>"timestamp"</i></dt>
    *   <dd><p>A timestamp number.</p></dd>
    *
    *   <dt><i>"value"</i></dt>
-   *   <dd><p>The <code>value</code> attribute, or <code>null</code> if empty.</p></dd>
+   *   <dd><p>The
+   *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value">value</a>
+   *   attribute, or <code>null</code> if empty.</p></dd>
    *
    *   <dt><i>"iso"</i></dt>
    *   <dd><p>An ISO date string.</p></dd>
@@ -83,7 +89,9 @@ export interface ElementValueAccessorOptions {
    *   <dd><p>The number of milliseconds passed from the start of the day.</p></dd>
    *
    *   <dt><i>"value"</i></dt>
-   *   <dd><p>The <code>value</code> attribute, or <code>null</code> if empty.</p></dd>
+   *   <dd><p>The
+   *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time#value">value</a>
+   *   attribute, or <code>null</code> if empty.</p></dd>
    * </dl>
    *
    * @default "value"
@@ -92,21 +100,30 @@ export interface ElementValueAccessorOptions {
 }
 
 /**
- * The opinionated element value accessor that applies following coercion rules, by default:
+ * The opinionated element value accessor that applies following coercion rules.
  *
- * - Single checkbox → boolean, see {@linkcode ElementValueAccessorOptions.checkboxFormat};
- * - Multiple checkboxes → an array of `value` attributes of checked checkboxes, see
- * {@linkcode ElementValueAccessorOptions.checkboxFormat};
- * - Radio buttons → the `value` attribute of a radio button that is checked or `null` if no radio buttons are checked;
+ * By default:
+ *
+ * - Single checkbox → boolean, see {@link ElementValueAccessorOptions.checkboxFormat};
+ * - Multiple checkboxes → an array of
+ * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value">value</a>
+ * attributes of checked checkboxes, see {@link ElementValueAccessorOptions.checkboxFormat};
+ * - Radio buttons → the
+ * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value">value</a>
+ * attribute of a radio button that is checked or `null` if no radio buttons are checked;
  * - Number input → number, or `null` if empty;
  * - Range input → number;
- * - Date input → the `value` attribute, or `null` if empty, see {@linkcode ElementValueAccessorOptions.dateFormat};
- * - Time input → a time string, or `null` if empty, see {@linkcode ElementValueAccessorOptions.timeFormat};
- * - Image input → string value of the `src` attribute;
- * - File input → `File` or `null` if no file selected, file inputs are read-only;
- * - Multi-file input → array of `File`;
- * - Others → `value` attribute, or `null` if element doesn't support it;
- * - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
+ * - Date input → the
+ * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value">value</a>
+ * attribute, or `null` if empty, see {@link ElementValueAccessorOptions.dateFormat};
+ * - Time input → a time string, or `null` if empty, see {@link ElementValueAccessorOptions.timeFormat};
+ * - Image input → string value of the
+ * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src">value</a>
+ * attribute;
+ * - File input → {@link !File File} or `null` if no file selected, file inputs are read-only;
+ * - Multi-file input → array of {@link !File File};
+ * - Others → The _value_ attribute, or `null` if element doesn't support it;
+ * - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to _value_ attribute.
  */
 export function createElementValueAccessor(options?: ElementValueAccessorOptions): ElementValueAccessor {
   const get: ElementValueAccessor['get'] = elements => {

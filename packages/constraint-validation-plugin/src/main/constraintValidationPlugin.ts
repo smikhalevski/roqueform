@@ -1,7 +1,7 @@
 import { Field, Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by the {@linkcode constraintValidationPlugin}.
+ * The mixin added to fields by the {@link constraintValidationPlugin}.
  */
 export interface ConstraintValidationMixin {
   /**
@@ -27,7 +27,7 @@ export interface ConstraintValidationMixin {
 
   /**
    * Associates an error with the field. Calls
-   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
    * if the field has an associated element.
    *
    * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
@@ -38,7 +38,7 @@ export interface ConstraintValidationMixin {
 
   /**
    * Deletes an error associated with this field. Calls
-   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
    * if the field has an associated element.
    *
    * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
@@ -47,7 +47,7 @@ export interface ConstraintValidationMixin {
 
   /**
    * Recursively deletes errors associated with this field and all of its derived fields. Calls
-   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
    * if the field has an associated element.
    *
    * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
@@ -57,7 +57,7 @@ export interface ConstraintValidationMixin {
   /**
    * Shows error message balloon for the first element that is associated with this field or any of its derived fields,
    * that has an associated error via calling
-   * {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/reportValidity reportValidity}.
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/reportValidity reportValidity}.
    *
    * @returns `true` if a field doesn't have an error, or `false` otherwise.
    */

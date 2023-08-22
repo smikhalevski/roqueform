@@ -19,7 +19,10 @@ import { useField } from '@roqueform/react';
 import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
 
 export const App = () => {
-  const planetField = useField({ name: 'Mars' }, uncontrolledPlugin());
+  const planetField = useField(
+    { planet: 'Mars', properties: { color: 'red' } },
+    uncontrolledPlugin()
+  );
 
   const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
@@ -30,28 +33,41 @@ export const App = () => {
 
   return (
     <form onSubmit={handleSubmit}>
+      {'Planet:'}
       <input
         type="text"
-        ref={planetField.at('name').refCallback}
+        ref={field.at('planet').refCallback}
       />
+      <br/>
 
-      <input type="submit"/>
+      {'Color:'}
+      {['red', 'green', 'blue'].map(color =>
+        <label>
+          <input
+            type="radio"
+            name="color-property"
+            value={color}
+            ref={field.at('properties').at('color').refCallback}
+          />
+          {color}
+        </label>
+      )}
     </form>
   );
 };
 ```
 
 # Value coercion
-
-To associate field with a form element, pass `refCallback` as a `ref` attribute of an `input`, `textarea`, or any other
-form element:
+To associate field with a form element, pass
+[`Field.refCallback`](https://smikhalevski.github.io/roqueform/interfaces/_roqueform_ref_plugin.RefMixin.html#refCallback)
+as a `ref` attribute of an `input`, `textarea`, or any other form element:
 
 ```tsx
 <input ref={field.refCallback}/>
 ```
 
-The plugin would synchronize the field value and the input value. When the input value is changed and `change` or
-`input` event is dispatched, `field` is updated with the corresponding value.
+The plugin would synchronize the field value with the value of an input element. When the input value is changed and
+`change` or `input` event is dispatched, `field` is updated with the corresponding value.
 
 If you have a set of radio buttons, or checkboxes that update a single field, provide the same `refCallback` to all
 inputs, `uncontrolledPlugin` would use them a source of values.

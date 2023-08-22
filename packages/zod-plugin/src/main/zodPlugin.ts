@@ -2,7 +2,7 @@ import { ParseParams, ZodErrorMap, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny }
 import { Accessor, Field, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
 
 /**
- * The mixin added to fields by the {@linkcode zodPlugin}.
+ * The mixin added to fields by the {@link zodPlugin}.
  */
 export interface ZodMixin extends ValidationMixin<ZodIssue, Partial<ParseParams>> {
   setError(error: ZodIssue | string): void;
@@ -13,16 +13,14 @@ export interface ZodMixin extends ValidationMixin<ZodIssue, Partial<ParseParams>
  *
  * @param type The shape that parses the field value.
  * @param errorMap [The Zod error customizer.](https://github.com/colinhacks/zod/blob/master/ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
- * @template T The root field value.
+ * @template Value The root field value.
  * @returns The validation plugin.
  */
-export function zodPlugin<T>(type: ZodType<any, any, T>, errorMap?: ZodErrorMap): Plugin<ZodMixin, T> {
+export function zodPlugin<Value>(type: ZodType<any, any, Value>, errorMap?: ZodErrorMap): Plugin<ZodMixin, Value> {
   let plugin: Plugin<any>;
 
   return (field, accessor, notify) => {
-    plugin ||= createValidationPlugin(type, errorMap, accessor);
-
-    plugin(field, accessor, notify);
+    (plugin ||= createValidationPlugin(type, errorMap, accessor))(field, accessor, notify);
 
     const { setError } = field;
 

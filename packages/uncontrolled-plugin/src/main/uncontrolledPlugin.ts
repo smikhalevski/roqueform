@@ -8,7 +8,7 @@ import { createElementValueAccessor, ElementValueAccessor } from './createElemen
 const elementValueAccessor = createElementValueAccessor();
 
 /**
- * The mixin added to fields by the {@linkcode uncontrolledPlugin}.
+ * The mixin added to fields by the {@link uncontrolledPlugin}.
  */
 export interface UncontrolledMixin {
   /**
