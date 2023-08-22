@@ -1,6 +1,6 @@
 import { Accessor, Field, Plugin } from './shared-types';
 import { callAll, callOrGet, isEqual } from './utils';
-import { objectAccessor } from './objectAccessor';
+import { naturalAccessor } from './naturalAccessor';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
 type NoInfer<T> = T extends infer T ? T : never;
@@ -41,7 +41,7 @@ export function createField(initialValue?: unknown, plugin?: Plugin | Accessor, 
     plugin = undefined;
     accessor = plugin;
   }
-  return getOrCreateFieldController(accessor || objectAccessor, null, null, initialValue, plugin)._field;
+  return getOrCreateFieldController(accessor || naturalAccessor, null, null, initialValue, plugin)._field;
 }
 
 interface FieldController {
@@ -82,16 +82,16 @@ function getOrCreateFieldController(
 
   const listeners: Array<(updatedField: Field, currentField: Field) => void> = [];
 
-  const notify = (targetField: Field): void => {
-    callAll(listeners, targetField, controller._field);
+  const notify = (updatedField: Field): void => {
+    callAll(listeners, [updatedField, controller._field]);
   };
 
   const field = {
     setValue(value) {
-      applyValue(controller, callOrGet(value, controller._value), false);
+      applyValue(controller, callOrGet(value, [controller._value]), false);
     },
     setTransientValue(value) {
-      applyValue(controller, callOrGet(value, controller._value), true);
+      applyValue(controller, callOrGet(value, [controller._value]), true);
     },
     dispatch() {
       applyValue(controller, controller._value, false);
@@ -100,7 +100,7 @@ function getOrCreateFieldController(
       return getOrCreateFieldController(controller._accessor, controller, key, null, plugin)._field;
     },
     subscribe(listener) {
-      if (typeof listener === 'function') {
+      if (typeof listener === 'function' && listeners.indexOf(listener) === -1) {
         listeners.push(listener);
       }
       return () => {
@@ -153,7 +153,7 @@ function applyValue(controller: FieldController, value: unknown, transient: bool
     value = controller._accessor.set(rootController._value, _key, value);
   }
 
-  callAll(propagateValue(controller, rootController, value, []), controller._field);
+  callAll(propagateValue(controller, rootController, value, []), [controller._field]);
 }
 
 function propagateValue(

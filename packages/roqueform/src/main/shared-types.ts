@@ -1,19 +1,23 @@
-/**
- * Consolidates properties of all objects in union into a single object.
- *
- * ```
- * ConsolidateUnion<{ a: X, b: B } | { a: Y, b: B, c: C }> → { a: X | Y, b: B, c: C | undefined }
- * ```
- */
-type ConsolidateUnion<T> = {
-  [K in T extends infer P ? keyof P : never]: T extends infer P ? (K extends keyof P ? P[K] : undefined) : never;
-};
+// prettier-ignore
+type KeyOf<T> =
+  T extends Function | Date | RegExp | string | number | boolean | bigint | symbol | undefined | null ? never :
+  T extends { set(key: any, value: any): any, get(key: infer K): any } ? K :
+  T extends { add(value: any): any, [Symbol.iterator]: Function } ? number :
+  T extends readonly any[] ? number :
+  T extends object ? keyof T :
+  never
+
+// prettier-ignore
+type ValueAt<T, Key> =
+  T extends { set(key: any, value: any): any, get(key: infer K): infer V } ? Key extends K ? V : undefined :
+  T extends { add(value: infer V): any, [Symbol.iterator]: Function } ? Key extends number ? V | undefined : undefined :
+  T extends readonly any[] ? Key extends number ? T[Key] : undefined :
+  Key extends keyof T ? T[Key] :
+  undefined
 
 /**
  * Makes all object properties mutable.
  */
-type ExtractObjects<T> = T extends object ? (T extends (...args: any[]) => any ? never : T) : never;
-
 type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 /**
@@ -125,10 +129,7 @@ export interface Field<Value = any, Mixin = unknown> {
    * @returns The derived {@link Field} instance.
    * @template Key The key of the object value controlled by the field.
    */
-  at<K extends keyof ConsolidateUnion<ExtractObjects<Value>>>(
-    key: K
-  ): Field<ConsolidateUnion<ExtractObjects<Value>>[K] | (Value extends null | undefined ? undefined : never), Mixin> &
-    Mixin;
+  at<Key extends KeyOf<Value>>(key: Key): Field<ValueAt<Value, Key>, Mixin> & Mixin;
 
   /**
    * Subscribes the listener to field updates.

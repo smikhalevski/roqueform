@@ -1,5 +1,5 @@
 import { ElementValueAccessor, uncontrolledPlugin } from '../main';
-import { applyPlugins, createField, objectAccessor } from 'roqueform';
+import { composePlugins, createField, naturalAccessor } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
 
 describe('uncontrolledPlugin', () => {
@@ -53,10 +53,10 @@ describe('uncontrolledPlugin', () => {
       field.refCallback = refCallbackMock;
     });
 
-    const field = createField({ foo: 111 }, applyPlugins(pluginMock, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, composePlugins(pluginMock, uncontrolledPlugin()));
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
 
     expect(refCallbackMock).not.toHaveBeenCalled();
 
@@ -75,7 +75,7 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('input'));
 
-    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(element1);
     field.at('foo').refCallback(element2);
@@ -93,7 +93,7 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('textarea'));
 
-    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(element1);
     field.at('foo').refCallback(element2);
@@ -116,7 +116,7 @@ describe('uncontrolledPlugin', () => {
       field.refCallback = refCallbackMock;
     };
 
-    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(element);
 
@@ -136,7 +136,7 @@ describe('uncontrolledPlugin', () => {
       field.refCallback = refCallbackMock;
     };
 
-    const field = createField({ foo: 111 }, applyPlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
     field.at('foo').refCallback(null);
 

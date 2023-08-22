@@ -20,7 +20,7 @@ The example below uses [Doubter](https://github.com/smikhalevski/doubter#readme)
 
 ```tsx
 import { SyntheticEvent, useEffect } from 'react';
-import { applyPlugins } from 'roqueform';
+import { composePlugins } from 'roqueform';
 import { FieldRenderer, useField } from '@roqueform/react';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
 import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
@@ -33,7 +33,7 @@ const planetShape = d.object({
 export const App = () => {
   const planetField = useField(
     { name: '' },
-    applyPlugins(
+    composePlugins(
       doubterPlugin(planetShape),
       scrollToErrorPlugin()
     )

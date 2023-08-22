@@ -1,9 +1,9 @@
 import { createContext } from 'react';
-import { Accessor, objectAccessor } from 'roqueform';
+import { naturalAccessor } from 'roqueform';
 
 /**
  * The context that is used by {@link useField} to retrieve an accessor.
  */
-export const AccessorContext = createContext<Accessor>(objectAccessor);
+export const AccessorContext = createContext(naturalAccessor);
 
 AccessorContext.displayName = 'AccessorContext';

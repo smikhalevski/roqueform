@@ -68,9 +68,11 @@ export interface ConstraintValidationMixin {
  * Enhances fields with Constraint Validation API methods.
  */
 export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> {
-  const controllerMap = new WeakMap<Field, FieldController>();
+  let controllerMap: WeakMap<Field, FieldController>;
 
   return (field, _accessor, notify) => {
+    controllerMap ||= new WeakMap();
+
     if (controllerMap.has(field)) {
       return;
     }

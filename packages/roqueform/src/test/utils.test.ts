@@ -16,7 +16,7 @@ describe('callOrGet', () => {
   });
 
   test('passes arguments to a function', () => {
-    expect(callOrGet((arg1, arg2) => arg1 + arg2, 123, 456)).toBe(579);
+    expect(callOrGet((arg1, arg2) => arg1 + arg2, [123, 456])).toBe(579);
   });
 });
 
@@ -26,7 +26,7 @@ describe('callAll', () => {
     const cbMock2 = jest.fn();
     const cbMock3 = jest.fn();
 
-    callAll([cbMock1, cbMock2, cbMock3], 'foo', 'bar');
+    callAll([cbMock1, cbMock2, cbMock3], ['foo', 'bar']);
 
     expect(cbMock1).toHaveBeenCalledTimes(1);
     expect(cbMock2).toHaveBeenCalledTimes(1);

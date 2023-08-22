@@ -1,4 +1,4 @@
-import { createField, objectAccessor, Plugin } from '../main';
+import { createField, naturalAccessor, Plugin } from '../main';
 
 jest.useFakeTimers();
 
@@ -275,7 +275,7 @@ describe('createField', () => {
     const field = createField(111, pluginMock);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
   });
 
   test('returns a field if plugin returns undefined', () => {
@@ -286,7 +286,7 @@ describe('createField', () => {
     expect(field.value).toBe(111);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
   });
 
   test('applies a plugin to the derived field', () => {
@@ -297,8 +297,8 @@ describe('createField', () => {
     const fooField = field.at('foo');
 
     expect(pluginMock).toHaveBeenCalledTimes(2);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, objectAccessor, expect.any(Function));
-    expect(pluginMock).toHaveBeenNthCalledWith(2, fooField, objectAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(2, fooField, naturalAccessor, expect.any(Function));
   });
 
   test('plugin notifies field subscribers', () => {
@@ -355,9 +355,9 @@ describe('createField', () => {
     const field = createField({ foo: 111 });
     const newValue = { foo: 222 };
 
-    field.at('foo').subscribe(targetField => {
-      expect(targetField).toBe(field);
-      expect(targetField.value).toBe(newValue);
+    field.at('foo').subscribe(updatedField => {
+      expect(updatedField).toBe(field);
+      expect(updatedField.value).toBe(newValue);
       done();
     });
 

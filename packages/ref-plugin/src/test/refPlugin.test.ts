@@ -1,4 +1,4 @@
-import { applyPlugins, createField } from 'roqueform';
+import { composePlugins, createField } from 'roqueform';
 import { refPlugin } from '../main';
 
 describe('refPlugin', () => {
@@ -23,7 +23,7 @@ describe('refPlugin', () => {
 
     const field = createField(
       { bar: 111 },
-      applyPlugins(field => Object.assign(field, { refCallback: refCallbackMock }), refPlugin())
+      composePlugins(field => Object.assign(field, { refCallback: refCallbackMock }), refPlugin())
     );
 
     field.refCallback(document.body);

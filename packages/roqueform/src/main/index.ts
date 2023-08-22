@@ -2,9 +2,9 @@
  * @module roqueform
  */
 
-export * from './applyPlugins';
+export * from './composePlugins';
 export * from './createField';
-export * from './objectAccessor';
+export * from './naturalAccessor';
 export * from './shared-types';
 export * from './utils';
 export * from './validationPlugin';
