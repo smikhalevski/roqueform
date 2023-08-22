@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/doubter-plugin",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Validates Roqueform fields with Doubter shapes.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
