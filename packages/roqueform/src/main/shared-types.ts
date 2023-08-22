@@ -10,14 +10,14 @@ type ConsolidateUnion<T> = {
 };
 
 /**
- * Extracts objects and excludes functions.
+ * Makes all object properties mutable.
  */
 type ExtractObjects<T> = T extends object ? (T extends (...args: any[]) => any ? never : T) : never;
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 /**
- * The key in {@linkcode Plugin} that stores the root field value type.
+ * The key in {@link Plugin} that stores the root field value type.
  */
 declare const ROOT_VALUE: unique symbol;
 
@@ -26,27 +26,27 @@ declare const ROOT_VALUE: unique symbol;
  *
  * The plugin should _mutate_ the passed field instance.
  *
- * @template M The mixin added by the plugin.
- * @template T The root field value.
+ * @template Mixin The mixin added by the plugin.
+ * @template Value The root field value.
  */
-export interface Plugin<M = unknown, T = any> {
+export interface Plugin<Mixin = unknown, Value = any> {
   /**
    * @param field The field that must be enhanced.
    * @param accessor The accessor that reads and writes object properties.
    * @param notify Synchronously notifies listeners of the field.
    */
-  (field: Mutable<Field & M>, accessor: Accessor, notify: () => void): void;
+  (field: Mutable<Field & Mixin>, accessor: Accessor, notify: () => void): void;
 
   /**
    * Prevents root field value type erasure.
    *
    * @internal
    */
-  [ROOT_VALUE]?: T;
+  [ROOT_VALUE]?: Value;
 }
 
 /**
- * The abstraction used by the {@linkcode Field} to read and write object properties.
+ * The abstraction used by the {@link Field} to read and write object properties.
  */
 export interface Accessor {
   /**
@@ -70,14 +70,17 @@ export interface Accessor {
 }
 
 /**
- * @template T The root field value.
- * @template M The mixin added by the plugin.
+ * The field that holds a value and provides means to update it. Fields can be enhanced by plugins that provide such
+ * things as integration with rendering and validation libraries.
+ *
+ * @template Value The root field value.
+ * @template Mixin The mixin added by the plugin.
  */
-export interface Field<T = any, M = unknown> {
+export interface Field<Value = any, Mixin = unknown> {
   /**
    * The parent field from which this one was derived, or `null` if there's no parent.
    */
-  readonly parent: (Field<any, M> & M) | null;
+  readonly parent: (Field<any, Mixin> & Mixin) | null;
 
   /**
    * The key in the parent value that corresponds to the value controlled by the field, or `null` if there's no parent.
@@ -87,27 +90,27 @@ export interface Field<T = any, M = unknown> {
   /**
    * The current value of the field.
    */
-  readonly value: T;
+  readonly value: Value;
 
   /**
-   * `true` if the value was last updated using {@linkcode setTransientValue}, or `false` otherwise.
+   * `true` if the value was last updated using {@link setTransientValue}, or `false` otherwise.
    */
   readonly isTransient: boolean;
 
   /**
    * Updates the value of the field and notifies both ancestors and derived fields. If field withholds a
-   * {@linkcode isTransient} value then it becomes non-isTransient.
+   * {@link isTransient} value then it becomes non-isTransient.
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
-  setValue(value: T | ((prevValue: T) => T)): void;
+  setValue(value: Value | ((prevValue: Value) => Value)): void;
 
   /**
    * Updates the value of the field and notifies only derived fields and marks value as {@link isTransient transient}.
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
-  setTransientValue(value: T | ((prevValue: T) => T)): void;
+  setTransientValue(value: Value | ((prevValue: Value) => Value)): void;
 
   /**
    * If the current value {@link isTransient is transient} then `dispatch` notifies the parent about this value and
@@ -119,8 +122,8 @@ export interface Field<T = any, M = unknown> {
    * Derives a new field that controls value that is stored under a key in the value of this field.
    *
    * @param key The key the derived field would control.
-   * @returns The derived `Field` instance.
-   * @template K The key of the object value controlled by the field.
+   * @returns The derived {@link Field} instance.
+   * @template Key The key of the object value controlled by the field.
    */
   at<K extends keyof ConsolidateUnion<ExtractObjects<T>>>(
     key: K
@@ -134,9 +137,9 @@ export interface Field<T = any, M = unknown> {
    */
   subscribe(
     /**
-     * @param targetField The field that triggered the update. This can be ancestor ot descendant field.
-     * @param currentField The field to which this listener is subscribed.
+     * @param updatedField The field that was updated. This can be ancestor, descendant, or the `currentField` itself.
+     * @param currentField The field to which the listener is subscribed.
      */
-    listener: (targetField: Field<any, M> & M, currentField: Field<T, M> & M) => void
+    listener: (updatedField: Field<any, Mixin> & Mixin, currentField: Field<Value, Mixin> & Mixin) => void
   ): () => void;
 }

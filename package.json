@@ -4,7 +4,7 @@
     "build": "npm run build --workspaces",
     "clean": "rimraf docs && npm run clean --workspaces",
     "test": "jest",
-    "test:definitions": "npm run test:definitions --if-present --workspaces",
+    "test:definitions": "tsc --version && npm run test:definitions --if-present --workspaces",
     "docs": "typedoc"
   },
   "workspaces": [

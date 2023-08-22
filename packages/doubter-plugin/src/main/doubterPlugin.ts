@@ -4,7 +4,7 @@ import { Field, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
 const anyShape = new Shape();
 
 /**
- * The mixin added to fields by the {@linkcode doubterPlugin}.
+ * The mixin added to fields by the {@link doubterPlugin}.
  */
 export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
   setError(error: Issue | string): void;
@@ -14,7 +14,7 @@ export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
  *
  * @param shape The shape that parses the field value.
- * @template T The root field value.
+ * @template Value The root field value.
  */
 export function doubterPlugin<T>(shape: Shape<T, any>): Plugin<DoubterMixin, T> {
   const plugin = createValidationPlugin(shape);

@@ -2,26 +2,25 @@ import { createElement, Fragment, ReactElement, ReactNode, useEffect, useReducer
 import { callOrGet, Field, isEqual } from 'roqueform';
 
 /**
- * Properties of the {@linkcode FieldRenderer} component.
+ * Properties of the {@link FieldRenderer} component.
  *
- * @template F The field.
+ * @template RenderedField The rendered field.
  */
-export interface FieldRendererProps<F extends Field> {
+export interface FieldRendererProps<RenderedField extends Field> {
   /**
    * The field to subscribe to.
    */
-  field: F;
+  field: RenderedField;
 
   /**
-   * The render function that receive a field as an argument or a node to render.
+   * The render function that receive a field as an argument.
    */
-  children: ((field: F) => ReactNode) | ReactNode;
+  children: (field: RenderedField) => ReactNode;
 
   /**
-   * If set to `true` then {@linkcode FieldRenderer} is re-rendered whenever the {@linkcode field} itself, its parent
-   * fields or descendant fields are updated. If set to `false` then {@linkcode FieldRenderer} re-rendered only if the
-   * field was directly changed (updates from parent and descendants are ignored, even if they affect the value of the
-   * field).
+   * If set to `true` then {@link FieldRenderer} is re-rendered whenever the {@link field} itself, its parent fields or
+   * descendant fields are updated. If set to `false` then {@link FieldRenderer} re-rendered only if the field was
+   * directly changed (updates from parent and descendants are ignored, even if they affect the value of the field).
    *
    * @default false
    */
@@ -32,30 +31,29 @@ export interface FieldRendererProps<F extends Field> {
    *
    * @param value The new field value.
    */
-  onChange?: (value: F['value']) => void;
+  onChange?: (value: RenderedField['value']) => void;
 }
 
 /**
- * The component that subscribes to the {@linkcode Field} instance and re-renders its children when the field is
- * notified.
+ * The component that subscribes to the {@link Field} instance and re-renders its children when the field is notified.
  *
- * @template F The field.
+ * @template RenderedField The rendered field.
  */
-export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): ReactElement {
+export function FieldRenderer<RenderedField extends Field>(props: FieldRendererProps<RenderedField>): ReactElement {
   const { field, eagerlyUpdated } = props;
 
   const [, rerender] = useReducer(reduceCount, 0);
-  const handleChangeRef = useRef<FieldRendererProps<F>['onChange']>();
+  const handleChangeRef = useRef<FieldRendererProps<RenderedField>['onChange']>();
 
   handleChangeRef.current = props.onChange;
 
   useEffect(() => {
     let prevValue: unknown;
 
-    return field.subscribe(targetField => {
+    return field.subscribe(updatedField => {
       const { value } = field;
 
-      if (eagerlyUpdated || field === targetField) {
+      if (eagerlyUpdated || field === updatedField) {
         rerender();
       }
       if (field.isTransient || isEqual(value, prevValue)) {
