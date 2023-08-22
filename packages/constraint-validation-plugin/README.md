@@ -9,7 +9,7 @@ npm install --save-prod @roqueform/constraint-validation-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/constraint_validation_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_constraint_validation_plugin.html)
 
 ```tsx
 import { useEffect } from 'react';

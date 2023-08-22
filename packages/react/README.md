@@ -8,7 +8,7 @@ npm install --save-prod @roqueform/react
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/react.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_react.html)
 
 ```tsx
 import { SyntheticEvent } from 'react';

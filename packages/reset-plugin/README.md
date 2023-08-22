@@ -8,7 +8,7 @@ npm install --save-prod @roqueform/reset-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/reset_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_reset_plugin.html)
 
 The field is considered dirty when its value differs from the initial value. Values are compared using an equality
 checker function passed to the `resetPlugin`. By default, values are compared using

@@ -8,7 +8,7 @@ npm install --save-prod @roqueform/zod-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/zod_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_zod_plugin.html)
 
 ```tsx
 import { SyntheticEvent } from 'react';

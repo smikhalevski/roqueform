@@ -16,7 +16,7 @@ npm install --save-prod @roqueform/doubter-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/doubter_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_doubter_plugin.html)
 
 ```tsx
 import { SyntheticEvent } from 'react';
@@ -39,7 +39,7 @@ export const App = () => {
       return;
     }
 
-    // If your shapes have transform the input, you can safely parse
+    // If your shapes transform the input, you can safely parse
     // the field value after it was successfully validated
     const value = planetShape.parse(planetField.value);
   };

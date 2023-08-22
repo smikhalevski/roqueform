@@ -11,7 +11,7 @@ npm install --save-prod @roqueform/uncontrolled-plugin
 
 # Usage example
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/uncontrolled_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_uncontrolled_plugin.html)
 
 ```tsx
 import { SyntheticEvent } from 'react';
