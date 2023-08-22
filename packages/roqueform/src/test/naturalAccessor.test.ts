@@ -1,7 +1,7 @@
 import { naturalAccessor } from '../main';
 
 describe('naturalAccessor', () => {
-  test('does not read value from skipped values', () => {
+  test('does not read value from primitive values', () => {
     expect(naturalAccessor.get(null, 'aaa')).toBe(undefined);
     expect(naturalAccessor.get(undefined, 'aaa')).toBe(undefined);
     expect(naturalAccessor.get(111, 'toString')).toBe(undefined);
