@@ -7,7 +7,7 @@
   "disableSources": true,
   "hideGenerator": true,
   "readme": "none",
-  "tsconfig": "./tsconfig.build.json",
+  "tsconfig": "./tsconfig.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": [
     "./packages/roqueform/src/main/index.ts",
@@ -22,9 +22,9 @@
   ],
   "externalSymbolLinkMappings": {
     "doubter": {
-      "Issue": "https://smikhalevski.github.io/doubter/latest/classes/doubter_core.Issue.html",
-      "ParseOptions": "https://smikhalevski.github.io/doubter/latest/classes/doubter_core.ParseOptions.html",
-      "Shape": "https://smikhalevski.github.io/doubter/latest/classes/doubter_core.Shape.html"
+      "Issue": "https://smikhalevski.github.io/doubter/latest/classes/core.Issue.html",
+      "ParseOptions": "https://smikhalevski.github.io/doubter/latest/classes/core.ParseOptions.html",
+      "Shape": "https://smikhalevski.github.io/doubter/latest/classes/core.Shape.html"
     },
     "typescript": {
       "Promise": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"

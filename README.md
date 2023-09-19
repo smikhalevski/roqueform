@@ -441,9 +441,9 @@ Roqueform a shipped with validation scaffolding plugin
 your validation on top of it.
 
 > [!NOTE]\
-> Maybe you don't need to use the validation scaffolding plugin directly and
-> [constraint-validation-plugin](./packages/constraint-validation-plugin#readme),
-> [doubter-plugin](./packages/doubter-plugin#readme), or [zod-plugin](./packages/zod-plugin#readme) can fit your needs.
+> This plugin provides a low-level functionality. Prefer [constraint-validation-plugin](#plugins-and-integrations),
+> [doubter-plugin](#plugins-and-integrations), or [zod-plugin](#plugins-and-integrations) or other high-level
+> validation plugin.
 
 ```ts
 import { validationPlugin } from 'roqueform';
