@@ -623,4 +623,30 @@ describe('validationPlugin', () => {
 
     await expect(promise).rejects.toEqual(new Error('Validation aborted'));
   });
+
+  test('validation can be called in subscribe', () => {
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
+
+    const listenerMock = jest.fn(() => {
+      field.validate();
+    });
+
+    field.subscribe(listenerMock);
+
+    field.at('foo').setValue(111);
+
+    // field.at('foo').subscribe(fooListenerMock);
+    //
+    // field.setError(111);
+    //
+    // expect(field.isInvalid).toBe(true);
+    // expect(field.error).toBe(111);
+    //
+    // expect(field.at('foo').isInvalid).toBe(false);
+    // expect(field.at('foo').error).toBe(null);
+    //
+    // expect(listenerMock).toHaveBeenCalledTimes(1);
+    // expect(fooListenerMock).not.toHaveBeenCalled();
+    //
+  });
 });

@@ -357,7 +357,9 @@ function beginValidation(
 ): Array<() => void> {
   controller._initiator = initiator;
 
-  notifyCallbacks.push(controller._notify);
+  if (initiator._abortController) {
+    notifyCallbacks.push(controller._notify);
+  }
 
   if (controller._children !== null) {
     for (const child of controller._children) {
@@ -388,6 +390,18 @@ function endValidation(
     return notifyCallbacks;
   }
 
+  controller._initiator = null;
+
+  if (initiator._abortController) {
+    notifyCallbacks.push(controller._notify);
+  }
+
+  if (controller._children !== null) {
+    for (const child of controller._children) {
+      endValidation(child, initiator, aborted, notifyCallbacks);
+    }
+  }
+
   if (controller._abortController !== null) {
     if (aborted) {
       controller._abortController.abort();
@@ -395,15 +409,6 @@ function endValidation(
     controller._abortController = null;
   }
 
-  controller._initiator = null;
-
-  notifyCallbacks.push(controller._notify);
-
-  if (controller._children !== null) {
-    for (const child of controller._children) {
-      endValidation(child, initiator, aborted, notifyCallbacks);
-    }
-  }
   return notifyCallbacks;
 }
 
@@ -465,10 +470,10 @@ function validateAsync(controller: FieldController, options: unknown): Promise<a
     endValidation(controller, controller, true, notifyCallbacks);
   }
 
+  controller._abortController = new AbortController();
+
   clearErrors(controller, true, notifyCallbacks);
   beginValidation(controller, controller, notifyCallbacks);
-
-  controller._abortController = new AbortController();
 
   const abortSignal = controller._abortController.signal;
   const validationNonce = ++controller._validationNonce;
