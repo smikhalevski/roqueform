@@ -36,27 +36,34 @@ export interface ValidationMixin<Error, Options> {
   deleteError(): void;
 
   /**
+   * Returns an array of all errors associated with this field and its derived fields.
+   */
+  collectErrors(): Error[];
+
+  /**
    * Recursively deletes errors associated with this field and all of its derived fields.
    */
   clearErrors(): void;
 
   /**
    * Triggers a sync field validation. Starting a validation will clear errors that were set during the previous
-   * validation and preserve errors set manually by {@link setError}. If you want to clear all errors before the
-   * validation, use {@link clearErrors}.
+   * validation and preserve errors set via {@link setError}. If you want to clear all errors before the validation,
+   * use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
-   * @returns The list of validation errors, or `null` if there are no errors.
+   * @returns The array of validation errors returned by the {@link Validator.validate}, or `null` if there are no
+   * errors.
    */
   validate(options?: Options): Error[] | null;
 
   /**
    * Triggers an async field validation. Starting a validation will clear errors that were set during the previous
-   * validation and preserve errors set manually by {@link setError}. If you want to clear all errors before the
-   * validation, use {@link clearErrors}.
+   * validation and preserve errors set via {@link setError}. If you want to clear all errors before the validation,
+   * use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
-   * @returns The list of validation errors, or `null` if there are no errors.
+   * @returns The array of validation errors returned by the {@link Validator.validateAsync}, or `null` if there are no
+   * errors.
    */
   validateAsync(options?: Options): Promise<Error[] | null>;
 
@@ -180,6 +187,8 @@ export function validationPlugin<Error = any, Options = void, Value = any>(
     field.deleteError = () => {
       callAll(deleteError(controller, false, []));
     };
+
+    field.collectErrors = () => collectErrors(controller, []);
 
     field.clearErrors = () => {
       callAll(clearErrors(controller, false, []));
@@ -318,6 +327,21 @@ function deleteError(
   return notifyCallbacks;
 }
 
+function collectErrors(controller: FieldController, errors: unknown[]): any[] {
+  if (controller._errorCount === 0) {
+    return errors;
+  }
+  if (controller._isErrored) {
+    errors.push(controller._error);
+  }
+  if (controller._children !== null) {
+    for (const child of controller._children) {
+      collectErrors(child, errors);
+    }
+  }
+  return errors;
+}
+
 /**
  * Recursively deletes errors associated with the field and all of its derived fields.
  *
@@ -417,7 +441,7 @@ function endValidation(
  *
  * @param controller The controller that must be validated.
  * @param options Options passed to the validator.
- * @returns The list of validation errors, or `null` if there are no errors.
+ * @returns The array of validation errors, or `null` if there are no errors.
  */
 function validate(controller: FieldController, options: unknown): any[] | null {
   const notifyCallbacks: Array<() => void> = [];
@@ -461,7 +485,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
  *
  * @param controller The controller that must be validated.
  * @param options Options passed to the validator.
- * @returns The list of validation errors, or `null` if there are no errors.
+ * @returns The array of validation errors, or `null` if there are no errors.
  */
 function validateAsync(controller: FieldController, options: unknown): Promise<any[] | null> {
   const notifyCallbacks: Array<() => void> = [];

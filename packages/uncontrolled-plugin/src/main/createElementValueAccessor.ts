@@ -5,7 +5,7 @@ export interface ElementValueAccessor {
   /**
    * Retrieves value from elements that produce value for the field.
    *
-   * @param elements The list of referenced elements, never empty.
+   * @param elements The array of referenced elements, never empty.
    * @return The value that elements represent.
    */
   get(elements: any[]): any;
@@ -13,7 +13,7 @@ export interface ElementValueAccessor {
   /**
    * Sets value to elements controlled by the field.
    *
-   * @param elements The list of referenced elements, never empty.
+   * @param elements The array of referenced elements, never empty.
    * @param value The value to assign to elements.
    */
   set(elements: any[], value: any): void;

@@ -106,7 +106,7 @@ interface FieldController {
   _parent: FieldController | null;
 
   /**
-   * The list of controllers that can be scrolled to.
+   * The array of controllers that can be scrolled to.
    */
   _targetControllers: FieldController[];
   _field: Field & ScrollToErrorMixin;

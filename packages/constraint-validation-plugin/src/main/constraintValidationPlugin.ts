@@ -46,6 +46,13 @@ export interface ConstraintValidationMixin {
   deleteError(): void;
 
   /**
+   * Returns an array of all errors associated with this field and its derived fields.
+   *
+   * @returns The array of non-empty error messages.
+   */
+  collectErrors(): string[];
+
+  /**
    * Recursively deletes errors associated with this field and all of its derived fields. Calls
    * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
    * if the field has an associated element.
@@ -166,6 +173,8 @@ export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> 
       setError(controller, '');
     };
 
+    field.collectErrors = () => collectErrors(controller, []);
+
     field.clearErrors = () => {
       clearErrors(controller);
     };
@@ -232,8 +241,22 @@ function setError(controller: FieldController, error: string): void {
   }
 }
 
-function getError(controller: FieldController): string {
+function getError(controller: FieldController): string | null {
   return (controller._element !== null ? controller._element.validationMessage : controller._error) || null;
+}
+
+function collectErrors(controller: FieldController, errors: string[]): any[] {
+  const error = getError(controller);
+
+  if (error !== null) {
+    errors.push(error);
+  }
+  if (controller._children !== null) {
+    for (const child of controller._children) {
+      collectErrors(child, errors);
+    }
+  }
+  return errors;
 }
 
 function clearErrors(controller: FieldController): void {
