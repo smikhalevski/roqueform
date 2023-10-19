@@ -433,7 +433,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
 
   let errors: unknown[] | null = null;
 
-  const setInternalError = (targetField: Field, error: unknown): void => {
+  const setErrorCallback = (targetField: Field, error: unknown): void => {
     const targetController = controller._controllerMap.get(targetField);
     if (
       targetController !== undefined &&
@@ -446,7 +446,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
   };
 
   try {
-    controller._validator.validate(controller._field, setInternalError, options);
+    controller._validator.validate(controller._field, setErrorCallback, options);
   } catch (error) {
     callAll(endValidation(controller, controller, false, notifyCallbacks));
     throw error;
