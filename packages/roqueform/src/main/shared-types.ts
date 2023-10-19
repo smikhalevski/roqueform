@@ -102,8 +102,8 @@ export interface Field<Value = any, Mixin = unknown> {
   readonly isTransient: boolean;
 
   /**
-   * Updates the value of the field and notifies both ancestors and derived fields. If field withholds a
-   * {@link isTransient} value then it becomes non-isTransient.
+   * Updates the value of the field and notifies both ancestors and derived fields. If field withholds
+   * {@link isTransient a transient value} then it becomes non-transient.
    *
    * @param value The value to set or a callback that receives a previous value and returns a new one.
    */
