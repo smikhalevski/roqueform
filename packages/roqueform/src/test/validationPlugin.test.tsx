@@ -635,18 +635,6 @@ describe('validationPlugin', () => {
 
     field.at('foo').setValue(111);
 
-    // field.at('foo').subscribe(fooListenerMock);
-    //
-    // field.setError(111);
-    //
-    // expect(field.isInvalid).toBe(true);
-    // expect(field.error).toBe(111);
-    //
-    // expect(field.at('foo').isInvalid).toBe(false);
-    // expect(field.at('foo').error).toBe(null);
-    //
-    // expect(listenerMock).toHaveBeenCalledTimes(1);
-    // expect(fooListenerMock).not.toHaveBeenCalled();
-    //
+    expect(listenerMock).toHaveBeenCalledTimes(1);
   });
 });

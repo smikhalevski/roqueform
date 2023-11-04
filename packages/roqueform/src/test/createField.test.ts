@@ -380,7 +380,7 @@ describe('createField', () => {
     expect(() => field.at('foo')).toThrow(new Error('expected2'));
   });
 
-  test('setting field value in a its listener is safe', () => {
+  test('setting field value in a listener does not trigger an infinite loop', () => {
     const field = createField(111);
 
     const listenerMock = jest.fn(() => {
@@ -395,7 +395,7 @@ describe('createField', () => {
     expect(listenerMock).toHaveBeenCalledTimes(2);
   });
 
-  test('setting field value in a derived field listener is safe', () => {
+  test('setting field value in a derived field listener does not trigger an infinite loop', () => {
     const field = createField({ foo: 111 });
 
     const listenerMock = jest.fn(() => {
