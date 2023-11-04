@@ -36,11 +36,6 @@ export interface ValidationMixin<Error, Options> {
   deleteError(): void;
 
   /**
-   * Returns an array of all errors associated with this field and its derived fields.
-   */
-  collectErrors(): Error[];
-
-  /**
    * Recursively deletes errors associated with this field and all of its derived fields.
    */
   clearErrors(): void;
@@ -188,8 +183,6 @@ export function validationPlugin<Error = any, Options = void, Value = any>(
       callAll(deleteError(controller, false, []));
     };
 
-    field.collectErrors = () => collectErrors(controller, []);
-
     field.clearErrors = () => {
       callAll(clearErrors(controller, false, []));
     };
@@ -325,21 +318,6 @@ function deleteError(
   }
 
   return notifyCallbacks;
-}
-
-function collectErrors(controller: FieldController, errors: unknown[]): any[] {
-  if (controller._errorCount === 0) {
-    return errors;
-  }
-  if (controller._isErrored) {
-    errors.push(controller._error);
-  }
-  if (controller._children !== null) {
-    for (const child of controller._children) {
-      collectErrors(child, errors);
-    }
-  }
-  return errors;
 }
 
 /**
