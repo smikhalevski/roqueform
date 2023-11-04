@@ -232,7 +232,7 @@ function setError(controller: FieldController, error: string): void {
   }
 }
 
-function getError(controller: FieldController): string {
+function getError(controller: FieldController): string | null {
   return (controller._element !== null ? controller._element.validationMessage : controller._error) || null;
 }
 

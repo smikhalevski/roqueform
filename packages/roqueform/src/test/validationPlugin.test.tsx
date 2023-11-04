@@ -206,8 +206,8 @@ describe('validationPlugin', () => {
     const field = createField(
       { foo: 0 },
       validationPlugin({
-        validate(field, setInternalError) {
-          setInternalError(field.at('foo'), 111);
+        validate(field, setError) {
+          setError(field.at('foo'), 111);
         },
       })
     );
@@ -235,8 +235,8 @@ describe('validationPlugin', () => {
   test('synchronously validates the root field with a callback validator', () => {
     const field = createField(
       { foo: 0 },
-      validationPlugin((field, setInternalError) => {
-        setInternalError(field.at('foo'), 111);
+      validationPlugin((field, setError) => {
+        setError(field.at('foo'), 111);
       })
     );
 
@@ -264,8 +264,8 @@ describe('validationPlugin', () => {
     const field = createField(
       { foo: 0 },
       validationPlugin({
-        validate(field, setInternalError) {
-          setInternalError(field, 111);
+        validate(field, setError) {
+          setError(field, 111);
         },
       })
     );
@@ -294,9 +294,9 @@ describe('validationPlugin', () => {
     const field = createField(
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate(field, setInternalError) {
-          setInternalError(field.at('foo'), 111);
-          setInternalError(field.at('bar'), 222);
+        validate(field, setError) {
+          setError(field.at('foo'), 111);
+          setError(field.at('bar'), 222);
         },
       })
     );
@@ -316,13 +316,13 @@ describe('validationPlugin', () => {
   test('clears previous validation errors before validation', () => {
     const validateMock = jest.fn();
 
-    validateMock.mockImplementationOnce((field, setInternalError) => {
-      setInternalError(field.at('foo'), 111);
-      setInternalError(field.at('bar'), 222);
+    validateMock.mockImplementationOnce((field, setError) => {
+      setError(field.at('foo'), 111);
+      setError(field.at('bar'), 222);
     });
 
-    validateMock.mockImplementationOnce((field, setInternalError) => {
-      setInternalError(field.at('foo'), 111);
+    validateMock.mockImplementationOnce((field, setError) => {
+      setError(field.at('foo'), 111);
     });
 
     const field = createField(
@@ -351,8 +351,8 @@ describe('validationPlugin', () => {
     const field = createField(
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate(field, setInternalError) {
-          setInternalError(field.at('foo'), 111);
+        validate(field, setError) {
+          setError(field.at('foo'), 111);
         },
       })
     );
@@ -375,9 +375,9 @@ describe('validationPlugin', () => {
     const field = createField(
       { foo: 0, bar: 'qux' },
       validationPlugin({
-        validate(field, setInternalError) {
-          setInternalError(field.at('foo'), 111);
-          setInternalError(field.at('bar'), 222);
+        validate(field, setError) {
+          setError(field.at('foo'), 111);
+          setError(field.at('bar'), 222);
         },
       })
     );
@@ -402,8 +402,8 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(field, setInternalError) {
-          setInternalError(field.at('foo'), 111);
+        async validateAsync(field, setError) {
+          setError(field.at('foo'), 111);
         },
       })
     );
@@ -441,8 +441,8 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(field, setInternalError) {
-          setInternalError(field, 111);
+        async validateAsync(field, setError) {
+          setError(field, 111);
         },
       })
     );
@@ -530,7 +530,7 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(_field, _setInternalError, _context, signal) {
+        async validateAsync(_field, _setError, _context, signal) {
           lastSignal = signal;
         },
       })
@@ -558,7 +558,7 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(_field, _setInternalError, _context, signal) {
+        async validateAsync(_field, _setError, _context, signal) {
           signals.push(signal);
         },
       })
@@ -582,7 +582,7 @@ describe('validationPlugin', () => {
       validationPlugin({
         validate: () => undefined,
 
-        async validateAsync(_field, _setInternalError, _context, signal) {
+        async validateAsync(_field, _setError, _context, signal) {
           signals.push(signal);
         },
       })
@@ -598,12 +598,12 @@ describe('validationPlugin', () => {
   test('does not apply errors from the aborted validation', async () => {
     const validateAsyncMock = jest.fn();
 
-    validateAsyncMock.mockImplementationOnce((field, setInternalError) => {
-      return Promise.resolve().then(() => setInternalError(field.at('foo'), 111));
+    validateAsyncMock.mockImplementationOnce((field, setError) => {
+      return Promise.resolve().then(() => setError(field.at('foo'), 111));
     });
 
-    validateAsyncMock.mockImplementationOnce((field, setInternalError) => {
-      return Promise.resolve().then(() => setInternalError(field.at('bar'), 222));
+    validateAsyncMock.mockImplementationOnce((field, setError) => {
+      return Promise.resolve().then(() => setError(field.at('bar'), 222));
     });
 
     const field = createField(
@@ -622,5 +622,19 @@ describe('validationPlugin', () => {
     expect(field.at('bar').error).toBe(222);
 
     await expect(promise).rejects.toEqual(new Error('Validation aborted'));
+  });
+
+  test('validation can be called in subscribe', () => {
+    const field = createField({ foo: 0 }, validationPlugin(noopValidator));
+
+    const listenerMock = jest.fn(() => {
+      field.validate();
+    });
+
+    field.subscribe(listenerMock);
+
+    field.at('foo').setValue(111);
+
+    expect(listenerMock).toHaveBeenCalledTimes(1);
   });
 });

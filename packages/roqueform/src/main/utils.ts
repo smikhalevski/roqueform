@@ -11,10 +11,10 @@ export function callOrGet<T>(value: T | (() => T)): T;
  * If value is a function then it is called with the given set of arguments, otherwise the value is returned as is.
  *
  * @param value The value to return or a callback to call.
- * @param args The list of arguments to pass to a callback.
+ * @param args The array of arguments to pass to a callback.
  * @returns The value or the call result.
  * @template T The returned value.
- * @template A The list of callback arguments.
+ * @template A The array of callback arguments.
  */
 export function callOrGet<T, A extends any[]>(value: T | ((...args: A) => T), args: A): T;
 
@@ -23,24 +23,24 @@ export function callOrGet(value: unknown, args?: unknown[]) {
 }
 
 /**
- * Calls each callback from the list.
+ * Calls each callback from the array.
  *
- * If the list contains the same callback multiple times then the callback is called only once. If a callback throws an
+ * If the array contains the same callback multiple times then the callback is called only once. If a callback throws an
  * error, the remaining callbacks are still called and the error is re-thrown asynchronously.
  *
- * @param callbacks The list of callbacks.
+ * @param callbacks The array of callbacks.
  */
 export function callAll(callbacks: Array<() => any>): void;
 
 /**
- * Calls each callback from the list with given set of arguments.
+ * Calls each callback from the array with given set of arguments.
  *
- * If the list contains the same callback multiple times then the callback is called only once. If a callback throws an
+ * If the array contains the same callback multiple times then the callback is called only once. If a callback throws an
  * error, the remaining callbacks are still called and the error is re-thrown asynchronously.
  *
- * @param callbacks The list of callbacks.
- * @param args The list of arguments to pass to each callback.
- * @template A The list of callback arguments.
+ * @param callbacks The array of callbacks.
+ * @param args The array of arguments to pass to each callback.
+ * @template A The array of callback arguments.
  */
 export function callAll<A extends any[]>(callbacks: Array<(...args: A) => any>, args: A): void;
 

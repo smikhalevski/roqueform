@@ -32,22 +32,22 @@ export function zodPlugin<Value>(type: ZodType<any, any, Value>, errorMap?: ZodE
 
 function createValidationPlugin(type: ZodTypeAny, errorMap: ZodErrorMap | undefined, accessor: Accessor) {
   return validationPlugin<ZodIssue, Partial<ParseParams>>({
-    validate(field, setInternalError, options) {
+    validate(field, setError, options) {
       options = Object.assign({ errorMap }, options);
 
       const result = type.safeParse(getValue(field, accessor), options);
 
       if (!result.success) {
-        setIssues(field, result.error.issues, setInternalError);
+        setIssues(field, result.error.issues, setError);
       }
     },
 
-    validateAsync(field, setInternalError, options) {
+    validateAsync(field, setError, options) {
       options = Object.assign({ errorMap }, options);
 
       return type.safeParseAsync(getValue(field, accessor), options).then(result => {
         if (!result.success) {
-          setIssues(field, result.error.issues, setInternalError);
+          setIssues(field, result.error.issues, setError);
         }
       });
     },
@@ -76,7 +76,7 @@ function getPath(field: Field): Array<string | number> {
   return path;
 }
 
-function setIssues(field: Field, issues: ZodIssue[], setInternalError: (field: Field, error: ZodIssue) => void): void {
+function setIssues(field: Field, issues: ZodIssue[], setError: (field: Field, error: ZodIssue) => void): void {
   let prefix = getPath(field);
 
   issues: for (const issue of issues) {
@@ -95,6 +95,6 @@ function setIssues(field: Field, issues: ZodIssue[], setInternalError: (field: F
     for (let i = prefix.length; i < path.length; ++i) {
       targetField = targetField.at(path[i]);
     }
-    setInternalError(targetField, issue);
+    setError(targetField, issue);
   }
 }

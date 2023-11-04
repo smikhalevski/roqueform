@@ -40,24 +40,24 @@ function createValidationPlugin(rootShape: AnyShape) {
   const shapeCache = new WeakMap<Field, AnyShape>();
 
   return validationPlugin<Issue, ParseOptions>({
-    validate(field, setInternalError, options) {
+    validate(field, setError, options) {
       options = Object.assign({ verbose: true }, options);
 
       const result = getShape(field, shapeCache, rootShape).try(field.value, options);
 
       if (!result.ok) {
-        setIssues(field, result.issues, setInternalError);
+        setIssues(field, result.issues, setError);
       }
     },
 
-    validateAsync(field, setInternalError, options) {
+    validateAsync(field, setError, options) {
       options = Object.assign({ verbose: true }, options);
 
       return getShape(field, shapeCache, rootShape)
         .tryAsync(field.value, options)
         .then(result => {
           if (!result.ok) {
-            setIssues(field, result.issues, setInternalError);
+            setIssues(field, result.issues, setError);
           }
         });
     },
@@ -81,7 +81,7 @@ function prependPath(field: Field, path: unknown[] | undefined): unknown[] | und
   return path;
 }
 
-function setIssues(field: Field, issues: Issue[], setInternalError: (field: Field, error: Issue) => void): void {
+function setIssues(field: Field, issues: Issue[], setError: (field: Field, error: Issue) => void): void {
   for (const issue of issues) {
     let targetField = field;
 
@@ -92,6 +92,6 @@ function setIssues(field: Field, issues: Issue[], setInternalError: (field: Fiel
     }
 
     issue.path = prependPath(field, issue.path);
-    setInternalError(targetField, issue);
+    setError(targetField, issue);
   }
 }

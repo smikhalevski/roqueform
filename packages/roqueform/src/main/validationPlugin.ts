@@ -42,21 +42,23 @@ export interface ValidationMixin<Error, Options> {
 
   /**
    * Triggers a sync field validation. Starting a validation will clear errors that were set during the previous
-   * validation and preserve errors set manually by {@link setError}. If you want to clear all errors before the
-   * validation, use {@link clearErrors}.
+   * validation and preserve errors set via {@link setError}. If you want to clear all errors before the validation,
+   * use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
-   * @returns The list of validation errors, or `null` if there are no errors.
+   * @returns The array of validation errors returned by the {@link Validator.validate}, or `null` if there are no
+   * errors.
    */
   validate(options?: Options): Error[] | null;
 
   /**
    * Triggers an async field validation. Starting a validation will clear errors that were set during the previous
-   * validation and preserve errors set manually by {@link setError}. If you want to clear all errors before the
-   * validation, use {@link clearErrors}.
+   * validation and preserve errors set via {@link setError}. If you want to clear all errors before the validation,
+   * use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
-   * @returns The list of validation errors, or `null` if there are no errors.
+   * @returns The array of validation errors returned by the {@link Validator.validateAsync}, or `null` if there are no
+   * errors.
    */
   validateAsync(options?: Options): Promise<Error[] | null>;
 
@@ -357,7 +359,9 @@ function beginValidation(
 ): Array<() => void> {
   controller._initiator = initiator;
 
-  notifyCallbacks.push(controller._notify);
+  if (initiator._abortController) {
+    notifyCallbacks.push(controller._notify);
+  }
 
   if (controller._children !== null) {
     for (const child of controller._children) {
@@ -388,6 +392,18 @@ function endValidation(
     return notifyCallbacks;
   }
 
+  controller._initiator = null;
+
+  if (initiator._abortController) {
+    notifyCallbacks.push(controller._notify);
+  }
+
+  if (controller._children !== null) {
+    for (const child of controller._children) {
+      endValidation(child, initiator, aborted, notifyCallbacks);
+    }
+  }
+
   if (controller._abortController !== null) {
     if (aborted) {
       controller._abortController.abort();
@@ -395,15 +411,6 @@ function endValidation(
     controller._abortController = null;
   }
 
-  controller._initiator = null;
-
-  notifyCallbacks.push(controller._notify);
-
-  if (controller._children !== null) {
-    for (const child of controller._children) {
-      endValidation(child, initiator, aborted, notifyCallbacks);
-    }
-  }
   return notifyCallbacks;
 }
 
@@ -412,7 +419,7 @@ function endValidation(
  *
  * @param controller The controller that must be validated.
  * @param options Options passed to the validator.
- * @returns The list of validation errors, or `null` if there are no errors.
+ * @returns The array of validation errors, or `null` if there are no errors.
  */
 function validate(controller: FieldController, options: unknown): any[] | null {
   const notifyCallbacks: Array<() => void> = [];
@@ -428,7 +435,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
 
   let errors: unknown[] | null = null;
 
-  const setInternalError = (targetField: Field, error: unknown): void => {
+  const setErrorCallback = (targetField: Field, error: unknown): void => {
     const targetController = controller._controllerMap.get(targetField);
     if (
       targetController !== undefined &&
@@ -441,7 +448,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
   };
 
   try {
-    controller._validator.validate(controller._field, setInternalError, options);
+    controller._validator.validate(controller._field, setErrorCallback, options);
   } catch (error) {
     callAll(endValidation(controller, controller, false, notifyCallbacks));
     throw error;
@@ -456,7 +463,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
  *
  * @param controller The controller that must be validated.
  * @param options Options passed to the validator.
- * @returns The list of validation errors, or `null` if there are no errors.
+ * @returns The array of validation errors, or `null` if there are no errors.
  */
 function validateAsync(controller: FieldController, options: unknown): Promise<any[] | null> {
   const notifyCallbacks: Array<() => void> = [];
@@ -465,10 +472,10 @@ function validateAsync(controller: FieldController, options: unknown): Promise<a
     endValidation(controller, controller, true, notifyCallbacks);
   }
 
+  controller._abortController = new AbortController();
+
   clearErrors(controller, true, notifyCallbacks);
   beginValidation(controller, controller, notifyCallbacks);
-
-  controller._abortController = new AbortController();
 
   const abortSignal = controller._abortController.signal;
   const validationNonce = ++controller._validationNonce;
