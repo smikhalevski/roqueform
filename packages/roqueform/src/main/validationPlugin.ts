@@ -1,20 +1,21 @@
-import { Field, Plugin } from './shared-types';
-import { callAll, isEqual } from './utils';
+import { Field, PluginCallback } from './typings';
+import { isEqual } from './utils';
+import { InferPlugin } from './typings';
 
 /**
- * The mixin added to fields by the {@link validationPlugin}.
+ * The plugin that enables field value validation.
  *
  * @template Error The validation error.
  * @template Options Options passed to the validator.
  */
-export interface ValidationMixin<Error, Options> {
+export interface ValidationPlugin<Error = any, Options = any> {
   /**
    * A validation error associated with the field, or `null` if there's no error.
    */
-  readonly error: Error | null;
+  error: Error | null;
 
   /**
-   * `true` if the field or any of its derived fields have an associated error, or `false` otherwise.
+   * `true` if this field or any of its descendants have no associated errors, or `false` otherwise.
    */
   readonly isInvalid: boolean;
 
@@ -22,6 +23,35 @@ export interface ValidationMixin<Error, Options> {
    * `true` if an async validation is pending, or `false` otherwise.
    */
   readonly isValidating: boolean;
+
+  /**
+   * The total number of errors associated with this field and its child fields.
+   */
+  ['errorCount']: number;
+
+  /**
+   * The type of the associated error:
+   * - `external` if an error was set using {@link ValidationPlugin.setError};
+   * - `validation` if an error was set using {@link ValidationPlugin.setValidationError};
+   * - `null` if there's no associated error.
+   */
+  ['errorType']: 'external' | 'validation' | null;
+
+  /**
+   * The validator to which the field value validation is delegated.
+   */
+  ['validator']: Validator;
+
+  /**
+   * The field that initiated the validation, or `null` if there's no pending validation.
+   */
+  ['validationRoot']: Field<any, InferPlugin<this>> | null;
+
+  /**
+   * The abort controller that aborts the signal passed to {@link Validator.validateAsync}, or `null` if there's no
+   * pending async validation.
+   */
+  ['validationAbortController']: AbortController | null;
 
   /**
    * Associates an error with the field and notifies the subscribers.
@@ -41,15 +71,19 @@ export interface ValidationMixin<Error, Options> {
   clearErrors(): void;
 
   /**
+   * Returns all fields that have an error.
+   */
+  getInvalidFields(): Field<any, InferPlugin<this>>[];
+
+  /**
    * Triggers a sync field validation. Starting a validation will clear errors that were set during the previous
    * validation and preserve errors set via {@link setError}. If you want to clear all errors before the validation,
    * use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
-   * @returns The array of validation errors returned by the {@link Validator.validate}, or `null` if there are no
-   * errors.
+   * @returns `true` if {@link isInvalid field is valid}, or `false` otherwise.
    */
-  validate(options?: Options): Error[] | null;
+  validate(options?: Options): boolean;
 
   /**
    * Triggers an async field validation. Starting a validation will clear errors that were set during the previous
@@ -57,48 +91,55 @@ export interface ValidationMixin<Error, Options> {
    * use {@link clearErrors}.
    *
    * @param options Options passed to the validator.
-   * @returns The array of validation errors returned by the {@link Validator.validateAsync}, or `null` if there are no
-   * errors.
+   * @returns `true` if {@link isInvalid field is valid}, or `false` otherwise.
    */
-  validateAsync(options?: Options): Promise<Error[] | null>;
+  validateAsync(options?: Options): Promise<boolean>;
 
   /**
    * Aborts async validation of the field or no-op if there's no pending validation. If the field's parent is being
    * validated then parent validation proceeds but this field won't be updated with validation errors.
    */
   abortValidation(): void;
+
+  /**
+   * Associates an internal error with the field and notifies the subscribers. Use this method in
+   * {@link Validator validators} to set errors that would be overridden during the next validation.
+   *
+   * @param error The error to set.
+   */
+  ['setValidationError'](error: Error): void;
 }
 
 /**
- * The validator implements the library-specific validation logic.
+ * The validator implements the validation rules.
  *
  * @template Error The validation error.
  * @template Options Options passed to the validator.
  */
-export interface Validator<Error, Options> {
+export interface Validator<Error = any, Options = any> {
   /**
    * The callback that applies validation rules to a field.
    *
-   * @param field The field where {@link ValidationMixin.validate} was called.
-   * @param setError The callback that associates an error with the field.
-   * @param options The options passed to the {@link ValidationMixin.validate} method.
+   * Set {@link ValidationPlugin.setValidationError validation errors} to invalid fields during validation.
+   *
+   * @param field The field where {@link ValidationPlugin.validate} was called.
+   * @param options The options passed to the {@link ValidationPlugin.validate} method.
    */
-  validate(field: Field, setError: (field: Field, error: Error) => void, options: Options | undefined): void;
+  validate(field: Field<any, ValidationPlugin<Error, Options>>, options: Options | undefined): void;
 
   /**
    * The callback that applies validation rules to a field.
    *
-   * @param field The field where {@link ValidationMixin.validate} was called.
-   * @param setError The callback that associates an error with the field.
-   * @param options The options passed to the {@link ValidationMixin.validate} method.
-   * @param signal The signal that is aborted if the validation process should be stopped.
+   * Check that {@link ValidationPlugin.validationAbortController validation isn't aborted} before
+   * {@link ValidationPlugin.setValidationError setting a validation error}, otherwise stop validation as soon as
+   * possible.
+   *
+   * If this callback is omitted, then {@link validate} would be called instead.
+   *
+   * @param field The field where {@link ValidationPlugin.validateAsync} was called.
+   * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
    */
-  validateAsync?(
-    field: Field,
-    setError: (field: Field, error: Error) => void,
-    options: Options | undefined,
-    signal: AbortSignal
-  ): Promise<void>;
+  validateAsync?(field: Field<any, ValidationPlugin<Error, Options>>, options: Options | undefined): Promise<void>;
 }
 
 /**
@@ -116,63 +157,43 @@ export interface Validator<Error, Options> {
  */
 export function validationPlugin<Error = any, Options = void, Value = any>(
   validator: Validator<Error, Options> | Validator<Error, Options>['validate']
-): Plugin<ValidationMixin<Error, Options>, Value> {
-  let controllerMap: WeakMap<Field, FieldController>;
-
-  return (field, _accessor, notify) => {
-    controllerMap ||= new WeakMap();
-
-    if (controllerMap.has(field)) {
-      return;
-    }
-
-    const controller: FieldController = {
-      _parent: null,
-      _children: null,
-      _field: field,
-      _errorCount: 0,
-      _isErrored: false,
-      _error: null,
-      _isInternal: false,
-      _validator: typeof validator === 'function' ? { validate: validator } : validator,
-      _initiator: null,
-      _validationNonce: 0,
-      _abortController: null,
-      _controllerMap: controllerMap,
-      _notify: notify,
-    };
-
-    controllerMap.set(field, controller);
-
-    if (field.parent !== null) {
-      const parent = controllerMap.get(field.parent)!;
-
-      controller._parent = parent;
-      controller._initiator = parent._initiator;
-
-      (parent._children ||= []).push(controller);
-    }
-
-    const { setTransientValue, setValue } = field;
+): PluginCallback<ValidationPlugin<Error, Options>, Value> {
+  return field => {
+    field.error = null;
+    field.errorCount = 0;
+    field.errorType = null;
+    field.validator = typeof validator === 'function' ? { validate: validator } : validator;
+    field.validationRoot = null;
+    field.validationAbortController = null;
 
     Object.defineProperties(field, {
-      error: { enumerable: true, get: () => controller._error },
-      isInvalid: { enumerable: true, get: () => controller._errorCount !== 0 },
-      isValidating: { enumerable: true, get: () => controller._initiator !== null },
+      isInvalid: { get: () => field.errorCount !== 0 },
+      isValidating: { get: () => field.validationRoot !== null },
     });
 
-    field.setTransientValue = value => {
-      if (controller._initiator !== null) {
-        callAll(endValidation(controller, controller._initiator, true, []));
-      }
-      setTransientValue(value);
-    };
+    const { setValue, setTransientValue } = field;
+
+    // field.setError = null;
+    // field.deleteError = null;
+    // field.clearErrors = null;
+    // field.getInvalidFields = null;
+    // field.validate = null;
+    // field.validateAsync = null;
+    // field.abortValidation = null;
+    // field.setValidationError = null;
 
     field.setValue = value => {
-      if (controller._initiator !== null) {
-        callAll(endValidation(controller, controller._initiator, true, []));
+      if (field.validationRoot !== null) {
+        callAll(endValidation(field, field.validationRoot, true, []));
       }
       setValue(value);
+    };
+
+    field.setTransientValue = value => {
+      if (controller.validationRoot !== null) {
+        callAll(endValidation(controller, controller.validationRoot, true, []));
+      }
+      setTransientValue(value);
     };
 
     field.setError = error => {
@@ -357,7 +378,7 @@ function beginValidation(
   initiator: FieldController,
   notifyCallbacks: Array<() => void>
 ): Array<() => void> {
-  controller._initiator = initiator;
+  controller.validationRoot = initiator;
 
   if (initiator._abortController) {
     notifyCallbacks.push(controller._notify);
@@ -388,11 +409,11 @@ function endValidation(
   aborted: boolean,
   notifyCallbacks: Array<() => void>
 ): Array<() => void> {
-  if (controller._initiator !== initiator) {
+  if (controller.validationRoot !== initiator) {
     return notifyCallbacks;
   }
 
-  controller._initiator = null;
+  controller.validationRoot = null;
 
   if (initiator._abortController) {
     notifyCallbacks.push(controller._notify);
@@ -424,7 +445,7 @@ function endValidation(
 function validate(controller: FieldController, options: unknown): any[] | null {
   const notifyCallbacks: Array<() => void> = [];
 
-  if (controller._initiator === controller) {
+  if (controller.validationRoot === controller) {
     endValidation(controller, controller, true, notifyCallbacks);
   }
 
@@ -439,7 +460,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
     const targetController = controller._controllerMap.get(targetField);
     if (
       targetController !== undefined &&
-      targetController._initiator === controller &&
+      targetController.validationRoot === controller &&
       controller._validationNonce === validationNonce
     ) {
       (errors ||= []).push(error);
@@ -468,7 +489,7 @@ function validate(controller: FieldController, options: unknown): any[] | null {
 function validateAsync(controller: FieldController, options: unknown): Promise<any[] | null> {
   const notifyCallbacks: Array<() => void> = [];
 
-  if (controller._initiator === controller) {
+  if (controller.validationRoot === controller) {
     endValidation(controller, controller, true, notifyCallbacks);
   }
 
@@ -488,7 +509,7 @@ function validateAsync(controller: FieldController, options: unknown): Promise<a
     const targetController = controller._controllerMap.get(targetField);
     if (
       targetController !== undefined &&
-      targetController._initiator === controller &&
+      targetController.validationRoot === controller &&
       controller._validationNonce === validationNonce
     ) {
       (errors ||= []).push(error);

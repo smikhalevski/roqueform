@@ -1,10 +1,10 @@
-import { Accessor } from './shared-types';
+import { ValueAccessor } from './typings';
 import { isEqual } from './utils';
 
 /**
  * The accessor that reads and writes key-value pairs to well-known object instances.
  */
-export const naturalAccessor: Accessor = {
+export const naturalAccessor: ValueAccessor = {
   get(obj, key) {
     if (isPrimitive(obj)) {
       return undefined;

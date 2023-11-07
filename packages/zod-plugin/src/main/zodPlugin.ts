@@ -1,5 +1,5 @@
 import { ParseParams, ZodErrorMap, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
-import { Accessor, Field, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
+import { ValueAccessor, Field, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
 
 /**
  * The mixin added to fields by the {@link zodPlugin}.
