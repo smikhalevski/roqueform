@@ -282,20 +282,20 @@ planetsField.at(1).value;
 
 # Accessors
 
-[`ValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html) creates, reads and updates
+[`Accessor`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html) creates, reads and updates
 field values.
 
 - When the new field is derived via
   [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#at) method, the field value is
   read from the value of the parent field using the
-  [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
+  [`Accessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
 
 - When a field value is updated via
   [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setValue), then the parent
   field value is updated with the value returned from the
-  [`ValueAccessor.set`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#set) method. If the
+  [`Accessor.set`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#set) method. If the
   updated field has derived fields, their values are updated with values returned from the
-  [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
+  [`Accessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
 
 You can explicitly provide a custom accessor along with the initial value. Be default, Roqueform uses
 [`naturalAccessor`](https://smikhalevski.github.io/roqueform/variables/roqueform.naturalAccessor.html):

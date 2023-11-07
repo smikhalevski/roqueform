@@ -2,18 +2,23 @@
  * The field describes field that holds a value and provides means to update it. Fields can be enhanced by plugins that
  * provide such things as integration with rendering and validation libraries.
  *
- * @template Value The field value.
  * @template Plugin The plugin added to the field.
+ * @template Value The field value.
  */
-export type Field<Value = any, Plugin = unknown> = FieldController<Value, Plugin> & Plugin;
+export type Field<Plugin = unknown, Value = any> = FieldController<Plugin, Value> & Plugin;
 
 /**
- * The baseline of a field.
+ * The baseline field controller that can be enhanced by plugins.
  *
- * @template Value The field value.
  * @template Plugin The plugin added to the field.
+ * @template Value The field value.
  */
-interface FieldController<Value = any, Plugin = unknown> {
+interface FieldController<Plugin = unknown, Value = any> {
+  /**
+   * @internal
+   */
+  ['__plugin']: Plugin;
+
   /**
    * The key in the {@link parent parent value} that corresponds to the value of this field, or `null` if there's no
    * parent.
@@ -38,36 +43,37 @@ interface FieldController<Value = any, Plugin = unknown> {
   /**
    * The root field.
    */
-  ['root']: Field<any, Plugin>;
+  ['root']: Field<Plugin>;
 
   /**
    * The parent field, or `null` if this is the root field.
    */
-  ['parent']: Field<any, Plugin> | null;
+  ['parent']: Field<Plugin> | null;
 
   /**
    * The array of immediate child fields that were {@link at previously accessed}, or `null` if there's no children.
+   * Children array is always in sync with {@link childrenMap}.
    *
-   * @see {@link childrenMap}
+   * Don't modify this array directly and always use on {@link at} to add a new child.
    */
-  ['children']: Field<any, Plugin>[];
+  ['children']: Field<Plugin>[] | null;
 
   /**
-   * Mapping from a key to a child field.
+   * Mapping from a key to a child field. Children map is always in sync with {@link children children array}.
    *
-   * @see {@link children}
+   * Don't modify this array directly and always use on {@link at} to add a new child.
    */
-  ['childrenMap']: Map<unknown, Field<any, Plugin>>;
+  ['childrenMap']: Map<unknown, Field<Plugin>> | null;
 
   /**
    * The map from an event type to an array of associated listeners, or `null` if no listeners were added.
    */
-  ['eventListeners']: { [eventType: string]: Array<(event: Event<Value, Plugin>) => void> };
+  ['listeners']: { [eventType: string]: Array<(event: Event<Plugin, Value>) => void> } | null;
 
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
    */
-  ['valueAccessor']: ValueAccessor;
+  ['accessor']: Accessor;
 
   /**
    * The plugin that is applied to this field and all child field when they are accessed.
@@ -104,7 +110,7 @@ interface FieldController<Value = any, Plugin = unknown> {
    * @returns The child field instance.
    * @template Key The key in the value of this field.
    */
-  at<Key extends KeyOf<Value>>(key: Key): Field<ValueAt<Value, Key>, Plugin>;
+  at<Key extends KeyOf<Value>>(key: Key): Field<Plugin, ValueAt<Value, Key>>;
 
   /**
    * Subscribes the listener to all events.
@@ -113,25 +119,25 @@ interface FieldController<Value = any, Plugin = unknown> {
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  on(eventType: '*', listener: (event: Event<Value, Plugin>) => void): () => void;
+  on(eventType: '*', listener: (event: Event<Plugin, Value>) => void): () => void;
 
   /**
-   * Subscribes the listener to field value changes.
+   * Subscribes the listener to field value change events.
    *
    * @param eventType The type of the event.
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  on(eventType: 'valueChanged', listener: (event: ValueChangeEvent<Value, Plugin>) => void): () => void;
+  on(eventType: 'valueChange', listener: (event: ValueChangeEvent<Plugin, Value>) => void): () => void;
 }
 
 /**
  * The event dispatched to subscribers of {@link Field a field}.
  *
- * @template Value The field value.
  * @template Plugin The plugin added to the field.
+ * @template Value The field value.
  */
-export interface Event<Value = any, Plugin = unknown> {
+export interface Event<Plugin = unknown, Value = any> {
   /**
    * The type of the event.
    */
@@ -140,22 +146,22 @@ export interface Event<Value = any, Plugin = unknown> {
   /**
    * The field that caused the event to be dispatched. This can be ancestor, descendant, or the {@link currentTarget}.
    */
-  target: Field<any, Plugin>;
+  target: Field<Plugin>;
 
   /**
    * The field to which the event listener is subscribed.
    */
-  currentTarget: Field<Value, Plugin>;
+  currentTarget: Field<Plugin, Value>;
 }
 
 /**
  * The event dispatched when the field value has changed.
  *
- * @template Value The field value.
  * @template Plugin The plugin added to the field.
+ * @template Value The field value.
  */
-export interface ValueChangeEvent<Value = any, Plugin = unknown> extends Event<Value, Plugin> {
-  type: 'change';
+export interface ValueChangeEvent<Plugin = unknown, Value = any> extends Event<Plugin, Value> {
+  type: 'valueChange';
 
   /**
    * The previous value that was replaced by {@link Field.value the current field value}.
@@ -171,17 +177,12 @@ export interface ValueChangeEvent<Value = any, Plugin = unknown> extends Event<V
  * @template Plugin The plugin added to the field.
  * @template Value The root field value.
  */
-export type PluginCallback<Plugin = unknown, Value = any> = (field: Field<Value, Plugin>) => void;
-
-/**
- * Infers plugin from a field.
- */
-export type InferPlugin<Field> = Field extends FieldController<any, infer Plugin> ? Plugin : unknown;
+export type PluginCallback<Plugin = unknown, Value = any> = (field: Field<Plugin, Value>) => void;
 
 /**
  * The abstraction used by the {@link Field} to read and write object properties.
  */
-export interface ValueAccessor {
+export interface Accessor {
   /**
    * Returns the value that corresponds to `key` in `obj`.
    *

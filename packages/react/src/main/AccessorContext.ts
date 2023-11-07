@@ -1,5 +1,5 @@
 import { createContext, Context } from 'react';
-import { naturalAccessor, ValueAccessor } from 'roqueform';
+import { naturalAccessor, Accessor } from 'roqueform';
 
 /**
  * The context that is used by {@link useField} to retrieve an accessor.
