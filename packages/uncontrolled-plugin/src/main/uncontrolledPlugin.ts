@@ -8,9 +8,9 @@ import { createElementValueAccessor, ElementValueAccessor } from './createElemen
 const elementValueAccessor = createElementValueAccessor();
 
 /**
- * The mixin added to fields by the {@link uncontrolledPlugin}.
+ * The plugin added to fields by the {@link uncontrolledPlugin}.
  */
-export interface UncontrolledMixin {
+export interface UncontrolledPlugin {
   /**
    * The callback that associates the field with the DOM element.
    */
@@ -29,7 +29,7 @@ export interface UncontrolledMixin {
  *
  * @param accessor The accessor that reads and writes value to and from the DOM elements managed by the filed.
  */
-export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<UncontrolledMixin> {
+export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<UncontrolledPlugin> {
   return field => {
     const { refCallback } = field;
 

@@ -1,9 +1,9 @@
 import { Field, Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by the {@link constraintValidationPlugin}.
+ * The plugin added to fields by the {@link constraintValidationPlugin}.
  */
-export interface ConstraintValidationMixin {
+export interface ConstraintValidationPlugin {
   /**
    * An error associated with the field, or `null` if there's no error.
    */
@@ -67,7 +67,7 @@ export interface ConstraintValidationMixin {
 /**
  * Enhances fields with Constraint Validation API methods.
  */
-export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> {
+export function constraintValidationPlugin(): Plugin<ConstraintValidationPlugin> {
   let controllerMap: WeakMap<Field, FieldController>;
 
   return (field, _accessor, notify) => {

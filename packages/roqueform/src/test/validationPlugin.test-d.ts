@@ -1,4 +1,4 @@
 import { expectType } from 'tsd';
-import { Plugin, ValidationMixin, validationPlugin } from 'roqueform';
+import { Plugin, ValidationPlugin, validationPlugin } from 'roqueform';
 
-expectType<Plugin<ValidationMixin<unknown, void>>>(validationPlugin(() => undefined));
+expectType<Plugin<ValidationPlugin<unknown, void>>>(validationPlugin(() => undefined));

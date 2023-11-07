@@ -59,7 +59,7 @@ export const App = () => {
 
 # Value coercion
 To associate field with a form element, pass
-[`Field.refCallback`](https://smikhalevski.github.io/roqueform/interfaces/_roqueform_ref_plugin.RefMixin.html#refCallback)
+[`Field.refCallback`](https://smikhalevski.github.io/roqueform/interfaces/_roqueform_ref_plugin.RefPlugin.html#refCallback)
 as a `ref` attribute of an `input`, `textarea`, or any other form element:
 
 ```tsx

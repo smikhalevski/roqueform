@@ -389,14 +389,14 @@ has changed. Let's update the plugin implementation to trigger subscribers.
 ```ts
 import { Plugin } from 'roqueform';
 
-interface ElementMixin {
+interface ElementPlugin {
 
   readonly element: Element | null;
 
   setElement(element: Element | null): void;
 }
 
-const elementPlugin: Plugin<ElementMixin> = (field, accessor, notify) => {
+const elementPlugin: Plugin<ElementPlugin> = (field, accessor, notify) => {
   field.element = null;
 
   field.setElement = element => {

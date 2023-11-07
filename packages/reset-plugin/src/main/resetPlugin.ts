@@ -2,9 +2,9 @@ import { Accessor, callAll, Field, isEqual, Plugin } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 
 /**
- * The mixin added to fields by the {@link resetPlugin}.
+ * The plugin added to fields by the {@link resetPlugin}.
  */
-export interface ResetMixin {
+export interface ResetPlugin {
   /**
    * @internal
    */
@@ -41,7 +41,7 @@ export interface ResetMixin {
  */
 export function resetPlugin(
   equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
-): Plugin<ResetMixin> {
+): Plugin<ResetPlugin> {
   let controllerMap: WeakMap<Field, FieldController>;
 
   return (field, accessor, notify) => {

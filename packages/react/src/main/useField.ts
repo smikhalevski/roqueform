@@ -29,12 +29,12 @@ export function useField<Value>(initialValue: Value | (() => Value)): Field<Valu
  * @param plugin Enhances the field with additional functionality.
  * @returns The {@link Field} instance.
  * @template Value The root field value.
- * @template Mixin The mixin added by the plugin.
+ * @template Plugin The plugin added by the plugin.
  */
-export function useField<Value, Mixin>(
+export function useField<Value, Plugin>(
   initialValue: Value | (() => Value),
-  plugin: Plugin<Mixin, NoInfer<Value>>
-): Field<Value, Mixin> & Mixin;
+  plugin: Plugin<Plugin, NoInfer<Value>>
+): Field<Value, Plugin> & Plugin;
 
 export function useField(initialValue?: unknown, plugin?: Plugin) {
   const accessor = useContext(AccessorContext);

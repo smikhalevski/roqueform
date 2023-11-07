@@ -8,9 +8,9 @@ export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
 }
 
 /**
- * The mixin added to fields by the {@link scrollToErrorPlugin}.
+ * The plugin added to fields by the {@link scrollToErrorPlugin}.
  */
-export interface ScrollToErrorMixin {
+export interface ScrollToErrorPlugin {
   /**
    * @internal
    */
@@ -58,7 +58,7 @@ export interface ScrollToErrorMixin {
  * Use this plugin in conjunction with another plugin that adds validation methods and manages `error` property of each
  * field.
  */
-export function scrollToErrorPlugin(): Plugin<ScrollToErrorMixin> {
+export function scrollToErrorPlugin(): Plugin<ScrollToErrorPlugin> {
   let controllerMap: WeakMap<Field, FieldController>;
 
   return field => {
@@ -109,7 +109,7 @@ interface FieldController {
    * The array of controllers that can be scrolled to.
    */
   _targetControllers: FieldController[];
-  _field: Field & ScrollToErrorMixin;
+  _field: Field & ScrollToErrorPlugin;
   _element: Element | null;
 }
 

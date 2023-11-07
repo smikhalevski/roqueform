@@ -1,9 +1,9 @@
 import { Plugin } from 'roqueform';
 
 /**
- * The mixin added to fields by the {@link refPlugin}.
+ * The plugin added to fields by the {@link refPlugin}.
  */
-export interface RefMixin {
+export interface RefPlugin {
   /**
    * The DOM element associated with the field.
    */
@@ -46,7 +46,7 @@ export interface RefMixin {
 /**
  * Enables field-element association and simplifies focus control.
  */
-export function refPlugin(): Plugin<RefMixin> {
+export function refPlugin(): Plugin<RefPlugin> {
   return field => {
     const { refCallback } = field;
 

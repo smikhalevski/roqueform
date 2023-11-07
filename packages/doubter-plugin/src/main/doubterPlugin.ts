@@ -1,13 +1,21 @@
-import { AnyShape, Issue, ParseOptions, Shape } from 'doubter';
-import { Field, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
-
-const anyShape = new Shape();
+import { Issue, ParseOptions, Shape } from 'doubter';
+import { Field, PluginCallback, ValidationPlugin, validationPlugin } from 'roqueform';
 
 /**
- * The mixin added to fields by the {@link doubterPlugin}.
+ * The plugin added to fields by the {@link doubterPlugin}.
  */
-export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
-  setError(error: Issue | string): void;
+export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
+  /**
+   * @internal
+   */
+  value: unknown;
+
+  /**
+   * The shape that Doubter uses to validate {@link FieldController.value the field value}.
+   */
+  ['shape']: Shape<this['value'], any> | null;
+
+  setError(error: Issue | string | null | undefined): void;
 }
 
 /**
@@ -16,15 +24,45 @@ export interface DoubterMixin extends ValidationMixin<Issue, ParseOptions> {
  * @param shape The shape that parses the field value.
  * @template Value The root field value.
  */
-export function doubterPlugin<Value>(shape: Shape<Value, any>): Plugin<DoubterMixin, Value> {
-  let plugin: Plugin<any>;
+export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginCallback<DoubterPlugin, Value> {
+  let plugin;
 
-  return (field, accessor, notify) => {
-    (plugin ||= createValidationPlugin(shape))(field, accessor, notify);
+  return field => {
+    plugin ||= validationPlugin<Issue, ParseOptions>({
+      validate(field, options) {
+        const shape = (field as unknown as DoubterPlugin).shape;
+        if (shape === null) {
+          return;
+        }
+        const result = shape.try(field.value, Object.assign({ verbose: true }, options));
+        if (!result.ok) {
+          setIssues(field, result.issues);
+        }
+      },
+
+      validateAsync(field, signal, options) {
+        const shape = (field as unknown as DoubterPlugin).shape;
+        if (shape === null) {
+          return Promise.resolve();
+        }
+        return shape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
+          if (!result.ok && !signal.aborted) {
+            setIssues(field, result.issues);
+          }
+        });
+      },
+    });
+
+    plugin(field);
+
+    field.shape = field.parent !== null ? field.parent.shape?.at(field.key) || null : shape;
 
     const { setError } = field;
 
     field.setError = error => {
+      if (error === null || error === undefined) {
+        return setError(error);
+      }
       if (typeof error === 'string') {
         error = { message: error };
       }
@@ -36,54 +74,16 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): Plugin<DoubterMi
   };
 }
 
-function createValidationPlugin(rootShape: AnyShape) {
-  const shapeCache = new WeakMap<Field, AnyShape>();
-
-  return validationPlugin<Issue, ParseOptions>({
-    validate(field, setError, options) {
-      options = Object.assign({ verbose: true }, options);
-
-      const result = getShape(field, shapeCache, rootShape).try(field.value, options);
-
-      if (!result.ok) {
-        setIssues(field, result.issues, setError);
-      }
-    },
-
-    validateAsync(field, setError, options) {
-      options = Object.assign({ verbose: true }, options);
-
-      return getShape(field, shapeCache, rootShape)
-        .tryAsync(field.value, options)
-        .then(result => {
-          if (!result.ok) {
-            setIssues(field, result.issues, setError);
-          }
-        });
-    },
-  });
-}
-
-function getShape(field: Field, shapeCache: WeakMap<Field, AnyShape>, rootShape: AnyShape): AnyShape {
-  let shape = shapeCache.get(field);
-
-  if (shape === undefined) {
-    shape = field.parent === null ? rootShape : getShape(field.parent, shapeCache, rootShape).at(field.key) || anyShape;
-    shapeCache.set(field, shape);
-  }
-  return shape;
-}
-
-function prependPath(field: Field, path: unknown[] | undefined): unknown[] | undefined {
+function prependPath(field: Field<any>, path: unknown[] | undefined): unknown[] | undefined {
   for (let ancestor = field; ancestor.parent !== null; ancestor = ancestor.parent) {
     (path ||= []).unshift(ancestor.key);
   }
   return path;
 }
 
-function setIssues(field: Field, issues: Issue[], setError: (field: Field, error: Issue) => void): void {
+function setIssues(validationRoot: Field<ValidationPlugin>, issues: Issue[]): void {
   for (const issue of issues) {
-    let targetField = field;
+    let targetField = validationRoot;
 
     if (Array.isArray(issue.path)) {
       for (const key of issue.path) {
@@ -91,7 +91,7 @@ function setIssues(field: Field, issues: Issue[], setError: (field: Field, error
       }
     }
 
-    issue.path = prependPath(field, issue.path);
-    setError(targetField, issue);
+    issue.path = prependPath(validationRoot, issue.path);
+    targetField.setValidationError(issue);
   }
 }

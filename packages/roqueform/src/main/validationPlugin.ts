@@ -59,7 +59,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
   /**
    * The field where the validation was triggered, or `null` if there's no pending validation.
    */
-  ['validationRoot']: Field<any, this['__plugin']> | null;
+  ['validationRoot']: Field<this['__plugin']> | null;
 
   /**
    * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
@@ -87,7 +87,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
   /**
    * Returns all fields that have an error.
    */
-  getInvalidFields(): Field<any, this['__plugin']>[];
+  getInvalidFields(): Field<this['__plugin']>[];
 
   /**
    * Triggers a sync field validation. Starting a validation will clear errors that were set during the previous
@@ -170,7 +170,7 @@ export interface Validator<Error = any, Options = any> {
    * @param field The field where {@link ValidationPlugin.validate} was called.
    * @param options The options passed to the {@link ValidationPlugin.validate} method.
    */
-  validate(field: Field<any, ValidationPlugin<Error, Options>>, options: Options | undefined): void;
+  validate(field: Field<ValidationPlugin<Error, Options>>, options: Options | undefined): void;
 
   /**
    * The callback that applies validation rules to a field.
@@ -182,9 +182,14 @@ export interface Validator<Error = any, Options = any> {
    * If this callback is omitted, then {@link validate} would be called instead.
    *
    * @param field The field where {@link ValidationPlugin.validateAsync} was called.
+   * @param signal The signal that indicates that validation was aborted.
    * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
    */
-  validateAsync?(field: Field<any, ValidationPlugin<Error, Options>>, options: Options | undefined): Promise<void>;
+  validateAsync?(
+    field: Field<ValidationPlugin<Error, Options>>,
+    signal: AbortSignal,
+    options: Options | undefined
+  ): Promise<void>;
 }
 
 /**
@@ -261,7 +266,7 @@ export function validationPlugin<Error = any, Options = void, Value = any>(
 }
 
 function setError(
-  field: Field<any, ValidationPlugin>,
+  field: Field<ValidationPlugin>,
   error: unknown,
   errorOrigin: 1 | 2,
   events: Event<ValidationPlugin>[]
@@ -428,13 +433,14 @@ function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promis
   }
 
   const { validate, validateAsync = validate } = field.validator;
+  const signal = field.validationAbortController!.signal;
 
   return Promise.race([
     new Promise(resolve => {
-      resolve(validateAsync(field, options));
+      resolve(validateAsync(field, signal, options));
     }),
     new Promise((_resolve, reject) => {
-      field.validationAbortController!.signal.addEventListener('abort', () => {
+      signal.addEventListener('abort', () => {
         reject(new Error(ERROR_VALIDATION_ABORTED));
       });
     }),
