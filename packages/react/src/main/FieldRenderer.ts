@@ -1,5 +1,5 @@
 import { createElement, Fragment, ReactElement, ReactNode, useEffect, useReducer, useRef } from 'react';
-import { callOrGet, Field, isEqual } from 'roqueform';
+import { callOrGet, Field } from 'roqueform';
 
 /**
  * Properties of the {@link FieldRenderer} component.
@@ -48,28 +48,22 @@ export function FieldRenderer<RenderedField extends Field>(props: FieldRendererP
   handleChangeRef.current = props.onChange;
 
   useEffect(() => {
-    let prevValue: unknown;
-
-    return field.subscribe(updatedField => {
-      const { value } = field;
-
-      if (eagerlyUpdated || field === updatedField) {
+    return field.on('*', event => {
+      if (eagerlyUpdated || event.target === field) {
         rerender();
       }
-      if (field.isTransient || isEqual(value, prevValue)) {
+      if (field.isTransient || event.type !== 'valueChange') {
         return;
       }
 
-      prevValue = value;
-
       const handleChange = handleChangeRef.current;
       if (typeof handleChange === 'function') {
-        handleChange(value);
+        handleChange(field.value);
       }
     });
   }, [field, eagerlyUpdated]);
 
-  return createElement(Fragment, null, callOrGet(props.children, [field]));
+  return createElement(Fragment, null, callOrGet(props.children, field));
 }
 
 function reduceCount(count: number): number {

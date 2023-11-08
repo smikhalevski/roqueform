@@ -1,6 +1,6 @@
 import { Event } from './typings';
 
-export function callOrGet<T>(value: T | ((prevValue: T) => T), prevValue: T): T {
+export function callOrGet<T, A>(value: T | ((prevValue: A) => T), prevValue: A): T {
   return typeof value === 'function' ? (value as Function)(prevValue) : value;
 }
 

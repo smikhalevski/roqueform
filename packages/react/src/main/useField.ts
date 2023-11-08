@@ -1,5 +1,5 @@
 import { useContext, useRef } from 'react';
-import { callOrGet, createField, Field, Plugin } from 'roqueform';
+import { callOrGet, createField, Field, PluginCallback } from 'roqueform';
 import { AccessorContext } from './AccessorContext';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
@@ -33,11 +33,11 @@ export function useField<Value>(initialValue: Value | (() => Value)): Field<Valu
  */
 export function useField<Value, Plugin>(
   initialValue: Value | (() => Value),
-  plugin: Plugin<Plugin, NoInfer<Value>>
-): Field<Value, Plugin> & Plugin;
+  plugin: PluginCallback<Plugin, NoInfer<Value>>
+): Field<Plugin, Value>;
 
-export function useField(initialValue?: unknown, plugin?: Plugin) {
+export function useField(initialValue?: unknown, plugin?: PluginCallback) {
   const accessor = useContext(AccessorContext);
 
-  return (useRef<Field>().current ||= createField(callOrGet(initialValue), plugin!, accessor));
+  return (useRef<Field>().current ||= createField(callOrGet(initialValue, undefined), plugin!, accessor));
 }
