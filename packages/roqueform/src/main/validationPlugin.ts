@@ -1,10 +1,26 @@
 import { Event, Field, PluginCallback } from './typings';
 import { dispatchEvents, isEqual } from './utils';
 
-const EVENT_VALIDITY_CHANGE = 'validityChange';
-const EVENT_VALIDATION_START = 'validationStart';
-const EVENT_VALIDATION_END = 'validationEnd';
-const ERROR_VALIDATION_ABORTED = 'Validation aborted';
+const EVENT_CHANGE = 'validityChange';
+const EVENT_START = 'validationStart';
+const EVENT_END = 'validationEnd';
+const ERROR_ABORT = 'Validation aborted';
+
+/**
+ * Describes the pending validation.
+ */
+export interface Validation<Plugin = ValidationPlugin> {
+  /**
+   * The field where the validation was triggered.
+   */
+  readonly root: Field<Plugin>;
+
+  /**
+   * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
+   * the validation is synchronous.
+   */
+  readonly abortController: AbortController | null;
+}
 
 /**
  * The plugin that enables field value validation.
@@ -44,7 +60,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
   ['errorCount']: number;
 
   /**
-   * The type of the associated error:
+   * The origin of the associated error:
    * - 0 if there's no associated error.
    * - 1 if an error was set using {@link ValidationPlugin.setValidationError};
    * - 2 if an error was set using {@link ValidationPlugin.setError};
@@ -57,20 +73,14 @@ export interface ValidationPlugin<Error = any, Options = any> {
   ['validator']: Validator;
 
   /**
-   * The field where the validation was triggered, or `null` if there's no pending validation.
+   * The pending validation, or `null` if there's no pending validation.
    */
-  ['validationRoot']: Field<this['__plugin']> | null;
-
-  /**
-   * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
-   * there's no pending async validation. Abort controller is only defined for {@link validationRoot}.
-   */
-  ['validationAbortController']: AbortController | null;
+  ['validation']: Validation<this['__plugin']> | null;
 
   /**
    * Associates an error with the field and notifies the subscribers.
    *
-   * @param error The error to set. If the passed error is `null` of `undefined` then an error is deleted.
+   * @param error The error to set. If `null` or `undefined` then an error is deleted.
    */
   setError(error: Error | null | undefined): void;
 
@@ -83,6 +93,11 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * Recursively deletes errors associated with this field and all of its derived fields.
    */
   clearErrors(): void;
+
+  /**
+   * Returns all errors associated with this field and its child fields.
+   */
+  getErrors(): Error[];
 
   /**
    * Returns all fields that have an error.
@@ -147,12 +162,13 @@ export interface ValidationPlugin<Error = any, Options = any> {
   on(eventType: 'validationEnd', listener: (event: Event<this['value'], this['__plugin']>) => void): () => void;
 
   /**
-   * Associates an internal error with the field and notifies the subscribers. Use this method in
-   * {@link Validator validators} to set errors that would be overridden during the next validation.
+   * Associates a validation error with the field and notifies the subscribers. Use this method in
+   * {@link Validator validators} to set errors that can be overridden during the next validation.
    *
+   * @param validation The validation in scope of which the value is set.
    * @param error The error to set.
    */
-  ['setValidationError'](error: Error): void;
+  ['setValidationError'](validation: Validation<this['__plugin']>, error: Error): void;
 }
 
 /**
@@ -175,21 +191,16 @@ export interface Validator<Error = any, Options = any> {
   /**
    * The callback that applies validation rules to a field.
    *
-   * Check that {@link ValidationPlugin.validationAbortController validation isn't aborted} before
+   * Check that {@link Validation.abortController validation isn't aborted} before
    * {@link ValidationPlugin.setValidationError setting a validation error}, otherwise stop validation as soon as
    * possible.
    *
    * If this callback is omitted, then {@link validate} would be called instead.
    *
    * @param field The field where {@link ValidationPlugin.validateAsync} was called.
-   * @param signal The signal that indicates that validation was aborted.
    * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
    */
-  validateAsync?(
-    field: Field<ValidationPlugin<Error, Options>>,
-    signal: AbortSignal,
-    options: Options | undefined
-  ): Promise<void>;
+  validateAsync?(field: Field<ValidationPlugin<Error, Options>>, options: Options | undefined): Promise<void>;
 }
 
 /**
@@ -205,34 +216,35 @@ export interface Validator<Error = any, Options = any> {
  * @template Options Options passed to the validator.
  * @template Value The root field value.
  */
-export function validationPlugin<Error = any, Options = void, Value = any>(
+export function validationPlugin<Error = any, Options = void>(
   validator: Validator<Error, Options> | Validator<Error, Options>['validate']
-): PluginCallback<ValidationPlugin<Error, Options>, Value> {
+): PluginCallback<ValidationPlugin<Error, Options>> {
   return field => {
     field.error = null;
     field.errorCount = 0;
     field.errorOrigin = 0;
     field.validator = typeof validator === 'function' ? { validate: validator } : validator;
-    field.validationRoot = null;
-    field.validationAbortController = null;
+    field.validation = null;
 
     Object.defineProperties(field, {
       isInvalid: { get: () => field.errorCount !== 0 },
-      isValidating: { get: () => field.validationRoot !== null },
+      isValidating: { get: () => field.validation !== null },
     });
 
     const { setValue, setTransientValue } = field;
 
     field.setValue = value => {
-      if (field.validationRoot !== null) {
-        dispatchEvents(endValidation(field, field.validationRoot, true, []));
+      if (field.validation !== null) {
+        dispatchEvents(abortValidation(field, []));
       }
       setValue(value);
     };
 
     field.setTransientValue = value => {
-      if (field.validationRoot !== null) {
-        dispatchEvents(endValidation(field, field.validationRoot, true, []));
+      if (field.validation !== null) {
+        dispatchEvents(
+          field.validation.root === field ? abortValidation(field, []) : endValidation(field, field.validation, [])
+        );
       }
       setTransientValue(value);
     };
@@ -249,6 +261,8 @@ export function validationPlugin<Error = any, Options = void, Value = any>(
       dispatchEvents(clearErrors(field, 2, []));
     };
 
+    field.getErrors = () => convertToErrors(getInvalidFields(field, []));
+
     field.getInvalidFields = () => getInvalidFields(field, []);
 
     field.validate = options => validate(field, options);
@@ -256,21 +270,25 @@ export function validationPlugin<Error = any, Options = void, Value = any>(
     field.validateAsync = options => validateAsync(field, options);
 
     field.abortValidation = () => {
-      dispatchEvents(endValidation(field, field, true, []));
+      dispatchEvents(abortValidation(field, []));
     };
 
-    field.setValidationError = error => {
-      dispatchEvents(setError(field, error, 1, []));
+    field.setValidationError = (validation, error) => {
+      if (validation !== null && field.validation !== validation && field.errorOrigin < 2) {
+        dispatchEvents(setError(field, error, 1, []));
+      }
     };
   };
 }
+
+type ValidationEvent = Event<ValidationPlugin>;
 
 function setError(
   field: Field<ValidationPlugin>,
   error: unknown,
   errorOrigin: 1 | 2,
-  events: Event<ValidationPlugin>[]
-): Event<ValidationPlugin>[] {
+  events: ValidationEvent[]
+): ValidationEvent[] {
   if (error === null || error === undefined) {
     return deleteError(field, errorOrigin, events);
   }
@@ -284,7 +302,7 @@ function setError(
   field.error = error;
   field.errorOrigin = errorOrigin;
 
-  events.push({ type: EVENT_VALIDITY_CHANGE, target: field, currentTarget: field });
+  events.push({ type: EVENT_CHANGE, target: field, currentTarget: field });
 
   if (errored) {
     return events;
@@ -294,18 +312,14 @@ function setError(
 
   for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
     if (ancestor.errorCount++ === 0) {
-      events.push({ type: EVENT_VALIDITY_CHANGE, target: field, currentTarget: ancestor });
+      events.push({ type: EVENT_CHANGE, target: field, currentTarget: ancestor });
     }
   }
 
   return events;
 }
 
-function deleteError(
-  field: Field<ValidationPlugin>,
-  errorOrigin: 1 | 2,
-  events: Event<ValidationPlugin>[]
-): Event<ValidationPlugin>[] {
+function deleteError(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events: ValidationEvent[]): ValidationEvent[] {
   if (field.error === null || field.errorOrigin > errorOrigin) {
     return events;
   }
@@ -314,26 +328,25 @@ function deleteError(
   field.errorOrigin = 0;
   field.errorCount--;
 
-  events.push({ type: EVENT_VALIDITY_CHANGE, target: field, currentTarget: field });
+  events.push({ type: EVENT_CHANGE, target: field, currentTarget: field });
 
   for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
     if (--ancestor.errorCount === 0) {
-      events.push({ type: EVENT_VALIDITY_CHANGE, target: field, currentTarget: ancestor });
+      events.push({ type: EVENT_CHANGE, target: field, currentTarget: ancestor });
     }
   }
 
   return events;
 }
 
-function clearErrors(
-  field: Field<ValidationPlugin>,
-  errorOrigin: 1 | 2,
-  events: Event<ValidationPlugin>[]
-): Event<ValidationPlugin>[] {
+function clearErrors(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events: ValidationEvent[]): ValidationEvent[] {
   deleteError(field, errorOrigin, events);
 
   if (field.children !== null) {
     for (const child of field.children) {
+      if (errorOrigin === 1 && child.isTransient) {
+        continue;
+      }
       clearErrors(child, errorOrigin, events);
     }
   }
@@ -342,17 +355,17 @@ function clearErrors(
 
 function startValidation(
   field: Field<ValidationPlugin>,
-  validationRoot: Field<ValidationPlugin>,
-  events: Event<ValidationPlugin>[]
-): Event<ValidationPlugin>[] {
-  field.validationRoot = validationRoot;
+  validation: Validation,
+  events: ValidationEvent[]
+): ValidationEvent[] {
+  field.validation = validation;
 
-  events.push({ type: EVENT_VALIDATION_START, target: validationRoot, currentTarget: field });
+  events.push({ type: EVENT_START, target: validation.root, currentTarget: field });
 
   if (field.children !== null) {
     for (const child of field.children) {
       if (!child.isTransient) {
-        startValidation(child, validationRoot, events);
+        startValidation(child, validation, events);
       }
     }
   }
@@ -361,112 +374,121 @@ function startValidation(
 
 function endValidation(
   field: Field<ValidationPlugin>,
-  validationRoot: Field<ValidationPlugin>,
-  aborted: boolean,
-  events: Event<ValidationPlugin>[]
-): Event<ValidationPlugin>[] {
-  if (field.validationRoot !== validationRoot) {
+  validation: Validation,
+  events: ValidationEvent[]
+): ValidationEvent[] {
+  if (field.validation !== validation) {
     return events;
   }
 
-  field.validationRoot = null;
+  field.validation = null;
 
-  events.push({ type: EVENT_VALIDATION_END, target: validationRoot, currentTarget: field });
+  events.push({ type: EVENT_END, target: validation.root, currentTarget: field });
 
   if (field.children !== null) {
     for (const child of field.children) {
-      endValidation(child, validationRoot, aborted, events);
+      endValidation(child, validation, events);
     }
-  }
-
-  if (field.validationAbortController !== null) {
-    if (aborted) {
-      field.validationAbortController.abort();
-    }
-    field.validationAbortController = null;
   }
 
   return events;
 }
 
-function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
-  const events: Event<ValidationPlugin>[] = [];
+function abortValidation(field: Field<ValidationPlugin>, events: ValidationEvent[]): ValidationEvent[] {
+  const { validation } = field;
 
-  if (field.validationRoot !== null) {
-    endValidation(field.validationRoot, field.validationRoot, true, events);
+  if (validation !== null) {
+    endValidation(validation.root, validation, events);
+    validation.abortController?.abort();
+  }
+  return events;
+}
+
+function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
+  dispatchEvents(clearErrors(field, 1, abortValidation(field, [])));
+
+  if (field.validation !== null) {
+    throw new Error(ERROR_ABORT);
   }
 
-  clearErrors(field, 1, events);
-  startValidation(field, field, events);
-  dispatchEvents(events);
+  const validation: Validation = { root: field, abortController: null };
 
-  if (field.validationRoot !== field) {
-    throw new Error(ERROR_VALIDATION_ABORTED);
+  dispatchEvents(startValidation(field, validation, []));
+
+  if (field.validation !== validation) {
+    throw new Error(ERROR_ABORT);
   }
 
   try {
     field.validator.validate(field, options);
   } catch (error) {
-    dispatchEvents(endValidation(field, field, false, []));
+    dispatchEvents(endValidation(field, validation, []));
     throw error;
   }
 
-  dispatchEvents(endValidation(field, field, false, []));
+  if (field.validation !== validation) {
+    throw new Error(ERROR_ABORT);
+  }
+  dispatchEvents(endValidation(field, validation, []));
   return field.errorCount === 0;
 }
 
 function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promise<boolean> {
-  const events: Event<ValidationPlugin>[] = [];
+  dispatchEvents(clearErrors(field, 1, abortValidation(field, [])));
 
-  if (field.validationRoot !== null) {
-    endValidation(field.validationRoot, field.validationRoot, true, events);
+  if (field.validation !== null) {
+    return Promise.reject(new Error(ERROR_ABORT));
   }
 
-  field.validationAbortController = new AbortController();
+  const validation: Validation = { root: field, abortController: new AbortController() };
 
-  clearErrors(field, 1, events);
-  startValidation(field, field, events);
-  dispatchEvents(events);
+  dispatchEvents(startValidation(field, validation, []));
 
-  if (field.validationRoot !== field) {
-    return Promise.reject(new Error(ERROR_VALIDATION_ABORTED));
+  if ((field.validation as Validation | null) !== validation) {
+    return Promise.reject(new Error(ERROR_ABORT));
   }
 
   const { validate, validateAsync = validate } = field.validator;
-  const signal = field.validationAbortController!.signal;
 
   return Promise.race([
     new Promise(resolve => {
-      resolve(validateAsync(field, signal, options));
+      resolve(validateAsync(field, options));
     }),
     new Promise((_resolve, reject) => {
-      signal.addEventListener('abort', () => {
-        reject(new Error(ERROR_VALIDATION_ABORTED));
+      validation.abortController!.signal.addEventListener('abort', () => {
+        reject(new Error(ERROR_ABORT));
       });
     }),
   ]).then(
     () => {
-      dispatchEvents(endValidation(field, field, false, []));
+      if (field.validation !== validation) {
+        throw new Error(ERROR_ABORT);
+      }
+      dispatchEvents(endValidation(field, validation, []));
       return field.errorCount === 0;
     },
     error => {
-      dispatchEvents(endValidation(field, field, false, []));
+      dispatchEvents(endValidation(field, validation, []));
       throw error;
     }
   );
 }
 
-function getInvalidFields(
-  field: Field<ValidationPlugin>,
-  invalidFields: Field<ValidationPlugin>[]
-): Field<ValidationPlugin>[] {
+function getInvalidFields(field: Field<ValidationPlugin>, batch: Field<ValidationPlugin>[]): Field<ValidationPlugin>[] {
   if (field.error !== null) {
-    invalidFields.push(field.error);
+    batch.push(field.error);
   }
   if (field.children !== null) {
     for (const child of field.children) {
-      getInvalidFields(child, invalidFields);
+      getInvalidFields(child, batch);
     }
   }
-  return invalidFields;
+  return batch;
+}
+
+function convertToErrors(batch: Field<ValidationPlugin>[]): any[] {
+  for (let i = 0; i < batch.length; ++i) {
+    batch[i] = batch[i].error;
+  }
+  return batch;
 }

@@ -1,4 +1,4 @@
-import { Accessor, callAll, Field, isEqual, Plugin } from 'roqueform';
+import { dispatchEvents, Event, Field, isEqual, PluginCallback } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 
 /**
@@ -8,17 +8,25 @@ export interface ResetPlugin {
   /**
    * @internal
    */
-  readonly value: unknown;
+  ['__plugin']: unknown;
+
+  /**
+   * @internal
+   */
+  value: unknown;
 
   /**
    * `true` if the field value is different from its initial value, or `false` otherwise.
    */
-  readonly isDirty: boolean;
+  isDirty: boolean;
 
   /**
-   * The initial field value.
+   * The callback that compares initial value and the current value of the field.
+   *
+   * @param initialValue The initial value.
+   * @param value The current value.
    */
-  readonly initialValue: this['value'];
+  ['equalityChecker']: (initialValue: any, value: any) => boolean;
 
   /**
    * Sets the initial value of the field and notifies ancestors and descendants.
@@ -31,6 +39,33 @@ export interface ResetPlugin {
    * Reverts the field to its initial value.
    */
   reset(): void;
+
+  /**
+   * Subscribes the listener to field initial value change events.
+   *
+   * @param eventType The type of the event.
+   * @param listener The listener that would be triggered.
+   * @returns The callback to unsubscribe the listener.
+   */
+  on(
+    eventType: 'initialValueChange',
+    listener: (event: InitialValueChangeEvent<this['__plugin'], this['value']>) => void
+  ): () => void;
+}
+
+/**
+ * The event dispatched when the field initial value has changed.
+ *
+ * @template Plugin The plugin added to the field.
+ * @template Value The field value.
+ */
+export interface InitialValueChangeEvent<Plugin = unknown, Value = any> extends Event<Plugin, Value> {
+  type: 'initialValueChange';
+
+  /**
+   * The previous initial value that was replaced by {@link Field.initialValue the new initial value}.
+   */
+  previousInitialValue: Value;
 }
 
 /**
@@ -41,114 +76,64 @@ export interface ResetPlugin {
  */
 export function resetPlugin(
   equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
-): Plugin<ResetPlugin> {
-  let controllerMap: WeakMap<Field, FieldController>;
-
-  return (field, accessor, notify) => {
-    controllerMap ||= new WeakMap();
-
-    if (controllerMap.has(field)) {
-      return;
-    }
-
-    const controller: FieldController = {
-      _parent: null,
-      _children: null,
-      _field: field,
-      _key: field.key,
-      _isDirty: false,
-      _initialValue: field.value,
-      _accessor: accessor,
-      _equalityChecker: equalityChecker,
-      _notify: notify,
-    };
-
-    controllerMap.set(field, controller);
-
-    if (field.parent !== null) {
-      const parent = controllerMap.get(field.parent)!;
-
-      controller._parent = parent;
-      controller._initialValue = accessor.get(parent._initialValue, controller._key);
-
-      (parent._children ||= []).push(controller);
-    }
-
-    Object.defineProperties(field, {
-      isDirty: { enumerable: true, get: () => controller._isDirty },
-      initialValue: { enumerable: true, get: () => controller._initialValue },
-    });
+): PluginCallback<ResetPlugin> {
+  return field => {
+    field.isDirty = field.equalityChecker(field.initialValue, field.value);
+    field.equalityChecker = equalityChecker;
 
     field.setInitialValue = value => {
-      applyInitialValue(controller, value);
+      setInitialValue(field, value);
     };
 
     field.reset = () => {
-      controller._field.setValue(controller._initialValue);
+      field.setValue(field.initialValue);
     };
 
-    field.subscribe(() => {
-      applyDirty(controller);
+    field.on('valueChange', () => {
+      field.isDirty = field.equalityChecker(field.initialValue, field.value);
     });
-
-    applyDirty(controller);
   };
 }
 
-interface FieldController {
-  _parent: FieldController | null;
-  _children: FieldController[] | null;
-  _field: Field;
-  _key: unknown;
-  _isDirty: boolean;
-  _initialValue: unknown;
-  _accessor: Accessor;
-  _equalityChecker: (initialValue: any, value: any) => boolean;
-  _notify: () => void;
-}
-
-function applyDirty(controller: FieldController): void {
-  controller._isDirty = !controller._equalityChecker(controller._initialValue, controller._field.value);
-}
-
-function applyInitialValue(controller: FieldController, initialValue: unknown): void {
-  if (isEqual(controller._initialValue, initialValue)) {
+function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void {
+  if (isEqual(field.initialValue, initialValue)) {
     return;
   }
 
-  let rootController = controller;
+  let root = field;
 
-  while (rootController._parent !== null) {
-    const { _key } = rootController;
-    rootController = rootController._parent;
-    initialValue = controller._accessor.set(rootController._initialValue, _key, initialValue);
+  while (root.parent !== null) {
+    initialValue = field.accessor.set(root.parent.value, root.key, initialValue);
+    root = root.parent;
   }
 
-  callAll(propagateInitialValue(controller, rootController, initialValue, []));
+  dispatchEvents(propagateInitialValue(field, root, initialValue, []));
 }
 
 function propagateInitialValue(
-  targetController: FieldController,
-  controller: FieldController,
+  target: Field<ResetPlugin>,
+  field: Field<ResetPlugin>,
   initialValue: unknown,
-  notifyCallbacks: Array<() => void>
-): Array<() => void> {
-  notifyCallbacks.push(controller._notify);
+  events: InitialValueChangeEvent[]
+): InitialValueChangeEvent[] {
+  events.push({
+    type: 'initialValueChange',
+    target: target as Field<any>,
+    currentTarget: field as Field<any>,
+    previousInitialValue: field.initialValue,
+  });
 
-  controller._initialValue = initialValue;
+  field.initialValue = initialValue;
+  field.isDirty = field.equalityChecker(initialValue, field.initialValue);
 
-  applyDirty(controller);
-
-  if (controller._children !== null) {
-    for (const child of controller._children) {
-      const childInitialValue = controller._accessor.get(initialValue, child._key);
-
-      if (child !== targetController && isEqual(child._initialValue, childInitialValue)) {
+  if (field.children !== null) {
+    for (const child of field.children) {
+      const childInitialValue = field.accessor.get(initialValue, child.key);
+      if (child !== target && isEqual(child.initialValue, childInitialValue)) {
         continue;
       }
-      propagateInitialValue(targetController, child, childInitialValue, notifyCallbacks);
+      propagateInitialValue(target, child, childInitialValue, events);
     }
   }
-
-  return notifyCallbacks;
+  return events;
 }

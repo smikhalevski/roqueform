@@ -1,6 +1,6 @@
 /**
  * The field describes field that holds a value and provides means to update it. Fields can be enhanced by plugins that
- * provide such things as integration with rendering and validation libraries.
+ * provide integration with rendering frameworks, validation libraries, and other tools.
  *
  * @template Plugin The plugin added to the field.
  * @template Value The field value.
@@ -23,7 +23,7 @@ interface FieldController<Plugin = unknown, Value = any> {
    * The key in the {@link parent parent value} that corresponds to the value of this field, or `null` if there's no
    * parent.
    */
-  key: any;
+  readonly key: any;
 
   /**
    * The current value of the field.
@@ -48,7 +48,7 @@ interface FieldController<Plugin = unknown, Value = any> {
   /**
    * The parent field, or `null` if this is the root field.
    */
-  ['parent']: Field<Plugin> | null;
+  readonly ['parent']: Field<Plugin> | null;
 
   /**
    * The array of immediate child fields that were {@link at previously accessed}, or `null` if there's no children.
@@ -73,12 +73,12 @@ interface FieldController<Plugin = unknown, Value = any> {
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
    */
-  ['accessor']: Accessor;
+  readonly ['accessor']: Accessor;
 
   /**
    * The plugin that is applied to this field and all child field when they are accessed.
    */
-  ['plugin']: PluginCallback<Plugin, Value> | null;
+  readonly ['plugin']: PluginCallback<Plugin, Value> | null;
 
   /**
    * Updates the field value and notifies both ancestor and child fields about the change. If the field withholds

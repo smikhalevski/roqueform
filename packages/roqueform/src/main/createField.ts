@@ -10,7 +10,7 @@ type NoInfer<T> = T extends infer T ? T : never;
  *
  * @template Value The root field value.
  */
-export function createField<Value = any>(): Field<Value | undefined>;
+export function createField<Value = any>(): Field<unknown, Value | undefined>;
 
 /**
  * Creates the new field instance.
@@ -19,7 +19,7 @@ export function createField<Value = any>(): Field<Value | undefined>;
  * @param accessor Resolves values for derived fields.
  * @template Value The root field value.
  */
-export function createField<Value>(initialValue: Value, accessor?: Accessor): Field<Value>;
+export function createField<Value>(initialValue: Value, accessor?: Accessor): Field<unknown, Value>;
 
 /**
  * Creates the new field instance.
@@ -144,6 +144,5 @@ function propagateValue(target: Field, field: Field, value: unknown, events: Val
       propagateValue(target, child, childValue, events);
     }
   }
-
   return events;
 }
