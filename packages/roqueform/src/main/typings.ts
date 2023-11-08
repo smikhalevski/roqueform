@@ -68,7 +68,7 @@ interface FieldController<Plugin = unknown, Value = any> {
   /**
    * The map from an event type to an array of associated listeners, or `null` if no listeners were added.
    */
-  ['listeners']: { [eventType: string]: Array<(event: Event<Plugin, Value>) => void> } | null;
+  ['listeners']: { [eventType: string]: Array<(event: FieldEvent<Plugin, Value>) => void> } | null;
 
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
@@ -119,7 +119,7 @@ interface FieldController<Plugin = unknown, Value = any> {
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  on(eventType: '*', listener: (event: Event<Plugin, Value>) => void): () => void;
+  on(eventType: '*', listener: (event: FieldEvent<Plugin, Value>) => void): () => void;
 
   /**
    * Subscribes the listener to field value change events.
@@ -137,7 +137,7 @@ interface FieldController<Plugin = unknown, Value = any> {
  * @template Plugin The plugin added to the field.
  * @template Value The field value.
  */
-export interface Event<Plugin = unknown, Value = any> {
+export interface FieldEvent<Plugin = unknown, Value = any> {
   /**
    * The type of the event.
    */
@@ -160,7 +160,7 @@ export interface Event<Plugin = unknown, Value = any> {
  * @template Plugin The plugin added to the field.
  * @template Value The field value.
  */
-export interface ValueChangeEvent<Plugin = unknown, Value = any> extends Event<Plugin, Value> {
+export interface ValueChangeEvent<Plugin = unknown, Value = any> extends FieldEvent<Plugin, Value> {
   type: 'valueChange';
 
   /**

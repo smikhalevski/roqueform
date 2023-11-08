@@ -125,7 +125,9 @@ export interface ElementValueAccessorOptions {
  * - Others → The _value_ attribute, or `null` if element doesn't support it;
  * - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to _value_ attribute.
  */
-export function createElementValueAccessor(options?: ElementValueAccessorOptions): ElementValueAccessor {
+export function createElementValueAccessor(options: ElementValueAccessorOptions = {}): ElementValueAccessor {
+  const { checkboxFormat, dateFormat, timeFormat } = options;
+
   const get: ElementValueAccessor['get'] = elements => {
     const element = elements[0];
     const { type, valueAsNumber } = element;
@@ -135,8 +137,6 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
     }
 
     if (type === 'checkbox') {
-      const checkboxFormat = options?.checkboxFormat;
-
       if (elements.length === 1 && checkboxFormat !== 'booleanArray' && checkboxFormat !== 'valueArray') {
         return checkboxFormat !== 'value' ? element.checked : element.checked ? element.value : null;
       }
@@ -177,7 +177,6 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
       }
 
       const date = element.valueAsDate || new Date(valueAsNumber);
-      const dateFormat = options?.dateFormat;
 
       // prettier-ignore
       return (
@@ -191,7 +190,7 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
     }
 
     if (type === 'time') {
-      return valueAsNumber !== valueAsNumber ? null : options?.timeFormat === 'number' ? valueAsNumber : element.value;
+      return valueAsNumber !== valueAsNumber ? null : timeFormat === 'number' ? valueAsNumber : element.value;
     }
     if (type === 'image') {
       return element.src;

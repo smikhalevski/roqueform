@@ -1,4 +1,4 @@
-import { dispatchEvents, Event, Field, isEqual, PluginCallback } from 'roqueform';
+import { dispatchEvents, FieldEvent, Field, isEqual, PluginCallback } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 
 /**
@@ -59,7 +59,7 @@ export interface ResetPlugin {
  * @template Plugin The plugin added to the field.
  * @template Value The field value.
  */
-export interface InitialValueChangeEvent<Plugin = unknown, Value = any> extends Event<Plugin, Value> {
+export interface InitialValueChangeEvent<Plugin = unknown, Value = any> extends FieldEvent<Plugin, Value> {
   type: 'initialValueChange';
 
   /**

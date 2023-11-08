@@ -22,7 +22,7 @@ export interface ScrollToErrorPlugin {
   element: Element | null;
 
   /**
-   * The callback that associates the field with the DOM element.
+   * Associates the field with the DOM element.
    */
   refCallback(element: Element | null): void;
 

@@ -1,4 +1,4 @@
-import { Event, Field, PluginCallback } from './typings';
+import { FieldEvent, Field, PluginCallback } from './typings';
 import { dispatchEvents, isEqual } from './utils';
 
 const EVENT_CHANGE = 'validityChange';
@@ -137,29 +137,29 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  on(eventType: 'validityChange', listener: (event: Event<this['value'], this['__plugin']>) => void): () => void;
+  on(eventType: 'validityChange', listener: (event: FieldEvent<this['value'], this['__plugin']>) => void): () => void;
 
   /**
    * Subscribes the listener to validation start events. The event is triggered for all fields that are going to be
    * validated. The {@link FieldController.value current value} of the field is the one that is being validated.
-   * {@link Event.target} points to the field where validation was triggered.
+   * {@link FieldEvent.target} points to the field where validation was triggered.
    *
    * @param eventType The type of the event.
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  on(eventType: 'validationStart', listener: (event: Event<this['value'], this['__plugin']>) => void): () => void;
+  on(eventType: 'validationStart', listener: (event: FieldEvent<this['value'], this['__plugin']>) => void): () => void;
 
   /**
    * Subscribes the listener to validation start end events. The event is triggered for all fields that were validated.
-   * {@link Event.target} points to the field where validation was triggered. Check {@link isInvalid} to detect the
+   * {@link FieldEvent.target} points to the field where validation was triggered. Check {@link isInvalid} to detect the
    * actual validity status.
    *
    * @param eventType The type of the event.
    * @param listener The listener that would be triggered.
    * @returns The callback to unsubscribe the listener.
    */
-  on(eventType: 'validationEnd', listener: (event: Event<this['value'], this['__plugin']>) => void): () => void;
+  on(eventType: 'validationEnd', listener: (event: FieldEvent<this['value'], this['__plugin']>) => void): () => void;
 
   /**
    * Associates a validation error with the field and notifies the subscribers. Use this method in
@@ -179,7 +179,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
  */
 export interface Validator<Error = any, Options = any> {
   /**
-   * The callback that applies validation rules to a field.
+   * Applies validation rules to a field.
    *
    * Set {@link ValidationPlugin.setValidationError validation errors} to invalid fields during validation.
    *
@@ -189,7 +189,7 @@ export interface Validator<Error = any, Options = any> {
   validate(field: Field<ValidationPlugin<Error, Options>>, options: Options | undefined): void;
 
   /**
-   * The callback that applies validation rules to a field.
+   * Applies validation rules to a field.
    *
    * Check that {@link Validation.abortController validation isn't aborted} before
    * {@link ValidationPlugin.setValidationError setting a validation error}, otherwise stop validation as soon as
@@ -281,7 +281,7 @@ export function validationPlugin<Error = any, Options = void>(
   };
 }
 
-type ValidationEvent = Event<ValidationPlugin>;
+type ValidationEvent = FieldEvent<ValidationPlugin>;
 
 function setError(
   field: Field<ValidationPlugin>,

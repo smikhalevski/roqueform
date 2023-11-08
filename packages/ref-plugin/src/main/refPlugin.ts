@@ -10,7 +10,7 @@ export interface RefPlugin {
   element: Element | null;
 
   /**
-   * The callback that associates the field with the {@link element DOM element}.
+   * Associates the field with the {@link element DOM element}.
    */
   refCallback(element: Element | null): void;
 

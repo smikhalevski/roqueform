@@ -1,4 +1,4 @@
-import { Event } from './typings';
+import { FieldEvent } from './typings';
 
 export function callOrGet<T, A>(value: T | ((prevValue: A) => T), prevValue: A): T {
   return typeof value === 'function' ? (value as Function)(prevValue) : value;
@@ -15,7 +15,7 @@ export function isEqual(a: unknown, b: unknown): boolean {
   return a === b || (a !== a && b !== b);
 }
 
-export function dispatchEvents(events: readonly Event<any>[]): void {
+export function dispatchEvents<E extends FieldEvent<any>>(events: readonly E[]): void {
   for (const event of events) {
     const { listeners } = event.currentTarget;
 
@@ -26,7 +26,7 @@ export function dispatchEvents(events: readonly Event<any>[]): void {
   }
 }
 
-function callAll(listeners: Array<(event: Event) => void> | undefined, event: Event): void {
+function callAll(listeners: Array<(event: FieldEvent) => void> | undefined, event: FieldEvent): void {
   if (listeners !== undefined) {
     for (const listener of listeners) {
       try {
