@@ -47,14 +47,14 @@ const doubterValidator: Validator<Issue, ParseOptions> = {
   validate(field, options) {
     const { validation, shape } = field as unknown as Field<DoubterPlugin>;
 
-    endValidation(validation!, shape.try(field.value, Object.assign({ verbose: true }, options)));
+    applyResult(validation!, shape.try(field.value, Object.assign({ verbose: true }, options)));
   },
 
   validateAsync(field, options) {
     const { validation, shape } = field as unknown as Field<DoubterPlugin>;
 
     return shape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
-      endValidation(validation!, result);
+      applyResult(validation!, result);
     });
   },
 };
@@ -65,7 +65,7 @@ function setPath(field: Field<any>, issue: Issue): void {
   }
 }
 
-function endValidation(validation: Validation<DoubterPlugin>, result: Err | Ok): void {
+function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): void {
   if (result.ok) {
     return;
   }
