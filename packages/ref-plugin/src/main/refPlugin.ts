@@ -1,4 +1,4 @@
-import { Plugin } from 'roqueform';
+import { PluginCallback } from 'roqueform';
 
 /**
  * The plugin added to fields by the {@link refPlugin}.
@@ -7,7 +7,7 @@ export interface RefPlugin {
   /**
    * The DOM element associated with the field.
    */
-  readonly element: Element | null;
+  element: Element | null;
 
   /**
    * The callback that associates the field with the {@link element DOM element}.
@@ -46,32 +46,30 @@ export interface RefPlugin {
 /**
  * Enables field-element association and simplifies focus control.
  */
-export function refPlugin(): Plugin<RefPlugin> {
+export function refPlugin(): PluginCallback<RefPlugin> {
   return field => {
+    field.element = null;
+
     const { refCallback } = field;
 
-    let targetElement: Element | null = null;
-
-    Object.defineProperty(field, 'element', { enumerable: true, get: () => targetElement });
-
     field.refCallback = element => {
-      targetElement = element instanceof Element ? element : null;
+      field.element = element instanceof Element ? element : null;
       refCallback?.(element);
     };
 
     field.scrollIntoView = options => {
-      targetElement?.scrollIntoView(options);
+      field.element?.scrollIntoView(options);
     };
 
     field.focus = options => {
-      if (isFocusable(targetElement)) {
-        targetElement.focus(options);
+      if (isFocusable(field.element)) {
+        field.element.focus(options);
       }
     };
 
     field.blur = () => {
-      if (isFocusable(targetElement)) {
-        targetElement.blur();
+      if (isFocusable(field.element)) {
+        field.element.blur();
       }
     };
   };
