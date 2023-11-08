@@ -1,4 +1,4 @@
-import { Field, Plugin } from 'roqueform';
+import { Field, PluginCallback } from 'roqueform';
 
 export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
   /**
@@ -14,7 +14,12 @@ export interface ScrollToErrorPlugin {
   /**
    * @internal
    */
-  readonly error: unknown;
+  error: unknown;
+
+  /**
+   * The DOM element associated with the field.
+   */
+  element: Element | null;
 
   /**
    * The callback that associates the field with the DOM element.
@@ -58,79 +63,53 @@ export interface ScrollToErrorPlugin {
  * Use this plugin in conjunction with another plugin that adds validation methods and manages `error` property of each
  * field.
  */
-export function scrollToErrorPlugin(): Plugin<ScrollToErrorPlugin> {
-  let controllerMap: WeakMap<Field, FieldController>;
-
+export function scrollToErrorPlugin(): PluginCallback<ScrollToErrorPlugin> {
   return field => {
-    controllerMap ||= new WeakMap();
-
-    if (controllerMap.has(field)) {
-      return;
-    }
-
-    const controller: FieldController = {
-      _parent: field.parent !== null ? controllerMap.get(field.parent)! : null,
-      _targetControllers: [],
-      _field: field,
-      _element: null,
-    };
-
-    controllerMap.set(field, controller);
-
-    for (let ancestor: FieldController | null = controller; ancestor !== null; ancestor = ancestor._parent) {
-      ancestor._targetControllers!.push(controller);
-    }
-
     const { refCallback } = field;
 
     field.refCallback = element => {
-      controller._element = element;
+      field.element = element;
       refCallback?.(element);
     };
 
     field.scrollToError = (index = 0, options) => {
       const rtl = options === null || typeof options !== 'object' || options.direction !== 'ltr';
-      const controllers = controller._targetControllers.filter(hasVisibleError);
-      const targetController = sortByBoundingRect(controllers, rtl)[index < 0 ? controllers.length + index : index];
+      const targets = getTargetFields(field, []);
 
-      if (targetController === undefined) {
+      if (targets.length === 0) {
         return false;
       }
-      targetController._element!.scrollIntoView(options);
+
+      const target = sortByBoundingRect(targets, rtl)[index < 0 ? targets.length + index : index];
+
+      if (target !== undefined) {
+        target.element!.scrollIntoView(options);
+      }
       return true;
     };
   };
 }
 
-interface FieldController {
-  _parent: FieldController | null;
+function getTargetFields(
+  field: Field<ScrollToErrorPlugin>,
+  batch: Field<ScrollToErrorPlugin>[]
+): Field<ScrollToErrorPlugin>[] {
+  if (field.error !== null && field.element !== null) {
+    const rect = field.element.getBoundingClientRect();
 
-  /**
-   * The array of controllers that can be scrolled to.
-   */
-  _targetControllers: FieldController[];
-  _field: Field & ScrollToErrorPlugin;
-  _element: Element | null;
-}
-
-function hasVisibleError(controller: FieldController): boolean {
-  if (controller._element === null || controller._field.error === null) {
-    return false;
+    if (rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0) {
+      batch.push(field);
+    }
   }
-
-  const rect = controller._element.getBoundingClientRect();
-
-  // Exclude non-displayed elements
-  return rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0;
+  if (field.children !== null) {
+    for (const child of field.children) {
+      getTargetFields(child, batch);
+    }
+  }
+  return batch;
 }
 
-/**
- * Sorts controllers by their visual position.
- *
- * @param controllers The controllers to sort. All controllers must have a ref with an element.
- * @param rtl The sorting order for elements.
- */
-function sortByBoundingRect(controllers: FieldController[], rtl: boolean): FieldController[] {
+function sortByBoundingRect(fields: Field<ScrollToErrorPlugin>[], rtl: boolean): Field<ScrollToErrorPlugin>[] {
   const { body, documentElement } = document;
 
   const scrollY = window.pageYOffset || documentElement.scrollTop || body.scrollTop;
@@ -139,9 +118,9 @@ function sortByBoundingRect(controllers: FieldController[], rtl: boolean): Field
   const scrollX = window.pageXOffset || documentElement.scrollLeft || body.scrollLeft;
   const clientX = documentElement.clientLeft || body.clientLeft || 0;
 
-  return controllers.sort((controller1, controller2) => {
-    const rect1 = controller1._element!.getBoundingClientRect();
-    const rect2 = controller2._element!.getBoundingClientRect();
+  return fields.sort((field1, field2) => {
+    const rect1 = field1.element!.getBoundingClientRect();
+    const rect2 = field2.element!.getBoundingClientRect();
 
     const y1 = Math.round(rect1.top + scrollY - clientY);
     const y2 = Math.round(rect2.top + scrollY - clientY);
