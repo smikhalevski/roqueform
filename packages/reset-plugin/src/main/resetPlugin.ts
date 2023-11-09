@@ -51,6 +51,11 @@ export function resetPlugin(
   equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
 ): PluginInjector<ResetPlugin> {
   return field => {
+    Object.defineProperty(field, 'isDirty', {
+      configurable: true,
+      get: () => !field.equalityChecker(field.initialValue, field.value),
+    });
+
     field.equalityChecker = equalityChecker;
 
     field.setInitialValue = value => {
@@ -60,8 +65,6 @@ export function resetPlugin(
     field.reset = () => {
       field.setValue(field.initialValue);
     };
-
-    Object.defineProperty(field, 'isDirty', { get: () => field.equalityChecker(field.initialValue, field.value) });
   };
 }
 
@@ -73,7 +76,7 @@ function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void
   let root = field;
 
   while (root.parent !== null) {
-    initialValue = field.accessor.set(root.parent.value, root.key, initialValue);
+    initialValue = field.valueAccessor.set(root.parent.value, root.key, initialValue);
     root = root.parent;
   }
 
@@ -92,7 +95,7 @@ function propagateInitialValue(
 
   if (field.children !== null) {
     for (const child of field.children) {
-      const childInitialValue = field.accessor.get(initialValue, child.key);
+      const childInitialValue = field.valueAccessor.get(initialValue, child.key);
       if (child !== target && isEqual(child.initialValue, childInitialValue)) {
         continue;
       }

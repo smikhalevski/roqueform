@@ -5,6 +5,4 @@ import { DoubterPlugin, doubterPlugin } from '@roqueform/doubter-plugin';
 
 const shape = d.object({ foo: d.object({ bar: d.string() }) });
 
-expectType<Field<{ foo: { bar: string } }, DoubterPlugin> & DoubterPlugin>(
-  createField({ foo: { bar: 'aaa' } }, doubterPlugin(shape))
-);
+expectType<Field<DoubterPlugin, { foo: { bar: string } }>>(createField({ foo: { bar: 'aaa' } }, doubterPlugin(shape)));

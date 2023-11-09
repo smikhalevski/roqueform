@@ -1,9 +1,5 @@
 import { Event } from './typings';
 
-export function callOrGet<T, A>(value: T | ((prevValue: A) => T), prevValue: A): T {
-  return typeof value === 'function' ? (value as Function)(prevValue) : value;
-}
-
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
  *
@@ -15,26 +11,43 @@ export function isEqual(a: unknown, b: unknown): boolean {
   return a === b || (a !== a && b !== b);
 }
 
+/**
+ * If value is a function then it is called with the given argument, otherwise the value is returned as is.
+ *
+ * @param value The value to return or a callback to call.
+ * @param arg The of argument to pass to the value callback.
+ * @returns The value or the call result.
+ * @template T The returned value.
+ * @template A The value callback argument.
+ */
+export function callOrGet<T, A>(value: T | ((arg: A) => T), arg: A): T {
+  return typeof value === 'function' ? (value as Function)(arg) : value;
+}
+
+/**
+ * Calls field subscribers that can handle given events.
+ *
+ * @param events The array of events to dispatch.
+ */
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
     const { subscribers } = event.target;
 
-    if (subscribers !== null) {
-      callAll(subscribers[event.type], event);
-      callAll(subscribers['*'], event);
+    if (subscribers === null) {
+      continue;
     }
-  }
-}
 
-function callAll(subscribers: Array<(event: Event) => void> | undefined, event: Event): void {
-  if (subscribers !== undefined) {
-    for (const subscriber of subscribers) {
-      try {
+    const typeSubscribers = subscribers[event.type];
+    const globSubscribers = subscribers['*'];
+
+    if (typeSubscribers !== undefined) {
+      for (const subscriber of typeSubscribers) {
         subscriber(event);
-      } catch (error) {
-        setTimeout(() => {
-          throw error;
-        }, 0);
+      }
+    }
+    if (globSubscribers !== undefined) {
+      for (const subscriber of globSubscribers) {
+        subscriber(event);
       }
     }
   }

@@ -97,7 +97,7 @@ describe('createElementValueAccessor', () => {
       const accessor = createElementValueAccessor({ checkboxFormat: 'value' });
 
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: true, value: 'aaa' })])).toBe('aaa');
-      expect(accessor.get([createElement('input', { type: 'checkbox', checked: false, value: 'aaa' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'checkbox', checked: false, value: 'aaa' })])).toBeNull();
     });
 
     test('returns an array of values for multiple checkboxes for "value" format', () => {
@@ -149,7 +149,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty number inputs', () => {
-      expect(accessor.get([createElement('input', { type: 'number' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'number' })])).toBeNull();
     });
 
     test('returns default value for empty range inputs', () => {
@@ -167,11 +167,11 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty date inputs by default', () => {
-      expect(accessor.get([createElement('input', { type: 'date' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'date' })])).toBeNull();
     });
 
     test('returns null for empty datetime-local inputs by default', () => {
-      expect(accessor.get([createElement('input', { type: 'date' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'date' })])).toBeNull();
     });
 
     test('returns input value for date inputs for "value" format', () => {
@@ -235,7 +235,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty time inputs by default', () => {
-      expect(accessor.get([createElement('input', { type: 'time' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'time' })])).toBeNull();
     });
 
     test('returns value for time inputs by default', () => {
@@ -259,7 +259,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty file inputs', () => {
-      expect(accessor.get([createElement('input', { type: 'file' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'file' })])).toBeNull();
     });
 
     test('returns an array for empty multi-file inputs', () => {
@@ -281,7 +281,7 @@ describe('createElementValueAccessor', () => {
 
       accessor.set([element], 'aaa');
 
-      expect(element.value).toBe(undefined);
+      expect(element.value).toBeUndefined();
     });
 
     test('sets checkboxes checked state from an array of booleans', () => {

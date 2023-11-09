@@ -1,4 +1,4 @@
-import { Accessor, Field, Event, PluginInjector } from './typings';
+import { ValueAccessor, Event, Field, PluginInjector, Subscriber } from './typings';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalAccessor } from './naturalAccessor';
 
@@ -16,27 +16,27 @@ export function createField<Value = any>(): Field<unknown, Value | undefined>;
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param accessor Resolves values for derived fields.
+ * @param accessor Resolves values for child fields.
  * @template Value The root field value.
  */
-export function createField<Value>(initialValue: Value, accessor?: Accessor): Field<unknown, Value>;
+export function createField<Value>(initialValue: Value, accessor?: ValueAccessor): Field<unknown, Value>;
 
 /**
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin that enhances the field.
- * @param accessor Resolves values for derived fields.
+ * @param plugin The plugin injected into the field.
+ * @param accessor Resolves values for child fields.
  * @template Value The root field initial value.
  * @template Plugin The plugin injected into the field.
  */
 export function createField<Value, Plugin>(
   initialValue: Value,
   plugin: PluginInjector<Plugin, NoInfer<Value>>,
-  accessor?: Accessor
+  accessor?: ValueAccessor
 ): Field<Plugin, Value>;
 
-export function createField(initialValue?: unknown, plugin?: PluginInjector | Accessor, accessor?: Accessor) {
+export function createField(initialValue?: unknown, plugin?: PluginInjector | ValueAccessor, accessor?: ValueAccessor) {
   if (typeof plugin !== 'function') {
     accessor = plugin;
     plugin = undefined;
@@ -45,7 +45,7 @@ export function createField(initialValue?: unknown, plugin?: PluginInjector | Ac
 }
 
 function getOrCreateField(
-  accessor: Accessor,
+  accessor: ValueAccessor,
   parent: Field | null,
   key: unknown,
   initialValue: unknown,
@@ -59,7 +59,7 @@ function getOrCreateField(
 
   child = {
     key,
-    value: null,
+    value: initialValue,
     initialValue,
     isTransient: false,
     root: null!,
@@ -67,7 +67,7 @@ function getOrCreateField(
     children: null,
     childrenMap: null,
     subscribers: null,
-    accessor,
+    valueAccessor: accessor,
     plugin,
 
     setValue: value => {
@@ -82,11 +82,14 @@ function getOrCreateField(
       setValue(child, child.value, false);
     },
 
-    at: key => getOrCreateField(child.accessor, child, key, null, plugin),
+    at: key => getOrCreateField(child.valueAccessor, child, key, null, plugin),
 
     on: (type, subscriber) => {
-      let subscribers: unknown[];
-      (subscribers = (child.subscribers ||= Object.create(null))[type] ||= []).push(subscriber);
+      const subscribers: Subscriber[] = ((child.subscribers ||= Object.create(null))[type] ||= []);
+
+      if (!subscribers.includes(subscriber)) {
+        subscribers.push(subscriber);
+      }
       return () => {
         subscribers.splice(subscribers.indexOf(subscriber), 1);
       };
@@ -121,7 +124,7 @@ function setValue(field: Field, value: unknown, transient: boolean): void {
   let changeRoot = field;
 
   while (changeRoot.parent !== null && !changeRoot.isTransient) {
-    value = field.accessor.set(changeRoot.parent.value, changeRoot.key, value);
+    value = field.valueAccessor.set(changeRoot.parent.value, changeRoot.key, value);
     changeRoot = changeRoot.parent;
   }
 
@@ -139,7 +142,7 @@ function propagateValue(origin: Field, field: Field, value: unknown, events: Eve
         continue;
       }
 
-      const childValue = field.accessor.get(value, child.key);
+      const childValue = field.valueAccessor.get(value, child.key);
       if (child !== origin && isEqual(child.value, childValue)) {
         continue;
       }

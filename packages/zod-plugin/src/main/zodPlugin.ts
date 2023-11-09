@@ -66,7 +66,7 @@ function getValue(field: Field<ValidationPlugin>): unknown {
 
   while (field.parent !== null) {
     transient ||= field.isTransient;
-    value = transient ? field.accessor.set(field.parent.value, field.key, value) : field.parent.value;
+    value = transient ? field.valueAccessor.set(field.parent.value, field.key, value) : field.parent.value;
     field = field.parent;
   }
   return value;

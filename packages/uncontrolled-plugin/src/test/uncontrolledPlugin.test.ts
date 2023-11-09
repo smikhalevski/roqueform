@@ -1,5 +1,5 @@
 import { ElementValueAccessor, uncontrolledPlugin } from '../main';
-import { composePlugins, createField, naturalAccessor } from 'roqueform';
+import { composePlugins, createField } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
 
 describe('uncontrolledPlugin', () => {
@@ -15,34 +15,34 @@ describe('uncontrolledPlugin', () => {
 
   test('updates field value on input change', () => {
     const subscriberMock = jest.fn();
-    const field = createField({ foo: 0 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, uncontrolledPlugin());
 
     element.type = 'number';
 
-    field.subscribe(subscriberMock);
-    field.at('foo').ref(element);
+    field.on('*', subscriberMock);
+    field.at('aaa').observe(element);
 
-    fireEvent.change(element, { target: { value: '111' } });
+    fireEvent.change(element, { target: { value: '222' } });
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
-    expect(field.value).toEqual({ foo: 111 });
+    expect(field.value).toEqual({ aaa: 222 });
   });
 
   test('updates input value on field change', () => {
-    const field = createField({ foo: 0 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, uncontrolledPlugin());
 
-    field.at('foo').ref(element);
-    field.at('foo').setValue(111);
+    field.at('aaa').observe(element);
+    field.at('aaa').setValue(222);
 
-    expect(element.value).toBe('111');
+    expect(element.value).toBe('222');
   });
 
   test('sets the initial value to the element', () => {
-    const field = createField({ foo: 111 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, uncontrolledPlugin());
 
     element.type = 'number';
 
-    field.at('foo').ref(element);
+    field.at('aaa').observe(element);
 
     expect(element.value).toBe('111');
   });
@@ -53,14 +53,14 @@ describe('uncontrolledPlugin', () => {
       field.ref = refMock;
     });
 
-    const field = createField({ foo: 111 }, composePlugins(pluginMock, uncontrolledPlugin()));
+    const field = createField({ aaa: 111 }, composePlugins(pluginMock, uncontrolledPlugin()));
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field);
 
     expect(refMock).not.toHaveBeenCalled();
 
-    field.at('foo').ref(element);
+    field.at('aaa').observe(element);
 
     expect(refMock).toHaveBeenCalledTimes(1);
     expect(refMock).toHaveBeenNthCalledWith(1, element);
@@ -75,10 +75,10 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('input'));
 
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ aaa: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').ref(element1);
-    field.at('foo').ref(element2);
+    field.at('aaa').observe(element1);
+    field.at('aaa').observe(element2);
 
     expect(refMock).toHaveBeenCalledTimes(1);
     expect(refMock).toHaveBeenNthCalledWith(1, element1);
@@ -93,10 +93,10 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('textarea'));
 
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ aaa: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').ref(element1);
-    field.at('foo').ref(element2);
+    field.at('aaa').observe(element1);
+    field.at('aaa').observe(element2);
 
     expect(refMock).toHaveBeenCalledTimes(1);
     expect(refMock).toHaveBeenNthCalledWith(1, element1);
@@ -116,9 +116,9 @@ describe('uncontrolledPlugin', () => {
       field.ref = refMock;
     };
 
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ aaa: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').ref(element);
+    field.at('aaa').observe(element);
 
     element.remove();
 
@@ -136,9 +136,9 @@ describe('uncontrolledPlugin', () => {
       field.ref = refMock;
     };
 
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
+    const field = createField({ aaa: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').ref(null);
+    field.at('aaa').observe(null);
 
     expect(refMock).not.toHaveBeenCalled();
   });
@@ -153,7 +153,7 @@ describe('uncontrolledPlugin', () => {
 
     const setValueMock = (field.setValue = jest.fn(field.setValue));
 
-    field.ref(element);
+    field.observe(element);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
     expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 'aaa');
@@ -176,17 +176,17 @@ describe('uncontrolledPlugin', () => {
       set: jest.fn(),
     };
 
-    const field = createField({ foo: 'aaa' }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').ref(element);
+    field.at('aaa').observe(element);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
-    expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 'aaa');
+    expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 111);
 
-    field.at('foo').setValue('bbb');
+    field.at('aaa').setValue(222);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(2);
-    expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element], 'bbb');
+    expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element], 222);
   });
 
   test('does not call set accessor if there are no referenced elements', () => {
@@ -195,9 +195,9 @@ describe('uncontrolledPlugin', () => {
       set: jest.fn(),
     };
 
-    const field = createField({ foo: 'aaa' }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').setValue('bbb');
+    field.at('aaa').setValue(222);
 
     expect(accessorMock.set).not.toHaveBeenCalled();
   });
@@ -211,14 +211,14 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.body.appendChild(document.createElement('input'));
     const element2 = document.body.appendChild(document.createElement('textarea'));
 
-    const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').ref(element1);
+    field.at('aaa').observe(element1);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
     expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element1], 111);
 
-    field.at('foo').ref(element2);
+    field.at('aaa').observe(element2);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(2);
     expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element1, element2], 111);
@@ -232,9 +232,9 @@ describe('uncontrolledPlugin', () => {
 
     const element = document.createElement('input');
 
-    const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').ref(element);
+    field.at('aaa').observe(element);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(0);
   });
@@ -242,9 +242,9 @@ describe('uncontrolledPlugin', () => {
   test('mutation observer disconnects after last element is removed', done => {
     const disconnectMock = jest.spyOn(MutationObserver.prototype, 'disconnect');
 
-    const field = createField({ foo: 111 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, uncontrolledPlugin());
 
-    field.at('foo').ref(element);
+    field.at('aaa').observe(element);
 
     element.remove();
 

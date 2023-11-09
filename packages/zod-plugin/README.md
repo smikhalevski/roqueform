@@ -27,13 +27,12 @@ export const App = () => {
     event.preventDefault();
 
     if (planetField.validate()) {
-      // Errors are associated with fields automatically
-      return;
+      // If your shapes have transformations or refinements, you can safely parse
+      // the field value after it was successfully validated.
+      const value = planetSchema.parse(planetField.value);
+    } else {
+      // Errors are associated with fields automatically.
     }
-
-    // If your shapes have transformations or refinements, you can safely parse
-    // the field value after it was successfully validated
-    const value = planetSchema.parse(planetField.value);
   };
 
   return (

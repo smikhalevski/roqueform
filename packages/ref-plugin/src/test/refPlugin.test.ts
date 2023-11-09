@@ -3,14 +3,14 @@ import { refPlugin } from '../main';
 
 describe('refPlugin', () => {
   test('adds an element property to the field', () => {
-    const field = createField({ bar: 111 }, refPlugin());
+    const field = createField({ aaa: 111 }, refPlugin());
 
-    expect(field.element).toBe(null);
-    expect(field.at('bar').element).toBe(null);
+    expect(field.element).toBeNull();
+    expect(field.at('aaa').element).toBeNull();
   });
 
   test('ref updates an element property', () => {
-    const field = createField({ bar: 111 }, refPlugin());
+    const field = createField({ aaa: 111 }, refPlugin());
     const element = document.createElement('input');
 
     field.ref(element);
@@ -19,10 +19,10 @@ describe('refPlugin', () => {
   });
 
   test('preserves the ref from preceding plugin', () => {
-    const refMock = jest.fn(() => undefined);
+    const refMock = jest.fn();
 
     const field = createField(
-      { bar: 111 },
+      { aaa: 111 },
       composePlugins(field => Object.assign(field, { ref: refMock }), refPlugin())
     );
 

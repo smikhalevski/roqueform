@@ -1,4 +1,4 @@
-import { dispatchEvents, Event as Event_, PluginInjector, Subscriber, Unsubscribe } from 'roqueform';
+import { dispatchEvents, Event, PluginInjector, Subscriber, Unsubscribe } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 import { createElementValueAccessor, ElementValueAccessor } from './createElementValueAccessor';
 
@@ -15,7 +15,8 @@ const elementValueAccessor = createElementValueAccessor();
 export interface UncontrolledPlugin {
   /**
    * The array of elements that are used to derive the field value. Update this array by calling {@link observe} method.
-   * Elements are observed by the {@link MutationObserver} and deleted from this array when they are removed from DOM.
+   * Elements are observed by the {@link !MutationObserver MutationObserver} and deleted from this array when they are
+   * removed from DOM.
    *
    * @protected
    */
@@ -72,7 +73,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
     field.elementValueAccessor = accessor;
 
     const mutationObserver = new MutationObserver(mutations => {
-      const events: Event_[] = [];
+      const events: Event[] = [];
       const { observedElements } = field;
       const [element] = observedElements;
 
@@ -83,7 +84,9 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
           if (elementIndex === -1) {
             continue;
           }
+
           const element = observedElements[elementIndex];
+
           element.removeEventListener('input', changeListener);
           element.removeEventListener('change', changeListener);
 
@@ -102,7 +105,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
       dispatchEvents(events);
     });
 
-    const changeListener = (event: Event): void => {
+    const changeListener: EventListener = event => {
       let value;
       if (
         field.observedElements.indexOf(event.target as Element) !== -1 &&

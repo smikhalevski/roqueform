@@ -1,4 +1,4 @@
-import { createField, naturalAccessor, Plugin } from '../main';
+import { createField, naturalAccessor } from '../main';
 
 jest.useFakeTimers();
 
@@ -10,103 +10,172 @@ describe('createField', () => {
   test('creates a field without an initial value', () => {
     const field = createField();
 
-    expect(field.parent).toBe(null);
-    expect(field.key).toBe(null);
-    expect(field.value).toBe(undefined);
+    expect(field.key).toBeNull();
+    expect(field.value).toBeUndefined();
+    expect(field.initialValue).toBeUndefined();
     expect(field.isTransient).toBe(false);
+    expect(field.root).toBe(field);
+    expect(field.parent).toBeNull();
+    expect(field.children).toBeNull();
+    expect(field.childrenMap).toBeNull();
+    expect(field.subscribers).toBeNull();
+    expect(field.valueAccessor).toBe(naturalAccessor);
+    expect(field.plugin).toBeNull();
   });
 
   test('creates a field with the initial value', () => {
     const field = createField(111);
 
     expect(field.value).toBe(111);
+    expect(field.initialValue).toBe(111);
   });
 
   test('returns a field at key', () => {
-    const field = createField({ foo: 111 });
+    const field = createField({ aaa: 111 });
 
-    expect(field.at('foo').parent).toBe(field);
-    expect(field.at('foo').key).toBe('foo');
-    expect(field.at('foo').value).toBe(111);
+    const child = field.at('aaa');
+
+    expect(child.root).toBe(field);
+    expect(child.parent).toBe(field);
+    expect(child.key).toBe('aaa');
+    expect(child.value).toBe(111);
+    expect(child.initialValue).toBe(111);
+
+    expect(field.children).toEqual([child]);
+    expect(field.childrenMap).toEqual(new Map([['aaa', child]]));
   });
 
   test('returns the same field for the same key', () => {
-    const field = createField({ foo: 111 });
+    const field = createField({ aaa: 111 });
 
-    expect(field.at('foo')).toBe(field.at('foo'));
+    expect(field.at('aaa')).toBe(field.at('aaa'));
   });
 
-  test('dispatches a value to a root field', () => {
+  test('sets a value to a root field', () => {
     const field = createField(111);
 
     field.setValue(222);
 
     expect(field.value).toBe(222);
+    expect(field.initialValue).toBe(111);
     expect(field.isTransient).toBe(false);
   });
 
-  test('dispatches a value to a derived field', () => {
-    const field = createField({ foo: 111 });
+  test('sets a value to a child field', () => {
+    const initialValue = { aaa: 111 };
 
-    field.at('foo').setValue(222);
+    const field = createField(initialValue);
 
-    expect(field.value).toEqual({ foo: 222 });
+    field.at('aaa').setValue(222);
+
+    expect(field.value).not.toBe(initialValue);
+    expect(field.value).toEqual({ aaa: 222 });
+    expect(field.initialValue).toEqual(initialValue);
     expect(field.isTransient).toBe(false);
 
-    expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').isTransient).toBe(false);
+    expect(field.at('aaa').value).toBe(222);
+    expect(field.at('aaa').initialValue).toBe(111);
+    expect(field.at('aaa').isTransient).toBe(false);
   });
 
-  test('invokes a subscriber when value is updated', () => {
+  test('calls a glob subscriber when value is updated', () => {
+    const rootSubscriberMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
+
+    const field = createField({ aaa: 111 });
+    field.on('*', rootSubscriberMock);
+
+    field.at('aaa').on('*', aaaSubscriberMock);
+
+    field.at('aaa').setValue(222);
+
+    expect(rootSubscriberMock).toHaveBeenCalledTimes(1);
+    expect(rootSubscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field.at('aaa'),
+      target: field,
+      data: { aaa: 111 },
+    });
+
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field.at('aaa'),
+      target: field.at('aaa'),
+      data: 111,
+    });
+  });
+
+  test('calls a type subscriber when value is updated', () => {
     const subscriberMock = jest.fn();
-    const fooListenerMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
 
-    const field = createField({ foo: 111 });
-    field.subscribe(subscriberMock);
+    const field = createField({ aaa: 111 });
+    field.on('change:value', subscriberMock);
 
-    field.at('foo').subscribe(fooListenerMock);
+    field.at('aaa').on('change:value', aaaSubscriberMock);
 
-    field.at('foo').setValue(222);
+    field.at('aaa').setValue(222);
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
-    expect(subscriberMock).toHaveBeenNthCalledWith(1, field.at('foo'), field);
+    expect(subscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field.at('aaa'),
+      target: field,
+      data: { aaa: 111 },
+    });
 
-    expect(fooListenerMock).toHaveBeenCalledTimes(1);
-    expect(fooListenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field.at('foo'));
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field.at('aaa'),
+      target: field.at('aaa'),
+      data: 111,
+    });
   });
 
   test('does not invoke the subscriber of the unchanged sibling field', () => {
-    const fooListenerMock = jest.fn();
-    const barListenerMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
+    const bbbSubscriberMock = jest.fn();
 
-    const field = createField({ foo: 111, bar: 'aaa' });
+    const field = createField({ aaa: 111, bbb: 'aaa' });
 
-    field.at('foo').subscribe(fooListenerMock);
-    field.at('bar').subscribe(barListenerMock);
+    field.at('aaa').on('*', aaaSubscriberMock);
+    field.at('bbb').on('*', bbbSubscriberMock);
 
-    field.at('foo').setValue(222);
+    field.at('aaa').setValue(222);
 
-    expect(barListenerMock).not.toHaveBeenCalled();
+    expect(bbbSubscriberMock).not.toHaveBeenCalled();
 
-    expect(fooListenerMock).toHaveBeenCalledTimes(1);
-    expect(fooListenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field.at('foo'));
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field.at('aaa'),
+      target: field.at('aaa'),
+      data: 111,
+    });
   });
 
-  test('does not invoke the subscriber of the unchanged derived field', () => {
-    const fooListenerMock = jest.fn();
-    const barListenerMock = jest.fn();
+  test('does not invoke the subscriber of the unchanged child field', () => {
+    const aaaSubscriberMock = jest.fn();
+    const bbbSubscriberMock = jest.fn();
 
-    const field = createField({ foo: 111, bar: 'aaa' });
+    const field = createField({ aaa: 111, bbb: 'aaa' });
 
-    field.at('foo').subscribe(fooListenerMock);
-    field.at('bar').subscribe(barListenerMock);
+    field.at('aaa').on('*', aaaSubscriberMock);
+    field.at('bbb').on('*', bbbSubscriberMock);
 
-    field.setValue({ foo: 222, bar: 'aaa' });
+    field.setValue({ aaa: 222, bbb: 'aaa' });
 
-    expect(barListenerMock).not.toHaveBeenCalled();
+    expect(bbbSubscriberMock).not.toHaveBeenCalled();
 
-    expect(fooListenerMock).toHaveBeenCalledTimes(1);
-    expect(fooListenerMock).toHaveBeenNthCalledWith(1, field, field.at('foo'));
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field,
+      target: field.at('aaa'),
+      data: 111,
+    });
   });
 
   test('sets a value to a root field', () => {
@@ -118,155 +187,141 @@ describe('createField', () => {
     expect(field.isTransient).toBe(true);
   });
 
-  test('sets a value to a derived field', () => {
-    const initialValue = { foo: 111 };
+  test('sets a value to a child field', () => {
+    const initialValue = { aaa: 111 };
 
     const field = createField(initialValue);
 
-    field.at('foo').setTransientValue(222);
+    field.at('aaa').setTransientValue(222);
 
     expect(field.value).toBe(initialValue);
     expect(field.isTransient).toBe(false);
 
-    expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').isTransient).toBe(true);
+    expect(field.at('aaa').value).toBe(222);
+    expect(field.at('aaa').isTransient).toBe(true);
   });
 
-  test('dispatches a value after it was set to a derived field', () => {
-    const field = createField({ foo: 111 });
+  test('propagates a value after it was set to a child field', () => {
+    const field = createField({ aaa: 111 });
 
-    field.at('foo').setTransientValue(222);
-    field.at('foo').dispatch();
+    field.at('aaa').setTransientValue(222);
+    field.at('aaa').propagate();
 
-    expect(field.value).toEqual({ foo: 222 });
+    expect(field.value).toEqual({ aaa: 222 });
     expect(field.isTransient).toBe(false);
 
-    expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').isTransient).toBe(false);
+    expect(field.at('aaa').value).toBe(222);
+    expect(field.at('aaa').isTransient).toBe(false);
   });
 
   test('invokes a subscriber when a value is updated transiently', () => {
     const subscriberMock = jest.fn();
-    const fooListenerMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
 
-    const field = createField({ foo: 111 });
-    field.subscribe(subscriberMock);
+    const field = createField({ aaa: 111 });
+    field.on('*', subscriberMock);
 
-    field.at('foo').subscribe(fooListenerMock);
-    field.at('foo').setTransientValue(222);
+    field.at('aaa').on('*', aaaSubscriberMock);
+    field.at('aaa').setTransientValue(222);
 
     expect(subscriberMock).toHaveBeenCalledTimes(0);
 
-    expect(fooListenerMock).toHaveBeenCalledTimes(1);
-    expect(fooListenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field.at('foo'));
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field.at('aaa'),
+      target: field.at('aaa'),
+      data: 111,
+    });
   });
 
-  test('does not leave the form in an inconsistent state if a subscriber throws an error', () => {
-    const fooListenerMock = jest.fn(() => {
-      throw new Error('fooExpected');
+  test('does not leave fields in an inconsistent state if a subscriber throws an error', () => {
+    const aaaSubscriberMock = jest.fn(() => {
+      throw new Error('aaaExpected');
     });
-    const barListenerMock = jest.fn(() => {
-      throw new Error('barExpected');
+    const bbbSubscriberMock = jest.fn(() => {
+      throw new Error('bbbExpected');
     });
 
-    const field = createField({ foo: 111, bar: 222 });
+    const field = createField({ aaa: 111, bbb: 222 });
 
-    field.at('foo').subscribe(fooListenerMock);
-    field.at('bar').subscribe(barListenerMock);
+    field.at('aaa').on('*', aaaSubscriberMock);
+    field.at('bbb').on('*', bbbSubscriberMock);
 
-    field.setValue({ foo: 333, bar: 444 });
+    try {
+      field.setValue({ aaa: 333, bbb: 444 });
+    } catch {}
 
-    expect(fooListenerMock).toHaveBeenCalledTimes(1);
-    expect(barListenerMock).toHaveBeenCalledTimes(1);
-    expect(field.at('foo').value).toBe(333);
-    expect(field.at('bar').value).toBe(444);
-
-    expect(() => jest.runAllTimers()).toThrow(new Error('fooExpected'));
-    expect(() => jest.runAllTimers()).toThrow(new Error('barExpected'));
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
+    expect(bbbSubscriberMock).toHaveBeenCalledTimes(0);
+    expect(field.at('aaa').value).toBe(333);
+    expect(field.at('bbb').value).toBe(444);
   });
 
-  test('calls all subscribers and throws error asynchronously', () => {
-    const subscriberMock1 = jest.fn(() => {
-      throw new Error('expected1');
-    });
-    const subscriberMock2 = jest.fn(() => {
-      throw new Error('expected2');
-    });
-
-    const field = createField({ foo: 111, bar: 222 });
-
-    field.at('foo').subscribe(subscriberMock1);
-    field.at('foo').subscribe(subscriberMock2);
-
-    field.setValue({ foo: 333, bar: 444 });
-
-    expect(subscriberMock1).toHaveBeenCalledTimes(1);
-    expect(subscriberMock2).toHaveBeenCalledTimes(1);
-    expect(field.at('foo').value).toBe(333);
-    expect(field.at('bar').value).toBe(444);
-
-    expect(() => jest.runAllTimers()).toThrow(new Error('expected1'));
-    expect(() => jest.runAllTimers()).toThrow(new Error('expected2'));
-  });
-
-  test('propagates a new value to the derived field', () => {
+  test('propagates a new value to the child field', () => {
     const subscriberMock = jest.fn();
-    const fooListenerMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
 
-    const field = createField({ foo: 111 });
-    field.subscribe(subscriberMock);
+    const field = createField({ aaa: 111 });
+    field.on('*', subscriberMock);
 
-    field.at('foo').subscribe(fooListenerMock);
+    field.at('aaa').on('*', aaaSubscriberMock);
 
-    const nextValue = { foo: 333 };
+    const nextValue = { aaa: 333 };
     field.setValue(nextValue);
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
-    expect(fooListenerMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
 
     expect(field.value).toBe(nextValue);
     expect(field.isTransient).toBe(false);
 
-    expect(field.at('foo').value).toBe(333);
-    expect(field.at('foo').isTransient).toBe(false);
+    expect(field.at('aaa').value).toBe(333);
+    expect(field.at('aaa').isTransient).toBe(false);
   });
 
-  test('does not propagate a new value to the transient derived field', () => {
+  test('does not propagate a new value to the transient child field', () => {
     const subscriberMock = jest.fn();
-    const fooListenerMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
 
-    const field = createField({ foo: 111 });
-    field.subscribe(subscriberMock);
+    const field = createField({ aaa: 111 });
+    field.on('*', subscriberMock);
 
-    field.at('foo').subscribe(fooListenerMock);
-    field.at('foo').setTransientValue(222);
+    field.at('aaa').on('*', aaaSubscriberMock);
+    field.at('aaa').setTransientValue(222);
 
-    field.setValue({ foo: 333 });
+    field.setValue({ aaa: 333 });
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
-    expect(fooListenerMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
 
-    expect(field.at('foo').value).toBe(222);
-    expect(field.at('foo').isTransient).toBe(true);
+    expect(field.at('aaa').value).toBe(222);
+    expect(field.at('aaa').isTransient).toBe(true);
   });
 
-  test('does not notify subscribers if a value of the derived field did not change', () => {
+  test('does not notify subscribers if a value of the child field did not change', () => {
     const subscriberMock = jest.fn();
-    const fooListenerMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
 
-    const fooValue = { bar: 111 };
+    const aaaValue = { bbb: 111 };
+    const initialValue = { aaa: aaaValue };
 
-    const field = createField({ foo: fooValue });
-    field.subscribe(subscriberMock);
+    const field = createField(initialValue);
+    field.on('*', subscriberMock);
 
-    field.at('foo').subscribe(fooListenerMock);
+    field.at('aaa').on('*', aaaSubscriberMock);
 
-    field.setValue({ foo: fooValue });
+    field.setValue({ aaa: aaaValue });
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
-    expect(subscriberMock).toHaveBeenNthCalledWith(1, field, field);
+    expect(subscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:value',
+      origin: field,
+      target: field,
+      data: initialValue,
+    });
 
-    expect(fooListenerMock).toHaveBeenCalledTimes(0);
+    expect(aaaSubscriberMock).toHaveBeenCalledTimes(0);
   });
 
   test('applies a plugin to the root field', () => {
@@ -275,96 +330,34 @@ describe('createField', () => {
     const field = createField(111, pluginMock);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field);
   });
 
-  test('returns a field if plugin returns undefined', () => {
+  test('applies a plugin to the child field', () => {
     const pluginMock = jest.fn();
 
-    const field = createField(111, pluginMock);
+    const field = createField({ aaa: 111 }, pluginMock);
 
-    expect(field.value).toBe(111);
-
-    expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
-  });
-
-  test('applies a plugin to the derived field', () => {
-    const pluginMock = jest.fn();
-
-    const field = createField({ foo: 111 }, pluginMock);
-
-    const fooField = field.at('foo');
+    const aaaField = field.at('aaa');
 
     expect(pluginMock).toHaveBeenCalledTimes(2);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
-    expect(pluginMock).toHaveBeenNthCalledWith(2, fooField, naturalAccessor, expect.any(Function));
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field);
+    expect(pluginMock).toHaveBeenNthCalledWith(2, aaaField);
   });
 
-  test('plugin notifies field subscribers', () => {
-    let notifyCallback1!: () => void;
+  test('an actual parent value is visible in the child field subscriber', done => {
+    const field = createField({ aaa: 111 });
+    const newValue = { aaa: 222 };
 
-    const plugin: Plugin = jest.fn().mockImplementationOnce((_field, _accessor, notify) => {
-      notifyCallback1 = notify;
-    });
-    const subscriberMock1 = jest.fn();
-    const subscriberMock2 = jest.fn();
-
-    const field = createField({ foo: 111 }, plugin);
-
-    field.subscribe(subscriberMock1);
-    field.at('foo').subscribe(subscriberMock2);
-
-    expect(subscriberMock1).not.toHaveBeenCalled();
-    expect(subscriberMock2).not.toHaveBeenCalled();
-
-    notifyCallback1();
-
-    expect(subscriberMock1).toHaveBeenCalledTimes(1);
-    expect(subscriberMock2).not.toHaveBeenCalled();
-  });
-
-  test('plugin notifies derived field subscribers', () => {
-    let notifyCallback1!: () => void;
-
-    const plugin: Plugin = jest
-      .fn()
-      .mockImplementationOnce(() => undefined)
-      .mockImplementationOnce((_field, _accessor, notify) => {
-        notifyCallback1 = notify;
-      });
-
-    const subscriberMock1 = jest.fn();
-    const subscriberMock2 = jest.fn();
-
-    const field = createField({ foo: 111 }, plugin);
-
-    field.subscribe(subscriberMock1);
-    field.at('foo').subscribe(subscriberMock2);
-
-    expect(subscriberMock1).not.toHaveBeenCalled();
-    expect(subscriberMock2).not.toHaveBeenCalled();
-
-    notifyCallback1();
-
-    expect(subscriberMock1).not.toHaveBeenCalled();
-    expect(subscriberMock2).toHaveBeenCalledTimes(1);
-  });
-
-  test('an actual parent value is visible in the derived field subscriber', done => {
-    const field = createField({ foo: 111 });
-    const newValue = { foo: 222 };
-
-    field.at('foo').subscribe(updatedField => {
-      expect(updatedField).toBe(field);
-      expect(updatedField.value).toBe(newValue);
+    field.at('aaa').on('*', event => {
+      expect(event.origin.value).toBe(newValue);
       done();
     });
 
     field.setValue(newValue);
   });
 
-  test('does not cache a derived field for which the plugin has thrown an error', () => {
+  test('does not cache a child field for which the plugin has thrown an error', () => {
     const pluginMock = jest.fn();
     pluginMock.mockImplementationOnce(() => undefined);
     pluginMock.mockImplementationOnce(() => {
@@ -374,10 +367,10 @@ describe('createField', () => {
       throw new Error('expected2');
     });
 
-    const field = createField({ foo: 111 }, pluginMock);
+    const field = createField({ aaa: 111 }, pluginMock);
 
-    expect(() => field.at('foo')).toThrow(new Error('expected1'));
-    expect(() => field.at('foo')).toThrow(new Error('expected2'));
+    expect(() => field.at('aaa')).toThrow(new Error('expected1'));
+    expect(() => field.at('aaa')).toThrow(new Error('expected2'));
   });
 
   test('setting field value in a subscriber does not trigger an infinite loop', () => {
@@ -387,7 +380,7 @@ describe('createField', () => {
       field.setValue(333);
     });
 
-    field.subscribe(subscriberMock);
+    field.on('*', subscriberMock);
 
     field.setValue(222);
 
@@ -395,18 +388,18 @@ describe('createField', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(2);
   });
 
-  test('setting field value in a derived field subscriber does not trigger an infinite loop', () => {
-    const field = createField({ foo: 111 });
+  test('setting field value in a child field subscriber does not trigger an infinite loop', () => {
+    const field = createField({ aaa: 111 });
 
     const subscriberMock = jest.fn(() => {
-      field.at('foo').setValue(333);
+      field.at('aaa').setValue(333);
     });
 
-    field.subscribe(subscriberMock);
+    field.on('*', subscriberMock);
 
-    field.at('foo').setValue(222);
+    field.at('aaa').setValue(222);
 
-    expect(field.value.foo).toBe(333);
+    expect(field.value.aaa).toBe(333);
     expect(subscriberMock).toHaveBeenCalledTimes(2);
   });
 });

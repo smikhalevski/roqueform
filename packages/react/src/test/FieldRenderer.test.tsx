@@ -1,7 +1,7 @@
 import React, { createElement } from 'react';
 import { act, render } from '@testing-library/react';
 import { FieldRenderer, useField } from '../main';
-import { Field, Plugin } from 'roqueform';
+import { createField } from 'roqueform';
 
 describe('FieldRenderer', () => {
   test('passes the field as an argument', () => {
@@ -21,82 +21,41 @@ describe('FieldRenderer', () => {
     );
   });
 
-  test('re-renders if field value is changed externally', async () => {
+  test('re-renders if field value is changed', async () => {
     const renderMock = jest.fn();
+    const rootField = createField();
 
-    let rootField!: Field;
-
-    render(
-      createElement(() => {
-        rootField = useField();
-
-        return <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>;
-      })
-    );
+    render(createElement(() => <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>));
 
     await act(() => rootField.setValue(111));
 
     expect(renderMock).toHaveBeenCalledTimes(2);
   });
 
-  test('re-renders if field is notified', async () => {
+  test('does not re-render if child field value is changed', async () => {
     const renderMock = jest.fn();
-    const plugin: Plugin = (_field, _accessor, notify) => {
-      notifyCallback = notify;
-    };
+    const rootField = createField();
 
-    let rootField!: Field;
-    let notifyCallback!: () => void;
-
-    render(
-      createElement(() => {
-        rootField = useField(undefined, plugin);
-
-        return <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>;
-      })
-    );
-
-    await act(() => notifyCallback());
-
-    expect(renderMock).toHaveBeenCalledTimes(2);
-  });
-
-  test('does not re-render if derived field value is changed externally', async () => {
-    const renderMock = jest.fn();
-
-    let rootField!: Field<{ foo: number }>;
-
-    render(
-      createElement(() => {
-        rootField = useField({ foo: 111 });
-
-        return <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>;
-      })
-    );
+    render(createElement(() => <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>));
 
     await act(() => rootField.at('foo').setValue(222));
 
     expect(renderMock).toHaveBeenCalledTimes(1);
   });
 
-  test('does not re-render if eagerlyUpdated and derived field value is changed externally', async () => {
+  test('does not re-render if eagerlyUpdated and child field value is changed', async () => {
     const renderMock = jest.fn();
-
-    let rootField!: Field<{ foo: number }>;
+    const rootField = createField();
 
     render(
-      createElement(() => {
-        rootField = useField({ foo: 111 });
-
-        return (
-          <FieldRenderer
-            field={rootField}
-            eagerlyUpdated={true}
-          >
-            {renderMock}
-          </FieldRenderer>
-        );
-      })
+      createElement(() => (
+        <FieldRenderer
+          field={rootField}
+          eagerlyUpdated={true}
+        >
+          {renderMock}
+        </FieldRenderer>
+      ))
     );
 
     await act(() => rootField.at('foo').setValue(222));
@@ -106,22 +65,17 @@ describe('FieldRenderer', () => {
 
   test('triggers onChange handler when value is changed non-transiently', async () => {
     const handleChangeMock = jest.fn();
-
-    let rootField!: Field<{ foo: number }>;
+    const rootField = createField();
 
     render(
-      createElement(() => {
-        rootField = useField({ foo: 111 });
-
-        return (
-          <FieldRenderer
-            field={rootField.at('foo')}
-            onChange={handleChangeMock}
-          >
-            {() => null}
-          </FieldRenderer>
-        );
-      })
+      createElement(() => (
+        <FieldRenderer
+          field={rootField.at('foo')}
+          onChange={handleChangeMock}
+        >
+          {() => null}
+        </FieldRenderer>
+      ))
     );
 
     await act(() => rootField.at('foo').setValue(222));
@@ -132,22 +86,17 @@ describe('FieldRenderer', () => {
 
   test('triggers onChange handler when value is changed transiently', async () => {
     const handleChangeMock = jest.fn();
-
-    let rootField!: Field<{ foo: number }>;
+    const rootField = createField();
 
     render(
-      createElement(() => {
-        rootField = useField({ foo: 111 });
-
-        return (
-          <FieldRenderer
-            field={rootField.at('foo')}
-            onChange={handleChangeMock}
-          >
-            {() => null}
-          </FieldRenderer>
-        );
-      })
+      createElement(() => (
+        <FieldRenderer
+          field={rootField.at('foo')}
+          onChange={handleChangeMock}
+        >
+          {() => null}
+        </FieldRenderer>
+      ))
     );
 
     await act(() => {
@@ -157,7 +106,7 @@ describe('FieldRenderer', () => {
 
     expect(handleChangeMock).toHaveBeenCalledTimes(0);
 
-    await act(() => rootField.at('foo').dispatch());
+    await act(() => rootField.at('foo').propagate());
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 333);

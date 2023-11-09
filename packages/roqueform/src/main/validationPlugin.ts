@@ -88,7 +88,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
   deleteError(): void;
 
   /**
-   * Recursively deletes errors associated with this field and all of its derived fields.
+   * Recursively deletes errors associated with this field and all of its child fields.
    */
   clearErrors(): void;
 
@@ -194,13 +194,10 @@ export interface Validator<Error = any, Options = any> {
   validate(field: Field<ValidationPlugin<Error, Options>>, options: Options | undefined): void;
 
   /**
-   * Applies validation rules to a field.
+   * Applies validation rules to a field. If this callback is omitted, then {@link validate} would be called instead.
    *
-   * Check that {@link Validation.abortController validation isn't aborted} before
-   * {@link ValidationPlugin.setValidationError setting a validation error}, otherwise stop validation as soon as
-   * possible.
-   *
-   * If this callback is omitted, then {@link validate} would be called instead.
+   * Set {@link ValidationPlugin.setValidationError validation errors} to invalid fields during validation. Refer to
+   * {@link ValidationPlugin.validation} to check that validation wasn't aborted.
    *
    * @param field The field where {@link ValidationPlugin.validateAsync} was called.
    * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
@@ -229,11 +226,11 @@ export function validationPlugin<Error = any, Options = void>(
     field.errorCount = 0;
     field.errorOrigin = 0;
     field.validator = typeof validator === 'function' ? { validate: validator } : validator;
-    field.validation = null;
+    field.validation = field.parent !== null ? field.parent.validation : null;
 
     Object.defineProperties(field, {
-      isInvalid: { get: () => field.errorCount !== 0 },
-      isValidating: { get: () => field.validation !== null },
+      isInvalid: { configurable: true, get: () => field.errorCount !== 0 },
+      isValidating: { configurable: true, get: () => field.validation !== null },
     });
 
     const { setValue, setTransientValue } = field;
@@ -279,7 +276,7 @@ export function validationPlugin<Error = any, Options = void>(
     };
 
     field.setValidationError = (validation, error) => {
-      if (validation !== null && field.validation !== validation && field.errorOrigin < 2) {
+      if (validation !== null && field.validation === validation && field.errorOrigin < 2) {
         dispatchEvents(setError(field, error, 1, []));
       }
     };

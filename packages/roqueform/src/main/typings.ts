@@ -58,7 +58,7 @@ export type Subscriber<Target = AnyField, Data = any> = (event: Event<Target, Da
 export type Unsubscribe = () => void;
 
 /**
- * Infers the plugin that was used to enhance the field.
+ * Infers plugins that were injected into a field
  *
  * Use `PluginOf<this>` in plugin interfaces to infer all plugin interfaces that were intersected with the field
  * controller.
@@ -155,7 +155,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * @see {@link on}
    * @protected
    */
-  ['subscribers']: Record<string, Subscriber<this>[]> | null;
+  ['subscribers']: Record<string, Subscriber<this>[] | undefined> | null;
 
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
@@ -163,7 +163,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
    * @protected
    */
-  ['accessor']: Accessor;
+  ['valueAccessor']: ValueAccessor;
 
   /**
    * The plugin that is applied to this field and all child fields when they are accessed, or `null` field isn't
@@ -239,7 +239,7 @@ export type PluginInjector<Plugin = unknown, Value = any> = (field: Field<Plugin
 /**
  * The abstraction used by the {@link Field} to read and write object properties.
  */
-export interface Accessor {
+export interface ValueAccessor {
   /**
    * Returns the value that corresponds to `key` in `obj`.
    *
@@ -294,8 +294,8 @@ type KeyOf<T> =
  */
 // prettier-ignore
 type ValueAt<T, Key> =
-  T extends { set(key: any, value: any): any, get(key: infer K): infer V } ? Key extends K ? V : never :
-  T extends { add(value: infer V): any, [Symbol.iterator]: Function } ? Key extends number ? V | undefined : never :
-  T extends readonly any[] ? Key extends number ? T[Key] : never :
+  T extends { set(key: any, value: any): any, get(key: infer K): infer V } ? Key extends K ? V : undefined :
+  T extends { add(value: infer V): any, [Symbol.iterator]: Function } ? Key extends number ? V | undefined : undefined :
+  T extends readonly any[] ? Key extends number ? T[Key] : undefined :
   Key extends keyof T ? T[Key] :
-  never
+  undefined

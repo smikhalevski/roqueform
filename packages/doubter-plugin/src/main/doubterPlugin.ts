@@ -33,7 +33,11 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
     const { setError } = field;
 
     field.setError = error => {
-      setError(typeof error === 'string' ? { message: error, path: getPath(field) } : error);
+      if (error === null || error === undefined) {
+        setError(error);
+      } else {
+        setError(prependPath(field, typeof error === 'string' ? { message: error, input: field.value } : error));
+      }
     };
   };
 }
@@ -60,22 +64,18 @@ const doubterValidator: Validator<Issue, ParseOptions> = {
   },
 };
 
-function getPath(field: AnyField): any[] {
-  const path = [];
-
+function prependPath(field: AnyField, issue: Issue): Issue {
   while (field.parent !== null) {
-    path.unshift(field.key);
+    (issue.path ||= []).unshift(field.key);
     field = field.parent;
   }
-  return path;
+  return issue;
 }
 
 function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): void {
   if (result.ok) {
     return;
   }
-
-  const basePath = getPath(validation.root);
 
   for (const issue of result.issues) {
     let child = validation.root;
@@ -84,11 +84,7 @@ function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): v
       for (const key of issue.path) {
         child = child.at(key);
       }
-      issue.path = basePath.concat(issue.path);
-    } else {
-      issue.path = basePath.slice(0);
     }
-
-    child.setValidationError(validation, issue);
+    child.setValidationError(validation, prependPath(validation.root, issue));
   }
 }

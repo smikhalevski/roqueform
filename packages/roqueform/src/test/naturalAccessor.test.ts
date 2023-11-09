@@ -2,14 +2,14 @@ import { naturalAccessor } from '../main';
 
 describe('naturalAccessor', () => {
   test('does not read value from primitive values', () => {
-    expect(naturalAccessor.get(null, 'aaa')).toBe(undefined);
-    expect(naturalAccessor.get(undefined, 'aaa')).toBe(undefined);
-    expect(naturalAccessor.get(111, 'toString')).toBe(undefined);
-    expect(naturalAccessor.get('aaa', 'toString')).toBe(undefined);
-    expect(naturalAccessor.get(true, 'toString')).toBe(undefined);
-    expect(naturalAccessor.get(() => undefined, 'length')).toBe(undefined);
-    expect(naturalAccessor.get(new Date(), 'now')).toBe(undefined);
-    expect(naturalAccessor.get(new RegExp(''), 'lastIndex')).toBe(undefined);
+    expect(naturalAccessor.get(null, 'aaa')).toBeUndefined();
+    expect(naturalAccessor.get(undefined, 'aaa')).toBeUndefined();
+    expect(naturalAccessor.get(111, 'toString')).toBeUndefined();
+    expect(naturalAccessor.get('aaa', 'toString')).toBeUndefined();
+    expect(naturalAccessor.get(true, 'toString')).toBeUndefined();
+    expect(naturalAccessor.get(() => undefined, 'length')).toBeUndefined();
+    expect(naturalAccessor.get(new Date(), 'now')).toBeUndefined();
+    expect(naturalAccessor.get(new RegExp(''), 'lastIndex')).toBeUndefined();
   });
 
   test('reads value from an array', () => {
@@ -106,6 +106,6 @@ describe('naturalAccessor', () => {
 
     expect(result).toEqual({ aaa: 111, bbb: 222 });
     expect(result).not.toBe(obj);
-    expect(Object.getPrototypeOf(result)).toBe(null);
+    expect(Object.getPrototypeOf(result)).toBeNull();
   });
 });

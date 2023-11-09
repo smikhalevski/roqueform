@@ -1,10 +1,10 @@
 import { expectType } from 'tsd';
-import { composePlugins, createField, Plugin } from 'roqueform';
+import { composePlugins, createField, PluginInjector } from 'roqueform';
 
-declare const plugin1: Plugin<{ aaa: number }>;
-declare const plugin2: Plugin<{ bbb: boolean }>;
+declare const plugin1: PluginInjector<{ aaa: number }>;
+declare const plugin2: PluginInjector<{ bbb: boolean }>;
 
-expectType<Plugin<{ aaa: number } & { bbb: boolean }>>(composePlugins(plugin1, plugin2));
+expectType<PluginInjector<{ aaa: number } & { bbb: boolean }>>(composePlugins(plugin1, plugin2));
 
 const field = createField({ foo: 111 }, composePlugins(plugin1, plugin2));
 

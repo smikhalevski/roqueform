@@ -5,6 +5,4 @@ import { ZodPlugin, zodPlugin } from '@roqueform/zod-plugin';
 
 const shape = z.object({ foo: z.object({ bar: z.string() }) });
 
-expectType<Field<{ foo: { bar: string } }, ZodPlugin> & ZodPlugin>(
-  createField({ foo: { bar: 'aaa' } }, zodPlugin(shape))
-);
+expectType<Field<ZodPlugin, { foo: { bar: string } }>>(createField({ foo: { bar: 'aaa' } }, zodPlugin(shape)));

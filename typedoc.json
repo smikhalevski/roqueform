@@ -34,6 +34,7 @@
       "Promise": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
     },
     "global": {
+      "MutationObserver": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/MutationObserver",
       "Date": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
       "File": "https://developer.mozilla.org/en-US/docs/Web/API/File"
     }

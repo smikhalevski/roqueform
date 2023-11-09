@@ -1,10 +1,10 @@
-import { Accessor } from './typings';
+import { ValueAccessor } from './typings';
 import { isEqual } from './utils';
 
 /**
  * The accessor that reads and writes key-value pairs to well-known object instances.
  */
-export const naturalAccessor: Accessor = {
+export const naturalAccessor: ValueAccessor = {
   get(obj, key) {
     if (isPrimitive(obj)) {
       return undefined;
@@ -93,7 +93,7 @@ export const naturalAccessor: Accessor = {
 };
 
 /**
- * Converts `k` to a number if it represents a valid array index, or returns -1 if `k` isn't an index.
+ * Converts `k` to a non-negative integer if it represents a valid array index, or returns -1 if `k` isn't an index.
  */
 function toArrayIndex(k: any): number {
   return (typeof k === 'number' || (typeof k === 'string' && k === '' + (k = +k))) && k >>> 0 === k ? k : -1;
@@ -104,13 +104,13 @@ function isPrimitive(obj: any): boolean {
     obj === null ||
     obj === undefined ||
     typeof obj !== 'object' ||
+    obj instanceof Date ||
+    obj instanceof RegExp ||
     obj instanceof String ||
     obj instanceof Number ||
     obj instanceof Boolean ||
     obj instanceof BigInt ||
-    obj instanceof Symbol ||
-    obj instanceof Date ||
-    obj instanceof RegExp
+    obj instanceof Symbol
   );
 }
 
