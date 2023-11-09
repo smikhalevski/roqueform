@@ -26,7 +26,7 @@ export const App = () => {
     <FieldRenderer field={planetField.at('name')}>
       {nameField => (
         <input
-          ref={nameField.refCallback}
+          ref={nameField.ref}
           value={nameField.value}
           onChange={event => {
             nameField.setValue(event.target.value);

@@ -100,7 +100,18 @@ function toArrayIndex(k: any): number {
 }
 
 function isPrimitive(obj: any): boolean {
-  return obj === null || obj === undefined || typeof obj !== 'object' || obj instanceof Date || obj instanceof RegExp;
+  return (
+    obj === null ||
+    obj === undefined ||
+    typeof obj !== 'object' ||
+    obj instanceof String ||
+    obj instanceof Number ||
+    obj instanceof Boolean ||
+    obj instanceof BigInt ||
+    obj instanceof Symbol ||
+    obj instanceof Date ||
+    obj instanceof RegExp
+  );
 }
 
 function isMapLike(obj: any): obj is Map<unknown, unknown> {

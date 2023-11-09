@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/zod-plugin
+ * @module zod-plugin
  */
 
 export * from './zodPlugin';

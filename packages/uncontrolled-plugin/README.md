@@ -36,7 +36,7 @@ export const App = () => {
       {'Planet:'}
       <input
         type="text"
-        ref={field.at('planet').refCallback}
+        ref={field.at('planet').ref}
       />
       <br/>
 
@@ -47,7 +47,7 @@ export const App = () => {
             type="radio"
             name="color-property"
             value={color}
-            ref={field.at('properties').at('color').refCallback}
+            ref={field.at('properties').at('color').ref}
           />
           {color}
         </label>
@@ -59,17 +59,17 @@ export const App = () => {
 
 # Value coercion
 To associate field with a form element, pass
-[`Field.refCallback`](https://smikhalevski.github.io/roqueform/interfaces/_roqueform_ref_plugin.RefPlugin.html#refCallback)
+[`Field.ref`](https://smikhalevski.github.io/roqueform/interfaces/_roqueform_ref_plugin.RefPlugin.html#ref)
 as a `ref` attribute of an `input`, `textarea`, or any other form element:
 
 ```tsx
-<input ref={field.refCallback}/>
+<input ref={field.ref}/>
 ```
 
 The plugin would synchronize the field value with the value of an input element. When the input value is changed and
 `change` or `input` event is dispatched, `field` is updated with the corresponding value.
 
-If you have a set of radio buttons, or checkboxes that update a single field, provide the same `refCallback` to all
+If you have a set of radio buttons, or checkboxes that update a single field, provide the same `ref` to all
 inputs, `uncontrolledPlugin` would use them a source of values.
 
 ```ts
@@ -83,13 +83,13 @@ The plugin relies only on `value` attribute, so `name` and other attributes are 
   <input
     type="checkbox"
     value="Mars"
-    ref={namesField.refCallback}
+    ref={namesField.ref}
   />
   <input
     type="checkbox"
     value="Pluto"
-    // 🟡 Note that the same refCallback is passed to two inputs
-    ref={namesField.refCallback}
+    // 🟡 Note that the same ref is passed to two inputs
+    ref={namesField.ref}
   />
 </form>
 ```

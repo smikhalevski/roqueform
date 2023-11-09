@@ -1,4 +1,4 @@
-import { dispatchEvents, FieldEvent, Field, isEqual, PluginCallback } from 'roqueform';
+import { dispatchEvents, Event, Field, isEqual, PluginInjector, Subscriber, Unsubscribe, ValueOf } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 
 /**
@@ -6,25 +6,16 @@ import isDeepEqual from 'fast-deep-equal';
  */
 export interface ResetPlugin {
   /**
-   * @internal
-   */
-  ['__plugin']: unknown;
-
-  /**
-   * @internal
-   */
-  value: unknown;
-
-  /**
    * `true` if the field value is different from its initial value, or `false` otherwise.
    */
-  isDirty: boolean;
+  readonly isDirty: boolean;
 
   /**
    * The callback that compares initial value and the current value of the field.
    *
    * @param initialValue The initial value.
    * @param value The current value.
+   * @protected
    */
   ['equalityChecker']: (initialValue: any, value: any) => boolean;
 
@@ -33,7 +24,7 @@ export interface ResetPlugin {
    *
    * @param value The initial value to set.
    */
-  setInitialValue(value: this['value']): void;
+  setInitialValue(value: ValueOf<this>): void;
 
   /**
    * Reverts the field to its initial value.
@@ -41,31 +32,13 @@ export interface ResetPlugin {
   reset(): void;
 
   /**
-   * Subscribes the listener to field initial value change events.
+   * Subscribes to changes of {@link FieldController.initialValue the initial value}.
    *
    * @param eventType The type of the event.
-   * @param listener The listener that would be triggered.
-   * @returns The callback to unsubscribe the listener.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
    */
-  on(
-    eventType: 'initialValueChange',
-    listener: (event: InitialValueChangeEvent<this['__plugin'], this['value']>) => void
-  ): () => void;
-}
-
-/**
- * The event dispatched when the field initial value has changed.
- *
- * @template Plugin The plugin added to the field.
- * @template Value The field value.
- */
-export interface InitialValueChangeEvent<Plugin = unknown, Value = any> extends FieldEvent<Plugin, Value> {
-  type: 'initialValueChange';
-
-  /**
-   * The previous initial value that was replaced by {@link Field.initialValue the new initial value}.
-   */
-  previousInitialValue: Value;
+  on(eventType: 'change:initialValue', subscriber: Subscriber<this, ValueOf<this>>): Unsubscribe;
 }
 
 /**
@@ -76,9 +49,8 @@ export interface InitialValueChangeEvent<Plugin = unknown, Value = any> extends 
  */
 export function resetPlugin(
   equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
-): PluginCallback<ResetPlugin> {
+): PluginInjector<ResetPlugin> {
   return field => {
-    field.isDirty = field.equalityChecker(field.initialValue, field.value);
     field.equalityChecker = equalityChecker;
 
     field.setInitialValue = value => {
@@ -89,9 +61,7 @@ export function resetPlugin(
       field.setValue(field.initialValue);
     };
 
-    field.on('valueChange', () => {
-      field.isDirty = field.equalityChecker(field.initialValue, field.value);
-    });
+    Object.defineProperty(field, 'isDirty', { get: () => field.equalityChecker(field.initialValue, field.value) });
   };
 }
 
@@ -114,17 +84,11 @@ function propagateInitialValue(
   target: Field<ResetPlugin>,
   field: Field<ResetPlugin>,
   initialValue: unknown,
-  events: InitialValueChangeEvent[]
-): InitialValueChangeEvent[] {
-  events.push({
-    type: 'initialValueChange',
-    target: target as Field<any>,
-    currentTarget: field as Field<any>,
-    previousInitialValue: field.initialValue,
-  });
+  events: Event[]
+): Event[] {
+  events.push({ type: 'change:initialValue', origin: target, target: field, data: field.initialValue });
 
   field.initialValue = initialValue;
-  field.isDirty = field.equalityChecker(initialValue, field.initialValue);
 
   if (field.children !== null) {
     for (const child of field.children) {

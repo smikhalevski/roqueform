@@ -7,7 +7,11 @@
   "disableSources": true,
   "hideGenerator": true,
   "readme": "none",
-  "tsconfig": "./tsconfig.json",
+  "visibilityFilters": {
+    "protected": true,
+    "inherited": true
+  },
+  "tsconfig": "./tsconfig.typedoc.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": [
     "./packages/roqueform/src/main/index.ts",

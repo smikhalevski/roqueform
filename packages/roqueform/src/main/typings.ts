@@ -1,29 +1,102 @@
 /**
- * The field describes field that holds a value and provides means to update it. Fields can be enhanced by plugins that
+ * The field that doesn't constrain its children and ancestors. Use this in plugins to streamline typing.
+ *
+ * @template Plugin The plugin injected into the field.
+ */
+export type AnyField<Plugin = unknown> = FieldController<any> & Plugin;
+
+/**
+ * The field that manages a value and related data. Fields can be {@link PluginInjector enhanced by plugins} that
  * provide integration with rendering frameworks, validation libraries, and other tools.
  *
- * @template Plugin The plugin added to the field.
+ * @template Plugin The plugin injected into the field.
  * @template Value The field value.
  */
 export type Field<Plugin = unknown, Value = any> = FieldController<Plugin, Value> & Plugin;
 
 /**
- * The baseline field controller that can be enhanced by plugins.
+ * The event dispatched to subscribers of {@link Field a field}.
  *
- * @template Plugin The plugin added to the field.
+ * @template Target The field where the event is dispatched.
+ * @template Data The additional data related to the event.
+ */
+export interface Event<Target = AnyField, Data = any> {
+  /**
+   * The type of the event.
+   */
+  type: string;
+
+  /**
+   * The field that has changed.
+   */
+  target: Target;
+
+  /**
+   * The original field that caused the event to be dispatched. This can be ancestor, descendant, or the{@link target}
+   * itself.
+   */
+  origin: Field<PluginOf<Target>>;
+
+  /**
+   * The additional data related to the event, depends on the {@link type event type}.
+   */
+  data: Data;
+}
+
+/**
+ * The callback that receives events dispatched by {@link Field a field}.
+ *
+ * @param event The dispatched event.
+ * @template Target The field where the event is dispatched.
+ * @template Data The additional data related to the event.
+ */
+export type Subscriber<Target = AnyField, Data = any> = (event: Event<Target, Data>) => void;
+
+/**
+ * Unsubscribes the subscriber. No-op if subscriber was already unsubscribed.
+ */
+export type Unsubscribe = () => void;
+
+/**
+ * Infers the plugin that was used to enhance the field.
+ *
+ * Use `PluginOf<this>` in plugin interfaces to infer all plugin interfaces that were intersected with the field
+ * controller.
+ *
+ * @template T The field to infer plugin of.
+ */
+export type PluginOf<T> = T['__plugin__' & keyof T];
+
+/**
+ * Infers the value of the field.
+ *
+ * Use `ValueOf<this>` in plugin interfaces to infer the value of the current field.
+ *
+ * @template T The field to infer value of.
+ */
+export type ValueOf<T> = T['value' & keyof T];
+
+/**
+ * The field controller provides the core field functionality.
+ *
+ * @template Plugin The plugin injected into the field.
  * @template Value The field value.
  */
-interface FieldController<Plugin = unknown, Value = any> {
+export interface FieldController<Plugin = unknown, Value = any> {
   /**
+   * Holds the plugin type for inference.
+   *
+   * Use {@link PluginOf PluginOf<this>} in plugin interfaces to infer the plugin type.
+   *
    * @internal
    */
-  ['__plugin']: Plugin;
+  readonly ['__plugin__']: Plugin;
 
   /**
    * The key in the {@link parent parent value} that corresponds to the value of this field, or `null` if there's no
    * parent.
    */
-  readonly key: any;
+  key: any;
 
   /**
    * The current value of the field.
@@ -37,54 +110,76 @@ interface FieldController<Plugin = unknown, Value = any> {
 
   /**
    * `true` if the value was last updated using {@link setTransientValue}, or `false` otherwise.
+   *
+   * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
    */
   isTransient: boolean;
 
   /**
    * The root field.
+   *
+   * @protected
    */
   ['root']: Field<Plugin>;
 
   /**
    * The parent field, or `null` if this is the root field.
+   *
+   * @protected
    */
-  readonly ['parent']: Field<Plugin> | null;
+  ['parent']: Field<Plugin> | null;
 
   /**
-   * The array of immediate child fields that were {@link at previously accessed}, or `null` if there's no children.
-   * Children array is always in sync with {@link childrenMap}.
+   * The array of immediate child fields that were {@link at previously accessed}, or `null` if there are no children.
    *
-   * Don't modify this array directly and always use on {@link at} to add a new child.
+   * This array is populated during {@link FieldController.at} call.
+   *
+   * @see {@link childrenMap}
+   * @protected
    */
   ['children']: Field<Plugin>[] | null;
 
   /**
-   * Mapping from a key to a child field. Children map is always in sync with {@link children children array}.
+   * Mapping from a key to a corresponding child field, or `null` if there are no children.
    *
-   * Don't modify this array directly and always use on {@link at} to add a new child.
+   * This map is populated during {@link FieldController.at} call.
+   *
+   * @see {@link children}
+   * @protected
    */
   ['childrenMap']: Map<unknown, Field<Plugin>> | null;
 
   /**
-   * The map from an event type to an array of associated listeners, or `null` if no listeners were added.
+   * The map from an event type to an array of associated subscribers, or `null` if no subscribers were added.
+   *
+   * @see {@link on}
+   * @protected
    */
-  ['listeners']: { [eventType: string]: Array<(event: FieldEvent<Plugin, Value>) => void> } | null;
+  ['subscribers']: Record<string, Subscriber<this>[]> | null;
 
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
+   *
+   * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
+   * @protected
    */
-  readonly ['accessor']: Accessor;
+  ['accessor']: Accessor;
 
   /**
-   * The plugin that is applied to this field and all child field when they are accessed.
+   * The plugin that is applied to this field and all child fields when they are accessed, or `null` field isn't
+   * enhanced by a plugin.
+   *
+   * @see [Authoring a plugin](https://github.com/smikhalevski/roqueform#authoring-a-plugin)
+   * @protected
    */
-  readonly ['plugin']: PluginCallback<Plugin, Value> | null;
+  ['plugin']: PluginInjector<Plugin, Value> | null;
 
   /**
-   * Updates the field value and notifies both ancestor and child fields about the change. If the field withholds
+   * Updates the field value and notifies both ancestors and child fields about the change. If the field withholds
    * {@link isTransient a transient value} then it becomes non-transient.
    *
    * @param value The value to set, or a callback that receives a previous value and returns a new one.
+   * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
    */
   setValue(value: Value | ((prevValue: Value) => Value)): void;
 
@@ -93,12 +188,13 @@ interface FieldController<Plugin = unknown, Value = any> {
    * {@link isTransient transient}.
    *
    * @param value The value to set, or a callback that receives a previous value and returns a new one.
+   * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
    */
   setTransientValue(value: Value | ((prevValue: Value) => Value)): void;
 
   /**
    * If {@link value the current value} {@link isTransient is transient} then the value of the parent field is notified
-   * about the change and this field is marked as non-transient.
+   * about the change and this field is marked as non-transient. No-op if the current value is non-transient.
    */
   propagate(): void;
 
@@ -113,71 +209,32 @@ interface FieldController<Plugin = unknown, Value = any> {
   at<Key extends KeyOf<Value>>(key: Key): Field<Plugin, ValueAt<Value, Key>>;
 
   /**
-   * Subscribes the listener to all events.
+   * Subscribes to all events.
    *
    * @param eventType The type of the event.
-   * @param listener The listener that would be triggered.
-   * @returns The callback to unsubscribe the listener.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
    */
-  on(eventType: '*', listener: (event: FieldEvent<Plugin, Value>) => void): () => void;
+  on(eventType: '*', subscriber: Subscriber<this>): Unsubscribe;
 
   /**
-   * Subscribes the listener to field value change events.
+   * Subscribes to {@link value the field value} changes.
    *
    * @param eventType The type of the event.
-   * @param listener The listener that would be triggered.
-   * @returns The callback to unsubscribe the listener.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
    */
-  on(eventType: 'valueChange', listener: (event: ValueChangeEvent<Plugin, Value>) => void): () => void;
+  on(eventType: 'change:value', subscriber: Subscriber<this, ValueOf<this>>): Unsubscribe;
 }
 
 /**
- * The event dispatched to subscribers of {@link Field a field}.
+ * The callback that enhances the field with a plugin. Injector should _mutate_ the passed field instance.
  *
- * @template Plugin The plugin added to the field.
- * @template Value The field value.
- */
-export interface FieldEvent<Plugin = unknown, Value = any> {
-  /**
-   * The type of the event.
-   */
-  type: string;
-
-  /**
-   * The field that caused the event to be dispatched. This can be ancestor, descendant, or the {@link currentTarget}.
-   */
-  target: Field<Plugin>;
-
-  /**
-   * The field to which the event listener is subscribed.
-   */
-  currentTarget: Field<Plugin, Value>;
-}
-
-/**
- * The event dispatched when the field value has changed.
- *
- * @template Plugin The plugin added to the field.
- * @template Value The field value.
- */
-export interface ValueChangeEvent<Plugin = unknown, Value = any> extends FieldEvent<Plugin, Value> {
-  type: 'valueChange';
-
-  /**
-   * The previous value that was replaced by {@link Field.value the current field value}.
-   */
-  previousValue: Value;
-}
-
-/**
- * The callback that enhances the field.
- *
- * The plugin should _mutate_ the passed field instance.
- *
- * @template Plugin The plugin added to the field.
+ * @param field The mutable field that must be enhanced.
+ * @template Plugin The plugin injected into the field.
  * @template Value The root field value.
  */
-export type PluginCallback<Plugin = unknown, Value = any> = (field: Field<Plugin, Value>) => void;
+export type PluginInjector<Plugin = unknown, Value = any> = (field: Field<Plugin, Value>) => void;
 
 /**
  * The abstraction used by the {@link Field} to read and write object properties.

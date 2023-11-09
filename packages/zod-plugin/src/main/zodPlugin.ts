@@ -1,5 +1,5 @@
-import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
-import { Field, PluginCallback, ValidationPlugin, validationPlugin, Validator } from 'roqueform';
+import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodSchema, ZodTypeAny } from 'zod';
+import { AnyField, Field, PluginInjector, Validation, ValidationPlugin, validationPlugin, Validator } from 'roqueform';
 
 /**
  * The plugin added to fields by the {@link zodPlugin}.
@@ -7,6 +7,8 @@ import { Field, PluginCallback, ValidationPlugin, validationPlugin, Validator } 
 export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParams>> {
   /**
    * The Zod validation schema of the root value.
+   *
+   * @protected
    */
   ['schema']: ZodTypeAny;
 
@@ -16,42 +18,49 @@ export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParam
 /**
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
  *
- * @param schema The shape that parses the field value.
+ * @param schema The schema that validates the field value.
  * @template Value The root field value.
  * @returns The validation plugin.
  */
-export function zodPlugin<Value>(schema: ZodType<any, any, Value>): PluginCallback<ZodPlugin, Value> {
-  let plugin: PluginCallback<any>;
+export function zodPlugin<Value>(schema: ZodSchema<any, any, Value>): PluginInjector<ZodPlugin, Value> {
+  let plugin;
 
   return field => {
     (plugin ||= validationPlugin(zodValidator))(field);
 
-    field.schema = schema;
+    field.schema = field.parent?.schema || schema;
 
     const { setError } = field;
 
     field.setError = error => {
-      if (typeof error === 'string') {
-        error = { code: ZodIssueCode.custom, path: getPath(field), message: error };
-      }
-      setError(error);
+      setError(typeof error === 'string' ? { code: ZodIssueCode.custom, path: getPath(field), message: error } : error);
     };
   };
 }
 
 const zodValidator: Validator<ZodIssue, Partial<ParseParams>> = {
   validate(field, options) {
-    applyResult(field, (field as unknown as Field<ZodPlugin>).schema.safeParse(getRootValue(field), options));
+    const { validation, schema } = field as unknown as Field<ZodPlugin>;
+
+    if (validation !== null) {
+      applyResult(validation, schema.safeParse(getValue(field), options));
+    }
   },
 
   validateAsync(field, options) {
-    return (field as unknown as Field<ZodPlugin>).schema.safeParseAsync(getRootValue(field), options).then(result => {
-      applyResult(field, result);
-    });
+    const { validation, schema } = field as unknown as Field<ZodPlugin>;
+
+    if (validation !== null) {
+      return schema.safeParseAsync(getValue(field), options).then(result => {
+        applyResult(validation, result);
+      });
+    }
+
+    return Promise.resolve();
   },
 };
 
-function getRootValue(field: Field<ValidationPlugin>): unknown {
+function getValue(field: Field<ValidationPlugin>): unknown {
   let value = field.value;
   let transient = false;
 
@@ -63,39 +72,39 @@ function getRootValue(field: Field<ValidationPlugin>): unknown {
   return value;
 }
 
-function getPath(field: Field<any>): any[] {
+function getPath(field: AnyField): any[] {
   const path = [];
-  for (let ancestor = field; ancestor.parent !== null; ancestor = ancestor.parent) {
-    path.unshift(ancestor.key);
+
+  while (field.parent !== null) {
+    path.unshift(field.key);
+    field = field.parent;
   }
   return path;
 }
 
-function applyResult(field: Field<ValidationPlugin>, result: SafeParseReturnType<any, any>): void {
-  const { validation } = field;
-
-  if (validation === null || result.success) {
+function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnType<unknown, unknown>): void {
+  if (result.success) {
     return;
   }
 
-  let prefix = getPath(field);
+  const basePath = getPath(validation.root);
 
   issues: for (const issue of result.error.issues) {
     const { path } = issue;
 
-    let targetField = field;
-
-    if (path.length < prefix.length) {
+    if (path.length < basePath.length) {
       continue;
     }
-    for (let i = 0; i < prefix.length; ++i) {
-      if (path[i] !== prefix[i]) {
+    for (let i = 0; i < basePath.length; ++i) {
+      if (path[i] !== basePath[i]) {
         continue issues;
       }
     }
-    for (let i = prefix.length; i < path.length; ++i) {
-      targetField = targetField.at(path[i]);
+
+    let child = validation.root;
+    for (let i = basePath.length; i < path.length; ++i) {
+      child = child.at(path[i]);
     }
-    field.setValidationError(validation, issue);
+    child.setValidationError(validation, issue);
   }
 }

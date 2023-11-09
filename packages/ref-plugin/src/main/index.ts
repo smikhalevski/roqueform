@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/ref-plugin
+ * @module ref-plugin
  */
 
 export * from './refPlugin';

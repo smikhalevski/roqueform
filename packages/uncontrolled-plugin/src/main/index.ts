@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/uncontrolled-plugin
+ * @module uncontrolled-plugin
  */
 
 export * from './createElementValueAccessor';

@@ -1,25 +1,25 @@
-import { FieldEvent, Field, PluginCallback } from './typings';
+import { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './typings';
 import { dispatchEvents, isEqual } from './utils';
 
-const EVENT_CHANGE = 'validityChange';
-const EVENT_START = 'validationStart';
-const EVENT_END = 'validationEnd';
+const EVENT_CHANGE_ERROR = 'change:error';
 const ERROR_ABORT = 'Validation aborted';
 
 /**
- * Describes the pending validation.
+ * The pending validation descriptor.
+ *
+ * @template Plugin The plugin injected into the field.
  */
 export interface Validation<Plugin = ValidationPlugin> {
   /**
    * The field where the validation was triggered.
    */
-  readonly root: Field<Plugin>;
+  root: Field<Plugin>;
 
   /**
    * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
    * the validation is synchronous.
    */
-  readonly abortController: AbortController | null;
+  abortController: AbortController | null;
 }
 
 /**
@@ -30,22 +30,12 @@ export interface Validation<Plugin = ValidationPlugin> {
  */
 export interface ValidationPlugin<Error = any, Options = any> {
   /**
-   * @internal
-   */
-  ['__plugin']: unknown;
-
-  /**
-   * @internal
-   */
-  value: unknown;
-
-  /**
    * A validation error associated with the field, or `null` if there's no error.
    */
   error: Error | null;
 
   /**
-   * `true` if this field or any of its descendants have no associated errors, or `false` otherwise.
+   * `true` if this field or any of its descendants have associated errors, or `false` otherwise.
    */
   readonly isInvalid: boolean;
 
@@ -56,6 +46,8 @@ export interface ValidationPlugin<Error = any, Options = any> {
 
   /**
    * The total number of errors associated with this field and its child fields.
+   *
+   * @protected
    */
   ['errorCount']: number;
 
@@ -64,18 +56,24 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * - 0 if there's no associated error.
    * - 1 if an error was set using {@link ValidationPlugin.setValidationError};
    * - 2 if an error was set using {@link ValidationPlugin.setError};
+   *
+   * @protected
    */
   ['errorOrigin']: 0 | 1 | 2;
 
   /**
    * The validator to which the field value validation is delegated.
+   *
+   * @protected
    */
   ['validator']: Validator;
 
   /**
    * The pending validation, or `null` if there's no pending validation.
+   *
+   * @protected
    */
-  ['validation']: Validation<this['__plugin']> | null;
+  ['validation']: Validation<PluginOf<this>> | null;
 
   /**
    * Associates an error with the field and notifies the subscribers.
@@ -102,14 +100,14 @@ export interface ValidationPlugin<Error = any, Options = any> {
   /**
    * Returns all fields that have an error.
    */
-  getInvalidFields(): Field<this['__plugin']>[];
+  getInvalidFields(): Field<PluginOf<this>>[];
 
   /**
    * Triggers a sync field validation. Starting a validation will clear errors that were set during the previous
    * validation and preserve errors set via {@link setError}. If you want to clear all errors before the validation,
    * use {@link clearErrors}.
    *
-   * @param options Options passed to the validator.
+   * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if {@link isInvalid field is valid}, or `false` otherwise.
    */
   validate(options?: Options): boolean;
@@ -119,7 +117,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * validation and preserve errors set via {@link setError}. If you want to clear all errors before the validation,
    * use {@link clearErrors}.
    *
-   * @param options Options passed to the validator.
+   * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if {@link isInvalid field is valid}, or `false` otherwise.
    */
   validateAsync(options?: Options): Promise<boolean>;
@@ -131,44 +129,51 @@ export interface ValidationPlugin<Error = any, Options = any> {
   abortValidation(): void;
 
   /**
-   * Subscribes the listener field validity change events. An {@link error} would contain the associated error.
+   * Subscribes to {@link error an associated error} changes of this field or any of its descendants.
    *
    * @param eventType The type of the event.
-   * @param listener The listener that would be triggered.
-   * @returns The callback to unsubscribe the listener.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
+   * @see {@link error}
+   * @see {@link isInvalid}
    */
-  on(eventType: 'validityChange', listener: (event: FieldEvent<this['value'], this['__plugin']>) => void): () => void;
+  on(eventType: 'change:error', subscriber: Subscriber<this, Error | null>): Unsubscribe;
 
   /**
-   * Subscribes the listener to validation start events. The event is triggered for all fields that are going to be
-   * validated. The {@link FieldController.value current value} of the field is the one that is being validated.
-   * {@link FieldEvent.target} points to the field where validation was triggered.
+   * Subscribes to the start of the validation. The event is triggered for all fields that are going to be validated.
+   * The {@link FieldController.value current value} of the field is the one that is being validated.
+   * {@link Event.origin} points to the field where validation was triggered.
    *
    * @param eventType The type of the event.
-   * @param listener The listener that would be triggered.
-   * @returns The callback to unsubscribe the listener.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
+   * @see {@link validation}
+   * @see {@link isValidating}
    */
-  on(eventType: 'validationStart', listener: (event: FieldEvent<this['value'], this['__plugin']>) => void): () => void;
+  on(eventType: 'validation:start', subscriber: Subscriber<this, void>): Unsubscribe;
 
   /**
-   * Subscribes the listener to validation start end events. The event is triggered for all fields that were validated.
-   * {@link FieldEvent.target} points to the field where validation was triggered. Check {@link isInvalid} to detect the
+   * Subscribes to the end of the validation. The event is triggered for all fields that were validated when validation.
+   * {@link Event.origin} points to the field where validation was triggered. Check {@link isInvalid} to detect the
    * actual validity status.
    *
    * @param eventType The type of the event.
-   * @param listener The listener that would be triggered.
-   * @returns The callback to unsubscribe the listener.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
+   * @see {@link validation}
+   * @see {@link isValidating}
    */
-  on(eventType: 'validationEnd', listener: (event: FieldEvent<this['value'], this['__plugin']>) => void): () => void;
+  on(eventType: 'validation:end', subscriber: Subscriber<this, void>): Unsubscribe;
 
   /**
    * Associates a validation error with the field and notifies the subscribers. Use this method in
    * {@link Validator validators} to set errors that can be overridden during the next validation.
    *
-   * @param validation The validation in scope of which the value is set.
+   * @param validation The validation in scope of which an error must be set.
    * @param error The error to set.
+   * @protected
    */
-  ['setValidationError'](validation: Validation<this['__plugin']>, error: Error): void;
+  ['setValidationError'](validation: Validation<PluginOf<this>>, error: Error): void;
 }
 
 /**
@@ -218,7 +223,7 @@ export interface Validator<Error = any, Options = any> {
  */
 export function validationPlugin<Error = any, Options = void>(
   validator: Validator<Error, Options> | Validator<Error, Options>['validate']
-): PluginCallback<ValidationPlugin<Error, Options>> {
+): PluginInjector<ValidationPlugin<Error, Options>> {
   return field => {
     field.error = null;
     field.errorCount = 0;
@@ -281,30 +286,23 @@ export function validationPlugin<Error = any, Options = void>(
   };
 }
 
-type ValidationEvent = FieldEvent<ValidationPlugin>;
-
-function setError(
-  field: Field<ValidationPlugin>,
-  error: unknown,
-  errorOrigin: 1 | 2,
-  events: ValidationEvent[]
-): ValidationEvent[] {
+function setError(field: Field<ValidationPlugin>, error: unknown, errorOrigin: 1 | 2, events: Event[]): Event[] {
   if (error === null || error === undefined) {
     return deleteError(field, errorOrigin, events);
   }
 
-  const errored = field.error !== null;
+  const originalError = field.error;
 
-  if (errored && isEqual(field.error, error) && field.errorOrigin === errorOrigin) {
+  if (originalError !== null && isEqual(originalError, error) && field.errorOrigin === errorOrigin) {
     return events;
   }
 
   field.error = error;
   field.errorOrigin = errorOrigin;
 
-  events.push({ type: EVENT_CHANGE, target: field, currentTarget: field });
+  events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: field, data: originalError });
 
-  if (errored) {
+  if (originalError !== null) {
     return events;
   }
 
@@ -312,15 +310,17 @@ function setError(
 
   for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
     if (ancestor.errorCount++ === 0) {
-      events.push({ type: EVENT_CHANGE, target: field, currentTarget: ancestor });
+      events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: ancestor, data: originalError });
     }
   }
 
   return events;
 }
 
-function deleteError(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events: ValidationEvent[]): ValidationEvent[] {
-  if (field.error === null || field.errorOrigin > errorOrigin) {
+function deleteError(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events: Event[]): Event[] {
+  const originalError = field.error;
+
+  if (originalError === null || field.errorOrigin > errorOrigin) {
     return events;
   }
 
@@ -328,18 +328,18 @@ function deleteError(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events:
   field.errorOrigin = 0;
   field.errorCount--;
 
-  events.push({ type: EVENT_CHANGE, target: field, currentTarget: field });
+  events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: field, data: originalError });
 
   for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
     if (--ancestor.errorCount === 0) {
-      events.push({ type: EVENT_CHANGE, target: field, currentTarget: ancestor });
+      events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: ancestor, data: originalError });
     }
   }
 
   return events;
 }
 
-function clearErrors(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events: ValidationEvent[]): ValidationEvent[] {
+function clearErrors(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events: Event[]): Event[] {
   deleteError(field, errorOrigin, events);
 
   if (field.children !== null) {
@@ -353,14 +353,10 @@ function clearErrors(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events:
   return events;
 }
 
-function startValidation(
-  field: Field<ValidationPlugin>,
-  validation: Validation,
-  events: ValidationEvent[]
-): ValidationEvent[] {
+function startValidation(field: Field<ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
   field.validation = validation;
 
-  events.push({ type: EVENT_START, target: validation.root, currentTarget: field });
+  events.push({ type: 'validation:start', origin: validation.root, target: field, data: undefined });
 
   if (field.children !== null) {
     for (const child of field.children) {
@@ -372,18 +368,14 @@ function startValidation(
   return events;
 }
 
-function endValidation(
-  field: Field<ValidationPlugin>,
-  validation: Validation,
-  events: ValidationEvent[]
-): ValidationEvent[] {
+function endValidation(field: Field<ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
   if (field.validation !== validation) {
     return events;
   }
 
   field.validation = null;
 
-  events.push({ type: EVENT_END, target: validation.root, currentTarget: field });
+  events.push({ type: 'validation:end', origin: validation.root, target: field, data: undefined });
 
   if (field.children !== null) {
     for (const child of field.children) {
@@ -394,7 +386,7 @@ function endValidation(
   return events;
 }
 
-function abortValidation(field: Field<ValidationPlugin>, events: ValidationEvent[]): ValidationEvent[] {
+function abortValidation(field: Field<ValidationPlugin>, events: Event[]): Event[] {
   const { validation } = field;
 
   if (validation !== null) {
@@ -402,6 +394,25 @@ function abortValidation(field: Field<ValidationPlugin>, events: ValidationEvent
     validation.abortController?.abort();
   }
   return events;
+}
+
+function getInvalidFields(field: Field<ValidationPlugin>, batch: Field<ValidationPlugin>[]): Field<ValidationPlugin>[] {
+  if (field.error !== null) {
+    batch.push(field);
+  }
+  if (field.children !== null) {
+    for (const child of field.children) {
+      getInvalidFields(child, batch);
+    }
+  }
+  return batch;
+}
+
+function convertToErrors(batch: Field<ValidationPlugin>[]): any[] {
+  for (let i = 0; i < batch.length; ++i) {
+    batch[i] = batch[i].error;
+  }
+  return batch;
 }
 
 function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
@@ -472,23 +483,4 @@ function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promis
       throw error;
     }
   );
-}
-
-function getInvalidFields(field: Field<ValidationPlugin>, batch: Field<ValidationPlugin>[]): Field<ValidationPlugin>[] {
-  if (field.error !== null) {
-    batch.push(field.error);
-  }
-  if (field.children !== null) {
-    for (const child of field.children) {
-      getInvalidFields(child, batch);
-    }
-  }
-  return batch;
-}
-
-function convertToErrors(batch: Field<ValidationPlugin>[]): any[] {
-  for (let i = 0; i < batch.length; ++i) {
-    batch[i] = batch[i].error;
-  }
-  return batch;
 }

@@ -38,21 +38,21 @@ describe('resetPlugin', () => {
   });
 
   test('updates the initial value and notifies fields', () => {
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
     const initialValue = { foo: 111 };
 
     const field = createField(initialValue, resetPlugin());
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     const initialValue2 = { foo: 222 };
 
     field.setInitialValue(initialValue2);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
     expect(field.at('foo').initialValue).toBe(222);
     expect(field.at('foo').isDirty).toBe(true);

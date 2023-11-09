@@ -1,21 +1,21 @@
 import { createElement, Fragment, ReactElement, ReactNode, useEffect, useReducer, useRef } from 'react';
-import { callOrGet, Field } from 'roqueform';
+import { AnyField, callOrGet, ValueOf } from 'roqueform';
 
 /**
  * Properties of the {@link FieldRenderer} component.
  *
- * @template RenderedField The rendered field.
+ * @template Field The rendered field.
  */
-export interface FieldRendererProps<RenderedField extends Field> {
+export interface FieldRendererProps<Field extends AnyField> {
   /**
    * The field to subscribe to.
    */
-  field: RenderedField;
+  field: Field;
 
   /**
    * The render function that receive a field as an argument.
    */
-  children: (field: RenderedField) => ReactNode;
+  children: (field: Field) => ReactNode;
 
   /**
    * If set to `true` then {@link FieldRenderer} is re-rendered whenever the {@link field} itself, its parent fields or
@@ -31,28 +31,28 @@ export interface FieldRendererProps<RenderedField extends Field> {
    *
    * @param value The new field value.
    */
-  onChange?: (value: RenderedField['value']) => void;
+  onChange?: (value: ValueOf<Field>) => void;
 }
 
 /**
  * The component that subscribes to the {@link Field} instance and re-renders its children when the field is notified.
  *
- * @template RenderedField The rendered field.
+ * @template Field The rendered field.
  */
-export function FieldRenderer<RenderedField extends Field>(props: FieldRendererProps<RenderedField>): ReactElement {
+export function FieldRenderer<Field extends AnyField>(props: FieldRendererProps<Field>): ReactElement {
   const { field, eagerlyUpdated } = props;
 
   const [, rerender] = useReducer(reduceCount, 0);
-  const handleChangeRef = useRef<FieldRendererProps<RenderedField>['onChange']>();
+  const handleChangeRef = useRef<FieldRendererProps<Field>['onChange']>();
 
   handleChangeRef.current = props.onChange;
 
   useEffect(() => {
     return field.on('*', event => {
-      if (eagerlyUpdated || event.target === field) {
+      if (eagerlyUpdated || event.origin === field) {
         rerender();
       }
-      if (field.isTransient || event.type !== 'valueChange') {
+      if (field.isTransient || event.type !== 'change:value') {
         return;
       }
 

@@ -1,4 +1,4 @@
-import { FieldEvent } from './typings';
+import { Event } from './typings';
 
 export function callOrGet<T, A>(value: T | ((prevValue: A) => T), prevValue: A): T {
   return typeof value === 'function' ? (value as Function)(prevValue) : value;
@@ -15,22 +15,22 @@ export function isEqual(a: unknown, b: unknown): boolean {
   return a === b || (a !== a && b !== b);
 }
 
-export function dispatchEvents<E extends FieldEvent<any>>(events: readonly E[]): void {
+export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
-    const { listeners } = event.currentTarget;
+    const { subscribers } = event.target;
 
-    if (listeners !== null) {
-      callAll(listeners[event.type], event);
-      callAll(listeners['*'], event);
+    if (subscribers !== null) {
+      callAll(subscribers[event.type], event);
+      callAll(subscribers['*'], event);
     }
   }
 }
 
-function callAll(listeners: Array<(event: FieldEvent) => void> | undefined, event: FieldEvent): void {
-  if (listeners !== undefined) {
-    for (const listener of listeners) {
+function callAll(subscribers: Array<(event: Event) => void> | undefined, event: Event): void {
+  if (subscribers !== undefined) {
+    for (const subscriber of subscribers) {
       try {
-        listener(event);
+        subscriber(event);
       } catch (error) {
         setTimeout(() => {
           throw error;

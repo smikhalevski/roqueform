@@ -1,18 +1,18 @@
-import { PluginCallback } from 'roqueform';
+import { PluginInjector } from 'roqueform';
 
 /**
  * The plugin added to fields by the {@link refPlugin}.
  */
 export interface RefPlugin {
   /**
-   * The DOM element associated with the field.
+   * The DOM element associated with the field, or `null` if there's no associated element.
    */
   element: Element | null;
 
   /**
    * Associates the field with the {@link element DOM element}.
    */
-  refCallback(element: Element | null): void;
+  ref(element: Element | null): void;
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -46,15 +46,15 @@ export interface RefPlugin {
 /**
  * Enables field-element association and simplifies focus control.
  */
-export function refPlugin(): PluginCallback<RefPlugin> {
+export function refPlugin(): PluginInjector<RefPlugin> {
   return field => {
     field.element = null;
 
-    const { refCallback } = field;
+    const { ref } = field;
 
-    field.refCallback = element => {
+    field.ref = element => {
       field.element = element instanceof Element ? element : null;
-      refCallback?.(element);
+      ref?.(element);
     };
 
     field.scrollIntoView = options => {

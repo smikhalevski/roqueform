@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/react
+ * @module react
  */
 
 export * from './AccessorContext';

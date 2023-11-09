@@ -9,27 +9,27 @@ describe('refPlugin', () => {
     expect(field.at('bar').element).toBe(null);
   });
 
-  test('refCallback updates an element property', () => {
+  test('ref updates an element property', () => {
     const field = createField({ bar: 111 }, refPlugin());
     const element = document.createElement('input');
 
-    field.refCallback(element);
+    field.ref(element);
 
     expect(field.element).toEqual(element);
   });
 
-  test('preserves the refCallback from preceding plugin', () => {
-    const refCallbackMock = jest.fn(() => undefined);
+  test('preserves the ref from preceding plugin', () => {
+    const refMock = jest.fn(() => undefined);
 
     const field = createField(
       { bar: 111 },
-      composePlugins(field => Object.assign(field, { refCallback: refCallbackMock }), refPlugin())
+      composePlugins(field => Object.assign(field, { ref: refMock }), refPlugin())
     );
 
-    field.refCallback(document.body);
+    field.ref(document.body);
 
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, document.body);
+    expect(refMock).toHaveBeenCalledTimes(1);
+    expect(refMock).toHaveBeenNthCalledWith(1, document.body);
     expect(field.element).toBe(document.body);
   });
 });

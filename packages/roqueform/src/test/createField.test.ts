@@ -58,18 +58,18 @@ describe('createField', () => {
   });
 
   test('invokes a subscriber when value is updated', () => {
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
     const field = createField({ foo: 111 });
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.at('foo').subscribe(fooListenerMock);
 
     field.at('foo').setValue(222);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-    expect(listenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenNthCalledWith(1, field.at('foo'), field);
 
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field.at('foo'));
@@ -146,22 +146,22 @@ describe('createField', () => {
   });
 
   test('invokes a subscriber when a value is updated transiently', () => {
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
     const field = createField({ foo: 111 });
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.at('foo').subscribe(fooListenerMock);
     field.at('foo').setTransientValue(222);
 
-    expect(listenerMock).toHaveBeenCalledTimes(0);
+    expect(subscriberMock).toHaveBeenCalledTimes(0);
 
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenNthCalledWith(1, field.at('foo'), field.at('foo'));
   });
 
-  test('does not leave the form in an inconsistent state if a listener throws an error', () => {
+  test('does not leave the form in an inconsistent state if a subscriber throws an error', () => {
     const fooListenerMock = jest.fn(() => {
       throw new Error('fooExpected');
     });
@@ -185,23 +185,23 @@ describe('createField', () => {
     expect(() => jest.runAllTimers()).toThrow(new Error('barExpected'));
   });
 
-  test('calls all listeners and throws error asynchronously', () => {
-    const listenerMock1 = jest.fn(() => {
+  test('calls all subscribers and throws error asynchronously', () => {
+    const subscriberMock1 = jest.fn(() => {
       throw new Error('expected1');
     });
-    const listenerMock2 = jest.fn(() => {
+    const subscriberMock2 = jest.fn(() => {
       throw new Error('expected2');
     });
 
     const field = createField({ foo: 111, bar: 222 });
 
-    field.at('foo').subscribe(listenerMock1);
-    field.at('foo').subscribe(listenerMock2);
+    field.at('foo').subscribe(subscriberMock1);
+    field.at('foo').subscribe(subscriberMock2);
 
     field.setValue({ foo: 333, bar: 444 });
 
-    expect(listenerMock1).toHaveBeenCalledTimes(1);
-    expect(listenerMock2).toHaveBeenCalledTimes(1);
+    expect(subscriberMock1).toHaveBeenCalledTimes(1);
+    expect(subscriberMock2).toHaveBeenCalledTimes(1);
     expect(field.at('foo').value).toBe(333);
     expect(field.at('bar').value).toBe(444);
 
@@ -210,18 +210,18 @@ describe('createField', () => {
   });
 
   test('propagates a new value to the derived field', () => {
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
     const field = createField({ foo: 111 });
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.at('foo').subscribe(fooListenerMock);
 
     const nextValue = { foo: 333 };
     field.setValue(nextValue);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
 
     expect(field.value).toBe(nextValue);
@@ -232,18 +232,18 @@ describe('createField', () => {
   });
 
   test('does not propagate a new value to the transient derived field', () => {
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
     const field = createField({ foo: 111 });
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.at('foo').subscribe(fooListenerMock);
     field.at('foo').setTransientValue(222);
 
     field.setValue({ foo: 333 });
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
 
     expect(field.at('foo').value).toBe(222);
@@ -251,20 +251,20 @@ describe('createField', () => {
   });
 
   test('does not notify subscribers if a value of the derived field did not change', () => {
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
     const fooValue = { bar: 111 };
 
     const field = createField({ foo: fooValue });
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.at('foo').subscribe(fooListenerMock);
 
     field.setValue({ foo: fooValue });
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-    expect(listenerMock).toHaveBeenNthCalledWith(1, field, field);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenNthCalledWith(1, field, field);
 
     expect(fooListenerMock).toHaveBeenCalledTimes(0);
   });
@@ -307,21 +307,21 @@ describe('createField', () => {
     const plugin: Plugin = jest.fn().mockImplementationOnce((_field, _accessor, notify) => {
       notifyCallback1 = notify;
     });
-    const listenerMock1 = jest.fn();
-    const listenerMock2 = jest.fn();
+    const subscriberMock1 = jest.fn();
+    const subscriberMock2 = jest.fn();
 
     const field = createField({ foo: 111 }, plugin);
 
-    field.subscribe(listenerMock1);
-    field.at('foo').subscribe(listenerMock2);
+    field.subscribe(subscriberMock1);
+    field.at('foo').subscribe(subscriberMock2);
 
-    expect(listenerMock1).not.toHaveBeenCalled();
-    expect(listenerMock2).not.toHaveBeenCalled();
+    expect(subscriberMock1).not.toHaveBeenCalled();
+    expect(subscriberMock2).not.toHaveBeenCalled();
 
     notifyCallback1();
 
-    expect(listenerMock1).toHaveBeenCalledTimes(1);
-    expect(listenerMock2).not.toHaveBeenCalled();
+    expect(subscriberMock1).toHaveBeenCalledTimes(1);
+    expect(subscriberMock2).not.toHaveBeenCalled();
   });
 
   test('plugin notifies derived field subscribers', () => {
@@ -334,24 +334,24 @@ describe('createField', () => {
         notifyCallback1 = notify;
       });
 
-    const listenerMock1 = jest.fn();
-    const listenerMock2 = jest.fn();
+    const subscriberMock1 = jest.fn();
+    const subscriberMock2 = jest.fn();
 
     const field = createField({ foo: 111 }, plugin);
 
-    field.subscribe(listenerMock1);
-    field.at('foo').subscribe(listenerMock2);
+    field.subscribe(subscriberMock1);
+    field.at('foo').subscribe(subscriberMock2);
 
-    expect(listenerMock1).not.toHaveBeenCalled();
-    expect(listenerMock2).not.toHaveBeenCalled();
+    expect(subscriberMock1).not.toHaveBeenCalled();
+    expect(subscriberMock2).not.toHaveBeenCalled();
 
     notifyCallback1();
 
-    expect(listenerMock1).not.toHaveBeenCalled();
-    expect(listenerMock2).toHaveBeenCalledTimes(1);
+    expect(subscriberMock1).not.toHaveBeenCalled();
+    expect(subscriberMock2).toHaveBeenCalledTimes(1);
   });
 
-  test('an actual parent value is visible in the derived field listener', done => {
+  test('an actual parent value is visible in the derived field subscriber', done => {
     const field = createField({ foo: 111 });
     const newValue = { foo: 222 };
 
@@ -380,33 +380,33 @@ describe('createField', () => {
     expect(() => field.at('foo')).toThrow(new Error('expected2'));
   });
 
-  test('setting field value in a listener does not trigger an infinite loop', () => {
+  test('setting field value in a subscriber does not trigger an infinite loop', () => {
     const field = createField(111);
 
-    const listenerMock = jest.fn(() => {
+    const subscriberMock = jest.fn(() => {
       field.setValue(333);
     });
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.setValue(222);
 
     expect(field.value).toBe(333);
-    expect(listenerMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
   });
 
-  test('setting field value in a derived field listener does not trigger an infinite loop', () => {
+  test('setting field value in a derived field subscriber does not trigger an infinite loop', () => {
     const field = createField({ foo: 111 });
 
-    const listenerMock = jest.fn(() => {
+    const subscriberMock = jest.fn(() => {
       field.at('foo').setValue(333);
     });
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.at('foo').setValue(222);
 
     expect(field.value.foo).toBe(333);
-    expect(listenerMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
   });
 });

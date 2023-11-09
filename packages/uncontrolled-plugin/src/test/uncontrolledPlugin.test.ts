@@ -14,24 +14,24 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('updates field value on input change', () => {
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const field = createField({ foo: 0 }, uncontrolledPlugin());
 
     element.type = 'number';
 
-    field.subscribe(listenerMock);
-    field.at('foo').refCallback(element);
+    field.subscribe(subscriberMock);
+    field.at('foo').ref(element);
 
     fireEvent.change(element, { target: { value: '111' } });
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(field.value).toEqual({ foo: 111 });
   });
 
   test('updates input value on field change', () => {
     const field = createField({ foo: 0 }, uncontrolledPlugin());
 
-    field.at('foo').refCallback(element);
+    field.at('foo').ref(element);
     field.at('foo').setValue(111);
 
     expect(element.value).toBe('111');
@@ -42,15 +42,15 @@ describe('uncontrolledPlugin', () => {
 
     element.type = 'number';
 
-    field.at('foo').refCallback(element);
+    field.at('foo').ref(element);
 
     expect(element.value).toBe('111');
   });
 
-  test('invokes refCallback from the preceding plugin', () => {
-    const refCallbackMock = jest.fn();
+  test('invokes ref from the preceding plugin', () => {
+    const refMock = jest.fn();
     const pluginMock = jest.fn(field => {
-      field.refCallback = refCallbackMock;
+      field.ref = refMock;
     });
 
     const field = createField({ foo: 111 }, composePlugins(pluginMock, uncontrolledPlugin()));
@@ -58,18 +58,18 @@ describe('uncontrolledPlugin', () => {
     expect(pluginMock).toHaveBeenCalledTimes(1);
     expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
 
-    expect(refCallbackMock).not.toHaveBeenCalled();
+    expect(refMock).not.toHaveBeenCalled();
 
-    field.at('foo').refCallback(element);
+    field.at('foo').ref(element);
 
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, element);
+    expect(refMock).toHaveBeenCalledTimes(1);
+    expect(refMock).toHaveBeenNthCalledWith(1, element);
   });
 
   test('does not invoke preceding plugin if an additional element is added', () => {
-    const refCallbackMock = jest.fn();
+    const refMock = jest.fn();
     const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
+      field.ref = refMock;
     };
 
     const element1 = document.body.appendChild(document.createElement('input'));
@@ -77,17 +77,17 @@ describe('uncontrolledPlugin', () => {
 
     const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').refCallback(element1);
-    field.at('foo').refCallback(element2);
+    field.at('foo').ref(element1);
+    field.at('foo').ref(element2);
 
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, element1);
+    expect(refMock).toHaveBeenCalledTimes(1);
+    expect(refMock).toHaveBeenNthCalledWith(1, element1);
   });
 
   test('invokes preceding plugin if the head element has changed', done => {
-    const refCallbackMock = jest.fn();
+    const refMock = jest.fn();
     const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
+      field.ref = refMock;
     };
 
     const element1 = document.body.appendChild(document.createElement('input'));
@@ -95,52 +95,52 @@ describe('uncontrolledPlugin', () => {
 
     const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').refCallback(element1);
-    field.at('foo').refCallback(element2);
+    field.at('foo').ref(element1);
+    field.at('foo').ref(element2);
 
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, element1);
+    expect(refMock).toHaveBeenCalledTimes(1);
+    expect(refMock).toHaveBeenNthCalledWith(1, element1);
 
     element1.remove();
 
     queueMicrotask(() => {
-      expect(refCallbackMock).toHaveBeenCalledTimes(2);
-      expect(refCallbackMock).toHaveBeenNthCalledWith(2, element2);
+      expect(refMock).toHaveBeenCalledTimes(2);
+      expect(refMock).toHaveBeenNthCalledWith(2, element2);
       done();
     });
   });
 
   test('invokes preceding plugin if the head element was removed', done => {
-    const refCallbackMock = jest.fn();
+    const refMock = jest.fn();
     const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
+      field.ref = refMock;
     };
 
     const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').refCallback(element);
+    field.at('foo').ref(element);
 
     element.remove();
 
     queueMicrotask(() => {
-      expect(refCallbackMock).toHaveBeenCalledTimes(2);
-      expect(refCallbackMock).toHaveBeenNthCalledWith(1, element);
-      expect(refCallbackMock).toHaveBeenNthCalledWith(2, null);
+      expect(refMock).toHaveBeenCalledTimes(2);
+      expect(refMock).toHaveBeenNthCalledWith(1, element);
+      expect(refMock).toHaveBeenNthCalledWith(2, null);
       done();
     });
   });
 
   test('null refs are not propagated to preceding plugin', () => {
-    const refCallbackMock = jest.fn();
+    const refMock = jest.fn();
     const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
+      field.ref = refMock;
     };
 
     const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
 
-    field.at('foo').refCallback(null);
+    field.at('foo').ref(null);
 
-    expect(refCallbackMock).not.toHaveBeenCalled();
+    expect(refMock).not.toHaveBeenCalled();
   });
 
   test('does not call setValue if the same value multiple times', () => {
@@ -153,7 +153,7 @@ describe('uncontrolledPlugin', () => {
 
     const setValueMock = (field.setValue = jest.fn(field.setValue));
 
-    field.refCallback(element);
+    field.ref(element);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
     expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 'aaa');
@@ -178,7 +178,7 @@ describe('uncontrolledPlugin', () => {
 
     const field = createField({ foo: 'aaa' }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').refCallback(element);
+    field.at('foo').ref(element);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
     expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 'aaa');
@@ -213,12 +213,12 @@ describe('uncontrolledPlugin', () => {
 
     const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').refCallback(element1);
+    field.at('foo').ref(element1);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
     expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element1], 111);
 
-    field.at('foo').refCallback(element2);
+    field.at('foo').ref(element2);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(2);
     expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element1, element2], 111);
@@ -234,7 +234,7 @@ describe('uncontrolledPlugin', () => {
 
     const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').refCallback(element);
+    field.at('foo').ref(element);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(0);
   });
@@ -244,7 +244,7 @@ describe('uncontrolledPlugin', () => {
 
     const field = createField({ foo: 111 }, uncontrolledPlugin());
 
-    field.at('foo').refCallback(element);
+    field.at('foo').ref(element);
 
     element.remove();
 

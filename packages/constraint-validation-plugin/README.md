@@ -29,7 +29,7 @@ export const App = () => {
         <input
           type="text"
           pattern="Venus"
-          ref={nameField.refCallback}
+          ref={nameField.ref}
           value={nameField.value}
           onChange={event => {
             nameField.setValue(event.target.value);

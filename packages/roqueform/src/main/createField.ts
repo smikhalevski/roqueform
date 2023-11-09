@@ -1,4 +1,4 @@
-import { Accessor, Field, PluginCallback, ValueChangeEvent } from './typings';
+import { Accessor, Field, Event, PluginInjector } from './typings';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalAccessor } from './naturalAccessor';
 
@@ -28,18 +28,18 @@ export function createField<Value>(initialValue: Value, accessor?: Accessor): Fi
  * @param plugin The plugin that enhances the field.
  * @param accessor Resolves values for derived fields.
  * @template Value The root field initial value.
- * @template Plugin The plugin added to the field.
+ * @template Plugin The plugin injected into the field.
  */
 export function createField<Value, Plugin>(
   initialValue: Value,
-  plugin: PluginCallback<Plugin, NoInfer<Value>>,
+  plugin: PluginInjector<Plugin, NoInfer<Value>>,
   accessor?: Accessor
 ): Field<Plugin, Value>;
 
-export function createField(initialValue?: unknown, plugin?: PluginCallback | Accessor, accessor?: Accessor) {
+export function createField(initialValue?: unknown, plugin?: PluginInjector | Accessor, accessor?: Accessor) {
   if (typeof plugin !== 'function') {
-    plugin = undefined;
     accessor = plugin;
+    plugin = undefined;
   }
   return getOrCreateField(accessor || naturalAccessor, null, null, initialValue, plugin || null);
 }
@@ -49,7 +49,7 @@ function getOrCreateField(
   parent: Field | null,
   key: unknown,
   initialValue: unknown,
-  plugin: PluginCallback | null
+  plugin: PluginInjector | null
 ): Field {
   let child: Field;
 
@@ -58,7 +58,6 @@ function getOrCreateField(
   }
 
   child = {
-    __plugin: undefined,
     key,
     value: null,
     initialValue,
@@ -67,29 +66,32 @@ function getOrCreateField(
     parent,
     children: null,
     childrenMap: null,
-    listeners: null,
+    subscribers: null,
     accessor,
     plugin,
+
     setValue: value => {
       setValue(child, callOrGet(value, child.value), false);
     },
+
     setTransientValue: value => {
       setValue(child, callOrGet(value, child.value), true);
     },
+
     propagate: () => {
       setValue(child, child.value, false);
     },
-    at: key => {
-      return getOrCreateField(child.accessor, child, key, null, plugin);
-    },
-    on: (type, listener) => {
-      let listeners: unknown[];
-      (listeners = (child.listeners ||= Object.create(null))[type] ||= []).push(listener);
+
+    at: key => getOrCreateField(child.accessor, child, key, null, plugin),
+
+    on: (type, subscriber) => {
+      let subscribers: unknown[];
+      (subscribers = (child.subscribers ||= Object.create(null))[type] ||= []).push(subscriber);
       return () => {
-        listeners.splice(listeners.indexOf(listener), 1);
+        subscribers.splice(subscribers.indexOf(subscriber), 1);
       };
     },
-  };
+  } satisfies Omit<Field, '__plugin__'> as unknown as Field;
 
   child.root = child;
 
@@ -126,8 +128,8 @@ function setValue(field: Field, value: unknown, transient: boolean): void {
   dispatchEvents(propagateValue(field, changeRoot, value, []));
 }
 
-function propagateValue(target: Field, field: Field, value: unknown, events: ValueChangeEvent[]): ValueChangeEvent[] {
-  events.push({ type: 'valueChange', target, currentTarget: field, previousValue: field.value });
+function propagateValue(origin: Field, field: Field, value: unknown, events: Event[]): Event[] {
+  events.push({ type: 'change:value', origin, target: field, data: field.value });
 
   field.value = value;
 
@@ -138,10 +140,10 @@ function propagateValue(target: Field, field: Field, value: unknown, events: Val
       }
 
       const childValue = field.accessor.get(value, child.key);
-      if (child !== target && isEqual(child.value, childValue)) {
+      if (child !== origin && isEqual(child.value, childValue)) {
         continue;
       }
-      propagateValue(target, child, childValue, events);
+      propagateValue(origin, child, childValue, events);
     }
   }
   return events;

@@ -20,10 +20,10 @@ describe('validationPlugin', () => {
   test('sets an error to the root field', () => {
     const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     field.setError(111);
@@ -34,17 +34,17 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).not.toHaveBeenCalled();
   });
 
   test('sets an error to the child field', () => {
     const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     field.at('foo').setError(111);
@@ -55,7 +55,7 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
   });
 
@@ -74,10 +74,10 @@ describe('validationPlugin', () => {
   test('deletes an error from the root field', () => {
     const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     field.setError(111);
@@ -89,17 +89,17 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
-    expect(listenerMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(fooListenerMock).not.toHaveBeenCalled();
   });
 
   test('deletes an error from the child field', () => {
     const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     field.at('foo').setError(111);
@@ -111,18 +111,18 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(false);
     expect(field.at('foo').error).toBe(null);
 
-    expect(listenerMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(fooListenerMock).toHaveBeenCalledTimes(2);
   });
 
   test('deletes an error from the child field but parent remains invalid', () => {
     const field = createField({ foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
     const barListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
     field.at('bar').subscribe(barListenerMock);
 
@@ -140,7 +140,7 @@ describe('validationPlugin', () => {
     expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
     expect(barListenerMock).toHaveBeenCalledTimes(2);
   });
@@ -148,11 +148,11 @@ describe('validationPlugin', () => {
   test('clears all errors', () => {
     const field = createField({ foo: 0, bar: 'qux' }, validationPlugin(noopValidator));
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
     const barListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
     field.at('bar').subscribe(barListenerMock);
 
@@ -170,7 +170,7 @@ describe('validationPlugin', () => {
     expect(field.at('bar').isInvalid).toBe(false);
     expect(field.at('bar').error).toBe(null);
 
-    expect(listenerMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(fooListenerMock).toHaveBeenCalledTimes(2);
     expect(barListenerMock).toHaveBeenCalledTimes(2);
   });
@@ -212,10 +212,10 @@ describe('validationPlugin', () => {
       })
     );
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     expect(field.validate()).toEqual([111]);
@@ -228,7 +228,7 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
   });
 
@@ -240,10 +240,10 @@ describe('validationPlugin', () => {
       })
     );
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     expect(field.validate()).toEqual([111]);
@@ -256,7 +256,7 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
   });
 
@@ -270,10 +270,10 @@ describe('validationPlugin', () => {
       })
     );
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     field.at('foo').validate();
@@ -286,7 +286,7 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(1);
   });
 
@@ -408,10 +408,10 @@ describe('validationPlugin', () => {
       })
     );
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     const promise = field.validateAsync();
@@ -431,7 +431,7 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(listenerMock).toHaveBeenCalledTimes(3);
+    expect(subscriberMock).toHaveBeenCalledTimes(3);
     expect(fooListenerMock).toHaveBeenCalledTimes(3);
   });
 
@@ -447,10 +447,10 @@ describe('validationPlugin', () => {
       })
     );
 
-    const listenerMock = jest.fn();
+    const subscriberMock = jest.fn();
     const fooListenerMock = jest.fn();
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
     field.at('foo').subscribe(fooListenerMock);
 
     const promise = field.at('foo').validateAsync();
@@ -468,7 +468,7 @@ describe('validationPlugin', () => {
     expect(field.at('foo').isInvalid).toBe(true);
     expect(field.at('foo').error).toBe(111);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(fooListenerMock).toHaveBeenCalledTimes(3);
   });
 
@@ -627,14 +627,14 @@ describe('validationPlugin', () => {
   test('validation can be called in subscribe', () => {
     const field = createField({ foo: 0 }, validationPlugin(noopValidator));
 
-    const listenerMock = jest.fn(() => {
+    const subscriberMock = jest.fn(() => {
       field.validate();
     });
 
-    field.subscribe(listenerMock);
+    field.subscribe(subscriberMock);
 
     field.at('foo').setValue(111);
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
   });
 });

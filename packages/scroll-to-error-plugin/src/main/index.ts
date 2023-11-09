@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/scroll-to-error-plugin
+ * @module scroll-to-error-plugin
  */
 
 export * from './scrollToErrorPlugin';

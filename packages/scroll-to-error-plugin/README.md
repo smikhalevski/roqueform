@@ -60,7 +60,7 @@ export const App = () => {
           <>
             <input
               // 🟡 Note that the input element ref is populated
-              ref={nameField.refCallback}
+              ref={nameField.ref}
               value={nameField.value}
               onChange={event => {
                 nameField.setValue(event.target.value);

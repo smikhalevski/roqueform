@@ -1,4 +1,4 @@
-import { Field, PluginCallback } from 'roqueform';
+import { Field, PluginInjector } from 'roqueform';
 
 export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
   /**
@@ -12,19 +12,19 @@ export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
  */
 export interface ScrollToErrorPlugin {
   /**
-   * @internal
+   * An error associated with the field, or `null` if there's no error.
    */
   error: unknown;
 
   /**
-   * The DOM element associated with the field.
+   * The DOM element associated with the field, or `null` if there's no associated element.
    */
   element: Element | null;
 
   /**
-   * Associates the field with the DOM element.
+   * Associates the field with the {@link element DOM element}.
    */
-  refCallback(element: Element | null): void;
+  ref(element: Element | null): void;
 
   /**
    * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
@@ -63,13 +63,16 @@ export interface ScrollToErrorPlugin {
  * Use this plugin in conjunction with another plugin that adds validation methods and manages `error` property of each
  * field.
  */
-export function scrollToErrorPlugin(): PluginCallback<ScrollToErrorPlugin> {
+export function scrollToErrorPlugin(): PluginInjector<ScrollToErrorPlugin> {
   return field => {
-    const { refCallback } = field;
+    field.error = null;
+    field.element = null;
 
-    field.refCallback = element => {
+    const { ref } = field;
+
+    field.ref = element => {
       field.element = element;
-      refCallback?.(element);
+      ref?.(element);
     };
 
     field.scrollToError = (index = 0, options) => {

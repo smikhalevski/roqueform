@@ -48,8 +48,8 @@ describe('scrollToErrorPlugin', () => {
     const fooElement = document.body.appendChild(document.createElement('input'));
     const barElement = document.body.appendChild(document.createElement('input'));
 
-    rootField.at('foo').refCallback(fooElement);
-    rootField.at('bar').refCallback(barElement);
+    rootField.at('foo').ref(fooElement);
+    rootField.at('bar').ref(barElement);
 
     jest.spyOn(fooElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(100));
     jest.spyOn(barElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(200));
@@ -124,8 +124,8 @@ describe('scrollToErrorPlugin', () => {
     const fooElement = document.body.appendChild(document.createElement('input'));
     const barElement = document.body.appendChild(document.createElement('input'));
 
-    rootField.at('foo').refCallback(fooElement);
-    rootField.at('bar').refCallback(barElement);
+    rootField.at('foo').ref(fooElement);
+    rootField.at('bar').ref(barElement);
 
     jest.spyOn(fooElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(100));
     jest.spyOn(barElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(200));

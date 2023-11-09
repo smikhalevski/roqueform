@@ -1,8 +1,8 @@
-import { dispatchEvents, Field, FieldEvent, PluginCallback } from 'roqueform';
+import { dispatchEvents, Event as Event_, PluginInjector, Subscriber, Unsubscribe } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 import { createElementValueAccessor, ElementValueAccessor } from './createElementValueAccessor';
 
-const EVENT_TRACK = 'trackedElementsChange';
+const EVENT_CHANGE_OBSERVED_ELEMENTS = 'change:observedElements';
 
 /**
  * The default value accessor.
@@ -14,104 +14,89 @@ const elementValueAccessor = createElementValueAccessor();
  */
 export interface UncontrolledPlugin {
   /**
-   * @internal
+   * The array of elements that are used to derive the field value. Update this array by calling {@link observe} method.
+   * Elements are observed by the {@link MutationObserver} and deleted from this array when they are removed from DOM.
+   *
+   * @protected
    */
-  ['__plugin']: unknown;
+  ['observedElements']: Element[];
 
   /**
-   * @internal
-   */
-  ['value']: unknown;
-
-  /**
-   * The array of that are used to derive the field value. Update this array by calling {@link track} method. Elements
-   * are watched by {@link MutationObserver} and removed from this array when they are removed from the DOM.
-   */
-  ['trackedElements']: Element[];
-
-  /**
-   * The accessor that reads and writes field value from and to {@link trackedElements tracked elements}.
+   * The accessor that reads and writes field value from and to {@link observedElements observed elements}.
+   *
+   * @protected
    */
   ['elementValueAccessor']: ElementValueAccessor;
 
   /**
-   * The adds the DOM element to the list of tracked elements.
+   * The adds the DOM element to {@link observedElements observed elements}.
    *
-   * @param element The element to track. No-op if the element is `null` or not connected to the DOM.
+   * @param element The element to observe. No-op if the element is `null` or not connected to the DOM.
    */
-  track(element: Element | null): void;
+  observe(element: Element | null): void;
 
   /**
-   * Overrides {@link elementValueAccessor the element value accessor} for the field.
+   * Overrides {@link elementValueAccessor the element value accessor} for this field.
    *
    * @param accessor The accessor to use for this filed.
    */
-  setElementValueAccessor(accessor: Partial<ElementValueAccessor>): this;
+  setElementValueAccessor(accessor: ElementValueAccessor): this;
 
   /**
-   * Subscribes the listener to additions and deletions in of {@link trackedElements tracked elements}.
+   * Subscribes to updates of {@link observedElements observed elements}.
    *
    * @param eventType The type of the event.
-   * @param listener The listener that would be triggered.
-   * @returns The callback to unsubscribe the listener.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
    */
-  on(
-    eventType: 'trackedElementsChange',
-    listener: (event: FieldEvent<this['__plugin'], this['value']>) => void
-  ): () => void;
+  on(eventType: 'change:observedElements', subscriber: Subscriber<this, Element>): Unsubscribe;
 
   /**
    * Associates the field with {@link element the DOM element}. This method is usually exposed by plugins that use DOM
-   * element references. This method is invoked when {@link trackedElements the first tracked element} is changed.
+   * element references. This method is invoked when {@link observedElements the first observed element} is changed.
+   *
+   * @protected
    */
-  ['refCallback']?(element: Element | null): void;
-}
-
-export interface TrackedElementsChangeEvent<Plugin = unknown, Value = any> extends FieldEvent<Plugin, Value> {
-  type: 'trackedElementsChange';
-
-  /**
-   * The element that was added or removed from {@link trackedElements tracked elements}.
-   */
-  element: Element;
+  ['ref']?(element: Element | null): void;
 }
 
 /**
  * Updates field value when the DOM element value is changed and vice versa.
  *
- * @param defaultAccessor The accessor that reads and writes value to and from the DOM elements managed by the filed.
+ * @param accessor The accessor that reads and writes values to and from the DOM elements that
+ * {@link UncontrolledPlugin.observedElements are observed by the filed}.
  */
-export function uncontrolledPlugin(defaultAccessor = elementValueAccessor): PluginCallback<UncontrolledPlugin> {
+export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
-    field.trackedElements = [];
-    field.elementValueAccessor = defaultAccessor;
+    field.observedElements = [];
+    field.elementValueAccessor = accessor;
 
     const mutationObserver = new MutationObserver(mutations => {
-      const events: TrackedElementsChangeEvent[] = [];
-      const { trackedElements } = field;
-      const [element] = trackedElements;
+      const events: Event_[] = [];
+      const { observedElements } = field;
+      const [element] = observedElements;
 
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.removedNodes.length; ++i) {
-          const elementIndex = trackedElements.indexOf(mutation.removedNodes.item(i) as Element);
+          const elementIndex = observedElements.indexOf(mutation.removedNodes.item(i) as Element);
 
           if (elementIndex === -1) {
             continue;
           }
-          const element = trackedElements[elementIndex];
+          const element = observedElements[elementIndex];
           element.removeEventListener('input', changeListener);
           element.removeEventListener('change', changeListener);
 
-          trackedElements.splice(elementIndex, 1);
-          events.push({ type: EVENT_TRACK, target: field as Field<any>, currentTarget: field as Field<any>, element });
+          observedElements.splice(elementIndex, 1);
+          events.push({ type: EVENT_CHANGE_OBSERVED_ELEMENTS, origin: field, target: field, data: element });
         }
       }
 
-      if (trackedElements.length === 0) {
+      if (observedElements.length === 0) {
         mutationObserver.disconnect();
-        field.refCallback?.(null);
-      } else if (element !== trackedElements[0]) {
-        field.refCallback?.(trackedElements[0]);
+        field.ref?.(null);
+      } else if (element !== observedElements[0]) {
+        field.ref?.(observedElements[0]);
       }
 
       dispatchEvents(events);
@@ -120,27 +105,27 @@ export function uncontrolledPlugin(defaultAccessor = elementValueAccessor): Plug
     const changeListener = (event: Event): void => {
       let value;
       if (
-        field.trackedElements.indexOf(event.target as Element) !== -1 &&
-        !isDeepEqual((value = field.elementValueAccessor.get(field.trackedElements)), field.value)
+        field.observedElements.indexOf(event.target as Element) !== -1 &&
+        !isDeepEqual((value = field.elementValueAccessor.get(field.observedElements)), field.value)
       ) {
         field.setValue(value);
       }
     };
 
-    field.on('valueChange', () => {
-      if (field.trackedElements.length !== 0) {
-        field.elementValueAccessor.set(field.trackedElements, field.value);
+    field.on('change:value', () => {
+      if (field.observedElements.length !== 0) {
+        field.elementValueAccessor.set(field.observedElements, field.value);
       }
     });
 
-    field.track = element => {
-      const { trackedElements } = field;
+    field.observe = element => {
+      const { observedElements } = field;
 
       if (
         element === null ||
         !(element instanceof Element) ||
         !element.isConnected ||
-        trackedElements.indexOf(element) !== -1
+        observedElements.indexOf(element) !== -1
       ) {
         return;
       }
@@ -150,22 +135,19 @@ export function uncontrolledPlugin(defaultAccessor = elementValueAccessor): Plug
       element.addEventListener('input', changeListener);
       element.addEventListener('change', changeListener);
 
-      trackedElements.push(element);
+      observedElements.push(element);
 
-      field.elementValueAccessor.set(trackedElements, field.value);
+      field.elementValueAccessor.set(observedElements, field.value);
 
-      if (trackedElements.length === 1) {
-        field.refCallback?.(trackedElements[0]);
+      if (observedElements.length === 1) {
+        field.ref?.(observedElements[0]);
       }
 
-      dispatchEvents([{ type: EVENT_TRACK, target: field, currentTarget: field, element }]);
+      dispatchEvents([{ type: EVENT_CHANGE_OBSERVED_ELEMENTS, origin: field, target: field, data: element }]);
     };
 
     field.setElementValueAccessor = accessor => {
-      field.elementValueAccessor = {
-        get: accessor.get || defaultAccessor.get,
-        set: accessor.set || defaultAccessor.set,
-      };
+      field.elementValueAccessor = accessor;
       return field;
     };
   };

@@ -168,7 +168,7 @@ nameField.value;
 
 # Subscriptions
 
-You can subscribe a listener to a field updates. The returned callback would unsubscribe the listener.
+You can subscribe a subscriber to a field updates. The returned callback would unsubscribe the subscriber.
 
 ```ts
 const unsubscribe = planetsField.subscribe((updatedField, currentField) => {
@@ -190,32 +190,32 @@ of its ancestor fields.
 <dt><code>currentField</code></dt>
 <dd>
 
-The field to which the listener is subscribed. In this example it is `planetsField`.
+The field to which the subscriber is subscribed. In this example it is `planetsField`.
 
 </dd>
 </dl>
 
 Listeners are called when a field value is changed or [when a plugin mutates the field object](#authoring-a-plugin).
-The root field and all derived fields are updated before listeners are called, so it's safe to read field values in a
-listener.
+The root field and all derived fields are updated before subscribers are called, so it's safe to read field values in a
+subscriber.
 
 Fields use [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison to detect that the
 value has changed.
 
 ```ts
-planetsField.at(0).at('name').subscribe(listener);
+planetsField.at(0).at('name').subscribe(subscriber);
 
-// ✅ The listener is called
+// ✅ The subscriber is called
 planetsField.at(0).at('name').setValue('Mercury');
 
-// 🚫 Value is unchanged, the listener isn't called
+// 🚫 Value is unchanged, the subscriber isn't called
 planetsField.at(0).setValue({ name: 'Mercury' });
 ```
 
 # Transient updates
 
 When you call [`setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setValue) on a field
-then listeners of its ancestors and its updated derived fields are triggered. To manually control the update propagation
+then subscribers of its ancestors and its updated derived fields are triggered. To manually control the update propagation
 to fields ancestors, you can use transient updates.
 
 When a value of a derived field is set transiently, values of its ancestors _aren't_ immediately updated.
