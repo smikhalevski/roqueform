@@ -1,4 +1,4 @@
-import { createElement, Fragment, ReactElement, ReactNode, useEffect, useReducer, useRef } from 'react';
+import { createElement, Fragment, ReactElement, ReactNode, useLayoutEffect, useReducer, useRef } from 'react';
 import { callOrGet, FieldController, ValueOf } from 'roqueform';
 
 /**
@@ -49,21 +49,23 @@ export function FieldRenderer<RenderedField extends FieldController<any>>(
 
   handleChangeRef.current = props.onChange;
 
-  useEffect(() => {
-    return field.on('*', event => {
-      if (eagerlyUpdated || event.origin === field) {
-        rerender();
-      }
-      if (field.isTransient || event.type !== 'change:value') {
-        return;
-      }
+  useLayoutEffect(
+    () =>
+      field.on('*', event => {
+        if (eagerlyUpdated || event.origin === field) {
+          rerender();
+        }
+        if (field.isTransient || event.type !== 'change:value') {
+          return;
+        }
 
-      const handleChange = handleChangeRef.current;
-      if (typeof handleChange === 'function') {
-        handleChange(field.value);
-      }
-    });
-  }, [field, eagerlyUpdated]);
+        const handleChange = handleChangeRef.current;
+        if (typeof handleChange === 'function') {
+          handleChange(field.value);
+        }
+      }),
+    [field, eagerlyUpdated]
+  );
 
   return createElement(Fragment, null, callOrGet(props.children, field));
 }
