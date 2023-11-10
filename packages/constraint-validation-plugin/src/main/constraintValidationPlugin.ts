@@ -162,9 +162,9 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         deleteError(field, 1, events);
       }
 
-      dispatchEvents(events);
-
       ref?.(element);
+
+      dispatchEvents(events);
     };
 
     field.setError = error => {
