@@ -207,7 +207,8 @@ function setError(
     return events;
   }
 
-  if (isValidatable(field.element)) {
+  if (errorOrigin === 2 && isValidatable(field.element)) {
+    // Custom validation error
     field.element.setCustomValidity(error);
   }
 
@@ -232,19 +233,19 @@ function setError(
 }
 
 function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 2, events: Event[]): Event[] {
-  const originalError = field.error;
+  const { error: originalError, element } = field;
 
   if (field.errorOrigin > errorOrigin || originalError === null) {
     return events;
   }
 
-  if (isValidatable(field.element)) {
-    field.element.setCustomValidity('');
+  if (isValidatable(element)) {
+    element.setCustomValidity('');
 
-    if (!field.element.validity.valid) {
+    if (!element.validity.valid) {
       field.errorOrigin = 1;
 
-      if (originalError !== (field.error = field.element.validationMessage)) {
+      if (originalError !== (field.error = element.validationMessage)) {
         events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: field, data: originalError });
       }
       return events;
