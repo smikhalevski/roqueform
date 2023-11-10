@@ -1,11 +1,4 @@
 /**
- * The field that doesn't constrain its children and ancestors. Use this in plugins to streamline typing.
- *
- * @template Plugin The plugin injected into the field.
- */
-export type AnyField<Plugin = unknown> = FieldController<any> & Plugin;
-
-/**
  * The field that manages a value and related data. Fields can be {@link PluginInjector enhanced by plugins} that
  * provide integration with rendering frameworks, validation libraries, and other tools.
  *
@@ -20,7 +13,7 @@ export type Field<Plugin = unknown, Value = any> = FieldController<Plugin, Value
  * @template Target The field where the event is dispatched.
  * @template Data The additional data related to the event.
  */
-export interface Event<Target = AnyField, Data = any> {
+export interface Event<Target = FieldController<any>, Data = any> {
   /**
    * The type of the event.
    */
@@ -50,7 +43,7 @@ export interface Event<Target = AnyField, Data = any> {
  * @template Target The field where the event is dispatched.
  * @template Data The additional data related to the event.
  */
-export type Subscriber<Target = AnyField, Data = any> = (event: Event<Target, Data>) => void;
+export type Subscriber<Target = FieldController<any>, Data = any> = (event: Event<Target, Data>) => void;
 
 /**
  * Unsubscribes the subscriber. No-op if subscriber was already unsubscribed.

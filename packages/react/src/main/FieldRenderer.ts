@@ -1,12 +1,12 @@
 import { createElement, Fragment, ReactElement, ReactNode, useEffect, useReducer, useRef } from 'react';
-import { AnyField, callOrGet, ValueOf } from 'roqueform';
+import { callOrGet, FieldController, ValueOf } from 'roqueform';
 
 /**
  * Properties of the {@link FieldRenderer} component.
  *
  * @template RenderedField The rendered field.
  */
-export interface FieldRendererProps<RenderedField extends AnyField> {
+export interface FieldRendererProps<RenderedField extends FieldController<any>> {
   /**
    * The field that triggers re-renders.
    */
@@ -39,7 +39,9 @@ export interface FieldRendererProps<RenderedField extends AnyField> {
  *
  * @template RenderedField The rendered field.
  */
-export function FieldRenderer<RenderedField extends AnyField>(props: FieldRendererProps<RenderedField>): ReactElement {
+export function FieldRenderer<RenderedField extends FieldController<any>>(
+  props: FieldRendererProps<RenderedField>
+): ReactElement {
   const { field, eagerlyUpdated } = props;
 
   const [, rerender] = useReducer(reduceCount, 0);

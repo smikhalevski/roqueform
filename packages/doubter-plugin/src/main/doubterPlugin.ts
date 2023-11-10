@@ -1,5 +1,13 @@
 import { Err, Issue, Ok, ParseOptions, Shape } from 'doubter';
-import { AnyField, Field, PluginInjector, Validation, ValidationPlugin, validationPlugin, Validator } from 'roqueform';
+import {
+  Field,
+  FieldController,
+  PluginInjector,
+  Validation,
+  ValidationPlugin,
+  validationPlugin,
+  Validator,
+} from 'roqueform';
 
 /**
  * The plugin added to fields by the {@link doubterPlugin}.
@@ -64,7 +72,7 @@ const doubterValidator: Validator<Issue, ParseOptions> = {
   },
 };
 
-function prependPath(field: AnyField, issue: Issue): Issue {
+function prependPath(field: FieldController<any>, issue: Issue): Issue {
   while (field.parent !== null) {
     (issue.path ||= []).unshift(field.key);
     field = field.parent;

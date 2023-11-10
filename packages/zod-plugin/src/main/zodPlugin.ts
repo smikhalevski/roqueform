@@ -1,5 +1,13 @@
 import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodSchema, ZodTypeAny } from 'zod';
-import { AnyField, Field, PluginInjector, Validation, ValidationPlugin, validationPlugin, Validator } from 'roqueform';
+import {
+  Field,
+  FieldController,
+  PluginInjector,
+  Validation,
+  ValidationPlugin,
+  validationPlugin,
+  Validator,
+} from 'roqueform';
 
 /**
  * The plugin added to fields by the {@link zodPlugin}.
@@ -72,7 +80,7 @@ function getValue(field: Field<ValidationPlugin>): unknown {
   return value;
 }
 
-function getPath(field: AnyField): any[] {
+function getPath(field: FieldController<any>): any[] {
   const path = [];
 
   while (field.parent !== null) {
