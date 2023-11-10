@@ -97,7 +97,7 @@ function getTargetFields(
   field: Field<ScrollToErrorPlugin>,
   batch: Field<ScrollToErrorPlugin>[]
 ): Field<ScrollToErrorPlugin>[] {
-  if (field.error !== null && field.element !== null) {
+  if (field.error !== null && field.element !== null && field.element.isConnected) {
     const rect = field.element.getBoundingClientRect();
 
     if (rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0) {
@@ -113,7 +113,11 @@ function getTargetFields(
 }
 
 function sortByBoundingRect(fields: Field<ScrollToErrorPlugin>[], rtl: boolean): Field<ScrollToErrorPlugin>[] {
-  const { body, documentElement } = document;
+  if (fields.length === 0) {
+    return fields;
+  }
+
+  const { body, documentElement } = fields[0].element!.ownerDocument;
 
   const scrollY = window.pageYOffset || documentElement.scrollTop || body.scrollTop;
   const clientY = documentElement.clientTop || body.clientTop || 0;
