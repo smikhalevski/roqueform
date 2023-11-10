@@ -1,4 +1,14 @@
-import { dispatchEvents, Event, Field, isEqual, PluginInjector, Subscriber, Unsubscribe, ValueOf } from 'roqueform';
+import {
+  createEvent,
+  dispatchEvents,
+  Event,
+  Field,
+  isEqual,
+  PluginInjector,
+  Subscriber,
+  Unsubscribe,
+  ValueOf,
+} from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 
 /**
@@ -89,7 +99,7 @@ function propagateInitialValue(
   initialValue: unknown,
   events: Event[]
 ): Event[] {
-  events.push({ type: 'change:initialValue', origin: target, target: field, data: field.initialValue });
+  events.unshift(createEvent('change:initialValue', field, initialValue));
 
   field.initialValue = initialValue;
 

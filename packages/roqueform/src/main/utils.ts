@@ -1,4 +1,4 @@
-import { Event } from './typings';
+import { Event, FieldController } from './typings';
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -25,29 +25,48 @@ export function callOrGet<T, A>(value: T | ((arg: A) => T), arg: A): T {
 }
 
 /**
+ * Creates the new event that would be dispatched from target field.
+ *
+ * @param type The type of the event.
+ * @param target The target field from which the event is dispatched.
+ * @param data The data carried by the event.
+ */
+export function createEvent<Target extends FieldController<any>, Data>(
+  type: string,
+  target: Target,
+  data: Data
+): Event<Target, Data> {
+  return { type, currentTarget: target, target, data };
+}
+
+/**
  * Calls field subscribers that can handle given events.
  *
  * @param events The array of events to dispatch.
  */
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
-    const { subscribers } = event.target;
+    for (let field = event.currentTarget; field !== null; field = field.parent) {
+      const { subscribers } = field;
 
-    if (subscribers === null) {
-      continue;
-    }
-
-    const typeSubscribers = subscribers[event.type];
-    const globSubscribers = subscribers['*'];
-
-    if (typeSubscribers !== undefined) {
-      for (const subscriber of typeSubscribers) {
-        subscriber(event);
+      if (subscribers === null) {
+        continue;
       }
-    }
-    if (globSubscribers !== undefined) {
-      for (const subscriber of globSubscribers) {
-        subscriber(event);
+
+      event.currentTarget = field;
+
+      const typeSubscribers = subscribers[event.type];
+      const globSubscribers = subscribers['*'];
+
+      if (typeSubscribers !== undefined) {
+        for (const subscriber of typeSubscribers) {
+          subscriber(event);
+        }
+      }
+      if (globSubscribers !== undefined) {
+        for (const subscriber of globSubscribers) {
+          subscriber(event);
+        }
       }
     }
   }

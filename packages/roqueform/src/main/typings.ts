@@ -10,28 +10,27 @@ export type Field<Plugin = unknown, Value = any> = FieldController<Plugin, Value
 /**
  * The event dispatched to subscribers of {@link Field a field}.
  *
- * @template Target The field where the event is dispatched.
+ * @template CurrentTarget The field where the event is dispatched.
  * @template Data The additional data related to the event.
  */
-export interface Event<Target = FieldController<any>, Data = any> {
+export interface Event<CurrentTarget = any, Data = any> {
   /**
    * The type of the event.
    */
   type: string;
 
   /**
-   * The field that has changed.
+   * The field to which the event subscriber has been added.
    */
-  target: Target;
+  currentTarget: CurrentTarget;
 
   /**
-   * The original field that caused the event to be dispatched. This can be ancestor, descendant, or the{@link target}
-   * itself.
+   * The field onto which the event was dispatched.
    */
-  origin: Field<PluginOf<Target>>;
+  target: Field<PluginOf<CurrentTarget>>;
 
   /**
-   * The additional data related to the event, depends on the {@link type event type}.
+   * The {@link type type-specific} data related to the {@link target target field}.
    */
   data: Data;
 }
@@ -40,10 +39,10 @@ export interface Event<Target = FieldController<any>, Data = any> {
  * The callback that receives events dispatched by {@link Field a field}.
  *
  * @param event The dispatched event.
- * @template Target The field where the event is dispatched.
+ * @template CurrentTarget The field where the event is dispatched.
  * @template Data The additional data related to the event.
  */
-export type Subscriber<Target = FieldController<any>, Data = any> = (event: Event<Target, Data>) => void;
+export type Subscriber<CurrentTarget = any, Data = any> = (event: Event<CurrentTarget, Data>) => void;
 
 /**
  * Unsubscribes the subscriber. No-op if subscriber was already unsubscribed.
@@ -58,7 +57,7 @@ export type Unsubscribe = () => void;
  *
  * @template T The field to infer plugin of.
  */
-export type PluginOf<T> = T['__plugin__' & keyof T];
+export type PluginOf<T> = '__plugin__' extends keyof T ? T['__plugin__'] : unknown;
 
 /**
  * Infers the value of the field.
@@ -67,7 +66,7 @@ export type PluginOf<T> = T['__plugin__' & keyof T];
  *
  * @template T The field to infer value of.
  */
-export type ValueOf<T> = T['value' & keyof T];
+export type ValueOf<T> = 'value' extends keyof T ? T['value'] : unknown;
 
 /**
  * The field controller provides the core field functionality.
@@ -211,7 +210,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
   on(eventType: '*', subscriber: Subscriber<this>): Unsubscribe;
 
   /**
-   * Subscribes to {@link value the field value} changes.
+   * Subscribes to {@link value the field value} changes. {@link Event.data} contains the previous field value.
    *
    * @param eventType The type of the event.
    * @param subscriber The subscriber that would be triggered.

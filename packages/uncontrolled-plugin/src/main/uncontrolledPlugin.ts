@@ -1,4 +1,4 @@
-import { dispatchEvents, Event, PluginInjector, Subscriber, Unsubscribe } from 'roqueform';
+import { createEvent, dispatchEvents, Event, PluginInjector, Subscriber, Unsubscribe } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 import { createElementValueAccessor, ElementValueAccessor } from './createElementValueAccessor';
 
@@ -91,7 +91,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
           element.removeEventListener('change', changeListener);
 
           observedElements.splice(elementIndex, 1);
-          events.push({ type: EVENT_CHANGE_OBSERVED_ELEMENTS, origin: field, target: field, data: element });
+          events.push(createEvent(EVENT_CHANGE_OBSERVED_ELEMENTS, field, element));
         }
       }
 
@@ -108,7 +108,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
     const changeListener: EventListener = event => {
       let value;
       if (
-        field.observedElements.indexOf(event.target as Element) !== -1 &&
+        field.observedElements.indexOf(event.currentTarget as Element) !== -1 &&
         !isDeepEqual((value = field.elementValueAccessor.get(field.observedElements)), field.value)
       ) {
         field.setValue(value);
@@ -146,7 +146,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
         field.ref?.(observedElements[0]);
       }
 
-      dispatchEvents([{ type: EVENT_CHANGE_OBSERVED_ELEMENTS, origin: field, target: field, data: element }]);
+      dispatchEvents([createEvent(EVENT_CHANGE_OBSERVED_ELEMENTS, field, element)]);
     };
 
     field.setElementValueAccessor = accessor => {

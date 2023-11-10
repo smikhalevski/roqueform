@@ -1,5 +1,5 @@
-import { ValueAccessor, Event, Field, PluginInjector, Subscriber } from './typings';
-import { callOrGet, dispatchEvents, isEqual } from './utils';
+import { Event, Field, PluginInjector, Subscriber, ValueAccessor } from './typings';
+import { callOrGet, createEvent, dispatchEvents, isEqual } from './utils';
 import { naturalAccessor } from './naturalAccessor';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
@@ -132,7 +132,7 @@ function setValue(field: Field, value: unknown, transient: boolean): void {
 }
 
 function propagateValue(origin: Field, field: Field, value: unknown, events: Event[]): Event[] {
-  events.push({ type: 'change:value', origin, target: field, data: field.value });
+  events.unshift(createEvent('change:value', field, value));
 
   field.value = value;
 

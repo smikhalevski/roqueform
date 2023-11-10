@@ -1,4 +1,13 @@
-import { dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
+import {
+  createEvent,
+  dispatchEvents,
+  Event,
+  Field,
+  PluginInjector,
+  PluginOf,
+  Subscriber,
+  Unsubscribe,
+} from 'roqueform';
 
 const EVENT_CHANGE_ERROR = 'change:error';
 
@@ -115,7 +124,7 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
     });
 
     const changeListener: EventListener = event => {
-      if (field.element === event.target && isValidatable(field.element)) {
+      if (field.element === event.currentTarget && isValidatable(field.element)) {
         dispatchEvents(setError(field, field.element.validationMessage, 1, []));
       }
     };
@@ -215,7 +224,7 @@ function setError(
   field.error = error;
   field.errorOrigin = errorOrigin;
 
-  events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: field, data: originalError });
+  events.push(createEvent(EVENT_CHANGE_ERROR, field, originalError));
 
   if (originalError !== null) {
     return events;
@@ -224,11 +233,8 @@ function setError(
   field.errorCount++;
 
   for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
-    if (ancestor.errorCount++ === 0) {
-      events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: ancestor, data: originalError });
-    }
+    ancestor.errorCount++;
   }
-
   return events;
 }
 
@@ -246,7 +252,7 @@ function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 
       field.errorOrigin = 1;
 
       if (originalError !== (field.error = element.validationMessage)) {
-        events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: field, data: originalError });
+        events.push(createEvent(EVENT_CHANGE_ERROR, field, originalError));
       }
       return events;
     }
@@ -256,14 +262,11 @@ function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 
   field.errorOrigin = 0;
   field.errorCount--;
 
-  events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: field, data: originalError });
+  events.push(createEvent(EVENT_CHANGE_ERROR, field, originalError));
 
   for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
-    if (--ancestor.errorCount === 0) {
-      events.push({ type: EVENT_CHANGE_ERROR, origin: field, target: ancestor, data: originalError });
-    }
+    ancestor.errorCount--;
   }
-
   return events;
 }
 

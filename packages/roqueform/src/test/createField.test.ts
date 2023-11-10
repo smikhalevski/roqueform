@@ -350,7 +350,7 @@ describe('createField', () => {
     const newValue = { aaa: 222 };
 
     field.at('aaa').on('*', event => {
-      expect(event.origin.value).toBe(newValue);
+      expect(event.target.value).toBe(newValue);
       done();
     });
 
