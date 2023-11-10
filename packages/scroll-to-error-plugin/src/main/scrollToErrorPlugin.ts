@@ -1,4 +1,4 @@
-import { Field, PluginInjector } from 'roqueform';
+import { Field, PluginInjector, PluginOf } from 'roqueform';
 
 export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
   /**
@@ -38,9 +38,9 @@ export interface ScrollToErrorPlugin {
    * @param alignToTop If `true`, the top of the element will be aligned to the top of the visible area of the
    * scrollable ancestor, otherwise element will be aligned to the bottom of the visible area of the scrollable
    * ancestor.
-   * @returns `true` if there's an error to scroll to, or `false` otherwise.
+   * @returns The field which is scrolled to, or `null` if there's no scroll happening.
    */
-  scrollToError(index?: number, alignToTop?: boolean): boolean;
+  scrollToError(index?: number, alignToTop?: boolean): Field<PluginOf<this>> | null;
 
   /**
    * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
@@ -52,9 +52,9 @@ export interface ScrollToErrorPlugin {
    * the end of the sequence. `scrollToError(-1)` scroll to the last error. The order of errors is the same as the
    * visual order of fields left-to-right and top-to-bottom.
    * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
-   * @returns `true` if there's an error to scroll to, or `false` otherwise.
+   * @returns The field which is scrolled to, or `null` if there's no scroll happening.
    */
-  scrollToError(index?: number, options?: ScrollToErrorOptions): boolean;
+  scrollToError(index?: number, options?: ScrollToErrorOptions): Field<PluginOf<this>> | null;
 }
 
 /**
@@ -80,15 +80,16 @@ export function scrollToErrorPlugin(): PluginInjector<ScrollToErrorPlugin> {
       const targets = getTargetFields(field, []);
 
       if (targets.length === 0) {
-        return false;
+        return null;
       }
 
       const target = sortByBoundingRect(targets, rtl)[index < 0 ? targets.length + index : index];
 
       if (target !== undefined) {
         target.element!.scrollIntoView(options);
+        return target;
       }
-      return true;
+      return null;
     };
   };
 }

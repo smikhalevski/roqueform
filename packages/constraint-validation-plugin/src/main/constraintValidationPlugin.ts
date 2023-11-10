@@ -133,27 +133,23 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
 
     field.ref = element => {
       if (field.element === element) {
-        // Same element
         ref?.(element);
         return;
       }
 
       if (field.element !== null) {
-        // Disconnect current element
+        // Disconnect from the current element
         field.element.removeEventListener('input', changeListener);
         field.element.removeEventListener('change', changeListener);
         field.element.removeEventListener('invalid', changeListener);
-
-        field.element = null;
       }
 
       field.element = element;
-      field.validity = null;
 
       const events: Event[] = [];
 
       if (isValidatable(element)) {
-        // Connect new element
+        // Connect to the new element
         element.addEventListener('input', changeListener);
         element.addEventListener('change', changeListener);
         element.addEventListener('invalid', changeListener);
@@ -162,6 +158,7 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         setError(field, element.validationMessage, 1, events);
       } else {
         // Delete the associated constraint error
+        field.validity = null;
         deleteError(field, 1, events);
       }
 

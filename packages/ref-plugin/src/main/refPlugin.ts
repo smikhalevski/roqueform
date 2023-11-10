@@ -63,7 +63,7 @@ export function refPlugin(): PluginInjector<RefPlugin> {
     const { ref } = field;
 
     field.ref = element => {
-      field.element = element instanceof Element ? element : null;
+      field.element = element;
       ref?.(element);
     };
 
