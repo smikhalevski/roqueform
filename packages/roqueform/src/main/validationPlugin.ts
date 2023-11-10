@@ -412,7 +412,12 @@ function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
 
   const validation: Validation = { root: field, abortController: null };
 
-  dispatchEvents(startValidation(field, validation, []));
+  try {
+    dispatchEvents(startValidation(field, validation, []));
+  } catch (error) {
+    dispatchEvents(endValidation(field, validation, []));
+    throw error;
+  }
 
   if (field.validation !== validation) {
     throw new Error(ERROR_ABORT);
@@ -433,42 +438,49 @@ function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
 }
 
 function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promise<boolean> {
-  dispatchEvents(clearErrors(field, 1, abortValidation(field, [])));
+  return new Promise((resolve, reject) => {
+    dispatchEvents(clearErrors(field, 1, abortValidation(field, [])));
 
-  if (field.validation !== null) {
-    return Promise.reject(new Error(ERROR_ABORT));
-  }
-
-  const validation: Validation = { root: field, abortController: new AbortController() };
-
-  dispatchEvents(startValidation(field, validation, []));
-
-  if ((field.validation as Validation | null) !== validation) {
-    return Promise.reject(new Error(ERROR_ABORT));
-  }
-
-  const { validate, validateAsync = validate } = field.validator;
-
-  return Promise.race([
-    new Promise(resolve => {
-      resolve(validateAsync(field, options));
-    }),
-    new Promise((_resolve, reject) => {
-      validation.abortController!.signal.addEventListener('abort', () => {
-        reject(new Error(ERROR_ABORT));
-      });
-    }),
-  ]).then(
-    () => {
-      if (field.validation !== validation) {
-        throw new Error(ERROR_ABORT);
-      }
-      dispatchEvents(endValidation(field, validation, []));
-      return field.errorCount === 0;
-    },
-    error => {
-      dispatchEvents(endValidation(field, validation, []));
-      throw error;
+    if (field.validation !== null) {
+      reject(new Error(ERROR_ABORT));
+      return;
     }
-  );
+
+    const validation: Validation = { root: field, abortController: new AbortController() };
+
+    try {
+      dispatchEvents(startValidation(field, validation, []));
+    } catch (error) {
+      dispatchEvents(endValidation(field, validation, []));
+      reject(error);
+      return;
+    }
+
+    if ((field.validation as Validation | null) !== validation || validation.abortController === null) {
+      reject(new Error(ERROR_ABORT));
+      return;
+    }
+
+    const { validate, validateAsync = validate } = field.validator;
+
+    validation.abortController.signal.addEventListener('abort', () => {
+      reject(new Error(ERROR_ABORT));
+    });
+
+    resolve(
+      Promise.resolve(validateAsync(field, options)).then(
+        () => {
+          if (field.validation !== validation) {
+            throw new Error(ERROR_ABORT);
+          }
+          dispatchEvents(endValidation(field, validation, []));
+          return field.errorCount === 0;
+        },
+        error => {
+          dispatchEvents(endValidation(field, validation, []));
+          throw error;
+        }
+      )
+    );
+  });
 }
