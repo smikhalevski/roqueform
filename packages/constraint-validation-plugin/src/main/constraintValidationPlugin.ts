@@ -123,11 +123,13 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
       isInvalid: { configurable: true, get: () => field.errorCount !== 0 },
     });
 
-    const changeListener: EventListener = event => {
-      if (field.element === event.currentTarget && isValidatable(field.element)) {
+    const changeListener = () => {
+      if (isValidatable(field.element)) {
         dispatchEvents(setError(field, field.element.validationMessage, 1, []));
       }
     };
+
+    field.on('change:value', changeListener);
 
     const { ref } = field;
 
@@ -138,7 +140,6 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
       }
 
       if (field.element !== null) {
-        // Disconnect from the current element
         field.element.removeEventListener('input', changeListener);
         field.element.removeEventListener('change', changeListener);
         field.element.removeEventListener('invalid', changeListener);
@@ -147,7 +148,6 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
       const events: Event[] = [];
 
       if (isValidatable(element)) {
-        // Connect to the new element
         element.addEventListener('input', changeListener);
         element.addEventListener('change', changeListener);
         element.addEventListener('invalid', changeListener);
@@ -159,7 +159,6 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
       } else {
         field.element = field.validity = null;
 
-        // Delete the associated constraint error
         deleteError(field, 1, events);
       }
 

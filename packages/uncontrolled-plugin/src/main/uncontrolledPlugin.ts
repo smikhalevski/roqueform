@@ -30,18 +30,11 @@ export interface UncontrolledPlugin {
   ['elementValueAccessor']: ElementValueAccessor;
 
   /**
-   * The adds the DOM element to {@link observedElements observed elements}.
+   * Adds the DOM element to {@link observedElements observed elements}.
    *
    * @param element The element to observe. No-op if the element is `null` or not connected to the DOM.
    */
   observe(element: Element | null): void;
-
-  /**
-   * Overrides {@link elementValueAccessor the element value accessor} for this field.
-   *
-   * @param accessor The accessor to use for this filed.
-   */
-  setElementValueAccessor(accessor: ElementValueAccessor): this;
 
   /**
    * Subscribes to updates of {@link observedElements observed elements}.
@@ -75,7 +68,6 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
     const mutationObserver = new MutationObserver(mutations => {
       const events: Event[] = [];
       const { observedElements } = field;
-      const [element] = observedElements;
 
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.removedNodes.length; ++i) {
@@ -98,7 +90,7 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
       if (observedElements.length === 0) {
         mutationObserver.disconnect();
         field.ref?.(null);
-      } else if (element !== observedElements[0]) {
+      } else {
         field.ref?.(observedElements[0]);
       }
 
@@ -125,33 +117,28 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
       const { observedElements } = field;
 
       if (
-        element === null ||
         !(element instanceof Element) ||
         !element.isConnected ||
-        observedElements.indexOf(element) !== -1
+        element.parentNode === null ||
+        observedElements.includes(element)
       ) {
         return;
       }
 
-      mutationObserver.observe(element.parentNode!, { childList: true });
+      mutationObserver.observe(element.parentNode, { childList: true });
 
       element.addEventListener('input', changeListener);
       element.addEventListener('change', changeListener);
 
-      observedElements.push(element);
+      const elementCount = observedElements.push(element);
 
       field.elementValueAccessor.set(observedElements, field.value);
 
-      if (observedElements.length === 1) {
-        field.ref?.(observedElements[0]);
+      if (elementCount === 1) {
+        field.ref?.(element);
       }
 
       dispatchEvents([createEvent(EVENT_CHANGE_OBSERVED_ELEMENTS, field, element)]);
-    };
-
-    field.setElementValueAccessor = accessor => {
-      field.elementValueAccessor = accessor;
-      return field;
     };
   };
 }
