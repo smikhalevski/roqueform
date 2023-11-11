@@ -5,6 +5,7 @@ import {
   Field,
   isEqual,
   PluginInjector,
+  PluginOf,
   Subscriber,
   Unsubscribe,
   ValueOf,
@@ -16,9 +17,10 @@ import isDeepEqual from 'fast-deep-equal';
  */
 export interface ResetPlugin {
   /**
-   * `true` if the field value is different from its initial value, or `false` otherwise.
+   * `true` if the field value is different from its initial value basing on {@link equalityChecker equality checker},
+   * or `false` otherwise.
    */
-  readonly isDirty: boolean;
+  isDirty: boolean;
 
   /**
    * The callback that compares initial value and the current value of the field.
@@ -40,6 +42,14 @@ export interface ResetPlugin {
    * Reverts the field to its initial value.
    */
   reset(): void;
+
+  /**
+   * Returns all fields that have {@link FieldController.value a value} that is different from
+   * {@link FieldController.initialValue an initial value} basing on {@link equalityChecker equality checker}.
+   *
+   * @see {@link isDirty}
+   */
+  getDirtyFields(): Field<PluginOf<this>>[];
 
   /**
    * Subscribes to changes of {@link FieldController.initialValue the initial value}.
@@ -75,6 +85,8 @@ export function resetPlugin(
     field.reset = () => {
       field.setValue(field.initialValue);
     };
+
+    field.getDirtyFields = () => getDirtyFields(field, []);
   };
 }
 
@@ -113,4 +125,16 @@ function propagateInitialValue(
     }
   }
   return events;
+}
+
+function getDirtyFields(field: Field<ResetPlugin>, batch: Field<ResetPlugin>[]): Field<ResetPlugin>[] {
+  if (field.isDirty) {
+    batch.push(field);
+  }
+  if (field.children !== null) {
+    for (const child of field.children) {
+      getDirtyFields(child, batch);
+    }
+  }
+  return batch;
 }

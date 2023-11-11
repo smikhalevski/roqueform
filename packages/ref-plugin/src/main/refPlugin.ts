@@ -10,7 +10,7 @@ export interface RefPlugin {
   element: Element | null;
 
   /**
-   * `true` if the {@link element DOM element} is focused, `false` otherwise.
+   * `true` if the {@link element DOM element} is currently focused, `false` otherwise.
    */
   readonly isFocused: boolean;
 
