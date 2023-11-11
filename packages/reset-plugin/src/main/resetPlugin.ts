@@ -27,6 +27,7 @@ export interface ResetPlugin {
    *
    * @param initialValue The initial value.
    * @param value The current value.
+   * @returns `true` if initial value is equal to value, or `false` otherwise.
    * @protected
    */
   ['equalityChecker']: (initialValue: any, value: any) => boolean;
