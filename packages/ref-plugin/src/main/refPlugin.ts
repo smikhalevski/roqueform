@@ -10,9 +10,9 @@ export interface RefPlugin {
   element: Element | null;
 
   /**
-   * `true` if the {@link element DOM element} is currently focused, `false` otherwise.
+   * `true` if {@link element the DOM element} or any of its descendants have focus, `false` otherwise.
    */
-  readonly isFocused: boolean;
+  readonly hasFocus: boolean;
 
   /**
    * Associates the field with the {@link element DOM element}.
@@ -55,15 +55,15 @@ export function refPlugin(): PluginInjector<RefPlugin> {
   return field => {
     field.element = null;
 
-    Object.defineProperty(field, 'isFocused', {
+    Object.defineProperty(field, 'hasFocus', {
       configurable: true,
-      get: () => field.element !== null && field.element.ownerDocument.activeElement === field.element,
+      get: () => field.element !== null && field.element.contains(field.element.ownerDocument.activeElement),
     });
 
     const { ref } = field;
 
     field.ref = element => {
-      field.element = element;
+      field.element = element instanceof Element ? element : null;
       ref?.(element);
     };
 
