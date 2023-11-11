@@ -63,8 +63,8 @@ export function refPlugin(): PluginInjector<RefPlugin> {
     const { ref } = field;
 
     field.ref = element => {
-      field.element = element instanceof Element ? element : null;
       ref?.(element);
+      field.element = element instanceof Element ? element : null;
     };
 
     field.scrollIntoView = options => {

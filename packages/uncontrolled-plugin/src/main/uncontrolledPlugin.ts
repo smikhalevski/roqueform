@@ -1,8 +1,6 @@
-import { createEvent, dispatchEvents, Event, PluginInjector, Subscriber, Unsubscribe } from 'roqueform';
+import { Field, PluginInjector } from 'roqueform';
 import isDeepEqual from 'fast-deep-equal';
 import { createElementValueAccessor, ElementValueAccessor } from './createElementValueAccessor';
-
-const EVENT_CHANGE_OBSERVED_ELEMENTS = 'change:observedElements';
 
 /**
  * The default value accessor.
@@ -13,132 +11,124 @@ const elementValueAccessor = createElementValueAccessor();
  * The plugin added to fields by the {@link uncontrolledPlugin}.
  */
 export interface UncontrolledPlugin {
-  /**
-   * The array of elements that are used to derive the field value. Update this array by calling {@link observe} method.
-   * Elements are observed by the {@link !MutationObserver MutationObserver} and deleted from this array when they are
-   * removed from DOM.
-   *
-   * @protected
-   */
-  ['observedElements']: Element[];
+  element: Element | null;
 
   /**
-   * The accessor that reads and writes field value from and to {@link observedElements observed elements}.
+   * The accessor that reads and writes the field value from and to {@link elements}.
    *
    * @protected
    */
   ['elementValueAccessor']: ElementValueAccessor;
 
   /**
-   * Adds the DOM element to {@link observedElements observed elements}.
-   *
-   * @param element The element to observe. No-op if the element is `null` or not connected to the DOM.
+   * Associates the field with the DOM element.
    */
-  observe(element: Element | null): void;
+  ref(element: Element | null): void;
 
   /**
-   * Subscribes to updates of {@link observedElements observed elements}.
-   *
-   * @param eventType The type of the event.
-   * @param subscriber The subscriber that would be triggered.
-   * @returns The callback to unsubscribe the subscriber.
+   * Returns a callback that associates the field with the DOM element under the given key.
    */
-  on(eventType: 'change:observedElements', subscriber: Subscriber<this, Element>): Unsubscribe;
-
-  /**
-   * Associates the field with {@link element the DOM element}. This method is usually exposed by plugins that use DOM
-   * element references. This method is invoked when {@link observedElements the first observed element} is changed.
-   *
-   * @protected
-   */
-  ['ref']?(element: Element | null): void;
+  refFor(key: unknown): (element: Element | null) => void;
 }
 
 /**
  * Updates field value when the DOM element value is changed and vice versa.
- *
- * @param accessor The accessor that reads and writes values to and from the DOM elements that
- * {@link UncontrolledPlugin.observedElements are observed by the filed}.
  */
 export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
-    field.observedElements = [];
     field.elementValueAccessor = accessor;
 
-    const mutationObserver = new MutationObserver(mutations => {
-      const events: Event[] = [];
-      const { observedElements } = field;
+    const refs = new Map<unknown, (element: Element | null) => void>();
+    const elements: Element[] = [];
+    const elementMap = new Map<unknown, Element | null>();
 
-      for (const mutation of mutations) {
-        for (let i = 0; i < mutation.removedNodes.length; ++i) {
-          const elementIndex = observedElements.indexOf(mutation.removedNodes.item(i) as Element);
-
-          if (elementIndex === -1) {
-            continue;
-          }
-
-          const element = observedElements[elementIndex];
-
-          element.removeEventListener('input', changeListener);
-          element.removeEventListener('change', changeListener);
-
-          observedElements.splice(elementIndex, 1);
-          events.push(createEvent(EVENT_CHANGE_OBSERVED_ELEMENTS, field, element));
-        }
-      }
-
-      if (observedElements.length === 0) {
-        mutationObserver.disconnect();
-        field.ref?.(null);
-      } else {
-        field.ref?.(observedElements[0]);
-      }
-
-      dispatchEvents(events);
-    });
+    let prevValue = field.value;
 
     const changeListener: EventListener = event => {
       let value;
       if (
-        field.observedElements.indexOf(event.currentTarget as Element) !== -1 &&
-        !isDeepEqual((value = field.elementValueAccessor.get(field.observedElements)), field.value)
+        elements.includes(event.target as Element) &&
+        !isDeepEqual((value = field.elementValueAccessor.get(elements)), field.value)
       ) {
-        field.setValue(value);
+        field.setValue((prevValue = value));
       }
     };
 
-    field.on('change:value', () => {
-      if (field.observedElements.length !== 0) {
-        field.elementValueAccessor.set(field.observedElements, field.value);
+    field.on('change:value', event => {
+      if (field.value !== prevValue && event.target === field && elements.length !== 0) {
+        field.elementValueAccessor.set(elements, field.value);
       }
     });
 
-    field.observe = element => {
-      const { observedElements } = field;
+    const { ref } = field;
 
-      if (
-        !(element instanceof Element) ||
-        !element.isConnected ||
-        element.parentNode === null ||
-        observedElements.includes(element)
-      ) {
-        return;
+    field.ref = nextElement => {
+      const prevElement = field.element;
+
+      ref?.(nextElement);
+
+      field.element = swapElements(field, changeListener, elements, prevElement, nextElement);
+    };
+
+    field.refFor = key => {
+      let ref = refs.get(key);
+      if (ref !== undefined) {
+        return ref;
       }
 
-      mutationObserver.observe(element.parentNode, { childList: true });
+      ref = nextElement => {
+        const prevElement = elementMap.get(key) || null;
 
-      element.addEventListener('input', changeListener);
-      element.addEventListener('change', changeListener);
+        nextElement = swapElements(field, changeListener, elements, prevElement, nextElement);
 
-      const elementCount = observedElements.push(element);
-
-      field.elementValueAccessor.set(observedElements, field.value);
-
-      if (elementCount === 1) {
-        field.ref?.(element);
-      }
-
-      dispatchEvents([createEvent(EVENT_CHANGE_OBSERVED_ELEMENTS, field, element)]);
+        if (prevElement !== nextElement) {
+          elementMap.set(key, nextElement);
+        }
+      };
+      refs.set(key, ref);
+      return ref;
     };
   };
+}
+
+function swapElements(
+  field: Field<UncontrolledPlugin>,
+  changeListener: EventListener,
+  elements: Element[],
+  prevElement: Element | null,
+  nextElement: Element | null
+): Element | null {
+  nextElement = nextElement instanceof Element ? nextElement : null;
+
+  if (prevElement === nextElement) {
+    return nextElement;
+  }
+
+  let prevIndex = -1;
+
+  if (prevElement !== null) {
+    prevElement.removeEventListener('input', changeListener);
+    prevElement.removeEventListener('change', changeListener);
+    prevIndex = elements.indexOf(prevElement);
+  }
+
+  if (nextElement !== null) {
+    nextElement.addEventListener('input', changeListener);
+    nextElement.addEventListener('change', changeListener);
+
+    if (prevIndex === -1) {
+      elements.push(nextElement);
+    } else {
+      elements[prevIndex] = nextElement;
+      prevIndex = -1;
+    }
+  }
+
+  if (prevIndex !== -1) {
+    elements.splice(prevIndex, 1);
+  }
+
+  field.elementValueAccessor.set(elements, field.value);
+
+  return nextElement;
 }

@@ -133,36 +133,36 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
 
     const { ref } = field;
 
-    field.ref = element => {
-      if (field.element === element) {
-        ref?.(element);
+    field.ref = nextElement => {
+      const prevElement = field.element;
+
+      ref?.(nextElement);
+
+      if (prevElement === nextElement) {
         return;
       }
 
-      if (field.element !== null) {
-        field.element.removeEventListener('input', changeListener);
-        field.element.removeEventListener('change', changeListener);
-        field.element.removeEventListener('invalid', changeListener);
+      field.element = nextElement = nextElement instanceof Element ? nextElement : null;
+
+      if (prevElement !== null) {
+        prevElement.removeEventListener('input', changeListener);
+        prevElement.removeEventListener('change', changeListener);
+        prevElement.removeEventListener('invalid', changeListener);
       }
 
       const events: Event[] = [];
 
-      if (isValidatable(element)) {
-        element.addEventListener('input', changeListener);
-        element.addEventListener('change', changeListener);
-        element.addEventListener('invalid', changeListener);
+      if (isValidatable(nextElement)) {
+        nextElement.addEventListener('input', changeListener);
+        nextElement.addEventListener('change', changeListener);
+        nextElement.addEventListener('invalid', changeListener);
 
-        field.element = element;
-        field.validity = element.validity;
-
-        setError(field, element.validationMessage, 1, events);
+        field.validity = nextElement.validity;
+        setError(field, nextElement.validationMessage, 1, events);
       } else {
-        field.element = field.validity = null;
-
+        field.validity = null;
         deleteError(field, 1, events);
       }
-
-      ref?.(element);
 
       dispatchEvents(events);
     };
