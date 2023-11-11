@@ -144,8 +144,6 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         field.element.removeEventListener('invalid', changeListener);
       }
 
-      field.element = element;
-
       const events: Event[] = [];
 
       if (isValidatable(element)) {
@@ -154,11 +152,14 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         element.addEventListener('change', changeListener);
         element.addEventListener('invalid', changeListener);
 
+        field.element = element;
         field.validity = element.validity;
+
         setError(field, element.validationMessage, 1, events);
       } else {
+        field.element = field.validity = null;
+
         // Delete the associated constraint error
-        field.validity = null;
         deleteError(field, 1, events);
       }
 

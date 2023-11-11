@@ -71,7 +71,7 @@ export function scrollToErrorPlugin(): PluginInjector<ScrollToErrorPlugin> {
     const { ref } = field;
 
     field.ref = element => {
-      field.element = element;
+      field.element = element instanceof Element ? element : null;
       ref?.(element);
     };
 
