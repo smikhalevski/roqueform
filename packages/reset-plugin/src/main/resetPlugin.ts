@@ -1,5 +1,4 @@
 import {
-  createEvent,
   dispatchEvents,
   Event,
   Field,
@@ -59,7 +58,7 @@ export interface ResetPlugin {
    * @param subscriber The subscriber that would be triggered.
    * @returns The callback to unsubscribe the subscriber.
    */
-  on(eventType: 'change:initialValue', subscriber: Subscriber<this, ValueOf<this>>): Unsubscribe;
+  on(eventType: 'change:initialValue', subscriber: Subscriber<PluginOf<this>>): Unsubscribe;
 }
 
 /**
@@ -107,22 +106,22 @@ function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void
 }
 
 function propagateInitialValue(
+  origin: Field<ResetPlugin>,
   target: Field<ResetPlugin>,
-  field: Field<ResetPlugin>,
   initialValue: unknown,
   events: Event[]
 ): Event[] {
-  events.unshift(createEvent('change:initialValue', field, initialValue));
+  events.push({ type: 'change:initialValue', target, origin, data: target.initialValue });
 
-  field.initialValue = initialValue;
+  target.initialValue = initialValue;
 
-  if (field.children !== null) {
-    for (const child of field.children) {
-      const childInitialValue = field.valueAccessor.get(initialValue, child.key);
-      if (child !== target && isEqual(child.initialValue, childInitialValue)) {
+  if (target.children !== null) {
+    for (const child of target.children) {
+      const childInitialValue = target.valueAccessor.get(initialValue, child.key);
+      if (child !== origin && isEqual(child.initialValue, childInitialValue)) {
         continue;
       }
-      propagateInitialValue(target, child, childInitialValue, events);
+      propagateInitialValue(origin, child, childInitialValue, events);
     }
   }
   return events;

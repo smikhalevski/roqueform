@@ -10,24 +10,27 @@ export type Field<Plugin = unknown, Value = any> = FieldController<Plugin, Value
 /**
  * The event dispatched to subscribers of {@link Field a field}.
  *
- * @template CurrentTarget The field where the event is dispatched.
+ * @template Plugin The plugin injected into the field.
  * @template Data The additional data related to the event.
  */
-export interface Event<CurrentTarget = any, Data = any> {
+export interface Event<Plugin = any, Data = any> {
   /**
    * The type of the event.
    */
   type: string;
 
   /**
-   * The field to which the event subscriber has been added.
+   * The field onto which the event was dispatched. Usually, this is the field which has changed.
    */
-  currentTarget: CurrentTarget;
+  target: Field<Plugin>;
 
   /**
-   * The field onto which the event was dispatched.
+   * The field that caused this event to be dispatched onto {@link target the target field}.
+   *
+   * For example: if a child field value is set, then the parent field value to updated as well. For all events
+   * dispatched in this scenario, the origin is the child field.
    */
-  target: Field<PluginOf<CurrentTarget>>;
+  origin: Field<Plugin>;
 
   /**
    * The {@link type type-specific} data related to the {@link target target field}.
@@ -39,10 +42,10 @@ export interface Event<CurrentTarget = any, Data = any> {
  * The callback that receives events dispatched by {@link Field a field}.
  *
  * @param event The dispatched event.
- * @template CurrentTarget The field where the event is dispatched.
+ * @template Plugin The plugin injected into the field.
  * @template Data The additional data related to the event.
  */
-export type Subscriber<CurrentTarget = any, Data = any> = (event: Event<CurrentTarget, Data>) => void;
+export type Subscriber<Plugin = any, Data = any> = (event: Event<Plugin, Data>) => void;
 
 /**
  * Unsubscribes the subscriber. No-op if subscriber was already unsubscribed.
@@ -141,7 +144,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * @see {@link on}
    * @protected
    */
-  ['subscribers']: Record<string, Subscriber<this>[] | undefined> | null;
+  ['subscribers']: Record<string, Subscriber<Plugin>[] | undefined> | null;
 
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
@@ -201,7 +204,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * @param subscriber The subscriber that would be triggered.
    * @returns The callback to unsubscribe the subscriber.
    */
-  on(eventType: '*', subscriber: Subscriber<this>): Unsubscribe;
+  on(eventType: '*', subscriber: Subscriber<Plugin>): Unsubscribe;
 
   /**
    * Subscribes to {@link value the field value} changes. {@link Event.data} contains the previous field value.
@@ -210,7 +213,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * @param subscriber The subscriber that would be triggered.
    * @returns The callback to unsubscribe the subscriber.
    */
-  on(eventType: 'change:value', subscriber: Subscriber<this, ValueOf<this>>): Unsubscribe;
+  on(eventType: 'change:value', subscriber: Subscriber<Plugin>): Unsubscribe;
 }
 
 /**

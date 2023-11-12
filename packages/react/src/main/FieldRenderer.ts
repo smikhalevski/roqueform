@@ -52,7 +52,7 @@ export function FieldRenderer<RenderedField extends FieldController<any>>(
   useLayoutEffect(
     () =>
       field.on('*', event => {
-        if (eagerlyUpdated || event.target === field) {
+        if (eagerlyUpdated || event.origin === field) {
           rerender();
         }
         if (field.isTransient || event.type !== 'change:value' || event.target !== field) {

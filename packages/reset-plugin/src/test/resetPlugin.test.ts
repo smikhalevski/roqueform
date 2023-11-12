@@ -52,7 +52,20 @@ describe('resetPlugin', () => {
 
     field.setInitialValue(initialValue2);
 
-    expect(subscriberMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenNthCalledWith(1, {
+      type: 'change:initialValue',
+      target: field,
+      origin: field,
+      data: { aaa: 111 },
+    });
+    expect(subscriberMock).toHaveBeenNthCalledWith(2, {
+      type: 'change:initialValue',
+      target: field.at('aaa'),
+      origin: field,
+      data: 111,
+    });
+
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(field.at('aaa').initialValue).toBe(222);
     expect(field.at('aaa').isDirty).toBe(true);

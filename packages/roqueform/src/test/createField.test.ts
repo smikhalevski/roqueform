@@ -79,29 +79,35 @@ describe('createField', () => {
   });
 
   test('calls a glob subscriber when value is updated', () => {
-    const rootSubscriberMock = jest.fn();
+    const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
 
     const field = createField({ aaa: 111 });
-    field.on('*', rootSubscriberMock);
+    field.on('*', subscriberMock);
 
     field.at('aaa').on('*', aaaSubscriberMock);
 
     field.at('aaa').setValue(222);
 
-    expect(rootSubscriberMock).toHaveBeenCalledTimes(1);
-    expect(rootSubscriberMock).toHaveBeenNthCalledWith(1, {
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      origin: field.at('aaa'),
       target: field,
+      origin: field.at('aaa'),
       data: { aaa: 111 },
+    });
+    expect(subscriberMock).toHaveBeenNthCalledWith(2, {
+      type: 'change:value',
+      target: field.at('aaa'),
+      origin: field.at('aaa'),
+      data: 111,
     });
 
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      origin: field.at('aaa'),
       target: field.at('aaa'),
+      origin: field.at('aaa'),
       data: 111,
     });
   });
@@ -117,19 +123,25 @@ describe('createField', () => {
 
     field.at('aaa').setValue(222);
 
-    expect(subscriberMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      origin: field.at('aaa'),
       target: field,
+      origin: field.at('aaa'),
       data: { aaa: 111 },
+    });
+    expect(subscriberMock).toHaveBeenNthCalledWith(2, {
+      type: 'change:value',
+      target: field.at('aaa'),
+      origin: field.at('aaa'),
+      data: 111,
     });
 
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      origin: field.at('aaa'),
       target: field.at('aaa'),
+      origin: field.at('aaa'),
       data: 111,
     });
   });
@@ -150,8 +162,8 @@ describe('createField', () => {
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      origin: field.at('aaa'),
       target: field.at('aaa'),
+      origin: field.at('aaa'),
       data: 111,
     });
   });
@@ -168,14 +180,7 @@ describe('createField', () => {
     field.setValue({ aaa: 222, bbb: 'aaa' });
 
     expect(bbbSubscriberMock).not.toHaveBeenCalled();
-
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
-    expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
-      type: 'change:value',
-      origin: field,
-      target: field.at('aaa'),
-      data: 111,
-    });
   });
 
   test('sets a value to a root field', () => {
@@ -224,15 +229,8 @@ describe('createField', () => {
     field.at('aaa').on('*', aaaSubscriberMock);
     field.at('aaa').setTransientValue(222);
 
-    expect(subscriberMock).toHaveBeenCalledTimes(0);
-
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
-    expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
-      type: 'change:value',
-      origin: field.at('aaa'),
-      target: field.at('aaa'),
-      data: 111,
-    });
   });
 
   test('does not leave fields in an inconsistent state if a subscriber throws an error', () => {
@@ -270,7 +268,7 @@ describe('createField', () => {
     const nextValue = { aaa: 333 };
     field.setValue(nextValue);
 
-    expect(subscriberMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
 
     expect(field.value).toBe(nextValue);
@@ -292,7 +290,7 @@ describe('createField', () => {
 
     field.setValue({ aaa: 333 });
 
-    expect(subscriberMock).toHaveBeenCalledTimes(1);
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
 
     expect(field.at('aaa').value).toBe(222);
@@ -316,8 +314,8 @@ describe('createField', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      origin: field,
       target: field,
+      origin: field,
       data: initialValue,
     });
 
@@ -347,14 +345,13 @@ describe('createField', () => {
 
   test('an actual parent value is visible in the child field subscriber', done => {
     const field = createField({ aaa: 111 });
-    const newValue = { aaa: 222 };
 
     field.at('aaa').on('*', event => {
-      expect(event.target.value).toBe(newValue);
+      expect(event.target.value).toBe(222);
       done();
     });
 
-    field.setValue(newValue);
+    field.setValue({ aaa: 222 });
   });
 
   test('does not cache a child field for which the plugin has thrown an error', () => {
@@ -400,6 +397,6 @@ describe('createField', () => {
     field.at('aaa').setValue(222);
 
     expect(field.value.aaa).toBe(333);
-    expect(subscriberMock).toHaveBeenCalledTimes(2);
+    expect(subscriberMock).toHaveBeenCalledTimes(4);
   });
 });

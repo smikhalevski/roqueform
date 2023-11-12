@@ -1,4 +1,4 @@
-import { Event, FieldController } from './typings';
+import { Event } from './typings';
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -36,35 +36,18 @@ export function callOrGet(value: unknown, arg?: unknown) {
 }
 
 /**
- * Creates the new event that would be dispatched from target field.
- *
- * @param type The type of the event.
- * @param target The target field where the event is dispatched.
- * @param data The data carried by the event.
- */
-export function createEvent<Target extends FieldController<any>, Data>(
-  type: string,
-  target: Target,
-  data: Data
-): Event<Target, Data> {
-  return { type, currentTarget: target, target, data };
-}
-
-/**
  * Dispatches multiple events to field subscribers.
  *
  * @param events The array of events to dispatch.
  */
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
-    for (let field = event.currentTarget; field !== null; field = field.parent) {
+    for (let field = event.target; field !== null; field = field.parent) {
       const { subscribers } = field;
 
       if (subscribers === null) {
         continue;
       }
-
-      event.currentTarget = field;
 
       const typeSubscribers = subscribers[event.type];
       const globSubscribers = subscribers['*'];

@@ -1,13 +1,4 @@
-import {
-  createEvent,
-  dispatchEvents,
-  Event,
-  Field,
-  PluginInjector,
-  PluginOf,
-  Subscriber,
-  Unsubscribe,
-} from 'roqueform';
+import { dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
 
 const EVENT_CHANGE_ERROR = 'change:error';
 
@@ -105,7 +96,7 @@ export interface ConstraintValidationPlugin {
    * @see {@link error}
    * @see {@link isInvalid}
    */
-  on(eventType: 'change:error', subscriber: Subscriber<this, string | null>): Unsubscribe;
+  on(eventType: 'change:error', subscriber: Subscriber<PluginOf<this>, string | null>): Unsubscribe;
 }
 
 /**
@@ -221,7 +212,7 @@ function setError(
   field.error = error;
   field.errorOrigin = errorOrigin;
 
-  events.push(createEvent(EVENT_CHANGE_ERROR, field, originalError));
+  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
 
   if (originalError !== null) {
     return events;
@@ -249,7 +240,7 @@ function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 
       field.errorOrigin = 1;
 
       if (originalError !== (field.error = element.validationMessage)) {
-        events.push(createEvent(EVENT_CHANGE_ERROR, field, originalError));
+        events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
       }
       return events;
     }
@@ -259,7 +250,7 @@ function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 
   field.errorOrigin = 0;
   field.errorCount--;
 
-  events.push(createEvent(EVENT_CHANGE_ERROR, field, originalError));
+  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
 
   for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
     ancestor.errorCount--;

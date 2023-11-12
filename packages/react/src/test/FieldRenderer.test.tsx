@@ -43,7 +43,7 @@ describe('FieldRenderer', () => {
     expect(renderMock).toHaveBeenCalledTimes(1);
   });
 
-  test('does not re-render if eagerlyUpdated and child field value is changed', async () => {
+  test('re-renders if eagerlyUpdated and child field value is changed', async () => {
     const renderMock = jest.fn();
     const rootField = createField();
 
@@ -63,7 +63,7 @@ describe('FieldRenderer', () => {
     expect(renderMock).toHaveBeenCalledTimes(2);
   });
 
-  test('triggers onChange handler when value is changed non-transiently', async () => {
+  test('triggers onChange when value is changed non-transiently', async () => {
     const handleChangeMock = jest.fn();
     const rootField = createField();
 
@@ -84,7 +84,7 @@ describe('FieldRenderer', () => {
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 222);
   });
 
-  test('triggers onChange handler when value is changed transiently', async () => {
+  test('does not trigger onChange when value is changed transiently', async () => {
     const handleChangeMock = jest.fn();
     const rootField = createField();
 

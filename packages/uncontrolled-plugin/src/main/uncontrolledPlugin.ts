@@ -53,6 +53,7 @@ export interface UncontrolledPlugin {
  */
 export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
+    field.element = null;
     field.elements = [];
     field.elementsMap = new Map();
     field.elementsValueAccessor = accessor;

@@ -1,5 +1,5 @@
 import { Event, Field, PluginInjector, Subscriber, ValueAccessor } from './typings';
-import { callOrGet, createEvent, dispatchEvents, isEqual } from './utils';
+import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalAccessor } from './naturalAccessor';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
@@ -131,18 +131,18 @@ function setValue(field: Field, value: unknown, transient: boolean): void {
   dispatchEvents(propagateValue(field, changeRoot, value, []));
 }
 
-function propagateValue(origin: Field, field: Field, value: unknown, events: Event[]): Event[] {
-  events.unshift(createEvent('change:value', field, value));
+function propagateValue(origin: Field, target: Field, value: unknown, events: Event[]): Event[] {
+  events.push({ type: 'change:value', target, origin, data: target.value });
 
-  field.value = value;
+  target.value = value;
 
-  if (field.children !== null) {
-    for (const child of field.children) {
+  if (target.children !== null) {
+    for (const child of target.children) {
       if (child.isTransient) {
         continue;
       }
 
-      const childValue = field.valueAccessor.get(value, child.key);
+      const childValue = target.valueAccessor.get(value, child.key);
       if (child !== origin && isEqual(child.value, childValue)) {
         continue;
       }
