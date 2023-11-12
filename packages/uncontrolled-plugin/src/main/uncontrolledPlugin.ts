@@ -112,7 +112,7 @@ function swapElements(
     prevIndex = elements.indexOf(prevElement);
   }
 
-  if (nextElement !== null) {
+  if (nextElement !== null && elements.indexOf(nextElement) === -1) {
     nextElement.addEventListener('input', changeListener);
     nextElement.addEventListener('change', changeListener);
 
@@ -127,8 +127,8 @@ function swapElements(
   if (prevIndex !== -1) {
     elements.splice(prevIndex, 1);
   }
-
-  field.elementValueAccessor.set(elements, field.value);
-
+  if (elements.length !== 0) {
+    field.elementValueAccessor.set(elements, field.value);
+  }
   return nextElement;
 }
