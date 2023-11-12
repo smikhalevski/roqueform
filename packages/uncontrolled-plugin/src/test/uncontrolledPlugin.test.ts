@@ -1,4 +1,4 @@
-import { ElementValueAccessor, uncontrolledPlugin } from '../main';
+import { ElementsValueAccessor, uncontrolledPlugin } from '../main';
 import { composePlugins, createField } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
 
@@ -144,7 +144,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('does not call setValue if the same value multiple times', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: jest.fn(() => 'xxx'),
       set: jest.fn(),
     };
@@ -171,7 +171,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('uses accessor to set values to the element', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: () => undefined,
       set: jest.fn(),
     };
@@ -190,7 +190,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('does not call set accessor if there are no referenced elements', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: () => undefined,
       set: jest.fn(),
     };
@@ -203,7 +203,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('multiple elements are passed to set accessor', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: () => 'xxx',
       set: jest.fn(),
     };
@@ -225,7 +225,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('non-connected elements are ignored', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: () => 'xxx',
       set: jest.fn(),
     };

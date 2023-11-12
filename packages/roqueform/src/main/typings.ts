@@ -88,7 +88,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * The key in the {@link parent parent value} that corresponds to the value of this field, or `null` if there's no
    * parent.
    */
-  key: any;
+  readonly key: any;
 
   /**
    * The current value of the field.
@@ -124,22 +124,16 @@ export interface FieldController<Plugin = unknown, Value = any> {
   /**
    * The array of immediate child fields that were {@link at previously accessed}, or `null` if there are no children.
    *
-   * This array is populated during {@link FieldController.at} call.
-   *
-   * @see {@link childrenMap}
    * @protected
    */
-  ['children']: Field<Plugin>[] | null;
+  ['children']: readonly Field<Plugin>[] | null;
 
   /**
    * Mapping from a key to a corresponding child field, or `null` if there are no children.
    *
-   * This map is populated during {@link FieldController.at} call.
-   *
-   * @see {@link children}
    * @protected
    */
-  ['childrenMap']: Map<unknown, Field<Plugin>> | null;
+  ['childrenMap']: ReadonlyMap<unknown, Field<Plugin>> | null;
 
   /**
    * The map from an event type to an array of associated subscribers, or `null` if no subscribers were added.

@@ -122,9 +122,9 @@ values of form elements:
 - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
 
 This behaviour can be changed by passing a custom
-[`ElementValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementValueAccessor.html)
+[`ElementsValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessor.html)
 implementation to a plugin. Or you can use a
-[`createElementValueAccessor`](https://smikhalevski.github.io/roqueform/functions/uncontrolled_plugin.createElementValueAccessor.html)
+[`createElementsValueAccessor`](https://smikhalevski.github.io/roqueform/functions/uncontrolled_plugin.createElementsValueAccessor.html)
 factory to customise the default behaviour:
 
 ```ts
@@ -134,10 +134,10 @@ import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
 const personField = useField(
   { dateOfBirth: 316310400000 },
   uncontrolledPlugin(
-    createElementValueAccessor({ dateFormat: 'timestamp' })
+    createElementsValueAccessor({ dateFormat: 'timestamp' })
   )
 );
 ```
 
 Read more about available options in
-[`ElementValueAccessorOptions`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementValueAccessorOptions.html).
+[`ElementsValueAccessorOptions`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessorOptions.html).

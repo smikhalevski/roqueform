@@ -107,8 +107,8 @@ function getOrCreateField(
   plugin?.(child);
 
   if (parent !== null) {
-    (parent.children ||= []).push(child);
-    (parent.childrenMap ||= new Map()).set(child.key, child);
+    ((parent.children ||= []) as Field[]).push(child);
+    ((parent.childrenMap ||= new Map()) as Map<unknown, Field>).set(child.key, child);
   }
 
   return child;

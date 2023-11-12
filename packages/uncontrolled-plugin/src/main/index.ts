@@ -2,5 +2,5 @@
  * @module uncontrolled-plugin
  */
 
-export * from './createElementValueAccessor';
+export * from './createElementsValueAccessor';
 export * from './uncontrolledPlugin';

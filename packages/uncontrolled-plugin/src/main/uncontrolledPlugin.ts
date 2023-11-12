@@ -1,24 +1,41 @@
 import { Field, PluginInjector } from 'roqueform';
-import isDeepEqual from 'fast-deep-equal';
-import { createElementValueAccessor, ElementValueAccessor } from './createElementValueAccessor';
+import { createElementsValueAccessor, ElementsValueAccessor } from './createElementsValueAccessor';
 
 /**
  * The default value accessor.
  */
-const elementValueAccessor = createElementValueAccessor();
+const elementsValueAccessor = createElementsValueAccessor();
 
 /**
  * The plugin added to fields by the {@link uncontrolledPlugin}.
  */
 export interface UncontrolledPlugin {
+  /**
+   * The DOM element associated with the field, or `null` if there's no associated element.
+   */
   element: Element | null;
+
+  /**
+   * The array of elements controlled by this field, includes {@link element}.
+   *
+   * @protected
+   */
+  ['elements']: readonly Element[];
+
+  /**
+   * The map from a key passed to {@link refFor} to a corresponding element. If {@link refFor} was called with `null`
+   * then a key is deleted from this map.
+   *
+   * @protected
+   */
+  ['elementsMap']: ReadonlyMap<unknown, Element>;
 
   /**
    * The accessor that reads and writes the field value from and to {@link elements}.
    *
    * @protected
    */
-  ['elementValueAccessor']: ElementValueAccessor;
+  ['elementsValueAccessor']: ElementsValueAccessor;
 
   /**
    * Associates the field with the DOM element.
@@ -26,7 +43,7 @@ export interface UncontrolledPlugin {
   ref(element: Element | null): void;
 
   /**
-   * Returns a callback that associates the field with the DOM element under the given key.
+   * Returns a callback that associates the field with the DOM element under the given key in {@link elementsMap}.
    */
   refFor(key: unknown): (element: Element | null) => void;
 }
@@ -34,29 +51,25 @@ export interface UncontrolledPlugin {
 /**
  * Updates field value when the DOM element value is changed and vice versa.
  */
-export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjector<UncontrolledPlugin> {
+export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
-    field.elementValueAccessor = accessor;
+    field.elements = [];
+    field.elementsMap = new Map();
+    field.elementsValueAccessor = accessor;
 
-    const refs = new Map<unknown, (element: Element | null) => void>();
-    const elements: Element[] = [];
-    const elementMap = new Map<unknown, Element | null>();
+    const refsMap = new Map<unknown, (element: Element | null) => void>();
 
     let prevValue = field.value;
 
     const changeListener: EventListener = event => {
-      let value;
-      if (
-        elements.includes(event.target as Element) &&
-        !isDeepEqual((value = field.elementValueAccessor.get(elements)), field.value)
-      ) {
-        field.setValue((prevValue = value));
+      if (field.elements.includes(event.target as Element)) {
+        field.setValue((prevValue = field.elementsValueAccessor.get(field.elements)));
       }
     };
 
     field.on('change:value', event => {
-      if (field.value !== prevValue && event.target === field && elements.length !== 0) {
-        field.elementValueAccessor.set(elements, field.value);
+      if (field.value !== prevValue && event.target === field && field.elements.length !== 0) {
+        field.elementsValueAccessor.set(field.elements, field.value);
       }
     });
 
@@ -67,25 +80,31 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
 
       ref?.(nextElement);
 
-      field.element = swapElements(field, changeListener, elements, prevElement, nextElement);
+      field.element = swapElements(field, changeListener, prevElement, nextElement);
     };
 
     field.refFor = key => {
-      let ref = refs.get(key);
-      if (ref !== undefined) {
-        return ref;
+      let ref = refsMap.get(key);
+
+      if (ref === undefined) {
+        ref = nextElement => {
+          const elementsMap = field.elementsMap as Map<unknown, Element>;
+          const prevElement = elementsMap.get(key) || null;
+
+          nextElement = swapElements(field, changeListener, prevElement, nextElement);
+
+          if (prevElement === nextElement) {
+            return;
+          }
+          if (nextElement === null) {
+            elementsMap.delete(key);
+          } else {
+            elementsMap.set(key, nextElement);
+          }
+        };
+        refsMap.set(key, ref);
       }
 
-      ref = nextElement => {
-        const prevElement = elementMap.get(key) || null;
-
-        nextElement = swapElements(field, changeListener, elements, prevElement, nextElement);
-
-        if (prevElement !== nextElement) {
-          elementMap.set(key, nextElement);
-        }
-      };
-      refs.set(key, ref);
       return ref;
     };
   };
@@ -94,10 +113,11 @@ export function uncontrolledPlugin(accessor = elementValueAccessor): PluginInjec
 function swapElements(
   field: Field<UncontrolledPlugin>,
   changeListener: EventListener,
-  elements: Element[],
   prevElement: Element | null,
   nextElement: Element | null
 ): Element | null {
+  const elements = field.elements as Element[];
+
   nextElement = nextElement instanceof Element ? nextElement : null;
 
   if (prevElement === nextElement) {
@@ -113,8 +133,10 @@ function swapElements(
   }
 
   if (nextElement !== null && elements.indexOf(nextElement) === -1) {
-    nextElement.addEventListener('input', changeListener);
-    nextElement.addEventListener('change', changeListener);
+    nextElement.addEventListener(
+      nextElement.tagName === 'INPUT' || nextElement.tagName === 'TEXTAREA' ? 'input' : 'change',
+      changeListener
+    );
 
     if (prevIndex === -1) {
       elements.push(nextElement);
@@ -128,7 +150,7 @@ function swapElements(
     elements.splice(prevIndex, 1);
   }
   if (elements.length !== 0) {
-    field.elementValueAccessor.set(elements, field.value);
+    field.elementsValueAccessor.set(elements, field.value);
   }
   return nextElement;
 }

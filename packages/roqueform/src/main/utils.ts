@@ -28,7 +28,7 @@ export function callOrGet<T, A>(value: T | ((arg: A) => T), arg: A): T {
  * Creates the new event that would be dispatched from target field.
  *
  * @param type The type of the event.
- * @param target The target field from which the event is dispatched.
+ * @param target The target field where the event is dispatched.
  * @param data The data carried by the event.
  */
 export function createEvent<Target extends FieldController<any>, Data>(
@@ -40,7 +40,7 @@ export function createEvent<Target extends FieldController<any>, Data>(
 }
 
 /**
- * Calls field subscribers that can handle given events.
+ * Dispatches multiple events to field subscribers.
  *
  * @param events The array of events to dispatch.
  */

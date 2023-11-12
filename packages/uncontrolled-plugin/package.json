@@ -42,8 +42,5 @@
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/uncontrolled-plugin#readme",
   "peerDependencies": {
     "roqueform": "^4.0.0"
-  },
-  "dependencies": {
-    "fast-deep-equal": "^3.1.3"
   }
 }
