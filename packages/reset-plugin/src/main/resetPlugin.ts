@@ -20,7 +20,7 @@ export interface ResetPlugin {
    * `true` if the field value is different from its initial value basing on {@link equalityChecker equality checker},
    * or `false` otherwise.
    */
-  isDirty: boolean;
+  readonly isDirty: boolean;
 
   /**
    * The callback that compares initial value and the current value of the field.
