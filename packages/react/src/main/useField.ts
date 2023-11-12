@@ -39,5 +39,5 @@ export function useField<Value, Plugin>(
 export function useField(initialValue?: unknown, plugin?: PluginInjector) {
   const accessor = useContext(AccessorContext);
 
-  return (useRef<Field>().current ||= createField(callOrGet(initialValue, undefined), plugin!, accessor));
+  return (useRef<Field>().current ||= createField(callOrGet(initialValue), plugin!, accessor));
 }

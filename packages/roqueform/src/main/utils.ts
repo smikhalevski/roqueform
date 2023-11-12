@@ -12,6 +12,15 @@ export function isEqual(a: unknown, b: unknown): boolean {
 }
 
 /**
+ * If value is a function then it is called, otherwise the value is returned as is.
+ *
+ * @param value The value to return or a callback to call.
+ * @returns The value or the call result.
+ * @template T The returned value.
+ */
+export function callOrGet<T>(value: T | (() => T)): T;
+
+/**
  * If value is a function then it is called with the given argument, otherwise the value is returned as is.
  *
  * @param value The value to return or a callback to call.
@@ -20,8 +29,10 @@ export function isEqual(a: unknown, b: unknown): boolean {
  * @template T The returned value.
  * @template A The value callback argument.
  */
-export function callOrGet<T, A>(value: T | ((arg: A) => T), arg: A): T {
-  return typeof value === 'function' ? (value as Function)(arg) : value;
+export function callOrGet<T, A>(value: T | ((arg: A) => T), arg: A): T;
+
+export function callOrGet(value: unknown, arg?: unknown) {
+  return typeof value !== 'function' ? value : arguments.length === 1 ? value() : value(arg);
 }
 
 /**
