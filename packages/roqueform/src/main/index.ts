@@ -4,7 +4,7 @@
 
 export * from './composePlugins';
 export * from './createField';
-export * from './naturalAccessor';
+export * from './naturalValueAccessor';
 export * from './typings';
 export * from './utils';
 export * from './validationPlugin';

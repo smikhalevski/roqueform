@@ -7,12 +7,12 @@ describe('FieldRenderer', () => {
   test('passes the field as an argument', () => {
     render(
       createElement(() => {
-        const rootField = useField({ foo: 'bar' });
+        const rootField = useField({ aaa: 111 });
 
         return (
-          <FieldRenderer field={rootField.at('foo')}>
+          <FieldRenderer field={rootField.at('aaa')}>
             {field => {
-              expect(field).toBe(rootField.at('foo'));
+              expect(field).toBe(rootField.at('aaa'));
               return null;
             }}
           </FieldRenderer>
@@ -38,7 +38,7 @@ describe('FieldRenderer', () => {
 
     render(createElement(() => <FieldRenderer field={rootField}>{renderMock}</FieldRenderer>));
 
-    await act(() => rootField.at('foo').setValue(222));
+    await act(() => rootField.at('aaa').setValue(222));
 
     expect(renderMock).toHaveBeenCalledTimes(1);
   });
@@ -58,7 +58,7 @@ describe('FieldRenderer', () => {
       ))
     );
 
-    await act(() => rootField.at('foo').setValue(222));
+    await act(() => rootField.at('aaa').setValue(222));
 
     expect(renderMock).toHaveBeenCalledTimes(2);
   });
@@ -70,7 +70,7 @@ describe('FieldRenderer', () => {
     render(
       createElement(() => (
         <FieldRenderer
-          field={rootField.at('foo')}
+          field={rootField.at('aaa')}
           onChange={handleChangeMock}
         >
           {() => null}
@@ -78,7 +78,7 @@ describe('FieldRenderer', () => {
       ))
     );
 
-    await act(() => rootField.at('foo').setValue(222));
+    await act(() => rootField.at('aaa').setValue(222));
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 222);
@@ -91,7 +91,7 @@ describe('FieldRenderer', () => {
     render(
       createElement(() => (
         <FieldRenderer
-          field={rootField.at('foo')}
+          field={rootField.at('aaa')}
           onChange={handleChangeMock}
         >
           {() => null}
@@ -100,13 +100,13 @@ describe('FieldRenderer', () => {
     );
 
     await act(() => {
-      rootField.at('foo').setTransientValue(222);
-      rootField.at('foo').setTransientValue(333);
+      rootField.at('aaa').setTransientValue(222);
+      rootField.at('aaa').setTransientValue(333);
     });
 
     expect(handleChangeMock).toHaveBeenCalledTimes(0);
 
-    await act(() => rootField.at('foo').propagate());
+    await act(() => rootField.at('aaa').propagate());
 
     expect(handleChangeMock).toHaveBeenCalledTimes(1);
     expect(handleChangeMock).toHaveBeenNthCalledWith(1, 333);

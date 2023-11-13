@@ -3,11 +3,11 @@ import { createField } from 'roqueform';
 
 // Optional properties
 
-const field1 = createField<{ foo: { bar?: string } | null }>({ foo: null });
+const field1 = createField<{ aaa: { bbb?: string } | null }>({ aaa: null });
 
-expectType<{ bar?: string } | null>(field1.at('foo').value);
+expectType<{ bbb?: string } | null>(field1.at('aaa').value);
 
-expectType<string | undefined>(field1.at('foo').at('bar').value);
+expectType<string | undefined>(field1.at('aaa').at('bbb').value);
 
 // Unions
 

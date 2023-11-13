@@ -35,7 +35,7 @@ export interface FieldRendererProps<RenderedField extends FieldController<any>> 
 }
 
 /**
- * The component that subscribes to the {@link Field} instance and re-renders its children when the field is notified.
+ * The component that subscribes to the field instance and re-renders its children when the field is notified.
  *
  * @template RenderedField The rendered field.
  */

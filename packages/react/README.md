@@ -62,7 +62,7 @@ You can provide the initial value for a field.
 
 ```ts
 useField({ planet: 'Mars' });
-// ⮕ Field<{ foo: string }>
+// ⮕ Field<{ planet: string }>
 ```
 
 If you pass a callback as an initial value, it would be invoked when the field is initialized.

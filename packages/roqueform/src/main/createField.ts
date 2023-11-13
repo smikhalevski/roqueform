@@ -1,6 +1,6 @@
 import { Event, Field, PluginInjector, Subscriber, ValueAccessor } from './typings';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
-import { naturalAccessor } from './naturalAccessor';
+import { naturalValueAccessor } from './naturalValueAccessor';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
 type NoInfer<T> = T extends infer T ? T : never;
@@ -41,7 +41,7 @@ export function createField(initialValue?: unknown, plugin?: PluginInjector | Va
     accessor = plugin;
     plugin = undefined;
   }
-  return getOrCreateField(accessor || naturalAccessor, null, null, initialValue, plugin || null);
+  return getOrCreateField(accessor || naturalValueAccessor, null, null, initialValue, plugin || null);
 }
 
 function getOrCreateField(

@@ -11,7 +11,7 @@
     "protected": true,
     "inherited": true
   },
-  "tsconfig": "./tsconfig.typedoc.json",
+  "tsconfig": "./tsconfig.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": [
     "./packages/roqueform/src/main/index.ts",
@@ -34,7 +34,6 @@
       "Promise": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
     },
     "global": {
-      "MutationObserver": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/MutationObserver",
       "Date": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
       "File": "https://developer.mozilla.org/en-US/docs/Web/API/File"
     }

@@ -298,15 +298,15 @@ field values.
   [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
 
 You can explicitly provide a custom accessor along with the initial value. Be default, Roqueform uses
-[`naturalAccessor`](https://smikhalevski.github.io/roqueform/variables/roqueform.naturalAccessor.html):
+[`naturalValueAccessor`](https://smikhalevski.github.io/roqueform/variables/roqueform.naturalValueAccessor.html):
 
 ```ts
-import { createField, naturalAccessor } from 'roqueform';
+import { createField, naturalValueAccessor } from 'roqueform';
 
-const field = createField(['Mars', 'Venus'], naturalAccessor);
+const field = createField(['Mars', 'Venus'], naturalValueAccessor);
 ```
 
-`naturalAccessor` supports plain object, array, `Map`-like, and `Set`-like instances.
+`naturalValueAccessor` supports plain object, array, `Map`-like, and `Set`-like instances.
 
 If the field value object has `add` and `Symbol.iterator` methods, it is treated as a `Set`:
 

@@ -1,4 +1,4 @@
-import { createField, naturalAccessor } from '../main';
+import { createField, naturalValueAccessor } from '../main';
 
 jest.useFakeTimers();
 
@@ -19,7 +19,7 @@ describe('createField', () => {
     expect(field.children).toBeNull();
     expect(field.childrenMap).toBeNull();
     expect(field.subscribers).toBeNull();
-    expect(field.valueAccessor).toBe(naturalAccessor);
+    expect(field.valueAccessor).toBe(naturalValueAccessor);
     expect(field.plugin).toBeNull();
   });
 

@@ -38,7 +38,7 @@ export interface ConstraintValidationPlugin {
    * The origin of the associated error:
    * - 0 if there's no associated error.
    * - 1 if an error was set by Constraint Validation API;
-   * - 2 if an error was set using {@link ValidationPlugin.setError};
+   * - 2 if an error was set using {@link ConstraintValidationPlugin.setError};
    *
    * @protected
    */
