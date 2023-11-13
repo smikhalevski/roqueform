@@ -1,4 +1,4 @@
-import { dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
+import { callOrGet, dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
 
 /**
  * The callback that applies patches to field annotations.
@@ -28,24 +28,24 @@ export interface AnnotationsPlugin<Annotations extends object = { [annotation: s
 
   /**
    * The callback that applies patches to field annotations.
-   *
-   * @protected
    */
-  ['annotationsPatcher']: AnnotationsPatcher<Annotations>;
+  annotationsPatcher: AnnotationsPatcher<Annotations>;
 
   /**
    * Updates annotations of this field.
    *
-   * @param patch The patch that must be applied to field annotations.
+   * @param patch The patch that is applied to current annotations, or a callback that receives the current annotations
+   * and returns a patch that must be applied. A patch is applied using {@link annotationsPatcher}.
    */
-  annotate(patch: Partial<Readonly<Annotations>>): void;
+  annotate(patch: Partial<Annotations> | ((annotations: Readonly<Annotations>) => Partial<Annotations>)): void;
 
   /**
    * Updates annotations of this field and all of its child fields.
    *
-   * @param patch The patch that must be applied to field annotations.
+   * @param patch The patch that is applied to current annotations, or a callback that receives the current annotations
+   * and returns a patch that must be applied. A patch is applied using {@link annotationsPatcher}.
    */
-  annotateAll(patch: Partial<Readonly<Annotations>>): void;
+  annotateAll(patch: Partial<Annotations> | ((annotations: Readonly<Annotations>) => Partial<Annotations>)): void;
 
   /**
    * Subscribes to changes of {@link AnnotationsPlugin.annotations the field annotations}.
@@ -103,13 +103,13 @@ export function annotationsPlugin(
 function annotate(
   target: Field<AnnotationsPlugin>,
   origin: Field<AnnotationsPlugin>,
-  patch: object,
+  patch: object | ((annotations: object) => object),
   deep: boolean,
   events: Event[]
 ): Event[] {
   events.push({ type: 'change:annotations', target, origin, data: target.annotations });
 
-  target.annotations = target.annotationsPatcher(target.annotations, patch);
+  target.annotations = target.annotationsPatcher(target.annotations, callOrGet(patch, target.annotations));
 
   if (deep && target.children !== null) {
     for (const child of target.children) {

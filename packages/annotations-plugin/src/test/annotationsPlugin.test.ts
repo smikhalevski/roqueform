@@ -42,6 +42,22 @@ describe('annotationsPlugin', () => {
     expect(aaaSubscriberMock).not.toHaveBeenCalled();
   });
 
+  test('patches root field annotations with callback', () => {
+    const patchMock = jest.fn(() => ({ xxx: 333 }));
+    const subscriberMock = jest.fn();
+
+    const field = createField(111, annotationsPlugin({ xxx: 222 }));
+
+    field.on('*', subscriberMock);
+
+    field.annotate(patchMock);
+
+    expect(field.annotations.xxx).toBe(333);
+
+    expect(patchMock).toHaveBeenCalledTimes(1);
+    expect(patchMock).toHaveBeenNthCalledWith(1, { xxx: 222 });
+  });
+
   test('patches child field annotations', () => {
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
