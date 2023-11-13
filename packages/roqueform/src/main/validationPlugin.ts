@@ -46,34 +46,26 @@ export interface ValidationPlugin<Error = any, Options = any> {
 
   /**
    * The total number of errors associated with this field and its child fields.
-   *
-   * @protected
    */
-  ['errorCount']: number;
+  errorCount: number;
 
   /**
    * The origin of the associated error:
    * - 0 if there's no associated error.
    * - 1 if an error was set using {@link ValidationPlugin.setValidationError};
    * - 2 if an error was set using {@link ValidationPlugin.setError};
-   *
-   * @protected
    */
-  ['errorOrigin']: 0 | 1 | 2;
+  errorOrigin: 0 | 1 | 2;
 
   /**
    * The validator to which the field value validation is delegated.
-   *
-   * @protected
    */
-  ['validator']: Validator;
+  validator: Validator;
 
   /**
    * The pending validation, or `null` if there's no pending validation.
-   *
-   * @protected
    */
-  ['validation']: Validation<PluginOf<this>> | null;
+  validation: Validation<PluginOf<this>> | null;
 
   /**
    * Associates an error with the field and notifies the subscribers.
@@ -168,9 +160,8 @@ export interface ValidationPlugin<Error = any, Options = any> {
    *
    * @param validation The validation in scope of which an error must be set.
    * @param error The error to set.
-   * @protected
    */
-  ['setValidationError'](validation: Validation<PluginOf<this>>, error: Error): void;
+  setValidationError(validation: Validation<PluginOf<this>>, error: Error): void;
 }
 
 /**

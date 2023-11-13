@@ -116,37 +116,28 @@ export interface FieldController<Plugin = unknown, Value = any> {
 
   /**
    * The root field.
-   *
-   * @protected
    */
-  ['root']: Field<Plugin>;
+  root: Field<Plugin>;
 
   /**
    * The parent field, or `null` if this is the root field.
-   *
-   * @protected
    */
-  ['parent']: Field<Plugin> | null;
+  parent: Field<Plugin> | null;
 
   /**
    * The array of immediate child fields that were {@link at previously accessed}, or `null` if there are no children.
-   *
-   * @protected
    */
-  ['children']: readonly Field<Plugin>[] | null;
+  children: readonly Field<Plugin>[] | null;
 
   /**
    * Mapping from a key to a corresponding child field, or `null` if there are no children.
-   *
-   * @protected
    */
-  ['childrenMap']: ReadonlyMap<unknown, Field<Plugin>> | null;
+  childrenMap: ReadonlyMap<unknown, Field<Plugin>> | null;
 
   /**
    * The map from an event type to an array of associated subscribers, or `null` if no subscribers were added.
    *
    * @see {@link on}
-   * @protected
    */
   ['subscribers']: { [eventType: string]: Subscriber<Plugin>[] | undefined } | null;
 
@@ -154,18 +145,16 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
    *
    * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
-   * @protected
    */
-  ['valueAccessor']: ValueAccessor;
+  valueAccessor: ValueAccessor;
 
   /**
    * The plugin that is applied to this field and all child fields when they are accessed, or `null` field isn't
    * enhanced by a plugin.
    *
    * @see [Authoring a plugin](https://github.com/smikhalevski/roqueform#authoring-a-plugin)
-   * @protected
    */
-  ['plugin']: PluginInjector<Plugin, Value> | null;
+  plugin: PluginInjector<Plugin, Value> | null;
 
   /**
    * Updates the field value and notifies both ancestors and child fields about the change. If the field withholds
