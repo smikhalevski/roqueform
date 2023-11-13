@@ -1,14 +1,14 @@
 /**
- * Abstraction over DOM element value getter and setter.
+ * Abstraction over value getter and setter for a group of DOM elements.
  */
-export interface ElementValueAccessor {
+export interface ElementsValueAccessor {
   /**
    * Retrieves value from elements that produce value for the field.
    *
    * @param elements The array of referenced elements, never empty.
    * @return The value that elements represent.
    */
-  get(elements: any[]): any;
+  get(elements: readonly any[]): any;
 
   /**
    * Sets value to elements controlled by the field.
@@ -16,13 +16,13 @@ export interface ElementValueAccessor {
    * @param elements The array of referenced elements, never empty.
    * @param value The value to assign to elements.
    */
-  set(elements: any[], value: any): void;
+  set(elements: readonly any[], value: any): void;
 }
 
 /**
- * Options applied to {@link createElementValueAccessor}.
+ * Options applied to {@link createElementsValueAccessor}.
  */
-export interface ElementValueAccessorOptions {
+export interface ElementsValueAccessorOptions {
   /**
    * The format of checkbox values.
    *
@@ -104,10 +104,10 @@ export interface ElementValueAccessorOptions {
  *
  * By default:
  *
- * - Single checkbox → boolean, see {@link ElementValueAccessorOptions.checkboxFormat};
+ * - Single checkbox → boolean, see {@link ElementsValueAccessorOptions.checkboxFormat};
  * - Multiple checkboxes → an array of
  * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value">value</a>
- * attributes of checked checkboxes, see {@link ElementValueAccessorOptions.checkboxFormat};
+ * attributes of checked checkboxes, see {@link ElementsValueAccessorOptions.checkboxFormat};
  * - Radio buttons → the
  * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value">value</a>
  * attribute of a radio button that is checked or `null` if no radio buttons are checked;
@@ -115,8 +115,8 @@ export interface ElementValueAccessorOptions {
  * - Range input → number;
  * - Date input → the
  * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value">value</a>
- * attribute, or `null` if empty, see {@link ElementValueAccessorOptions.dateFormat};
- * - Time input → a time string, or `null` if empty, see {@link ElementValueAccessorOptions.timeFormat};
+ * attribute, or `null` if empty, see {@link ElementsValueAccessorOptions.dateFormat};
+ * - Time input → a time string, or `null` if empty, see {@link ElementsValueAccessorOptions.timeFormat};
  * - Image input → string value of the
  * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src">value</a>
  * attribute;
@@ -125,8 +125,10 @@ export interface ElementValueAccessorOptions {
  * - Others → The _value_ attribute, or `null` if element doesn't support it;
  * - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to _value_ attribute.
  */
-export function createElementValueAccessor(options?: ElementValueAccessorOptions): ElementValueAccessor {
-  const get: ElementValueAccessor['get'] = elements => {
+export function createElementsValueAccessor(options: ElementsValueAccessorOptions = {}): ElementsValueAccessor {
+  const { checkboxFormat, dateFormat, timeFormat } = options;
+
+  const get: ElementsValueAccessor['get'] = elements => {
     const element = elements[0];
     const { type, valueAsNumber } = element;
 
@@ -135,8 +137,6 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
     }
 
     if (type === 'checkbox') {
-      const checkboxFormat = options?.checkboxFormat;
-
       if (elements.length === 1 && checkboxFormat !== 'booleanArray' && checkboxFormat !== 'valueArray') {
         return checkboxFormat !== 'value' ? element.checked : element.checked ? element.value : null;
       }
@@ -177,7 +177,6 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
       }
 
       const date = element.valueAsDate || new Date(valueAsNumber);
-      const dateFormat = options?.dateFormat;
 
       // prettier-ignore
       return (
@@ -191,7 +190,7 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
     }
 
     if (type === 'time') {
-      return valueAsNumber !== valueAsNumber ? null : options?.timeFormat === 'number' ? valueAsNumber : element.value;
+      return valueAsNumber !== valueAsNumber ? null : timeFormat === 'number' ? valueAsNumber : element.value;
     }
     if (type === 'image') {
       return element.src;
@@ -203,7 +202,7 @@ export function createElementValueAccessor(options?: ElementValueAccessorOptions
     return element.value;
   };
 
-  const set: ElementValueAccessor['set'] = (elements, value) => {
+  const set: ElementsValueAccessor['set'] = (elements, value) => {
     const element = elements[0];
     const { type } = element;
 

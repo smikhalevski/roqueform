@@ -5,7 +5,7 @@ describe('useField', () => {
   test('returns field with undefined initial value', () => {
     const hook = renderHook(() => useField());
 
-    expect(hook.result.current.value).toBe(undefined);
+    expect(hook.result.current.value).toBeUndefined();
   });
 
   test('returns a field with a literal initial value', () => {

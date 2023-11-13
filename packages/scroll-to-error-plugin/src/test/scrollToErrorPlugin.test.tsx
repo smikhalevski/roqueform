@@ -24,132 +24,132 @@ class DOMRect {
 }
 
 describe('scrollToErrorPlugin', () => {
-  test('returns false if there are no errors', () => {
+  test('returns null if there are no errors', () => {
     const field = createField(
-      { foo: 111 },
+      { aaa: 111 },
       composePlugins(
         validationPlugin(() => undefined),
         scrollToErrorPlugin()
       )
     );
 
-    expect(field.scrollToError()).toBe(false);
+    expect(field.scrollToError()).toBe(null);
   });
 
   test('scrolls to error at index with RTL text direction', async () => {
     const rootField = createField(
-      { foo: 111, bar: 'aaa' },
+      { aaa: 111, bbb: 222 },
       composePlugins(
         validationPlugin(() => undefined),
         scrollToErrorPlugin()
       )
     );
 
-    const fooElement = document.body.appendChild(document.createElement('input'));
-    const barElement = document.body.appendChild(document.createElement('input'));
+    const aaaElement = document.body.appendChild(document.createElement('input'));
+    const bbbElement = document.body.appendChild(document.createElement('input'));
 
-    rootField.at('foo').refCallback(fooElement);
-    rootField.at('bar').refCallback(barElement);
+    rootField.at('aaa').ref(aaaElement);
+    rootField.at('bbb').ref(bbbElement);
 
-    jest.spyOn(fooElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(100));
-    jest.spyOn(barElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(200));
+    jest.spyOn(aaaElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(100));
+    jest.spyOn(bbbElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(200));
 
-    const fooScrollIntoViewMock = (fooElement.scrollIntoView = jest.fn());
-    const barScrollIntoViewMock = (barElement.scrollIntoView = jest.fn());
+    const aaaScrollIntoViewMock = (aaaElement.scrollIntoView = jest.fn());
+    const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = jest.fn());
 
     await act(() => {
-      rootField.at('foo').setError('error1');
-      rootField.at('bar').setError('error2');
+      rootField.at('aaa').setError('error1');
+      rootField.at('bbb').setError('error2');
     });
 
     // Scroll to default index
-    rootField.scrollToError();
-    expect(fooScrollIntoViewMock).toHaveBeenCalledTimes(1);
-    expect(barScrollIntoViewMock).not.toHaveBeenCalled();
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(rootField.scrollToError()).toBe(rootField.at('aaa'));
+    expect(aaaScrollIntoViewMock).toHaveBeenCalledTimes(1);
+    expect(bbbScrollIntoViewMock).not.toHaveBeenCalled();
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
 
     // Scroll to 0
-    rootField.scrollToError(0);
-    expect(fooScrollIntoViewMock).toHaveBeenCalledTimes(1);
-    expect(barScrollIntoViewMock).not.toHaveBeenCalled();
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(rootField.scrollToError(0)).toBe(rootField.at('aaa'));
+    expect(aaaScrollIntoViewMock).toHaveBeenCalledTimes(1);
+    expect(bbbScrollIntoViewMock).not.toHaveBeenCalled();
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
 
     // Scroll to 1
-    rootField.scrollToError(1);
-    expect(fooScrollIntoViewMock).not.toHaveBeenCalled();
-    expect(barScrollIntoViewMock).toHaveBeenCalledTimes(1);
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(rootField.scrollToError(1)).toBe(rootField.at('bbb'));
+    expect(aaaScrollIntoViewMock).not.toHaveBeenCalled();
+    expect(bbbScrollIntoViewMock).toHaveBeenCalledTimes(1);
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
 
     // Scroll to 2
-    rootField.scrollToError(2);
-    expect(fooScrollIntoViewMock).not.toHaveBeenCalled();
-    expect(barScrollIntoViewMock).not.toHaveBeenCalled();
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(rootField.scrollToError(2)).toBe(null);
+    expect(aaaScrollIntoViewMock).not.toHaveBeenCalled();
+    expect(bbbScrollIntoViewMock).not.toHaveBeenCalled();
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
 
     // Scroll to -1
-    rootField.scrollToError(1);
-    expect(fooScrollIntoViewMock).not.toHaveBeenCalled();
-    expect(barScrollIntoViewMock).toHaveBeenCalledTimes(1);
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(rootField.scrollToError(-1)).toBe(rootField.at('bbb'));
+    expect(aaaScrollIntoViewMock).not.toHaveBeenCalled();
+    expect(bbbScrollIntoViewMock).toHaveBeenCalledTimes(1);
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
 
     // Scroll to -2
-    rootField.scrollToError(-2);
-    expect(fooScrollIntoViewMock).toHaveBeenCalledTimes(1);
-    expect(barScrollIntoViewMock).not.toHaveBeenCalled();
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(rootField.scrollToError(-2)).toBe(rootField.at('aaa'));
+    expect(aaaScrollIntoViewMock).toHaveBeenCalledTimes(1);
+    expect(bbbScrollIntoViewMock).not.toHaveBeenCalled();
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
 
     // Scroll to -3
-    rootField.scrollToError(-3);
-    expect(fooScrollIntoViewMock).not.toHaveBeenCalled();
-    expect(barScrollIntoViewMock).not.toHaveBeenCalled();
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(rootField.scrollToError(-3)).toBe(null);
+    expect(aaaScrollIntoViewMock).not.toHaveBeenCalled();
+    expect(bbbScrollIntoViewMock).not.toHaveBeenCalled();
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
   });
 
   test('scrolls to error at index with LTR text direction', async () => {
     const rootField = createField(
-      { foo: 111, bar: 'aaa' },
+      { aaa: 111, bbb: 222 },
       composePlugins(
         validationPlugin(() => undefined),
         scrollToErrorPlugin()
       )
     );
 
-    const fooElement = document.body.appendChild(document.createElement('input'));
-    const barElement = document.body.appendChild(document.createElement('input'));
+    const aaaElement = document.body.appendChild(document.createElement('input'));
+    const bbbElement = document.body.appendChild(document.createElement('input'));
 
-    rootField.at('foo').refCallback(fooElement);
-    rootField.at('bar').refCallback(barElement);
+    rootField.at('aaa').ref(aaaElement);
+    rootField.at('bbb').ref(bbbElement);
 
-    jest.spyOn(fooElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(100));
-    jest.spyOn(barElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(200));
+    jest.spyOn(aaaElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(100));
+    jest.spyOn(bbbElement, 'getBoundingClientRect').mockImplementation(() => new DOMRect(200));
 
-    const fooScrollIntoViewMock = (fooElement.scrollIntoView = jest.fn());
-    const barScrollIntoViewMock = (barElement.scrollIntoView = jest.fn());
+    const aaaScrollIntoViewMock = (aaaElement.scrollIntoView = jest.fn());
+    const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = jest.fn());
 
     await act(() => {
-      rootField.at('foo').setError('error1');
-      rootField.at('bar').setError('error2');
+      rootField.at('aaa').setError('error1');
+      rootField.at('bbb').setError('error2');
     });
 
     // Scroll to 0
     rootField.scrollToError(0, { direction: 'ltr' });
-    expect(fooScrollIntoViewMock).not.toHaveBeenCalled();
-    expect(barScrollIntoViewMock).toHaveBeenCalledTimes(1);
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(aaaScrollIntoViewMock).not.toHaveBeenCalled();
+    expect(bbbScrollIntoViewMock).toHaveBeenCalledTimes(1);
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
 
     // Scroll to 1
     rootField.scrollToError(1, { direction: 'ltr' });
-    expect(fooScrollIntoViewMock).toHaveBeenCalledTimes(1);
-    expect(barScrollIntoViewMock).not.toHaveBeenCalled();
-    fooScrollIntoViewMock.mockClear();
-    barScrollIntoViewMock.mockClear();
+    expect(aaaScrollIntoViewMock).toHaveBeenCalledTimes(1);
+    expect(bbbScrollIntoViewMock).not.toHaveBeenCalled();
+    aaaScrollIntoViewMock.mockClear();
+    bbbScrollIntoViewMock.mockClear();
   });
 });

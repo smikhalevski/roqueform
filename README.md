@@ -107,7 +107,7 @@ const planetsField = universeField.at('planets');
 // ⮕ Field<Planet[] | undefined>
 ```
 
-`planetsField` is a derived field, and it is linked to its parent `universeField`.
+`planetsField` is a child field, and it is linked to its parent `universeField`.
 
 ```ts
 planetsField.key;
@@ -126,18 +126,18 @@ universeField.at('planets');
 // ⮕ planetsField
 ```
 
-So most of the time you don't need to store a derived field in a variable if you already have a reference to a parent
+So most of the time you don't need to store a child field in a variable if you already have a reference to a parent
 field.
 
-The derived field has all the same functionality as its parent, so you can derive a new field from it as well:
+The child field has all the same functionality as its parent, so you can derive a new field from it as well:
 
 ```ts
 planetsField.at(0).at('name');
 // ⮕ Field<string>
 ```
 
-When a value is set to a derived field, a parent field value is also updated. If parent field doesn't have a value yet,
-Roqueform would infer its type from on the derived field key.
+When a value is set to a child field, a parent field value is also updated. If parent field doesn't have a value yet,
+Roqueform would infer its type from on the child field key.
 
 ```ts
 universeField.value;
@@ -152,7 +152,7 @@ universeField.value;
 By default, for a string key a parent object is created, and for a number key a parent array is created. You can change
 this behaviour with [custom accessors](#accessors).
 
-When a value is set to a parent field, derived fields are also updated:
+When a value is set to a parent field, child fields are also updated:
 
 ```ts
 const nameField = universeField.at('planets').at(0).at('name');
@@ -168,57 +168,57 @@ nameField.value;
 
 # Subscriptions
 
-You can subscribe a listener to a field updates. The returned callback would unsubscribe the listener.
+You can subscribe a subscriber to a field updates. The returned callback would unsubscribe the subscriber.
 
 ```ts
-const unsubscribe = planetsField.subscribe((updatedField, currentField) => {
+const unsubscribe = planetsField.on('*', (updatedField, currentField) => {
   // Handle the update
 });
 // ⮕ () => void
 ```
 
-Listeners are called with two arguments:
+Subscribers are called with two arguments:
 
 <dl>
 <dt><code>updatedField</code></dt>
 <dd>
 
-The field that initiated the update. In this example it can be `planetsField` itself, any of its derived fields, or any
+The field that initiated the update. In this example it can be `planetsField` itself, any of its child fields, or any
 of its ancestor fields.
 
 </dd>
 <dt><code>currentField</code></dt>
 <dd>
 
-The field to which the listener is subscribed. In this example it is `planetsField`.
+The field to which the subscriber is subscribed. In this example it is `planetsField`.
 
 </dd>
 </dl>
 
-Listeners are called when a field value is changed or [when a plugin mutates the field object](#authoring-a-plugin).
-The root field and all derived fields are updated before listeners are called, so it's safe to read field values in a
-listener.
+Subscribers are called when a field value is changed or [when a plugin mutates the field object](#authoring-a-plugin).
+The root field and all child fields are updated before subscribers are called, so it's safe to read field values in a
+subscriber.
 
 Fields use [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison to detect that the
 value has changed.
 
 ```ts
-planetsField.at(0).at('name').subscribe(listener);
+planetsField.at(0).at('name').on('*', subscriber);
 
-// ✅ The listener is called
+// ✅ The subscriber is called
 planetsField.at(0).at('name').setValue('Mercury');
 
-// 🚫 Value is unchanged, the listener isn't called
+// 🚫 Value is unchanged, the subscriber isn't called
 planetsField.at(0).setValue({ name: 'Mercury' });
 ```
 
 # Transient updates
 
 When you call [`setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setValue) on a field
-then listeners of its ancestors and its updated derived fields are triggered. To manually control the update propagation
+then subscribers of its ancestors and its updated child fields are triggered. To manually control the update propagation
 to fields ancestors, you can use transient updates.
 
-When a value of a derived field is set transiently, values of its ancestors _aren't_ immediately updated.
+When a value of a child field is set transiently, values of its ancestors _aren't_ immediately updated.
 
 ```ts
 const avatarField = createField();
@@ -240,7 +240,7 @@ avatarField.at('eyeColor').isTransient;
 // ⮕ true
 ```
 
-To propagate the transient value contained by the derived field to its parent, use
+To propagate the transient value contained by the child field to its parent, use
 the [`dispatch`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#dispatch) method:
 
 ```ts
@@ -253,7 +253,7 @@ avatarField.value;
 `setTransientValue` can be called multiple times, but only the most recent update is propagated to the parent field
 after the `dispatch` call.
 
-When a derived field is in a transient state, its value as observed from the parent may differ from the actual value:
+When a child field is in a transient state, its value as observed from the parent may differ from the actual value:
 
 ```ts
 const planetsField = createField(['Mars', 'Pluto']);
@@ -282,31 +282,31 @@ planetsField.at(1).value;
 
 # Accessors
 
-[`Accessor`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html) creates, reads and updates
+[`ValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html) creates, reads and updates
 field values.
 
-- When the new field is derived via
+- When the new field is child via
   [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#at) method, the field value is
   read from the value of the parent field using the
-  [`Accessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
+  [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
 
 - When a field value is updated via
   [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setValue), then the parent
   field value is updated with the value returned from the
-  [`Accessor.set`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#set) method. If the
-  updated field has derived fields, their values are updated with values returned from the
-  [`Accessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
+  [`ValueAccessor.set`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#set) method. If the
+  updated field has child fields, their values are updated with values returned from the
+  [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
 
 You can explicitly provide a custom accessor along with the initial value. Be default, Roqueform uses
-[`naturalAccessor`](https://smikhalevski.github.io/roqueform/variables/roqueform.naturalAccessor.html):
+[`naturalValueAccessor`](https://smikhalevski.github.io/roqueform/variables/roqueform.naturalValueAccessor.html):
 
 ```ts
-import { createField, naturalAccessor } from 'roqueform';
+import { createField, naturalValueAccessor } from 'roqueform';
 
-const field = createField(['Mars', 'Venus'], naturalAccessor);
+const field = createField(['Mars', 'Venus'], naturalValueAccessor);
 ```
 
-`naturalAccessor` supports plain object, array, `Map`-like, and `Set`-like instances.
+`naturalValueAccessor` supports plain object, array, `Map`-like, and `Set`-like instances.
 
 If the field value object has `add` and `Symbol.iterator` methods, it is treated as a `Set`:
 
@@ -375,7 +375,7 @@ planetField.element;
 // ⮕ null
 ```
 
-The plugin would be called for each derived field when it is first accessed:
+The plugin would be called for each child field when it is first accessed:
 
 ```ts
 planetField.at('name').element
@@ -389,14 +389,14 @@ has changed. Let's update the plugin implementation to trigger subscribers.
 ```ts
 import { Plugin } from 'roqueform';
 
-interface ElementMixin {
+interface ElementPlugin {
 
   readonly element: Element | null;
 
   setElement(element: Element | null): void;
 }
 
-const elementPlugin: Plugin<ElementMixin> = (field, accessor, notify) => {
+const elementPlugin: Plugin<ElementPlugin> = (field, accessor, notify) => {
   field.element = null;
 
   field.setElement = element => {
@@ -413,7 +413,7 @@ Now when `setElement` is called on a field, its subscribers would be invoked.
 ```ts
 const planetField = createField({ name: 'Mars' }, elementPlugin);
 
-planetField.at('name').subscribe((updatedField, currentField) => {
+planetField.at('name').on('*', (updatedField, currentField) => {
   // Handle the update
   currentField.element;
   // ⮕ document.body

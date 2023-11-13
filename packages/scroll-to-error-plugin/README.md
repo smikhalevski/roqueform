@@ -43,13 +43,13 @@ export const App = () => {
     event.preventDefault();
 
     if (planetField.validate()) {
-      // Scroll to the error that is closest to the top left conrner of the document 
+      // The valid form value to submit.
+      planetField.value;
+    } else {
+      // Errors are associated with fields automatically.
+      // Scroll to the error that is closest to the top left conrner of the document.
       planetField.scrollToError(0, { behavior: 'smooth' });
-      return;
     }
-
-    // The form value to submit
-    planetField.value;
   };
 
   return (
@@ -59,8 +59,8 @@ export const App = () => {
         {nameField => (
           <>
             <input
-              // 🟡 Note that the input element ref is populated
-              ref={nameField.refCallback}
+              // 🟡 Note that the input element ref is populated.
+              ref={nameField.ref}
               value={nameField.value}
               onChange={event => {
                 nameField.setValue(event.target.value);

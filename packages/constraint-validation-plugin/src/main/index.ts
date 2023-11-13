@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/constraint-validation-plugin
+ * @module constraint-validation-plugin
  */
 
 export * from './constraintValidationPlugin';

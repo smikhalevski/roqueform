@@ -3,33 +3,33 @@ import { refPlugin } from '../main';
 
 describe('refPlugin', () => {
   test('adds an element property to the field', () => {
-    const field = createField({ bar: 111 }, refPlugin());
+    const field = createField({ aaa: 111 }, refPlugin());
 
-    expect(field.element).toBe(null);
-    expect(field.at('bar').element).toBe(null);
+    expect(field.element).toBeNull();
+    expect(field.at('aaa').element).toBeNull();
   });
 
-  test('refCallback updates an element property', () => {
-    const field = createField({ bar: 111 }, refPlugin());
+  test('ref updates an element property', () => {
+    const field = createField({ aaa: 111 }, refPlugin());
     const element = document.createElement('input');
 
-    field.refCallback(element);
+    field.ref(element);
 
     expect(field.element).toEqual(element);
   });
 
-  test('preserves the refCallback from preceding plugin', () => {
-    const refCallbackMock = jest.fn(() => undefined);
+  test('preserves the ref from preceding plugin', () => {
+    const refMock = jest.fn();
 
     const field = createField(
-      { bar: 111 },
-      composePlugins(field => Object.assign(field, { refCallback: refCallbackMock }), refPlugin())
+      { aaa: 111 },
+      composePlugins(field => Object.assign(field, { ref: refMock }), refPlugin())
     );
 
-    field.refCallback(document.body);
+    field.ref(document.body);
 
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, document.body);
+    expect(refMock).toHaveBeenCalledTimes(1);
+    expect(refMock).toHaveBeenNthCalledWith(1, document.body);
     expect(field.element).toBe(document.body);
   });
 });

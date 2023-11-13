@@ -62,7 +62,7 @@ You can provide the initial value for a field.
 
 ```ts
 useField({ planet: 'Mars' });
-// ⮕ Field<{ foo: string }>
+// ⮕ Field<{ planet: string }>
 ```
 
 If you pass a callback as an initial value, it would be invoked when the field is initialized.
@@ -112,7 +112,7 @@ argument of the `children` render function is the field passed as a `field` prop
 ## Eager and lazy re-renders
 
 Let's consider the form with two `FieldRenderer` elements. One of them renders the value of the root field and the other
-one renders an input that updates the derived field:
+one renders an input that updates the child field:
 
 ```tsx
 const App = () => {
@@ -139,7 +139,7 @@ const App = () => {
 ```
 
 By default, `FieldRenderer` component re-renders only when the provided field was updated directly, so updates from
-ancestors or derived fields would be ignored. Add the `eagerlyUpdated` property to force `FieldRenderer` to re-render
+ancestors or child fields would be ignored. Add the `eagerlyUpdated` property to force `FieldRenderer` to re-render
 whenever its value was affected.
 
 ```diff

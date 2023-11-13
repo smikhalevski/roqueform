@@ -7,6 +7,10 @@
   "disableSources": true,
   "hideGenerator": true,
   "readme": "none",
+  "visibilityFilters": {
+    "protected": true,
+    "inherited": true
+  },
   "tsconfig": "./tsconfig.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": [

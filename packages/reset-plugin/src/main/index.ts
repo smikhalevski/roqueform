@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/reset-plugin
+ * @module reset-plugin
  */
 
 export * from './resetPlugin';

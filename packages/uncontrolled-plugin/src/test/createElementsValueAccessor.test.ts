@@ -1,7 +1,7 @@
-import { createElementValueAccessor } from '../main';
+import { createElementsValueAccessor } from '../main';
 
-describe('createElementValueAccessor', () => {
-  const accessor = createElementValueAccessor();
+describe('createElementsValueAccessor', () => {
+  const accessor = createElementsValueAccessor();
 
   function createElement(tagName: string, attributes?: object): any {
     return Object.assign(document.createElement(tagName), attributes);
@@ -35,14 +35,14 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns boolean for a single checkbox for "auto" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'auto' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'auto' });
 
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: true, value: 'aaa' })])).toBe(true);
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: false, value: 'aaa' })])).toBe(false);
     });
 
     test('returns an array of checked values for multiple checkboxes for "auto" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'auto' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'auto' });
 
       expect(
         accessor.get([
@@ -54,14 +54,14 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns boolean for a single checkbox for "boolean" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'boolean' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'boolean' });
 
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: true, value: 'aaa' })])).toBe(true);
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: false, value: 'aaa' })])).toBe(false);
     });
 
     test('returns an array of booleans for multiple checkboxes for "boolean" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'boolean' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'boolean' });
 
       expect(
         accessor.get([
@@ -73,7 +73,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns an array of booleans for a single checkbox for "booleanArray" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'booleanArray' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'booleanArray' });
 
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: true, value: 'aaa' })])).toEqual([true]);
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: false, value: 'aaa' })])).toEqual([
@@ -82,7 +82,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns an array of booleans for multiple checkboxes for "booleanArray" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'booleanArray' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'booleanArray' });
 
       expect(
         accessor.get([
@@ -94,14 +94,14 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns value or null for a single checkbox for "value" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'value' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'value' });
 
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: true, value: 'aaa' })])).toBe('aaa');
-      expect(accessor.get([createElement('input', { type: 'checkbox', checked: false, value: 'aaa' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'checkbox', checked: false, value: 'aaa' })])).toBeNull();
     });
 
     test('returns an array of values for multiple checkboxes for "value" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'value' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'value' });
 
       expect(
         accessor.get([
@@ -113,7 +113,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns an array of values for a single checkbox for "valueArray" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'valueArray' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'valueArray' });
 
       expect(accessor.get([createElement('input', { type: 'checkbox', checked: true, value: 'aaa' })])).toEqual([
         'aaa',
@@ -122,7 +122,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns an array of booleans for multiple checkboxes for "valueArray" format', () => {
-      const accessor = createElementValueAccessor({ checkboxFormat: 'valueArray' });
+      const accessor = createElementsValueAccessor({ checkboxFormat: 'valueArray' });
 
       expect(
         accessor.get([
@@ -149,7 +149,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty number inputs', () => {
-      expect(accessor.get([createElement('input', { type: 'number' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'number' })])).toBeNull();
     });
 
     test('returns default value for empty range inputs', () => {
@@ -167,15 +167,15 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty date inputs by default', () => {
-      expect(accessor.get([createElement('input', { type: 'date' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'date' })])).toBeNull();
     });
 
     test('returns null for empty datetime-local inputs by default', () => {
-      expect(accessor.get([createElement('input', { type: 'date' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'date' })])).toBeNull();
     });
 
     test('returns input value for date inputs for "value" format', () => {
-      const accessor = createElementValueAccessor({ dateFormat: 'value' });
+      const accessor = createElementsValueAccessor({ dateFormat: 'value' });
 
       const value1 = accessor.get([createElement('input', { type: 'date', valueAsNumber: 1676475065312 })]);
       const value2 = accessor.get([createElement('input', { type: 'datetime-local', valueAsNumber: 1676475065312 })]);
@@ -185,7 +185,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns ISO date for date inputs for "iso" format', () => {
-      const accessor = createElementValueAccessor({ dateFormat: 'iso' });
+      const accessor = createElementsValueAccessor({ dateFormat: 'iso' });
 
       const value1 = accessor.get([createElement('input', { type: 'date', valueAsNumber: 1676475065312 })]);
       const value2 = accessor.get([createElement('input', { type: 'datetime-local', valueAsNumber: 1676475065312 })]);
@@ -195,7 +195,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns UTC date for date inputs for "utc" format', () => {
-      const accessor = createElementValueAccessor({ dateFormat: 'utc' });
+      const accessor = createElementsValueAccessor({ dateFormat: 'utc' });
 
       const value1 = accessor.get([createElement('input', { type: 'date', valueAsNumber: 1676475065312 })]);
       const value2 = accessor.get([createElement('input', { type: 'datetime-local', valueAsNumber: 1676475065312 })]);
@@ -205,7 +205,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns GMT date for date inputs for "gmt" format', () => {
-      const accessor = createElementValueAccessor({ dateFormat: 'gmt' });
+      const accessor = createElementsValueAccessor({ dateFormat: 'gmt' });
 
       const value1 = accessor.get([createElement('input', { type: 'date', valueAsNumber: 1676475065312 })]);
       const value2 = accessor.get([createElement('input', { type: 'datetime-local', valueAsNumber: 1676475065312 })]);
@@ -215,7 +215,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns Date object for date inputs for "object" format', () => {
-      const accessor = createElementValueAccessor({ dateFormat: 'object' });
+      const accessor = createElementsValueAccessor({ dateFormat: 'object' });
 
       const value1 = accessor.get([createElement('input', { type: 'date', valueAsNumber: 1676475065312 })]);
       const value2 = accessor.get([createElement('input', { type: 'datetime-local', valueAsNumber: 1676475065312 })]);
@@ -225,7 +225,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns timestamp for date inputs for "timestamp" format', () => {
-      const accessor = createElementValueAccessor({ dateFormat: 'timestamp' });
+      const accessor = createElementsValueAccessor({ dateFormat: 'timestamp' });
 
       const value1 = accessor.get([createElement('input', { type: 'date', valueAsNumber: 1676475065312 })]);
       const value2 = accessor.get([createElement('input', { type: 'datetime-local', valueAsNumber: 1676475065312 })]);
@@ -235,7 +235,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty time inputs by default', () => {
-      expect(accessor.get([createElement('input', { type: 'time' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'time' })])).toBeNull();
     });
 
     test('returns value for time inputs by default', () => {
@@ -243,13 +243,13 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns value for time inputs for "value" format', () => {
-      const accessor = createElementValueAccessor({ timeFormat: 'value' });
+      const accessor = createElementsValueAccessor({ timeFormat: 'value' });
 
       expect(accessor.get([createElement('input', { type: 'time', valueAsNumber: 12300000 })])).toBe('03:25');
     });
 
     test('returns number for time inputs for "number" format', () => {
-      const accessor = createElementValueAccessor({ timeFormat: 'number' });
+      const accessor = createElementsValueAccessor({ timeFormat: 'number' });
 
       expect(accessor.get([createElement('input', { type: 'time', valueAsNumber: 12300000 })])).toBe(12300000);
     });
@@ -259,7 +259,7 @@ describe('createElementValueAccessor', () => {
     });
 
     test('returns null for empty file inputs', () => {
-      expect(accessor.get([createElement('input', { type: 'file' })])).toBe(null);
+      expect(accessor.get([createElement('input', { type: 'file' })])).toBeNull();
     });
 
     test('returns an array for empty multi-file inputs', () => {
@@ -281,7 +281,7 @@ describe('createElementValueAccessor', () => {
 
       accessor.set([element], 'aaa');
 
-      expect(element.value).toBe(undefined);
+      expect(element.value).toBeUndefined();
     });
 
     test('sets checkboxes checked state from an array of booleans', () => {

@@ -1,7 +1,7 @@
 /**
- * @module @roqueform/react
+ * @module react
  */
 
-export * from './AccessorContext';
+export * from './ValueAccessorContext';
 export * from './FieldRenderer';
 export * from './useField';

@@ -1,6 +1,6 @@
-import { Accessor, Field, Plugin } from './shared-types';
-import { callAll, callOrGet, isEqual } from './utils';
-import { naturalAccessor } from './naturalAccessor';
+import { Event, Field, PluginInjector, Subscriber, ValueAccessor } from './typings';
+import { callOrGet, dispatchEvents, isEqual } from './utils';
+import { naturalValueAccessor } from './naturalValueAccessor';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
 type NoInfer<T> = T extends infer T ? T : never;
@@ -10,175 +10,144 @@ type NoInfer<T> = T extends infer T ? T : never;
  *
  * @template Value The root field value.
  */
-export function createField<Value = any>(): Field<Value | undefined>;
+export function createField<Value = any>(): Field<unknown, Value | undefined>;
 
 /**
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param accessor Resolves values for derived fields.
+ * @param accessor Resolves values for child fields.
  * @template Value The root field value.
  */
-export function createField<Value>(initialValue: Value, accessor?: Accessor): Field<Value>;
+export function createField<Value>(initialValue: Value, accessor?: ValueAccessor): Field<unknown, Value>;
 
 /**
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin that enhances the field.
- * @param accessor Resolves values for derived fields.
- * @template Value The root field value.
- * @template Mixin The mixin added by the plugin.
+ * @param plugin The plugin injected into the field.
+ * @param accessor Resolves values for child fields.
+ * @template Value The root field initial value.
+ * @template Plugin The plugin injected into the field.
  */
-export function createField<Value, Mixin>(
+export function createField<Value, Plugin>(
   initialValue: Value,
-  plugin: Plugin<Mixin, NoInfer<Value>>,
-  accessor?: Accessor
-): Field<Value, Mixin> & Mixin;
+  plugin: PluginInjector<Plugin, NoInfer<Value>>,
+  accessor?: ValueAccessor
+): Field<Plugin, Value>;
 
-export function createField(initialValue?: unknown, plugin?: Plugin | Accessor, accessor?: Accessor) {
+export function createField(initialValue?: unknown, plugin?: PluginInjector | ValueAccessor, accessor?: ValueAccessor) {
   if (typeof plugin !== 'function') {
-    plugin = undefined;
     accessor = plugin;
+    plugin = undefined;
   }
-  return getOrCreateFieldController(accessor || naturalAccessor, null, null, initialValue, plugin)._field;
+  return getOrCreateField(accessor || naturalValueAccessor, null, null, initialValue, plugin || null);
 }
 
-interface FieldController {
-  _parent: FieldController | null;
-
-  /**
-   * The map from a child key to a corresponding controller.
-   */
-  _childrenMap: Map<unknown, FieldController> | null;
-  _children: FieldController[] | null;
-  _field: Field;
-  _key: unknown;
-  _value: unknown;
-  _isTransient: boolean;
-  _accessor: Accessor;
-  _notify: (updatedField: Field) => void;
-}
-
-function getOrCreateFieldController(
-  accessor: Accessor,
-  parentController: FieldController | null,
+function getOrCreateField(
+  accessor: ValueAccessor,
+  parent: Field | null,
   key: unknown,
   initialValue: unknown,
-  plugin: Plugin | undefined
-): FieldController {
-  let parent: Field | null = null;
+  plugin: PluginInjector | null
+): Field {
+  let child: Field;
 
-  if (parentController !== null) {
-    const child = parentController._childrenMap?.get(key);
-
-    if (child !== undefined) {
-      return child;
-    }
-
-    parent = parentController._field;
-    initialValue = accessor.get(parentController._value, key);
+  if (parent !== null && parent.childrenMap !== null && (child = parent.childrenMap.get(key)!) !== undefined) {
+    return child;
   }
 
-  const listeners: Array<(updatedField: Field, currentField: Field) => void> = [];
+  child = {
+    key,
+    value: initialValue,
+    initialValue,
+    isTransient: false,
+    root: null!,
+    parent,
+    children: null,
+    childrenMap: null,
+    subscribers: null,
+    valueAccessor: accessor,
+    plugin,
 
-  const notify = (updatedField: Field): void => {
-    callAll(listeners, [updatedField, controller._field]);
-  };
+    setValue: value => {
+      setValue(child, callOrGet(value, child.value), false);
+    },
 
-  const field = {
-    setValue(value) {
-      applyValue(controller, callOrGet(value, [controller._value]), false);
+    setTransientValue: value => {
+      setValue(child, callOrGet(value, child.value), true);
     },
-    setTransientValue(value) {
-      applyValue(controller, callOrGet(value, [controller._value]), true);
+
+    propagate: () => {
+      setValue(child, child.value, false);
     },
-    dispatch() {
-      applyValue(controller, controller._value, false);
-    },
-    at(key) {
-      return getOrCreateFieldController(controller._accessor, controller, key, null, plugin)._field;
-    },
-    subscribe(listener) {
-      if (typeof listener === 'function' && listeners.indexOf(listener) === -1) {
-        listeners.push(listener);
+
+    at: key => getOrCreateField(child.valueAccessor, child, key, null, plugin),
+
+    on: (type, subscriber) => {
+      const subscribers: Subscriber[] = ((child.subscribers ||= Object.create(null))[type] ||= []);
+
+      if (!subscribers.includes(subscriber)) {
+        subscribers.push(subscriber);
       }
       return () => {
-        listeners.splice(listeners.indexOf(listener), 1);
+        subscribers.splice(subscribers.indexOf(subscriber), 1);
       };
     },
-  } as Field;
+  } satisfies Omit<Field, '__plugin__'> as unknown as Field;
 
-  Object.defineProperties(field, {
-    parent: { enumerable: true, value: parent },
-    key: { enumerable: true, value: key },
-    value: { enumerable: true, get: () => controller._value },
-    isTransient: { enumerable: true, get: () => controller._isTransient },
-  });
+  child.root = child;
 
-  const controller: FieldController = {
-    _parent: parentController,
-    _childrenMap: null,
-    _children: null,
-    _field: field,
-    _key: key,
-    _value: initialValue,
-    _isTransient: false,
-    _notify: notify,
-    _accessor: accessor,
-  };
-
-  plugin?.(field, accessor, () => notify(controller._field));
-
-  if (parentController !== null) {
-    (parentController._childrenMap ||= new Map()).set(key, controller);
-    (parentController._children ||= []).push(controller);
+  if (parent !== null) {
+    child.root = parent.root;
+    child.value = accessor.get(parent.value, key);
+    child.initialValue = accessor.get(parent.initialValue, key);
   }
 
-  return controller;
+  plugin?.(child);
+
+  if (parent !== null) {
+    ((parent.children ||= []) as Field[]).push(child);
+    ((parent.childrenMap ||= new Map()) as Map<unknown, Field>).set(child.key, child);
+  }
+
+  return child;
 }
 
-function applyValue(controller: FieldController, value: unknown, transient: boolean): void {
-  if (isEqual(controller._value, value) && controller._isTransient === transient) {
+function setValue(field: Field, value: unknown, transient: boolean): void {
+  if (isEqual(field.value, value) && field.isTransient === transient) {
     return;
   }
 
-  controller._isTransient = transient;
+  field.isTransient = transient;
 
-  let rootController = controller;
+  let changeRoot = field;
 
-  while (rootController._parent !== null && !rootController._isTransient) {
-    const { _key } = rootController;
-    rootController = rootController._parent;
-    value = controller._accessor.set(rootController._value, _key, value);
+  while (changeRoot.parent !== null && !changeRoot.isTransient) {
+    value = field.valueAccessor.set(changeRoot.parent.value, changeRoot.key, value);
+    changeRoot = changeRoot.parent;
   }
 
-  callAll(propagateValue(controller, rootController, value, []), [controller._field]);
+  dispatchEvents(propagateValue(field, changeRoot, value, []));
 }
 
-function propagateValue(
-  targetController: FieldController,
-  controller: FieldController,
-  value: unknown,
-  notifyCallbacks: FieldController['_notify'][]
-): FieldController['_notify'][] {
-  notifyCallbacks.push(controller._notify);
+function propagateValue(origin: Field, target: Field, value: unknown, events: Event[]): Event[] {
+  events.push({ type: 'change:value', target, origin, data: target.value });
 
-  controller._value = value;
+  target.value = value;
 
-  if (controller._children !== null) {
-    for (const child of controller._children) {
-      if (child._isTransient) {
+  if (target.children !== null) {
+    for (const child of target.children) {
+      if (child.isTransient) {
         continue;
       }
 
-      const childValue = controller._accessor.get(value, child._key);
-      if (child !== targetController && isEqual(child._value, childValue)) {
+      const childValue = target.valueAccessor.get(value, child.key);
+      if (child !== origin && isEqual(child.value, childValue)) {
         continue;
       }
-      propagateValue(targetController, child, childValue, notifyCallbacks);
+      propagateValue(origin, child, childValue, events);
     }
   }
-
-  return notifyCallbacks;
+  return events;
 }

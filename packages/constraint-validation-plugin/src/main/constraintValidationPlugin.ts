@@ -1,16 +1,23 @@
-import { Field, Plugin } from 'roqueform';
+import { dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
+
+const EVENT_CHANGE_ERROR = 'change:error';
 
 /**
- * The mixin added to fields by the {@link constraintValidationPlugin}.
+ * The plugin added to fields by the {@link constraintValidationPlugin}.
  */
-export interface ConstraintValidationMixin {
+export interface ConstraintValidationPlugin {
   /**
-   * An error associated with the field, or `null` if there's no error.
+   * A non-empty error message associated with the field, or `null` if there's no error.
    */
-  readonly error: string | null;
+  error: string | null;
 
   /**
-   * `true` if the field or any of its derived fields have an associated error, or `false` otherwise.
+   * The DOM element associated with the field, or `null` if there's no associated element.
+   */
+  element: Element | null;
+
+  /**
+   * `true` if the field or any of its child fields have {@link error an associated error}, or `false` otherwise.
    */
   readonly isInvalid: boolean;
 
@@ -18,159 +25,156 @@ export interface ConstraintValidationMixin {
    * The [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState), or `null` if there's no
    * associated element, or it doesn't support Constraint Validation API.
    */
-  readonly validity: ValidityState | null;
+  validity: ValidityState | null;
 
   /**
-   * The callback that associates the field with the DOM element.
+   * The total number of errors associated with this field and its child fields.
+   *
+   * @protected
    */
-  refCallback(element: Element | null): void;
+  ['errorCount']: number;
 
   /**
-   * Associates an error with the field. Calls
-   * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
-   * if the field has an associated element.
+   * The origin of the associated error:
+   * - 0 if there's no associated error.
+   * - 1 if an error was set by Constraint Validation API;
+   * - 2 if an error was set using {@link ConstraintValidationPlugin.setError};
    *
-   * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
-   *
-   * @param error The error to set.
+   * @protected
    */
-  setError(error: string): void;
+  ['errorOrigin']: 0 | 1 | 2;
 
   /**
-   * Deletes an error associated with this field. Calls
-   * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
-   * if the field has an associated element.
+   * Associates the field with the {@link element DOM element}.
+   */
+  ref(element: Element | null): void;
+
+  /**
+   * Associates an error with the field.
    *
-   * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
+   * @param error The error to set. If `null`, `undefined`, or an empty string then an error is deleted.
+   */
+  setError(error: string | null | undefined): void;
+
+  /**
+   * Deletes an error associated with this field. If this field has {@link element an associated element} that supports
+   * [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/HTML/Constraint_validation) and the
+   * element has a non-empty `validationMessage` then this message would be immediately set as an error for this field.
    */
   deleteError(): void;
 
   /**
-   * Recursively deletes errors associated with this field and all of its derived fields. Calls
-   * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLObjectElement/setCustomValidity setCustomValidity}
-   * if the field has an associated element.
-   *
-   * If a field has an associated element that doesn't satisfy validation constraints this method is no-op.
+   * Recursively deletes errors associated with this field and all of its child fields.
    */
   clearErrors(): void;
 
   /**
-   * Shows error message balloon for the first element that is associated with this field or any of its derived fields,
+   * Shows error message balloon for the first element that is associated with this field or any of its child fields,
    * that has an associated error via calling
    * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/reportValidity reportValidity}.
    *
    * @returns `true` if a field doesn't have an error, or `false` otherwise.
    */
   reportValidity(): boolean;
+
+  /**
+   * Returns all errors associated with this field and its child fields.
+   */
+  getErrors(): string[];
+
+  /**
+   * Returns all fields that have an error.
+   */
+  getInvalidFields(): Field<PluginOf<this>>[];
+
+  /**
+   * Subscribes to {@link error an associated error} changes of this field or any of its descendants.
+   *
+   * @param eventType The type of the event.
+   * @param subscriber The subscriber that would be triggered.
+   * @returns The callback to unsubscribe the subscriber.
+   * @see {@link error}
+   * @see {@link isInvalid}
+   */
+  on(eventType: 'change:error', subscriber: Subscriber<PluginOf<this>, string | null>): Unsubscribe;
 }
 
 /**
  * Enhances fields with Constraint Validation API methods.
  */
-export function constraintValidationPlugin(): Plugin<ConstraintValidationMixin> {
-  let controllerMap: WeakMap<Field, FieldController>;
-
-  return (field, _accessor, notify) => {
-    controllerMap ||= new WeakMap();
-
-    if (controllerMap.has(field)) {
-      return;
-    }
-
-    const notifyAncestors = () => {
-      for (
-        let invalid = false, ancestor: FieldController | null = controller;
-        ancestor !== null;
-        ancestor = ancestor._parent
-      ) {
-        invalid ||= isInvalid(controller);
-
-        if (ancestor._isInvalid === invalid) {
-          break;
-        }
-        ancestor._isInvalid = invalid;
-        ancestor._notify();
-      }
-    };
-
-    const controller: FieldController = {
-      _parent: null,
-      _children: null,
-      _field: field,
-      _element: null,
-      _validity: null,
-      _isInvalid: false,
-      _error: '',
-      _notify: notify,
-      _notifyAncestors: notifyAncestors,
-    };
-
-    controllerMap.set(field, controller);
-
-    if (field.parent !== null) {
-      const parent = controllerMap.get(field.parent)!;
-
-      controller._parent = parent;
-
-      (parent._children ||= []).push(controller);
-    }
-
-    const { refCallback } = field;
-
-    const listener = (event: Event): void => {
-      if (controller._element !== null && controller._element === event.target) {
-        notifyAncestors();
-      }
-    };
+export function constraintValidationPlugin(): PluginInjector<ConstraintValidationPlugin> {
+  return field => {
+    field.error = null;
+    field.element = null;
+    field.validity = null;
+    field.errorCount = 0;
+    field.errorOrigin = 0;
 
     Object.defineProperties(field, {
-      error: { enumerable: true, get: () => getError(controller) },
-      isInvalid: { enumerable: true, get: () => isInvalid(controller) },
-      validity: { enumerable: true, get: () => controller._validity },
+      isInvalid: { configurable: true, get: () => field.errorCount !== 0 },
     });
 
-    field.refCallback = element => {
-      const { _element } = controller;
+    const changeListener = () => {
+      if (isValidatable(field.element)) {
+        dispatchEvents(setError(field, field.element.validationMessage, 1, []));
+      }
+    };
 
-      if (_element === element) {
-        refCallback?.(element);
+    field.on('change:value', changeListener);
+
+    const { ref } = field;
+
+    field.ref = nextElement => {
+      const prevElement = field.element;
+
+      ref?.(nextElement);
+
+      if (prevElement === nextElement) {
         return;
       }
 
-      if (_element !== null) {
-        _element.removeEventListener('input', listener);
-        _element.removeEventListener('change', listener);
-        _element.removeEventListener('invalid', listener);
+      field.element = nextElement = nextElement instanceof Element ? nextElement : null;
 
-        controller._element = controller._validity = null;
-        controller._error = '';
-      }
-      if (isValidatable(element)) {
-        element.addEventListener('input', listener);
-        element.addEventListener('change', listener);
-        element.addEventListener('invalid', listener);
-
-        controller._element = element;
-        controller._validity = element.validity;
+      if (prevElement !== null) {
+        prevElement.removeEventListener('input', changeListener);
+        prevElement.removeEventListener('change', changeListener);
+        prevElement.removeEventListener('invalid', changeListener);
       }
 
-      refCallback?.(element);
-      notifyAncestors();
+      const events: Event[] = [];
+
+      if (isValidatable(nextElement)) {
+        nextElement.addEventListener('input', changeListener);
+        nextElement.addEventListener('change', changeListener);
+        nextElement.addEventListener('invalid', changeListener);
+
+        field.validity = nextElement.validity;
+        setError(field, nextElement.validationMessage, 1, events);
+      } else {
+        field.validity = null;
+        deleteError(field, 1, events);
+      }
+
+      dispatchEvents(events);
     };
 
     field.setError = error => {
-      setError(controller, error);
+      dispatchEvents(setError(field, error, 2, []));
     };
 
     field.deleteError = () => {
-      setError(controller, '');
+      dispatchEvents(deleteError(field, 2, []));
     };
 
     field.clearErrors = () => {
-      clearErrors(controller);
+      dispatchEvents(clearErrors(field, []));
     };
 
-    field.reportValidity = () => reportValidity(controller);
+    field.reportValidity = () => reportValidity(field);
+
+    field.getErrors = () => getInvalidFields(field, []).map(field => field.error!);
+
+    field.getInvalidFields = () => getInvalidFields(field, []);
   };
 }
 
@@ -184,88 +188,111 @@ type ValidatableElement =
   | HTMLSelectElement
   | HTMLTextAreaElement;
 
-interface FieldController {
-  _parent: FieldController | null;
-  _children: FieldController[] | null;
-  _field: Field;
-  _element: ValidatableElement | null;
-  _validity: ValidityState | null;
-
-  /**
-   * The invalid status for which the field was notified the last time.
-   */
-  _isInvalid: boolean;
-
-  /**
-   * An error that is used if the field doesn't have an associated element.
-   */
-  _error: string;
-
-  /**
-   * Synchronously notifies listeners of the field.
-   */
-  _notify: () => void;
-
-  /**
-   * Notifies the field and its ancestors about changes.
-   */
-  _notifyAncestors: () => void;
-}
-
-/**
- * Sets a validation error to the field and notifies it.
- */
-function setError(controller: FieldController, error: string): void {
-  const { _element } = controller;
-
-  if (_element !== null) {
-    if (_element.validationMessage !== error) {
-      _element.setCustomValidity(error);
-      controller._notifyAncestors();
-    }
-    return;
+function setError(
+  field: Field<ConstraintValidationPlugin>,
+  error: string | null | undefined,
+  errorOrigin: 1 | 2,
+  events: Event[]
+): Event[] {
+  if (error === null || error === undefined || error.length === 0) {
+    return deleteError(field, errorOrigin, events);
   }
 
-  if (controller._error !== error) {
-    controller._error = error;
-    controller._notifyAncestors();
+  const originalError = field.error;
+
+  if (field.errorOrigin > errorOrigin || (originalError === error && field.errorOrigin === errorOrigin)) {
+    return events;
   }
-}
 
-function getError(controller: FieldController): string | null {
-  return (controller._element !== null ? controller._element.validationMessage : controller._error) || null;
-}
-
-function clearErrors(controller: FieldController): void {
-  setError(controller, '');
-
-  if (controller._children !== null) {
-    for (const child of controller._children) {
-      clearErrors(child);
-    }
+  if (errorOrigin === 2 && isValidatable(field.element)) {
+    // Custom validation error
+    field.element.setCustomValidity(error);
   }
+
+  field.error = error;
+  field.errorOrigin = errorOrigin;
+
+  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
+
+  if (originalError !== null) {
+    return events;
+  }
+
+  field.errorCount++;
+
+  for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
+    ancestor.errorCount++;
+  }
+  return events;
 }
 
-function isInvalid(controller: FieldController): boolean {
-  if (controller._children !== null) {
-    for (const child of controller._children) {
-      if (isInvalid(child)) {
-        return true;
+function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 2, events: Event[]): Event[] {
+  const { error: originalError, element } = field;
+
+  if (field.errorOrigin > errorOrigin || originalError === null) {
+    return events;
+  }
+
+  if (isValidatable(element)) {
+    element.setCustomValidity('');
+
+    if (!element.validity.valid) {
+      field.errorOrigin = 1;
+
+      if (originalError !== (field.error = element.validationMessage)) {
+        events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
       }
+      return events;
     }
   }
-  return getError(controller) !== null;
+
+  field.error = null;
+  field.errorOrigin = 0;
+  field.errorCount--;
+
+  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
+
+  for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
+    ancestor.errorCount--;
+  }
+  return events;
 }
 
-function reportValidity(controller: FieldController): boolean {
-  if (controller._children !== null) {
-    for (const child of controller._children) {
+function clearErrors(field: Field<ConstraintValidationPlugin>, events: Event[]): Event[] {
+  deleteError(field, 2, events);
+
+  if (field.children !== null) {
+    for (const child of field.children) {
+      clearErrors(child, events);
+    }
+  }
+  return events;
+}
+
+function reportValidity(field: Field<ConstraintValidationPlugin>): boolean {
+  if (field.children !== null) {
+    for (const child of field.children) {
       if (!reportValidity(child)) {
         return false;
       }
     }
   }
-  return controller._element !== null ? controller._element.reportValidity() : getError(controller) === null;
+  return isValidatable(field.element) ? field.element.reportValidity() : field.error === null;
+}
+
+function getInvalidFields(
+  field: Field<ConstraintValidationPlugin>,
+  batch: Field<ConstraintValidationPlugin>[]
+): Field<ConstraintValidationPlugin>[] {
+  if (field.error !== null) {
+    batch.push(field);
+  }
+  if (field.children !== null) {
+    for (const child of field.children) {
+      getInvalidFields(child, batch);
+    }
+  }
+  return batch;
 }
 
 function isValidatable(element: Element | null): element is ValidatableElement {

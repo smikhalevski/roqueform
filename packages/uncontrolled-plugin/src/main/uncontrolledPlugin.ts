@@ -1,117 +1,157 @@
-import { Plugin } from 'roqueform';
-import isDeepEqual from 'fast-deep-equal';
-import { createElementValueAccessor, ElementValueAccessor } from './createElementValueAccessor';
+import { Field, PluginInjector } from 'roqueform';
+import { createElementsValueAccessor, ElementsValueAccessor } from './createElementsValueAccessor';
 
 /**
  * The default value accessor.
  */
-const elementValueAccessor = createElementValueAccessor();
+const elementsValueAccessor = createElementsValueAccessor();
 
 /**
- * The mixin added to fields by the {@link uncontrolledPlugin}.
+ * The plugin added to fields by the {@link uncontrolledPlugin}.
  */
-export interface UncontrolledMixin {
+export interface UncontrolledPlugin {
   /**
-   * The callback that associates the field with the DOM element.
+   * The DOM element associated with the field, or `null` if there's no associated element.
    */
-  refCallback(element: Element | null): void;
+  element: Element | null;
 
   /**
-   * Overrides the element value accessor for the field.
+   * The array of elements controlled by this field, includes {@link element}.
    *
-   * @param accessor The accessor to use for this filed.
+   * @protected
    */
-  setAccessor(accessor: Partial<ElementValueAccessor>): this;
+  ['elements']: readonly Element[];
+
+  /**
+   * The map from a key passed to {@link refFor} to a corresponding element. If {@link refFor} was called with `null`
+   * then a key is deleted from this map.
+   *
+   * @protected
+   */
+  ['elementsMap']: ReadonlyMap<unknown, Element>;
+
+  /**
+   * The accessor that reads and writes the field value from and to {@link elements}.
+   *
+   * @protected
+   */
+  ['elementsValueAccessor']: ElementsValueAccessor;
+
+  /**
+   * Associates the field with the DOM element.
+   */
+  ref(element: Element | null): void;
+
+  /**
+   * Returns a callback that associates the field with the DOM element under the given key in {@link elementsMap}.
+   */
+  refFor(key: unknown): (element: Element | null) => void;
 }
 
 /**
  * Updates field value when the DOM element value is changed and vice versa.
- *
- * @param accessor The accessor that reads and writes value to and from the DOM elements managed by the filed.
  */
-export function uncontrolledPlugin(accessor = elementValueAccessor): Plugin<UncontrolledMixin> {
+export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
-    const { refCallback } = field;
+    field.element = null;
+    field.elements = [];
+    field.elementsMap = new Map();
+    field.elementsValueAccessor = accessor;
 
-    let elements: Element[] = [];
-    let targetElement: Element | null = null;
+    const refsMap = new Map<unknown, (element: Element | null) => void>();
 
-    let getElementValue = accessor.get;
-    let setElementValue = accessor.set;
+    let prevValue = field.value;
 
-    const mutationObserver = new MutationObserver((mutations: MutationRecord[]) => {
-      for (const mutation of mutations) {
-        for (let i = 0; i < mutation.removedNodes.length; ++i) {
-          const j = elements.indexOf(mutation.removedNodes.item(i) as Element);
-          if (j === -1) {
-            continue;
+    const changeListener: EventListener = event => {
+      if (field.elements.includes(event.target as Element)) {
+        field.setValue((prevValue = field.elementsValueAccessor.get(field.elements)));
+      }
+    };
+
+    field.on('change:value', event => {
+      if (field.value !== prevValue && event.target === field && field.elements.length !== 0) {
+        field.elementsValueAccessor.set(field.elements, field.value);
+      }
+    });
+
+    const { ref } = field;
+
+    field.ref = nextElement => {
+      const prevElement = field.element;
+
+      ref?.(nextElement);
+
+      field.element = swapElements(field, changeListener, prevElement, nextElement);
+    };
+
+    field.refFor = key => {
+      let ref = refsMap.get(key);
+
+      if (ref === undefined) {
+        ref = nextElement => {
+          const elementsMap = field.elementsMap as Map<unknown, Element>;
+          const prevElement = elementsMap.get(key) || null;
+
+          nextElement = swapElements(field, changeListener, prevElement, nextElement);
+
+          if (prevElement === nextElement) {
+            return;
           }
-
-          elements[j].removeEventListener('input', changeListener);
-          elements[j].removeEventListener('change', changeListener);
-
-          elements.splice(j, 1);
-        }
+          if (nextElement === null) {
+            elementsMap.delete(key);
+          } else {
+            elementsMap.set(key, nextElement);
+          }
+        };
+        refsMap.set(key, ref);
       }
 
-      if (elements.length === 0) {
-        mutationObserver.disconnect();
-        targetElement = null;
-        refCallback?.(targetElement);
-        return;
-      }
-
-      if (targetElement !== elements[0]) {
-        targetElement = elements[0];
-        refCallback?.(targetElement);
-      }
-    });
-
-    const changeListener = (event: Event): void => {
-      let value;
-      if (
-        elements.indexOf(event.target as Element) !== -1 &&
-        !isDeepEqual((value = getElementValue(elements.slice(0))), field.value)
-      ) {
-        field.setValue(value);
-      }
-    };
-
-    field.subscribe(() => {
-      if (elements.length !== 0) {
-        setElementValue(elements.slice(0), field.value);
-      }
-    });
-
-    field.refCallback = element => {
-      if (
-        element === null ||
-        !(element instanceof Element) ||
-        !element.isConnected ||
-        elements.indexOf(element) !== -1
-      ) {
-        return;
-      }
-
-      mutationObserver.observe(element.parentNode!, { childList: true });
-
-      element.addEventListener('input', changeListener);
-      element.addEventListener('change', changeListener);
-
-      elements.push(element);
-
-      setElementValue(elements.slice(0), field.value);
-
-      if (elements.length === 1) {
-        targetElement = elements[0];
-        refCallback?.(targetElement);
-      }
-    };
-
-    field.setAccessor = accessor => {
-      getElementValue = accessor.get || getElementValue;
-      setElementValue = accessor.set || setElementValue;
-      return field;
+      return ref;
     };
   };
+}
+
+function swapElements(
+  field: Field<UncontrolledPlugin>,
+  changeListener: EventListener,
+  prevElement: Element | null,
+  nextElement: Element | null
+): Element | null {
+  const elements = field.elements as Element[];
+
+  nextElement = nextElement instanceof Element ? nextElement : null;
+
+  if (prevElement === nextElement) {
+    return nextElement;
+  }
+
+  let prevIndex = -1;
+
+  if (prevElement !== null) {
+    prevElement.removeEventListener('input', changeListener);
+    prevElement.removeEventListener('change', changeListener);
+    prevIndex = elements.indexOf(prevElement);
+  }
+
+  if (nextElement !== null && elements.indexOf(nextElement) === -1) {
+    nextElement.addEventListener(
+      nextElement.tagName === 'INPUT' || nextElement.tagName === 'TEXTAREA' ? 'input' : 'change',
+      changeListener
+    );
+
+    if (prevIndex === -1) {
+      elements.push(nextElement);
+    } else {
+      elements[prevIndex] = nextElement;
+      prevIndex = -1;
+    }
+  }
+
+  if (prevIndex !== -1) {
+    elements.splice(prevIndex, 1);
+  }
+  if (elements.length !== 0) {
+    field.elementsValueAccessor.set(elements, field.value);
+  }
+  return nextElement;
 }

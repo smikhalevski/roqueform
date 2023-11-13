@@ -1,6 +1,6 @@
 import { useContext, useRef } from 'react';
-import { callOrGet, createField, Field, Plugin } from 'roqueform';
-import { AccessorContext } from './AccessorContext';
+import { callOrGet, createField, Field, PluginInjector } from 'roqueform';
+import { ValueAccessorContext } from './ValueAccessorContext';
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
 type NoInfer<T> = T extends infer T ? T : never;
@@ -26,18 +26,18 @@ export function useField<Value>(initialValue: Value | (() => Value)): Field<Valu
  * Creates the new field enhanced by a plugin.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin Enhances the field with additional functionality.
+ * @param plugin The plugin injected into the field.
  * @returns The {@link Field} instance.
  * @template Value The root field value.
- * @template Mixin The mixin added by the plugin.
+ * @template Plugin The plugin injected into the field.
  */
-export function useField<Value, Mixin>(
+export function useField<Value, Plugin>(
   initialValue: Value | (() => Value),
-  plugin: Plugin<Mixin, NoInfer<Value>>
-): Field<Value, Mixin> & Mixin;
+  plugin: PluginInjector<Plugin, NoInfer<Value>>
+): Field<Plugin, Value>;
 
-export function useField(initialValue?: unknown, plugin?: Plugin) {
-  const accessor = useContext(AccessorContext);
+export function useField(initialValue?: unknown, plugin?: PluginInjector) {
+  const accessor = useContext(ValueAccessorContext);
 
   return (useRef<Field>().current ||= createField(callOrGet(initialValue), plugin!, accessor));
 }

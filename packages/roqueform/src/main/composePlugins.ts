@@ -1,53 +1,65 @@
-import { Plugin } from './shared-types';
+import { PluginInjector } from './typings';
 
 /**
- * Composes a plugin from multiple plugins.
+ * @internal
  */
-export function composePlugins<T, A, B>(a: Plugin<A, T>, b: Plugin<B, T>): Plugin<A & B, T>;
+export function composePlugins<T, A, B>(a: PluginInjector<A, T>, b: PluginInjector<B, T>): PluginInjector<A & B, T>;
 
 /**
- * Composes a plugin from multiple plugins.
+ * @internal
  */
-export function composePlugins<T, A, B, C>(a: Plugin<A, T>, b: Plugin<B, T>, c: Plugin<C, T>): Plugin<A & B & C, T>;
+export function composePlugins<T, A, B, C>(
+  a: PluginInjector<A, T>,
+  b: PluginInjector<B, T>,
+  c: PluginInjector<C, T>
+): PluginInjector<A & B & C, T>;
 
 /**
- * Composes a plugin from multiple plugins.
+ * @internal
  */
 export function composePlugins<T, A, B, C, D>(
-  a: Plugin<A, T>,
-  b: Plugin<B, T>,
-  c: Plugin<C, T>,
-  d: Plugin<D, T>
-): Plugin<A & B & C & D, T>;
+  a: PluginInjector<A, T>,
+  b: PluginInjector<B, T>,
+  c: PluginInjector<C, T>,
+  d: PluginInjector<D, T>
+): PluginInjector<A & B & C & D, T>;
 
 /**
- * Composes a plugin from multiple plugins.
+ * @internal
  */
 export function composePlugins<T, A, B, C, D, E>(
-  a: Plugin<A, T>,
-  b: Plugin<B, T>,
-  c: Plugin<C, T>,
-  d: Plugin<D, T>,
-  e: Plugin<E, T>
-): Plugin<A & B & C & D & E, T>;
+  a: PluginInjector<A, T>,
+  b: PluginInjector<B, T>,
+  c: PluginInjector<C, T>,
+  d: PluginInjector<D, T>,
+  e: PluginInjector<E, T>
+): PluginInjector<A & B & C & D & E, T>;
 
 /**
- * Composes a plugin from multiple plugins.
+ * @internal
  */
 export function composePlugins<T, A, B, C, D, E, F>(
-  a: Plugin<A, T>,
-  b: Plugin<B, T>,
-  c: Plugin<C, T>,
-  d: Plugin<D, T>,
-  e: Plugin<E, T>,
-  f: Plugin<F, T>,
-  ...other: Plugin<any, T>[]
-): Plugin<A & B & C & D & E & F, T>;
+  a: PluginInjector<A, T>,
+  b: PluginInjector<B, T>,
+  c: PluginInjector<C, T>,
+  d: PluginInjector<D, T>,
+  e: PluginInjector<E, T>,
+  f: PluginInjector<F, T>,
+  ...other: PluginInjector<any, T>[]
+): PluginInjector<A & B & C & D & E & F, T>;
 
-export function composePlugins(...plugins: Plugin[]): Plugin {
-  return (field, accessor, notify) => {
+/**
+ * Composes multiple plugin callbacks into a single callback.
+ *
+ * @param plugins The array of plugin injectors to compose.
+ * @returns The plugins injector that sequentially applies all provided injectors into a field.
+ */
+export function composePlugins(...plugins: PluginInjector[]): PluginInjector;
+
+export function composePlugins(...plugins: PluginInjector[]): PluginInjector {
+  return field => {
     for (const plugin of plugins) {
-      plugin(field, accessor, notify);
+      plugin(field);
     }
     return field;
   };

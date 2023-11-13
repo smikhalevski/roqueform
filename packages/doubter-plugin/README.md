@@ -35,13 +35,12 @@ export const App = () => {
     event.preventDefault();
 
     if (planetField.validate()) {
-      // Errors are associated with fields automatically
-      return;
+      // If your shapes transform the input, you can safely parse
+      // the field value after it was successfully validated.
+      const value = planetShape.parse(planetField.value);
+    } else {
+      // Errors are associated with fields automatically.
     }
-
-    // If your shapes transform the input, you can safely parse
-    // the field value after it was successfully validated
-    const value = planetShape.parse(planetField.value);
   };
 
   return (
@@ -96,8 +95,8 @@ const planetField = useField({ name: 'Mars' }, doubterPlugin(planetShape));
 
 The type of the field value is inferred from the provided shape, so the field value is statically checked.
 
-When you call the `validate` method, it triggers validation of the field and all of its derived fields. So if you call
-`validate` on the derived field, it won't validate the parent field:
+When you call the `validate` method, it triggers validation of the field and all of its child fields. So if you call
+`validate` on the child field, it won't validate the parent field:
 
 ```ts
 planetField.at('name').validate();
@@ -110,7 +109,7 @@ In this example, `planetField.value` _is not_ validated, and `planetField.at('na
 > It's safe to trigger validation of a single text field on every keystroke, since validation doesn't have to process
 > the whole form state.
 
-To detect whether the field, or any of its derived fields contain a validation error:
+To detect whether the field, or any of its child fields contain a validation error:
 
 ```ts
 planetField.isInvalid;
@@ -140,7 +139,7 @@ To delete an error for the particular field:
 planetField.at('name').deleteError();
 ```
 
-Sometimes it is required to clear errors of the field itself and all of its derived fields:
+Sometimes it is required to clear errors of the field itself and all of its child fields:
 
 ```ts
 planetField.clearErrors();

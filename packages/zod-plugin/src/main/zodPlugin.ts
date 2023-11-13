@@ -1,100 +1,118 @@
-import { ParseParams, ZodErrorMap, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
-import { Accessor, Field, Plugin, ValidationMixin, validationPlugin } from 'roqueform';
+import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodSchema, ZodTypeAny } from 'zod';
+import {
+  Field,
+  FieldController,
+  PluginInjector,
+  Validation,
+  ValidationPlugin,
+  validationPlugin,
+  Validator,
+} from 'roqueform';
 
 /**
- * The mixin added to fields by the {@link zodPlugin}.
+ * The plugin added to fields by the {@link zodPlugin}.
  */
-export interface ZodMixin extends ValidationMixin<ZodIssue, Partial<ParseParams>> {
-  setError(error: ZodIssue | string): void;
+export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParams>> {
+  /**
+   * The Zod validation schema of the root value.
+   *
+   * @protected
+   */
+  ['schema']: ZodTypeAny;
+
+  setError(error: ZodIssue | string | null | undefined): void;
 }
 
 /**
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
  *
- * @param type The shape that parses the field value.
- * @param errorMap [The Zod error customizer.](https://github.com/colinhacks/zod/blob/master/ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
+ * @param schema The schema that validates the field value.
  * @template Value The root field value.
  * @returns The validation plugin.
  */
-export function zodPlugin<Value>(type: ZodType<any, any, Value>, errorMap?: ZodErrorMap): Plugin<ZodMixin, Value> {
-  let plugin: Plugin<any>;
+export function zodPlugin<Value>(schema: ZodSchema<any, any, Value>): PluginInjector<ZodPlugin, Value> {
+  let plugin;
 
-  return (field, accessor, notify) => {
-    (plugin ||= createValidationPlugin(type, errorMap, accessor))(field, accessor, notify);
+  return field => {
+    (plugin ||= validationPlugin(zodValidator))(field);
+
+    field.schema = field.parent?.schema || schema;
 
     const { setError } = field;
 
     field.setError = error => {
-      setError(typeof error !== 'string' ? error : { code: ZodIssueCode.custom, path: getPath(field), message: error });
+      setError(typeof error === 'string' ? { code: ZodIssueCode.custom, path: getPath(field), message: error } : error);
     };
   };
 }
 
-function createValidationPlugin(type: ZodTypeAny, errorMap: ZodErrorMap | undefined, accessor: Accessor) {
-  return validationPlugin<ZodIssue, Partial<ParseParams>>({
-    validate(field, setError, options) {
-      options = Object.assign({ errorMap }, options);
+const zodValidator: Validator<ZodIssue, Partial<ParseParams>> = {
+  validate(field, options) {
+    const { validation, schema } = field as unknown as Field<ZodPlugin>;
 
-      const result = type.safeParse(getValue(field, accessor), options);
+    if (validation !== null) {
+      applyResult(validation, schema.safeParse(getValue(field), options));
+    }
+  },
 
-      if (!result.success) {
-        setIssues(field, result.error.issues, setError);
-      }
-    },
+  validateAsync(field, options) {
+    const { validation, schema } = field as unknown as Field<ZodPlugin>;
 
-    validateAsync(field, setError, options) {
-      options = Object.assign({ errorMap }, options);
-
-      return type.safeParseAsync(getValue(field, accessor), options).then(result => {
-        if (!result.success) {
-          setIssues(field, result.error.issues, setError);
-        }
+    if (validation !== null) {
+      return schema.safeParseAsync(getValue(field), options).then(result => {
+        applyResult(validation, result);
       });
-    },
-  });
-}
+    }
 
-/**
- * Returns the value of the root field that contains a transient value of the target field.
- */
-function getValue(field: Field, accessor: Accessor): unknown {
+    return Promise.resolve();
+  },
+};
+
+function getValue(field: Field<ValidationPlugin>): unknown {
   let value = field.value;
+  let transient = false;
 
   while (field.parent !== null) {
-    value = accessor.set(field.parent.value, field.key, value);
+    transient ||= field.isTransient;
+    value = transient ? field.valueAccessor.set(field.parent.value, field.key, value) : field.parent.value;
     field = field.parent;
   }
   return value;
 }
 
-function getPath(field: Field): Array<string | number> {
-  const path: Array<string | number> = [];
+function getPath(field: FieldController<any>): any[] {
+  const path = [];
 
-  for (let ancestor = field; ancestor.parent !== null; ancestor = ancestor.parent) {
-    path.unshift(ancestor.key);
+  while (field.parent !== null) {
+    path.unshift(field.key);
+    field = field.parent;
   }
   return path;
 }
 
-function setIssues(field: Field, issues: ZodIssue[], setError: (field: Field, error: ZodIssue) => void): void {
-  let prefix = getPath(field);
+function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnType<unknown, unknown>): void {
+  if (result.success) {
+    return;
+  }
 
-  issues: for (const issue of issues) {
+  const basePath = getPath(validation.root);
+
+  issues: for (const issue of result.error.issues) {
     const { path } = issue;
 
-    let targetField = field;
-
-    if (path.length < prefix.length) {
+    if (path.length < basePath.length) {
       continue;
     }
-    for (let i = 0; i < prefix.length; ++i) {
-      if (path[i] !== prefix[i]) {
+    for (let i = 0; i < basePath.length; ++i) {
+      if (path[i] !== basePath[i]) {
         continue issues;
       }
     }
-    for (let i = prefix.length; i < path.length; ++i) {
-      targetField = targetField.at(path[i]);
+
+    let child = validation.root;
+    for (let i = basePath.length; i < path.length; ++i) {
+      child = child.at(path[i]);
     }
-    setError(targetField, issue);
+    child.setValidationError(validation, issue);
   }
 }

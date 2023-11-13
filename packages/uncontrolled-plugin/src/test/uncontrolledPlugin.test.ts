@@ -1,5 +1,5 @@
-import { ElementValueAccessor, uncontrolledPlugin } from '../main';
-import { composePlugins, createField, naturalAccessor } from 'roqueform';
+import { ElementsValueAccessor, uncontrolledPlugin } from '../main';
+import { composePlugins, createField } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
 
 describe('uncontrolledPlugin', () => {
@@ -13,244 +13,259 @@ describe('uncontrolledPlugin', () => {
     element.remove();
   });
 
-  test('updates field value on input change', () => {
-    const listenerMock = jest.fn();
-    const field = createField({ foo: 0 }, uncontrolledPlugin());
+  test('invokes ref from the preceding plugin', () => {
+    const refMock = jest.fn();
+    const pluginMock = jest.fn(field => {
+      field.ref = refMock;
+    });
+
+    const field = createField({ aaa: 111 }, composePlugins(pluginMock, uncontrolledPlugin()));
+
+    expect(pluginMock).toHaveBeenCalledTimes(1);
+    expect(pluginMock).toHaveBeenNthCalledWith(1, field);
+
+    expect(refMock).not.toHaveBeenCalled();
+
+    field.at('aaa').ref(element);
+
+    expect(refMock).toHaveBeenCalledTimes(1);
+    expect(refMock).toHaveBeenNthCalledWith(1, element);
+  });
+
+  test('ref populates elements', () => {
+    const field = createField(111, uncontrolledPlugin());
+
+    field.ref(element);
+
+    expect(field.element).toBe(element);
+    expect(field.elements).toEqual([element]);
+  });
+
+  test('refFor populates elements', () => {
+    const field = createField(111, uncontrolledPlugin());
+
+    const element1 = document.createElement('input');
+    const element2 = document.createElement('textarea');
+
+    field.refFor(1)(element1);
+    field.refFor(2)(element2);
+
+    expect(field.element).toBeNull();
+    expect(field.elements).toEqual([element1, element2]);
+  });
+
+  test('ref and refFor can be mixed', () => {
+    const field = createField(111, uncontrolledPlugin());
+
+    const element1 = document.createElement('input');
+    const element2 = document.createElement('textarea');
+
+    field.ref(element);
+    field.refFor(1)(element1);
+    field.refFor(2)(element2);
+
+    expect(field.element).toBe(element);
+    expect(field.elements).toEqual([element, element1, element2]);
+  });
+
+  test('ref and refFor can be called with the same element', () => {
+    const field = createField(111, uncontrolledPlugin());
+
+    field.ref(element);
+    field.refFor(1)(element);
+
+    expect(field.element).toBe(element);
+    expect(field.elements).toEqual([element]);
+  });
+
+  test('refFor can be called with the same element for different keys', () => {
+    const field = createField(111, uncontrolledPlugin());
+
+    field.refFor(1)(element);
+    field.refFor(2)(element);
+
+    expect(field.element).toBeNull();
+    expect(field.elements).toEqual([element]);
+  });
+
+  test('ref removes an element when called with null', () => {
+    const field = createField(111, uncontrolledPlugin());
+
+    const element1 = document.createElement('input');
+    const element2 = document.createElement('textarea');
+
+    field.ref(element);
+    field.refFor(1)(element1);
+    field.refFor(2)(element2);
+
+    field.ref(null);
+
+    expect(field.elements).toEqual([element1, element2]);
+  });
+
+  test('refFor removes an element when called with null', () => {
+    const field = createField(111, uncontrolledPlugin());
+
+    const element1 = document.createElement('input');
+    const element2 = document.createElement('textarea');
+
+    field.refFor(1)(element1);
+    field.refFor(2)(element2);
+
+    field.refFor(1)(null);
+
+    expect(field.elements).toEqual([element2]);
+
+    field.refFor(2)(null);
+
+    expect(field.elements).toEqual([]);
+  });
+
+  test('removed element does not update the field', () => {
+    const field = createField(111, uncontrolledPlugin());
+    const setValueSpy = jest.spyOn(field, 'setValue');
+
+    field.ref(element);
+    field.ref(null);
+
+    fireEvent.input(element, { target: { value: '222' } });
+
+    expect(setValueSpy).not.toHaveBeenCalled();
+    expect(field.value).toBe(111);
+  });
+
+  test('updates field value when input value changes', () => {
+    const subscriberMock = jest.fn();
+    const field = createField({ aaa: 111 }, uncontrolledPlugin());
 
     element.type = 'number';
 
-    field.subscribe(listenerMock);
-    field.at('foo').refCallback(element);
+    field.on('*', subscriberMock);
+    field.at('aaa').ref(element);
 
-    fireEvent.change(element, { target: { value: '111' } });
+    fireEvent.input(element, { target: { value: '222' } });
 
-    expect(listenerMock).toHaveBeenCalledTimes(1);
-    expect(field.value).toEqual({ foo: 111 });
+    expect(subscriberMock).toHaveBeenCalledTimes(2);
+    expect(field.value).toEqual({ aaa: 222 });
   });
 
-  test('updates input value on field change', () => {
-    const field = createField({ foo: 0 }, uncontrolledPlugin());
+  test('updates input value when field value changes', () => {
+    const field = createField({ aaa: 111 }, uncontrolledPlugin());
 
-    field.at('foo').refCallback(element);
-    field.at('foo').setValue(111);
+    field.at('aaa').ref(element);
+    field.at('aaa').setValue(222);
 
-    expect(element.value).toBe('111');
+    expect(element.value).toBe('222');
   });
 
   test('sets the initial value to the element', () => {
-    const field = createField({ foo: 111 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, uncontrolledPlugin());
 
     element.type = 'number';
 
-    field.at('foo').refCallback(element);
+    field.at('aaa').ref(element);
 
     expect(element.value).toBe('111');
   });
 
-  test('invokes refCallback from the preceding plugin', () => {
-    const refCallbackMock = jest.fn();
-    const pluginMock = jest.fn(field => {
-      field.refCallback = refCallbackMock;
-    });
+  test('input element uses input event', () => {
+    const field = createField('aaa', uncontrolledPlugin());
+    const setValueSpy = jest.spyOn(field, 'setValue');
 
-    const field = createField({ foo: 111 }, composePlugins(pluginMock, uncontrolledPlugin()));
+    field.ref(element);
 
-    expect(pluginMock).toHaveBeenCalledTimes(1);
-    expect(pluginMock).toHaveBeenNthCalledWith(1, field, naturalAccessor, expect.any(Function));
-
-    expect(refCallbackMock).not.toHaveBeenCalled();
-
-    field.at('foo').refCallback(element);
-
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, element);
-  });
-
-  test('does not invoke preceding plugin if an additional element is added', () => {
-    const refCallbackMock = jest.fn();
-    const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
-    };
-
-    const element1 = document.body.appendChild(document.createElement('input'));
-    const element2 = document.body.appendChild(document.createElement('input'));
-
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
-
-    field.at('foo').refCallback(element1);
-    field.at('foo').refCallback(element2);
-
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, element1);
-  });
-
-  test('invokes preceding plugin if the head element has changed', done => {
-    const refCallbackMock = jest.fn();
-    const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
-    };
-
-    const element1 = document.body.appendChild(document.createElement('input'));
-    const element2 = document.body.appendChild(document.createElement('textarea'));
-
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
-
-    field.at('foo').refCallback(element1);
-    field.at('foo').refCallback(element2);
-
-    expect(refCallbackMock).toHaveBeenCalledTimes(1);
-    expect(refCallbackMock).toHaveBeenNthCalledWith(1, element1);
-
-    element1.remove();
-
-    queueMicrotask(() => {
-      expect(refCallbackMock).toHaveBeenCalledTimes(2);
-      expect(refCallbackMock).toHaveBeenNthCalledWith(2, element2);
-      done();
-    });
-  });
-
-  test('invokes preceding plugin if the head element was removed', done => {
-    const refCallbackMock = jest.fn();
-    const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
-    };
-
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
-
-    field.at('foo').refCallback(element);
-
-    element.remove();
-
-    queueMicrotask(() => {
-      expect(refCallbackMock).toHaveBeenCalledTimes(2);
-      expect(refCallbackMock).toHaveBeenNthCalledWith(1, element);
-      expect(refCallbackMock).toHaveBeenNthCalledWith(2, null);
-      done();
-    });
-  });
-
-  test('null refs are not propagated to preceding plugin', () => {
-    const refCallbackMock = jest.fn();
-    const plugin = (field: any) => {
-      field.refCallback = refCallbackMock;
-    };
-
-    const field = createField({ foo: 111 }, composePlugins(plugin, uncontrolledPlugin()));
-
-    field.at('foo').refCallback(null);
-
-    expect(refCallbackMock).not.toHaveBeenCalled();
-  });
-
-  test('does not call setValue if the same value multiple times', () => {
-    const accessorMock: ElementValueAccessor = {
-      get: jest.fn(() => 'xxx'),
-      set: jest.fn(),
-    };
-
-    const field = createField('aaa', uncontrolledPlugin(accessorMock));
-
-    const setValueMock = (field.setValue = jest.fn(field.setValue));
-
-    field.refCallback(element);
-
-    expect(accessorMock.set).toHaveBeenCalledTimes(1);
-    expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 'aaa');
-    expect(accessorMock.get).not.toHaveBeenCalled();
-    expect(setValueMock).not.toHaveBeenCalled();
-
-    fireEvent.change(element, { target: { value: 'bbb' } });
     fireEvent.input(element, { target: { value: 'bbb' } });
 
-    expect(setValueMock).toHaveBeenCalledTimes(1);
-    expect(setValueMock).toHaveBeenNthCalledWith(1, 'xxx');
+    expect(setValueSpy).toHaveBeenCalledTimes(1);
 
-    expect(accessorMock.set).toHaveBeenCalledTimes(2);
-    expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element], 'xxx');
+    fireEvent.change(element, { target: { value: 'ccc' } });
+
+    expect(setValueSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('textarea element uses input event', () => {
+    const field = createField('aaa', uncontrolledPlugin());
+    const setValueSpy = jest.spyOn(field, 'setValue');
+    const element = document.body.appendChild(document.createElement('textarea'));
+
+    field.ref(element);
+
+    fireEvent.input(element, { target: { value: 'bbb' } });
+
+    expect(setValueSpy).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(element, { target: { value: 'ccc' } });
+
+    expect(setValueSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('select element uses input event', () => {
+    const field = createField('aaa', uncontrolledPlugin());
+    const setValueSpy = jest.spyOn(field, 'setValue');
+    const element = document.body.appendChild(document.createElement('select'));
+
+    field.ref(element);
+
+    fireEvent.input(element, { target: { value: 'bbb' } });
+
+    expect(setValueSpy).toHaveBeenCalledTimes(0);
+
+    fireEvent.change(element, { target: { value: 'ccc' } });
+
+    expect(setValueSpy).toHaveBeenCalledTimes(1);
   });
 
   test('uses accessor to set values to the element', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: () => undefined,
       set: jest.fn(),
     };
 
-    const field = createField({ foo: 'aaa' }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').refCallback(element);
+    field.at('aaa').ref(element);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
-    expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 'aaa');
+    expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element], 111);
 
-    field.at('foo').setValue('bbb');
+    field.at('aaa').setValue(222);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(2);
-    expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element], 'bbb');
+    expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element], 222);
   });
 
   test('does not call set accessor if there are no referenced elements', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: () => undefined,
       set: jest.fn(),
     };
 
-    const field = createField({ foo: 'aaa' }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').setValue('bbb');
+    field.at('aaa').setValue(222);
 
     expect(accessorMock.set).not.toHaveBeenCalled();
   });
 
   test('multiple elements are passed to set accessor', () => {
-    const accessorMock: ElementValueAccessor = {
+    const accessorMock: ElementsValueAccessor = {
       get: () => 'xxx',
       set: jest.fn(),
     };
 
-    const element1 = document.body.appendChild(document.createElement('input'));
-    const element2 = document.body.appendChild(document.createElement('textarea'));
+    const element1 = document.createElement('input');
+    const element2 = document.createElement('textarea');
 
-    const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
 
-    field.at('foo').refCallback(element1);
+    field.at('aaa').refFor(1)(element1);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(1);
     expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element1], 111);
 
-    field.at('foo').refCallback(element2);
+    field.at('aaa').refFor(2)(element2);
 
     expect(accessorMock.set).toHaveBeenCalledTimes(2);
     expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element1, element2], 111);
-  });
-
-  test('non-connected elements are ignored', () => {
-    const accessorMock: ElementValueAccessor = {
-      get: () => 'xxx',
-      set: jest.fn(),
-    };
-
-    const element = document.createElement('input');
-
-    const field = createField({ foo: 111 }, uncontrolledPlugin(accessorMock));
-
-    field.at('foo').refCallback(element);
-
-    expect(accessorMock.set).toHaveBeenCalledTimes(0);
-  });
-
-  test('mutation observer disconnects after last element is removed', done => {
-    const disconnectMock = jest.spyOn(MutationObserver.prototype, 'disconnect');
-
-    const field = createField({ foo: 111 }, uncontrolledPlugin());
-
-    field.at('foo').refCallback(element);
-
-    element.remove();
-
-    queueMicrotask(() => {
-      expect(disconnectMock).toHaveBeenCalledTimes(1);
-      done();
-    });
   });
 });

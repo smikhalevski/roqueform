@@ -1,5 +1,5 @@
 /**
- * @module @roqueform/doubter-plugin
+ * @module doubter-plugin
  */
 
 export * from './doubterPlugin';
