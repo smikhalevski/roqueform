@@ -1,4 +1,13 @@
-import { createElement, Fragment, ReactElement, ReactNode, useLayoutEffect, useReducer, useRef } from 'react';
+import {
+  createElement,
+  Fragment,
+  isValidElement,
+  ReactElement,
+  ReactNode,
+  useLayoutEffect,
+  useReducer,
+  useRef,
+} from 'react';
 import { callOrGet, FieldController, ValueOf } from 'roqueform';
 
 /**
@@ -49,26 +58,30 @@ export function FieldRenderer<RenderedField extends FieldController<any>>(
 
   handleChangeRef.current = props.onChange;
 
-  useLayoutEffect(
-    () =>
-      field.on('*', event => {
-        if (eagerlyUpdated || event.origin === field) {
-          rerender();
-        }
-        if (field.isTransient || event.type !== 'change:value' || event.target !== field) {
-          // The non-transient value of this field didn't change
-          return;
-        }
+  if (typeof window !== 'undefined') {
+    useLayoutEffect(
+      () =>
+        field.on('*', event => {
+          if (eagerlyUpdated || event.origin === field) {
+            rerender();
+          }
+          if (field.isTransient || event.type !== 'change:value' || event.target !== field) {
+            // The non-transient value of this field didn't change
+            return;
+          }
 
-        const handleChange = handleChangeRef.current;
-        if (typeof handleChange === 'function') {
-          handleChange(field.value);
-        }
-      }),
-    [field, eagerlyUpdated]
-  );
+          const handleChange = handleChangeRef.current;
+          if (typeof handleChange === 'function') {
+            handleChange(field.value);
+          }
+        }),
+      [field, eagerlyUpdated]
+    );
+  }
 
-  return createElement(Fragment, null, callOrGet(props.children, field));
+  const children = callOrGet(props.children, field);
+
+  return isValidElement(children) ? children : createElement(Fragment, null, children);
 }
 
 function reduceCount(count: number): number {

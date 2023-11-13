@@ -2,4 +2,4 @@
  * @module reset-plugin
  */
 
-export * from './resetPlugin';
+export { resetPlugin } from './resetPlugin';

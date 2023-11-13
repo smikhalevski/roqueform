@@ -52,6 +52,10 @@ export type Subscriber<Plugin = any, Data = any> = (event: Event<Plugin, Data>) 
  */
 export type Unsubscribe = () => void;
 
+export declare const __PLUGIN__: unique symbol;
+
+export type __PLUGIN__ = typeof __PLUGIN__;
+
 /**
  * Infers plugins that were injected into a field
  *
@@ -60,7 +64,7 @@ export type Unsubscribe = () => void;
  *
  * @template T The field to infer plugin of.
  */
-export type PluginOf<T> = '__plugin__' extends keyof T ? T['__plugin__'] : unknown;
+export type PluginOf<T> = __PLUGIN__ extends keyof T ? T[__PLUGIN__] : unknown;
 
 /**
  * Infers the value of the field.
@@ -85,7 +89,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    *
    * @internal
    */
-  readonly ['__plugin__']: Plugin;
+  readonly [__PLUGIN__]: Plugin;
 
   /**
    * The key in the {@link parent parent value} that corresponds to the value of this field, or `null` if there's no

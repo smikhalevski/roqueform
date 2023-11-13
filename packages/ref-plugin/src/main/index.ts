@@ -2,4 +2,4 @@
  * @module ref-plugin
  */
 
-export * from './refPlugin';
+export { refPlugin, RefPlugin } from './refPlugin';

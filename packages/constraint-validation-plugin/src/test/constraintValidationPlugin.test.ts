@@ -2,6 +2,8 @@ import { createField } from 'roqueform';
 import { constraintValidationPlugin } from '../main';
 import { fireEvent } from '@testing-library/dom';
 
+jest.useFakeTimers();
+
 describe('constraintValidationPlugin', () => {
   let element: HTMLInputElement;
 
@@ -10,6 +12,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   afterEach(() => {
+    jest.clearAllTimers();
     element.remove();
   });
 
@@ -202,11 +205,15 @@ describe('constraintValidationPlugin', () => {
 
     field.ref(element);
 
+    jest.runAllTimers();
+
     expect(field.isInvalid).toBe(true);
     expect(field.error).toEqual('Constraints not satisfied');
     expect(subscriberMock).toHaveBeenCalledTimes(1);
 
     field.ref(null);
+
+    jest.runAllTimers();
 
     expect(field.isInvalid).toBe(false);
     expect(field.error).toBeNull();
@@ -229,6 +236,8 @@ describe('constraintValidationPlugin', () => {
     expect(subscriberMock).not.toHaveBeenCalled();
 
     field.at('aaa').ref(element);
+
+    jest.runAllTimers();
 
     expect(subscriberMock).toHaveBeenCalledTimes(0);
     expect(field.at('aaa').isInvalid).toBe(false);

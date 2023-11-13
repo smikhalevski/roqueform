@@ -2,9 +2,19 @@
  * @module roqueform
  */
 
-export * from './composePlugins';
-export * from './createField';
-export * from './naturalValueAccessor';
-export * from './typings';
-export * from './utils';
-export * from './validationPlugin';
+export { composePlugins } from './composePlugins';
+export { createField } from './createField';
+export { naturalValueAccessor } from './naturalValueAccessor';
+export {
+  Field,
+  Event,
+  Subscriber,
+  Unsubscribe,
+  PluginOf,
+  ValueOf,
+  FieldController,
+  PluginInjector,
+  ValueAccessor,
+} from './typings';
+export { dispatchEvents, isEqual, callOrGet } from './utils';
+export { Validator, Validation, ValidationPlugin, validationPlugin } from './validationPlugin';

@@ -2,4 +2,4 @@
  * @module doubter-plugin
  */
 
-export * from './doubterPlugin';
+export { doubterPlugin, DoubterPlugin } from './doubterPlugin';

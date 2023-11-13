@@ -155,7 +155,15 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         deleteError(field, 1, events);
       }
 
-      dispatchEvents(events);
+      // Subscribers added in React.useLayoutEffect must receive these events
+      const task = () => {
+        dispatchEvents(events);
+      };
+      if (typeof queueMicrotask !== 'undefined') {
+        queueMicrotask(task);
+      } else {
+        setTimeout(task, 0);
+      }
     };
 
     field.setError = error => {

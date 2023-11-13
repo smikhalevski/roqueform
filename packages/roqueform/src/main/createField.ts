@@ -1,4 +1,4 @@
-import { Event, Field, PluginInjector, Subscriber, ValueAccessor } from './typings';
+import { Event, Field, __PLUGIN__, PluginInjector, Subscriber, ValueAccessor } from './typings';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalValueAccessor } from './naturalValueAccessor';
 
@@ -94,7 +94,7 @@ function getOrCreateField(
         subscribers.splice(subscribers.indexOf(subscriber), 1);
       };
     },
-  } satisfies Omit<Field, '__plugin__'> as unknown as Field;
+  } satisfies Omit<Field, __PLUGIN__> as unknown as Field;
 
   child.root = child;
 
