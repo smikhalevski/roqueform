@@ -15,6 +15,7 @@
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": [
     "./packages/roqueform/src/main/index.ts",
+    "./packages/annotations-plugin/src/main/index.ts",
     "./packages/constraint-validation-plugin/src/main/index.ts",
     "./packages/doubter-plugin/src/main/index.ts",
     "./packages/react/src/main/index.ts",
