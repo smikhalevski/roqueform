@@ -29,20 +29,16 @@ export interface ConstraintValidationPlugin {
 
   /**
    * The total number of errors associated with this field and its child fields.
-   *
-   * @protected
    */
-  ['errorCount']: number;
+  errorCount: number;
 
   /**
    * The origin of the associated error:
    * - 0 if there's no associated error.
    * - 1 if an error was set by Constraint Validation API;
    * - 2 if an error was set using {@link ConstraintValidationPlugin.setError};
-   *
-   * @protected
    */
-  ['errorOrigin']: 0 | 1 | 2;
+  errorOrigin: 0 | 1 | 2;
 
   /**
    * Associates the field with the {@link element DOM element}.
@@ -220,7 +216,7 @@ function setError(
   field.error = error;
   field.errorOrigin = errorOrigin;
 
-  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
+  events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
 
   if (originalError !== null) {
     return events;
@@ -228,7 +224,7 @@ function setError(
 
   field.errorCount++;
 
-  for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
+  for (let ancestor = field.parentField; ancestor !== null; ancestor = ancestor.parentField) {
     ancestor.errorCount++;
   }
   return events;
@@ -248,7 +244,7 @@ function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 
       field.errorOrigin = 1;
 
       if (originalError !== (field.error = element.validationMessage)) {
-        events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
+        events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
       }
       return events;
     }
@@ -258,9 +254,9 @@ function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 
   field.errorOrigin = 0;
   field.errorCount--;
 
-  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
+  events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
 
-  for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
+  for (let ancestor = field.parentField; ancestor !== null; ancestor = ancestor.parentField) {
     ancestor.errorCount--;
   }
   return events;

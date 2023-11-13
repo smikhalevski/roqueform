@@ -14,13 +14,11 @@ describe('createField', () => {
     expect(field.value).toBeUndefined();
     expect(field.initialValue).toBeUndefined();
     expect(field.isTransient).toBe(false);
-    expect(field.root).toBe(field);
-    expect(field.parent).toBeNull();
+    expect(field.rootField).toBe(field);
+    expect(field.parentField).toBeNull();
     expect(field.children).toBeNull();
-    expect(field.childrenMap).toBeNull();
     expect(field.subscribers).toBeNull();
     expect(field.valueAccessor).toBe(naturalValueAccessor);
-    expect(field.plugin).toBeNull();
   });
 
   test('creates a field with the initial value', () => {
@@ -35,14 +33,13 @@ describe('createField', () => {
 
     const child = field.at('aaa');
 
-    expect(child.root).toBe(field);
-    expect(child.parent).toBe(field);
+    expect(child.rootField).toBe(field);
+    expect(child.parentField).toBe(field);
     expect(child.key).toBe('aaa');
     expect(child.value).toBe(111);
     expect(child.initialValue).toBe(111);
 
     expect(field.children).toEqual([child]);
-    expect(field.childrenMap).toEqual(new Map([['aaa', child]]));
   });
 
   test('returns the same field for the same key', () => {
@@ -347,7 +344,7 @@ describe('createField', () => {
     const field = createField({ aaa: 111 });
 
     field.at('aaa').on('*', event => {
-      expect(event.target.value).toBe(222);
+      expect(event.targetField.value).toBe(222);
       done();
     });
 

@@ -42,7 +42,7 @@ export function callOrGet(value: unknown, arg?: unknown) {
  */
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
-    for (let field = event.target; field !== null; field = field.parent) {
+    for (let field = event.targetField; field !== null; field = field.parent) {
       const { subscribers } = field;
 
       if (subscribers === null) {

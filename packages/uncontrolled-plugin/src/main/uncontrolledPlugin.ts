@@ -17,25 +17,13 @@ export interface UncontrolledPlugin {
 
   /**
    * The array of elements controlled by this field, includes {@link element}.
-   *
-   * @protected
    */
-  ['elements']: readonly Element[];
-
-  /**
-   * The map from a key passed to {@link refFor} to a corresponding element. If {@link refFor} was called with `null`
-   * then a key is deleted from this map.
-   *
-   * @protected
-   */
-  ['elementsMap']: ReadonlyMap<unknown, Element>;
+  elements: readonly Element[];
 
   /**
    * The accessor that reads and writes the field value from and to {@link elements}.
-   *
-   * @protected
    */
-  ['elementsValueAccessor']: ElementsValueAccessor;
+  elementsValueAccessor: ElementsValueAccessor;
 
   /**
    * Associates the field with the DOM element.
@@ -43,7 +31,7 @@ export interface UncontrolledPlugin {
   ref(element: Element | null): void;
 
   /**
-   * Returns a callback that associates the field with the DOM element under the given key in {@link elementsMap}.
+   * Returns a callback that associates the field with the DOM element under the given key.
    */
   refFor(key: unknown): (element: Element | null) => void;
 }
@@ -55,9 +43,9 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
   return field => {
     field.element = null;
     field.elements = [];
-    field.elementsMap = new Map();
     field.elementsValueAccessor = accessor;
 
+    const elementsMap = new Map();
     const refsMap = new Map<unknown, (element: Element | null) => void>();
 
     let prevValue = field.value;
@@ -69,7 +57,7 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
     };
 
     field.on('change:value', event => {
-      if (field.value !== prevValue && event.target === field && field.elements.length !== 0) {
+      if (field.value !== prevValue && event.targetField === field && field.elements.length !== 0) {
         field.elementsValueAccessor.set(field.elements, field.value);
       }
     });
@@ -89,7 +77,6 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
 
       if (ref === undefined) {
         ref = nextElement => {
-          const elementsMap = field.elementsMap as Map<unknown, Element>;
           const prevElement = elementsMap.get(key) || null;
 
           nextElement = swapElements(field, changeListener, prevElement, nextElement);

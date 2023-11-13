@@ -1,5 +1,5 @@
 /**
- * The field that manages a value and related data. Fields can be {@link PluginInjector enhanced by plugins} that
+ * The field that manages a value and associated data. Fields can be {@link PluginInjector enhanced by plugins} that
  * provide integration with rendering frameworks, validation libraries, and other tools.
  *
  * @template Plugin The plugin injected into the field.
@@ -20,20 +20,20 @@ export interface Event<Plugin = any, Data = any> {
   type: string;
 
   /**
-   * The field onto which the event was dispatched. Usually, this is the field which has changed.
+   * The field onto which this event was dispatched.
    */
-  target: Field<Plugin>;
+  targetField: Field<Plugin>;
 
   /**
-   * The field that caused this event to be dispatched onto {@link target the target field}.
+   * The field that caused this event to be dispatched onto {@link targetField the target field}.
    *
-   * For example: if a child field value is set, then the parent field value to updated as well. For all events
-   * dispatched in this scenario, the origin is the child field.
+   * For example, if a child field value is changed and causes the change event to be dispatched for the parent field
+   * as well, then origin is the child field for both change events.
    */
-  origin: Field<Plugin>;
+  originField: Field<Plugin>;
 
   /**
-   * The {@link type type-specific} data related to the {@link target target field}.
+   * The {@link type type-specific} data related to the {@link targetField target field}.
    */
   data: Data;
 }
@@ -51,10 +51,6 @@ export type Subscriber<Plugin = any, Data = any> = (event: Event<Plugin, Data>) 
  * Unsubscribes the subscriber. No-op if subscriber was already unsubscribed.
  */
 export type Unsubscribe = () => void;
-
-export declare const __PLUGIN__: unique symbol;
-
-export type __PLUGIN__ = typeof __PLUGIN__;
 
 /**
  * Infers plugins that were injected into a field
@@ -87,12 +83,12 @@ export interface FieldController<Plugin = unknown, Value = any> {
    *
    * Use {@link PluginOf PluginOf<this>} in plugin interfaces to infer the plugin type.
    *
-   * @internal
+   * @hidden
    */
   readonly [__PLUGIN__]: Plugin;
 
   /**
-   * The key in the {@link parent parent value} that corresponds to the value of this field, or `null` if there's no
+   * The key in the {@link parentField parent value} that corresponds to the value of this field, or `null` if there's no
    * parent.
    */
   readonly key: any;
@@ -117,29 +113,24 @@ export interface FieldController<Plugin = unknown, Value = any> {
   /**
    * The root field.
    */
-  root: Field<Plugin>;
+  readonly rootField: Field<Plugin>;
 
   /**
    * The parent field, or `null` if this is the root field.
    */
-  parent: Field<Plugin> | null;
+  readonly parentField: Field<Plugin> | null;
 
   /**
-   * The array of immediate child fields that were {@link at previously accessed}, or `null` if there are no children.
+   * The array of child fields that were {@link at previously accessed}.
    */
-  children: readonly Field<Plugin>[] | null;
+  readonly children: readonly Field<Plugin>[];
 
   /**
-   * Mapping from a key to a corresponding child field, or `null` if there are no children.
-   */
-  childrenMap: ReadonlyMap<unknown, Field<Plugin>> | null;
-
-  /**
-   * The map from an event type to an array of associated subscribers, or `null` if no subscribers were added.
+   * The map from an event type to an array of associated subscribers.
    *
    * @see {@link on}
    */
-  ['subscribers']: { [eventType: string]: Subscriber<Plugin>[] | undefined } | null;
+  subscribers: { [eventType: string]: Subscriber<Plugin>[] };
 
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
@@ -147,14 +138,6 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
    */
   valueAccessor: ValueAccessor;
-
-  /**
-   * The plugin that is applied to this field and all child fields when they are accessed, or `null` field isn't
-   * enhanced by a plugin.
-   *
-   * @see [Authoring a plugin](https://github.com/smikhalevski/roqueform#authoring-a-plugin)
-   */
-  plugin: PluginInjector<Plugin, Value> | null;
 
   /**
    * Updates the field value and notifies both ancestors and child fields about the change. If the field withholds
@@ -223,24 +206,30 @@ export type PluginInjector<Plugin = unknown, Value = any> = (field: Field<Plugin
  */
 export interface ValueAccessor {
   /**
-   * Returns the value that corresponds to `key` in `obj`.
+   * Returns the value that corresponds to key.
    *
    * @param obj An arbitrary object from which the value must be read. May be `undefined` or `null`.
    * @param key The key to read.
-   * @returns The value in `obj` that corresponds to the `key`.
+   * @returns The value that corresponds to the key.
    */
   get(obj: any, key: any): any;
 
   /**
-   * Returns the object updated where the `key` is associated with `value`.
+   * Returns the object updated where the key is associated with the new value.
    *
    * @param obj The object to update. May be `undefined` or `null`.
    * @param key The key to write.
-   * @param value The value to associate with the `key`.
+   * @param value The value to associate with the key.
    * @returns The updated object.
    */
   set(obj: any, key: any, value: any): any;
 }
+
+export declare const __PLUGIN__: unique symbol;
+
+export type __PLUGIN__ = typeof __PLUGIN__;
+
+export type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 type Primitive =
   | String

@@ -28,9 +28,8 @@ export interface ResetPlugin {
    * @param initialValue The initial value.
    * @param value The current value.
    * @returns `true` if initial value is equal to value, or `false` otherwise.
-   * @protected
    */
-  ['equalityChecker']: (initialValue: any, value: any) => boolean;
+  equalityChecker: (initialValue: any, value: any) => boolean;
 
   /**
    * Sets the initial value of the field and notifies ancestors and descendants.
@@ -98,9 +97,9 @@ function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void
 
   let root = field;
 
-  while (root.parent !== null) {
-    initialValue = field.valueAccessor.set(root.parent.value, root.key, initialValue);
-    root = root.parent;
+  while (root.parentField !== null) {
+    initialValue = field.valueAccessor.set(root.parentField.value, root.key, initialValue);
+    root = root.parentField;
   }
 
   dispatchEvents(propagateInitialValue(field, root, initialValue, []));
@@ -112,7 +111,7 @@ function propagateInitialValue(
   initialValue: unknown,
   events: Event[]
 ): Event[] {
-  events.push({ type: 'change:initialValue', target, origin, data: target.initialValue });
+  events.push({ type: 'change:initialValue', targetField: target, originField: origin, data: target.initialValue });
 
   target.initialValue = initialValue;
 

@@ -16,10 +16,8 @@ export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
   /**
    * The shape that Doubter uses to validate {@link FieldController.value the field value}, or `null` if there's no
    * shape for this field.
-   *
-   * @protected
    */
-  ['shape']: Shape | null;
+  valueShape: Shape | null;
 
   setError(error: Issue | string | null | undefined): void;
 }
@@ -36,7 +34,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
   return field => {
     (plugin ||= validationPlugin(doubterValidator))(field);
 
-    field.shape = field.parent === null ? shape : field.parent.shape?.at(field.key) || null;
+    field.valueShape = field.parentField === null ? shape : field.parentField.valueShape?.at(field.key) || null;
 
     const { setError } = field;
 
@@ -52,18 +50,18 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
 
 const doubterValidator: Validator<Issue, ParseOptions> = {
   validate(field, options) {
-    const { validation, shape } = field as unknown as Field<DoubterPlugin>;
+    const { validation, valueShape } = field as unknown as Field<DoubterPlugin>;
 
-    if (validation !== null && shape !== null) {
-      applyResult(validation, shape.try(field.value, Object.assign({ verbose: true }, options)));
+    if (validation !== null && valueShape !== null) {
+      applyResult(validation, valueShape.try(field.value, Object.assign({ verbose: true }, options)));
     }
   },
 
   validateAsync(field, options) {
-    const { validation, shape } = field as unknown as Field<DoubterPlugin>;
+    const { validation, valueShape } = field as unknown as Field<DoubterPlugin>;
 
-    if (validation !== null && shape !== null) {
-      return shape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
+    if (validation !== null && valueShape !== null) {
+      return valueShape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
         applyResult(validation, result);
       });
     }
@@ -73,9 +71,9 @@ const doubterValidator: Validator<Issue, ParseOptions> = {
 };
 
 function prependPath(field: FieldController<any>, issue: Issue): Issue {
-  while (field.parent !== null) {
+  while (field.parentField !== null) {
     (issue.path ||= []).unshift(field.key);
-    field = field.parent;
+    field = field.parentField;
   }
   return issue;
 }

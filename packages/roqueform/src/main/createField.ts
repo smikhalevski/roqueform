@@ -1,4 +1,4 @@
-import { Event, Field, __PLUGIN__, PluginInjector, Subscriber, ValueAccessor } from './typings';
+import { __PLUGIN__, Event, Field, Mutable, PluginInjector, Subscriber, ValueAccessor } from './typings';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalValueAccessor } from './naturalValueAccessor';
 
@@ -41,51 +41,52 @@ export function createField(initialValue?: unknown, plugin?: PluginInjector | Va
     accessor = plugin;
     plugin = undefined;
   }
-  return getOrCreateField(accessor || naturalValueAccessor, null, null, initialValue, plugin || null);
+  return getOrCreateField(accessor || naturalValueAccessor, null, null, null, initialValue, plugin || null);
 }
 
 function getOrCreateField(
   accessor: ValueAccessor,
   parent: Field | null,
+  parentChildrenMap: Map<unknown, Field> | null,
   key: unknown,
   initialValue: unknown,
   plugin: PluginInjector | null
 ): Field {
-  let child: Field;
+  let field: Field;
 
-  if (parent !== null && parent.childrenMap !== null && (child = parent.childrenMap.get(key)!) !== undefined) {
-    return child;
+  if (parentChildrenMap !== null && (field = parentChildrenMap.get(key)!) !== undefined) {
+    return field;
   }
 
-  child = {
+  let childrenMap: Map<unknown, Field> | undefined;
+
+  field = {
     key,
     value: initialValue,
     initialValue,
     isTransient: false,
-    root: null!,
-    parent,
-    children: null,
-    childrenMap: null,
-    subscribers: null,
+    rootField: null!,
+    parentField: parent,
+    children: [],
+    subscribers: {},
     valueAccessor: accessor,
-    plugin,
 
     setValue: value => {
-      setValue(child, callOrGet(value, child.value), false);
+      setValue(field, callOrGet(value, field.value), false);
     },
 
     setTransientValue: value => {
-      setValue(child, callOrGet(value, child.value), true);
+      setValue(field, callOrGet(value, field.value), true);
     },
 
     propagate: () => {
-      setValue(child, child.value, false);
+      setValue(field, field.value, false);
     },
 
-    at: key => getOrCreateField(child.valueAccessor, child, key, null, plugin),
+    at: key => getOrCreateField(field.valueAccessor, field, (childrenMap ||= new Map()), key, null, plugin),
 
     on: (type, subscriber) => {
-      const subscribers: Subscriber[] = ((child.subscribers ||= Object.create(null))[type] ||= []);
+      const subscribers: Subscriber[] = (field.subscribers[type] ||= []);
 
       if (!subscribers.includes(subscriber)) {
         subscribers.push(subscriber);
@@ -96,22 +97,20 @@ function getOrCreateField(
     },
   } satisfies Omit<Field, __PLUGIN__> as unknown as Field;
 
-  child.root = child;
+  (field as Mutable<Field>).rootField = parent !== null ? parent.rootField : field;
 
   if (parent !== null) {
-    child.root = parent.root;
-    child.value = accessor.get(parent.value, key);
-    child.initialValue = accessor.get(parent.initialValue, key);
+    field.value = accessor.get(parent.value, key);
+    field.initialValue = accessor.get(parent.initialValue, key);
+    (parent.children as Field[]).push(field);
+    parentChildrenMap!.set(key, field);
   }
 
-  plugin?.(child);
-
-  if (parent !== null) {
-    ((parent.children ||= []) as Field[]).push(child);
-    ((parent.childrenMap ||= new Map()) as Map<unknown, Field>).set(child.key, child);
+  if (plugin !== null) {
+    plugin(field);
   }
 
-  return child;
+  return field;
 }
 
 function setValue(field: Field, value: unknown, transient: boolean): void {
@@ -121,18 +120,18 @@ function setValue(field: Field, value: unknown, transient: boolean): void {
 
   field.isTransient = transient;
 
-  let changeRoot = field;
+  let root = field;
 
-  while (changeRoot.parent !== null && !changeRoot.isTransient) {
-    value = field.valueAccessor.set(changeRoot.parent.value, changeRoot.key, value);
-    changeRoot = changeRoot.parent;
+  while (root.parentField !== null && !root.isTransient) {
+    value = field.valueAccessor.set(root.parentField.value, root.key, value);
+    root = root.parentField;
   }
 
-  dispatchEvents(propagateValue(field, changeRoot, value, []));
+  dispatchEvents(propagateValue(field, root, value, []));
 }
 
 function propagateValue(origin: Field, target: Field, value: unknown, events: Event[]): Event[] {
-  events.push({ type: 'change:value', target, origin, data: target.value });
+  events.push({ type: 'change:value', targetField: target, originField: origin, data: target.value });
 
   target.value = value;
 

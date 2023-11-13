@@ -214,7 +214,7 @@ export function validationPlugin<Error = any, Options = void>(
     field.errorCount = 0;
     field.errorOrigin = 0;
     field.validator = typeof validator === 'function' ? { validate: validator } : validator;
-    field.validation = field.parent !== null ? field.parent.validation : null;
+    field.validation = field.parentField !== null ? field.parentField.validation : null;
 
     Object.defineProperties(field, {
       isInvalid: { configurable: true, get: () => field.errorCount !== 0 },
@@ -285,7 +285,7 @@ function setError(field: Field<ValidationPlugin>, error: unknown, errorOrigin: 1
   field.error = error;
   field.errorOrigin = errorOrigin;
 
-  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
+  events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
 
   if (originalError !== null) {
     return events;
@@ -293,7 +293,7 @@ function setError(field: Field<ValidationPlugin>, error: unknown, errorOrigin: 1
 
   field.errorCount++;
 
-  for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
+  for (let ancestor = field.parentField; ancestor !== null; ancestor = ancestor.parentField) {
     ancestor.errorCount++;
   }
   return events;
@@ -310,9 +310,9 @@ function deleteError(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events:
   field.errorOrigin = 0;
   field.errorCount--;
 
-  events.push({ type: EVENT_CHANGE_ERROR, target: field, origin: field, data: originalError });
+  events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
 
-  for (let ancestor = field.parent; ancestor !== null; ancestor = ancestor.parent) {
+  for (let ancestor = field.parentField; ancestor !== null; ancestor = ancestor.parentField) {
     ancestor.errorCount--;
   }
   return events;
@@ -335,7 +335,7 @@ function clearErrors(field: Field<ValidationPlugin>, errorOrigin: 1 | 2, events:
 function startValidation(field: Field<ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
   field.validation = validation;
 
-  events.push({ type: 'validation:start', target: field, origin: validation.root, data: validation });
+  events.push({ type: 'validation:start', targetField: field, originField: validation.root, data: validation });
 
   if (field.children !== null) {
     for (const child of field.children) {
@@ -354,7 +354,7 @@ function endValidation(field: Field<ValidationPlugin>, validation: Validation, e
 
   field.validation = null;
 
-  events.push({ type: 'validation:end', target: field, origin: validation.root, data: validation });
+  events.push({ type: 'validation:end', targetField: field, originField: validation.root, data: validation });
 
   if (field.children !== null) {
     for (const child of field.children) {

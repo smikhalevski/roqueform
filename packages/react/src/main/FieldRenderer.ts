@@ -62,10 +62,10 @@ export function FieldRenderer<RenderedField extends FieldController<any>>(
     useLayoutEffect(
       () =>
         field.on('*', event => {
-          if (eagerlyUpdated || event.origin === field) {
+          if (eagerlyUpdated || event.originField === field) {
             rerender();
           }
-          if (field.isTransient || event.type !== 'change:value' || event.target !== field) {
+          if (field.isTransient || event.type !== 'change:value' || event.targetField !== field) {
             // The non-transient value of this field didn't change
             return;
           }

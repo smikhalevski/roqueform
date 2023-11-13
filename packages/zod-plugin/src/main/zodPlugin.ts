@@ -15,10 +15,8 @@ import {
 export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParams>> {
   /**
    * The Zod validation schema of the root value.
-   *
-   * @protected
    */
-  ['schema']: ZodTypeAny;
+  valueSchema: ZodTypeAny;
 
   setError(error: ZodIssue | string | null | undefined): void;
 }
@@ -36,7 +34,7 @@ export function zodPlugin<Value>(schema: ZodSchema<any, any, Value>): PluginInje
   return field => {
     (plugin ||= validationPlugin(zodValidator))(field);
 
-    field.schema = field.parent?.schema || schema;
+    field.valueSchema = field.parentField?.valueSchema || schema;
 
     const { setError } = field;
 
@@ -48,18 +46,18 @@ export function zodPlugin<Value>(schema: ZodSchema<any, any, Value>): PluginInje
 
 const zodValidator: Validator<ZodIssue, Partial<ParseParams>> = {
   validate(field, options) {
-    const { validation, schema } = field as unknown as Field<ZodPlugin>;
+    const { validation, valueSchema } = field as unknown as Field<ZodPlugin>;
 
     if (validation !== null) {
-      applyResult(validation, schema.safeParse(getValue(field), options));
+      applyResult(validation, valueSchema.safeParse(getValue(field), options));
     }
   },
 
   validateAsync(field, options) {
-    const { validation, schema } = field as unknown as Field<ZodPlugin>;
+    const { validation, valueSchema } = field as unknown as Field<ZodPlugin>;
 
     if (validation !== null) {
-      return schema.safeParseAsync(getValue(field), options).then(result => {
+      return valueSchema.safeParseAsync(getValue(field), options).then(result => {
         applyResult(validation, result);
       });
     }
@@ -72,10 +70,10 @@ function getValue(field: Field<ValidationPlugin>): unknown {
   let value = field.value;
   let transient = false;
 
-  while (field.parent !== null) {
+  while (field.parentField !== null) {
     transient ||= field.isTransient;
-    value = transient ? field.valueAccessor.set(field.parent.value, field.key, value) : field.parent.value;
-    field = field.parent;
+    value = transient ? field.valueAccessor.set(field.parentField.value, field.key, value) : field.parentField.value;
+    field = field.parentField;
   }
   return value;
 }
@@ -83,9 +81,9 @@ function getValue(field: Field<ValidationPlugin>): unknown {
 function getPath(field: FieldController<any>): any[] {
   const path = [];
 
-  while (field.parent !== null) {
+  while (field.parentField !== null) {
     path.unshift(field.key);
-    field = field.parent;
+    field = field.parentField;
   }
   return path;
 }
