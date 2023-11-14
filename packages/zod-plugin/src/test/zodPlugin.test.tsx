@@ -16,18 +16,18 @@ describe('zodPlugin', () => {
     const field = createField({ aaa: 111 }, zodPlugin(aaaType));
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('converts string errors to issue messages', () => {
     const field = createField({ aaa: 111 }, zodPlugin(aaaType));
 
-    field.setError('xxx');
+    field.addError('xxx');
 
-    expect(field.error).toEqual({ code: ZodIssueCode.custom, message: 'xxx', path: [] });
+    expect(field.errors).toEqual({ code: ZodIssueCode.custom, message: 'xxx', path: [] });
   });
 
   test('sets issue as an error', () => {
@@ -35,10 +35,10 @@ describe('zodPlugin', () => {
 
     const issue: ZodIssue = { code: ZodIssueCode.custom, path: ['bbb'], message: 'aaa' };
 
-    field.at('aaa').setError(issue);
+    field.at('aaa').addError(issue);
 
-    expect(field.at('aaa').error).toBe(issue);
-    expect(field.at('aaa').error).toEqual({ code: ZodIssueCode.custom, message: 'aaa', path: ['bbb'] });
+    expect(field.at('aaa').errors).toBe(issue);
+    expect(field.at('aaa').errors).toEqual({ code: ZodIssueCode.custom, message: 'aaa', path: ['bbb'] });
   });
 
   test('validates the root field', () => {
@@ -47,10 +47,10 @@ describe('zodPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'too_small',
       exact: false,
       inclusive: true,
@@ -67,10 +67,10 @@ describe('zodPlugin', () => {
     field.at('aaa').validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'too_small',
       exact: false,
       inclusive: true,
@@ -87,10 +87,10 @@ describe('zodPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'too_small',
       exact: false,
       inclusive: true,
@@ -101,7 +101,7 @@ describe('zodPlugin', () => {
     });
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').error).toEqual({
+    expect(field.at('bbb').errors).toEqual({
       code: 'too_big',
       exact: false,
       inclusive: true,
@@ -118,13 +118,13 @@ describe('zodPlugin', () => {
     field.at('bbb').validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toEqual(null);
+    expect(field.at('aaa').errors).toEqual(null);
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').error).toEqual({
+    expect(field.at('bbb').errors).toEqual({
       code: 'too_big',
       exact: false,
       inclusive: true,
@@ -142,13 +142,13 @@ describe('zodPlugin', () => {
     field.at('bbb').validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toEqual(null);
+    expect(field.at('aaa').errors).toEqual(null);
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').error).toEqual({
+    expect(field.at('bbb').errors).toEqual({
       code: 'too_big',
       exact: false,
       inclusive: true,
@@ -171,7 +171,7 @@ describe('zodPlugin', () => {
     expect(errorMapMock).toHaveBeenCalledTimes(1);
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'too_small',
       exact: false,
       inclusive: true,

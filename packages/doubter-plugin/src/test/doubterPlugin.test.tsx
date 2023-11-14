@@ -16,10 +16,10 @@ describe('doubterPlugin', () => {
     const field = createField({ aaa: 0 }, doubterPlugin(aaaShape));
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('sets an issue to the root field', () => {
@@ -27,14 +27,14 @@ describe('doubterPlugin', () => {
 
     const issue = { code: 'xxx' };
 
-    field.setError(issue);
+    field.addError(issue);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBe(issue);
-    expect(field.error).toEqual({ code: 'xxx' });
+    expect(field.errors).toBe(issue);
+    expect(field.errors).toEqual({ code: 'xxx' });
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('sets an issue to the child field', () => {
@@ -42,52 +42,52 @@ describe('doubterPlugin', () => {
 
     const issue = { code: 'aaa' };
 
-    field.at('aaa').setError(issue);
+    field.at('aaa').addError(issue);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(issue);
-    expect(field.at('aaa').error).toEqual({ code: 'aaa', path: ['aaa'] });
+    expect(field.at('aaa').errors).toBe(issue);
+    expect(field.at('aaa').errors).toEqual({ code: 'aaa', path: ['aaa'] });
   });
 
   test('converts string errors to issue messages', () => {
     const field = createField({ aaa: 0 }, doubterPlugin(aaaShape));
 
-    field.at('aaa').setError('xxx');
+    field.at('aaa').addError('xxx');
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({ message: 'xxx', input: 0, path: ['aaa'] });
+    expect(field.at('aaa').errors).toEqual({ message: 'xxx', input: 0, path: ['aaa'] });
   });
 
   test('deletes an issue from the root field', () => {
     const field = createField({ aaa: 0 }, doubterPlugin(aaaShape));
 
-    field.setError({ code: 'aaa' });
+    field.addError({ code: 'aaa' });
     field.deleteError();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('deletes an issue from the child field', () => {
     const field = createField({ aaa: 0 }, doubterPlugin(aaaShape));
 
-    field.at('aaa').setError({ code: 'aaa' });
+    field.at('aaa').addError({ code: 'aaa' });
     field.at('aaa').deleteError();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('deletes an issue from the child field but parent remains invalid', () => {
@@ -96,19 +96,19 @@ describe('doubterPlugin', () => {
     const issue1 = { code: 'aaa' };
     const issue2 = { code: 'bbb' };
 
-    field.at('aaa').setError(issue1);
-    field.at('bbb').setError(issue2);
+    field.at('aaa').addError(issue1);
+    field.at('bbb').addError(issue2);
 
     field.at('bbb').deleteError();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(issue1);
+    expect(field.at('aaa').errors).toBe(issue1);
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
   });
 
   test('clears all issues', () => {
@@ -117,19 +117,19 @@ describe('doubterPlugin', () => {
     const issue1 = { code: 'aaa' };
     const issue2 = { code: 'bbb' };
 
-    field.at('aaa').setError(issue1);
-    field.at('bbb').setError(issue2);
+    field.at('aaa').addError(issue1);
+    field.at('bbb').addError(issue2);
 
-    field.clearErrors();
+    field.clearAllErrors();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
   });
 
   test('validates the root field', () => {
@@ -138,10 +138,10 @@ describe('doubterPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'number.gte',
       path: ['aaa'],
       input: 0,
@@ -157,10 +157,10 @@ describe('doubterPlugin', () => {
     field.at('aaa').validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'number.gte',
       path: ['aaa'],
       input: 0,
@@ -176,10 +176,10 @@ describe('doubterPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'number.gte',
       path: ['aaa'],
       input: 0,
@@ -189,7 +189,7 @@ describe('doubterPlugin', () => {
     });
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').error).toEqual({
+    expect(field.at('bbb').errors).toEqual({
       code: 'string.max',
       path: ['bbb'],
       input: 'ccc',
@@ -209,10 +209,10 @@ describe('doubterPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'number.gte',
       path: ['aaa'],
       input: 0,
@@ -222,7 +222,7 @@ describe('doubterPlugin', () => {
     });
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
   });
 
   test('validate does not clear an issue set from userland', () => {
@@ -230,15 +230,15 @@ describe('doubterPlugin', () => {
 
     const issue = { code: 'aaa' };
 
-    field.at('bbb').setError(issue);
+    field.at('bbb').addError(issue);
 
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'number.gte',
       path: ['aaa'],
       input: 0,
@@ -248,7 +248,7 @@ describe('doubterPlugin', () => {
     });
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').error).toBe(issue);
+    expect(field.at('bbb').errors).toBe(issue);
   });
 
   test('validate does not raise issues for transient fields', () => {
@@ -259,10 +259,10 @@ describe('doubterPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual({
+    expect(field.at('aaa').errors).toEqual({
       code: 'number.gte',
       path: ['aaa'],
       input: 0,
@@ -272,6 +272,6 @@ describe('doubterPlugin', () => {
     });
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
   });
 });

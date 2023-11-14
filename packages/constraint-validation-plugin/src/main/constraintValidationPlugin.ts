@@ -1,6 +1,6 @@
 import { dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
 
-const EVENT_CHANGE_ERROR = 'change:error';
+const EVENT_CHANGE_ERROR = 'change:errors';
 
 /**
  * The plugin added to fields by the {@link constraintValidationPlugin}.
@@ -92,7 +92,7 @@ export interface ConstraintValidationPlugin {
    * @see {@link error}
    * @see {@link isInvalid}
    */
-  on(eventType: 'change:error', subscriber: Subscriber<PluginOf<this>, string | null>): Unsubscribe;
+  on(eventType: 'change:errors', subscriber: Subscriber<PluginOf<this>, string | null>): Unsubscribe;
 }
 
 /**

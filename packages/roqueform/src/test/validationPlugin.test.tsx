@@ -8,7 +8,7 @@ describe('validationPlugin', () => {
   test('enhances the field', () => {
     const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
 
-    expect(field.error).toBe(null);
+    expect(field.errors).toBe(null);
     expect(field.isInvalid).toBe(false);
     expect(field.isValidating).toBe(false);
     expect(field.errorCount).toBe(0);
@@ -18,7 +18,7 @@ describe('validationPlugin', () => {
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('sets an error to the root field', () => {
@@ -30,15 +30,15 @@ describe('validationPlugin', () => {
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
 
-    field.setError(222);
+    field.addError(222);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBe(222);
+    expect(field.errors).toBe(222);
     expect(field.errorCount).toBe(1);
     expect(field.errorOrigin).toBe(2);
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).not.toHaveBeenCalled();
@@ -53,15 +53,15 @@ describe('validationPlugin', () => {
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
 
-    field.at('aaa').setError(222);
+    field.at('aaa').addError(222);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
     expect(field.errorCount).toBe(1);
     expect(field.errorOrigin).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(222);
+    expect(field.at('aaa').errors).toBe(222);
     expect(field.at('aaa').errorCount).toBe(1);
     expect(field.at('aaa').errorOrigin).toBe(2);
 
@@ -72,14 +72,14 @@ describe('validationPlugin', () => {
   test('deletes an error if null is set', () => {
     const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
 
-    field.setError(222);
-    field.setError(null);
+    field.addError(222);
+    field.addError(null);
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('deletes an error from the root field', () => {
@@ -91,14 +91,14 @@ describe('validationPlugin', () => {
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
 
-    field.setError(111);
+    field.addError(111);
     field.deleteError();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
 
     expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(aaaSubscriberMock).not.toHaveBeenCalled();
@@ -113,14 +113,14 @@ describe('validationPlugin', () => {
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
 
-    field.at('aaa').setError(222);
+    field.at('aaa').addError(222);
     field.at('aaa').deleteError();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
 
     expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(2);
@@ -137,19 +137,19 @@ describe('validationPlugin', () => {
     field.at('aaa').on('*', aaaSubscriberMock);
     field.at('bbb').on('*', bbbSubscriberMock);
 
-    field.at('aaa').setError(333);
-    field.at('bbb').setError(444);
+    field.at('aaa').addError(333);
+    field.at('bbb').addError(444);
 
     field.at('bbb').deleteError();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(333);
+    expect(field.at('aaa').errors).toBe(333);
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
 
     expect(subscriberMock).toHaveBeenCalledTimes(3);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
@@ -167,19 +167,19 @@ describe('validationPlugin', () => {
     field.at('aaa').on('*', aaaSubscriberMock);
     field.at('bbb').on('*', bbbSubscriberMock);
 
-    field.at('aaa').setError(333);
-    field.at('bbb').setError(444);
+    field.at('aaa').addError(333);
+    field.at('bbb').addError(444);
 
-    field.clearErrors();
+    field.clearAllErrors();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
 
     expect(subscriberMock).toHaveBeenCalledTimes(4);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(2);
@@ -199,13 +199,13 @@ describe('validationPlugin', () => {
       validationPlugin(noopValidator)
     );
 
-    field.at('aaa').at('bbb').at('ccc').setError(333);
-    field.at('aaa').at('bbb').at('ddd').setError(444);
+    field.at('aaa').at('bbb').at('ccc').addError(333);
+    field.at('aaa').at('bbb').at('ddd').addError(444);
 
-    field.clearErrors();
+    field.clearAllErrors();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
     expect(field.at('aaa').at('bbb').isInvalid).toBe(false);
@@ -218,7 +218,7 @@ describe('validationPlugin', () => {
       { aaa: 111 },
       validationPlugin({
         validate(field) {
-          field.at('aaa').setValidationError(field.validation!, 222);
+          field.at('aaa').addValidationError(field.validation!, 222);
         },
       })
     );
@@ -233,11 +233,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(222);
+    expect(field.at('aaa').errors).toBe(222);
 
     expect(subscriberMock).toHaveBeenCalledTimes(5);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
@@ -253,7 +253,7 @@ describe('validationPlugin', () => {
       data: { root: field, abortController: null },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(3, {
-      type: 'change:error',
+      type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
       data: null,
@@ -279,7 +279,7 @@ describe('validationPlugin', () => {
       data: { root: field, abortController: null },
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(2, {
-      type: 'change:error',
+      type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
       data: null,
@@ -296,7 +296,7 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111 },
       validationPlugin(field => {
-        field.at('aaa').setValidationError(field.validation!, 222);
+        field.at('aaa').addValidationError(field.validation!, 222);
       })
     );
 
@@ -310,11 +310,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(222);
+    expect(field.at('aaa').errors).toBe(222);
 
     expect(subscriberMock).toHaveBeenCalledTimes(5);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(3);
@@ -325,7 +325,7 @@ describe('validationPlugin', () => {
       { aaa: 111 },
       validationPlugin({
         validate(field) {
-          field.setValidationError(field.validation!, 222);
+          field.addValidationError(field.validation!, 222);
         },
       })
     );
@@ -340,11 +340,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(222);
+    expect(field.at('aaa').errors).toBe(222);
 
     expect(subscriberMock).toHaveBeenCalledTimes(3);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
@@ -354,7 +354,7 @@ describe('validationPlugin', () => {
       data: { root: field.at('aaa'), abortController: null },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(2, {
-      type: 'change:error',
+      type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
       data: null,
@@ -374,7 +374,7 @@ describe('validationPlugin', () => {
       data: { root: field.at('aaa'), abortController: null },
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(2, {
-      type: 'change:error',
+      type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
       data: null,
@@ -392,8 +392,8 @@ describe('validationPlugin', () => {
       { aaa: 111, bbb: 222 },
       validationPlugin({
         validate(field) {
-          field.at('aaa').setValidationError(field.validation!, 333);
-          field.at('bbb').setValidationError(field.validation!, 444);
+          field.at('aaa').addValidationError(field.validation!, 333);
+          field.at('bbb').addValidationError(field.validation!, 444);
         },
       })
     );
@@ -401,13 +401,13 @@ describe('validationPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(333);
+    expect(field.at('aaa').errors).toBe(333);
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').error).toBe(444);
+    expect(field.at('bbb').errors).toBe(444);
   });
 
   test('clears previous validation errors before validation', () => {
@@ -435,13 +435,13 @@ describe('validationPlugin', () => {
     expect(validateMock).toHaveBeenCalledTimes(2);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(111);
+    expect(field.at('aaa').errors).toBe(111);
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
   });
 
   test('does not clear an error set by the user before validation', () => {
@@ -449,23 +449,23 @@ describe('validationPlugin', () => {
       { aaa: 0, bbb: 'ddd' },
       validationPlugin({
         validate(field) {
-          field.at('aaa').setValidationError(field.validation!, 111);
+          field.at('aaa').addValidationError(field.validation!, 111);
         },
       })
     );
 
-    field.at('bbb').setError(222);
+    field.at('bbb').addError(222);
 
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual(111);
+    expect(field.at('aaa').errors).toEqual(111);
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').error).toBe(222);
+    expect(field.at('bbb').errors).toBe(222);
   });
 
   test('does not set validation errors for transient fields', () => {
@@ -473,8 +473,8 @@ describe('validationPlugin', () => {
       { aaa: 0, bbb: 'ddd' },
       validationPlugin({
         validate(field) {
-          field.at('aaa').setValidationError(field.validation!, 111);
-          field.at('bbb').setValidationError(field.validation!, 222);
+          field.at('aaa').addValidationError(field.validation!, 111);
+          field.at('bbb').addValidationError(field.validation!, 222);
         },
       })
     );
@@ -484,13 +484,13 @@ describe('validationPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(111);
+    expect(field.at('aaa').errors).toBe(111);
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').error).toBeNull();
+    expect(field.at('bbb').errors).toBeNull();
   });
 
   test('asynchronously validates the root field', async () => {
@@ -500,7 +500,7 @@ describe('validationPlugin', () => {
         validate: () => undefined,
 
         async validateAsync(field) {
-          field.at('aaa').setValidationError(field.validation!, 222);
+          field.at('aaa').addValidationError(field.validation!, 222);
         },
       })
     );
@@ -522,11 +522,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(222);
+    expect(field.at('aaa').errors).toBe(222);
 
     expect(subscriberMock).toHaveBeenCalledTimes(5);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
@@ -542,7 +542,7 @@ describe('validationPlugin', () => {
       data: { root: field, abortController: expect.any(AbortController) },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(3, {
-      type: 'change:error',
+      type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
       data: null,
@@ -568,7 +568,7 @@ describe('validationPlugin', () => {
       data: { root: field, abortController: expect.any(AbortController) },
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(2, {
-      type: 'change:error',
+      type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
       data: null,
@@ -588,7 +588,7 @@ describe('validationPlugin', () => {
         validate: () => undefined,
 
         async validateAsync(field) {
-          field.setValidationError(field.validation!, 222);
+          field.addValidationError(field.validation!, 222);
         },
       })
     );
@@ -608,11 +608,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe(222);
+    expect(field.at('aaa').errors).toBe(222);
 
     expect(subscriberMock).toHaveBeenCalledTimes(3);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(3);
@@ -634,11 +634,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('cleans up validation if an async error is thrown', async () => {
@@ -661,11 +661,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('aborts validation', async () => {
@@ -767,8 +767,8 @@ describe('validationPlugin', () => {
 
     await field.validateAsync();
 
-    expect(field.at('aaa').error).toBeNull();
-    expect(field.at('bbb').error).toBe(444);
+    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('bbb').errors).toBe(444);
 
     await expect(promise).rejects.toEqual(new Error('Validation aborted'));
   });

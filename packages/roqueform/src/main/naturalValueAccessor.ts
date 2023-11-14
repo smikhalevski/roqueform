@@ -29,15 +29,8 @@ export const naturalValueAccessor: ValueAccessor = {
 
   set(obj, key, value) {
     if (isPrimitive(obj)) {
-      let index;
-
-      if (typeof key === 'number' && (index = toArrayIndex(key)) !== -1) {
-        obj = [];
-        obj[index] = value;
-      } else {
-        obj = {};
-        obj[key] = value;
-      }
+      obj = typeof key === 'number' && toArrayIndex(key) !== -1 ? [] : {};
+      obj[key] = value;
       return obj;
     }
 
@@ -51,16 +44,6 @@ export const naturalValueAccessor: ValueAccessor = {
     }
 
     const prototype = Object.getPrototypeOf(obj);
-
-    // Object
-    if (prototype === null) {
-      if (isEqual(obj[key], value)) {
-        return obj;
-      }
-      obj = Object.assign(Object.create(null), obj);
-      obj[key] = value;
-      return obj;
-    }
 
     if (isMapLike(obj)) {
       return isEqual(obj.get(key), value) ? obj : new prototype.constructor(obj).set(key, value);
@@ -82,11 +65,10 @@ export const naturalValueAccessor: ValueAccessor = {
       return new prototype.constructor(values);
     }
 
-    // Object
     if (isEqual(obj[key], value)) {
       return obj;
     }
-    obj = Object.assign({}, obj);
+    obj = Object.assign(Object.create(prototype), obj);
     obj[key] = value;
     return obj;
   },

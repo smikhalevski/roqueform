@@ -40,8 +40,8 @@ describe('constraintValidationPlugin', () => {
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
 
-    field.on('change:error', subscriberMock);
-    field.at('aaa').on('change:error', aaaSubscriberMock);
+    field.on('change:errors', subscriberMock);
+    field.at('aaa').on('change:errors', aaaSubscriberMock);
 
     field.at('aaa').setError('222');
 
@@ -64,8 +64,8 @@ describe('constraintValidationPlugin', () => {
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
 
-    field.on('change:error', subscriberMock);
-    field.at('aaa').on('change:error', aaaSubscriberMock);
+    field.on('change:errors', subscriberMock);
+    field.at('aaa').on('change:errors', aaaSubscriberMock);
 
     field.setError('222');
 
@@ -226,8 +226,8 @@ describe('constraintValidationPlugin', () => {
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
 
-    field.on('change:error', subscriberMock);
-    field.at('aaa').on('change:error', aaaSubscriberMock);
+    field.on('change:errors', subscriberMock);
+    field.at('aaa').on('change:errors', aaaSubscriberMock);
 
     element.value = 'aaa';
     element.required = true;

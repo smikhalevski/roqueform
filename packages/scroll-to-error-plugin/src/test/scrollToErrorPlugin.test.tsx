@@ -58,8 +58,8 @@ describe('scrollToErrorPlugin', () => {
     const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = jest.fn());
 
     await act(() => {
-      rootField.at('aaa').setError('error1');
-      rootField.at('bbb').setError('error2');
+      rootField.at('aaa').addError('error1');
+      rootField.at('bbb').addError('error2');
     });
 
     // Scroll to default index
@@ -134,8 +134,8 @@ describe('scrollToErrorPlugin', () => {
     const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = jest.fn());
 
     await act(() => {
-      rootField.at('aaa').setError('error1');
-      rootField.at('bbb').setError('error2');
+      rootField.at('aaa').addError('error1');
+      rootField.at('bbb').addError('error2');
     });
 
     // Scroll to 0

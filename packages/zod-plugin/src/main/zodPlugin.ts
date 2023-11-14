@@ -18,7 +18,7 @@ export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParam
    */
   valueSchema: ZodTypeAny;
 
-  setError(error: ZodIssue | string | null | undefined): void;
+  addError(error: ZodIssue | string | null | undefined): void;
 }
 
 /**
@@ -36,9 +36,9 @@ export function zodPlugin<Value>(schema: ZodSchema<any, any, Value>): PluginInje
 
     field.valueSchema = field.parentField?.valueSchema || schema;
 
-    const { setError } = field;
+    const { addError } = field;
 
-    field.setError = error => {
+    field.addError = error => {
       setError(typeof error === 'string' ? { code: ZodIssueCode.custom, path: getPath(field), message: error } : error);
     };
   };
@@ -111,6 +111,6 @@ function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnT
     for (let i = basePath.length; i < path.length; ++i) {
       child = child.at(path[i]);
     }
-    child.setValidationError(validation, issue);
+    child.addValidationError(validation, issue);
   }
 }

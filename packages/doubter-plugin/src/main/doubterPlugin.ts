@@ -19,7 +19,7 @@ export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
    */
   valueShape: Shape | null;
 
-  setError(error: Issue | string | null | undefined): void;
+  addError(error: Issue | string | null | undefined): void;
 }
 
 /**
@@ -36,9 +36,9 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
 
     field.valueShape = field.parentField === null ? shape : field.parentField.valueShape?.at(field.key) || null;
 
-    const { setError } = field;
+    const { addError } = field;
 
-    field.setError = error => {
+    field.addError = error => {
       if (error === null || error === undefined) {
         setError(error);
       } else {
@@ -91,6 +91,6 @@ function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): v
         child = child.at(key);
       }
     }
-    child.setValidationError(validation, prependPath(validation.root, issue));
+    child.addValidationError(validation, prependPath(validation.root, issue));
   }
 }
