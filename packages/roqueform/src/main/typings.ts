@@ -25,7 +25,7 @@ export interface Event<Plugin = any, Data = any> {
   targetField: Field<Plugin>;
 
   /**
-   * The field that caused this event to be dispatched onto {@link targetField the target field}.
+   * The field that caused this event to be dispatched onto the {@link targetField}.
    *
    * For example, if a child field value is changed and causes the change event to be dispatched for the parent field
    * as well, then origin is the child field for both change events.
@@ -33,13 +33,13 @@ export interface Event<Plugin = any, Data = any> {
   originField: Field<Plugin>;
 
   /**
-   * The {@link type type-specific} data related to the {@link targetField target field}.
+   * The {@link type type-specific} data related to the {@link targetField}.
    */
   data: Data;
 }
 
 /**
- * The callback that receives events dispatched by {@link Field a field}.
+ * The callback that receives events dispatched by a {@link Field}.
  *
  * @param event The dispatched event.
  * @template Plugin The plugin injected into the field.
@@ -88,10 +88,10 @@ export interface FieldController<Plugin = unknown, Value = any> {
   readonly [__PLUGIN__]: Plugin;
 
   /**
-   * The key in the {@link parentField parent value} that corresponds to the value of this field, or `null` if there's no
-   * parent.
+   * The key in the {@link parentField parent value} that corresponds to the value of this field, or `null` if there's
+   * no parent.
    */
-  readonly key: any;
+  key: any;
 
   /**
    * The current value of the field.
@@ -113,22 +113,20 @@ export interface FieldController<Plugin = unknown, Value = any> {
   /**
    * The root field.
    */
-  readonly rootField: Field<Plugin>;
+  rootField: Field<Plugin>;
 
   /**
    * The parent field, or `null` if this is the root field.
    */
-  readonly parentField: Field<Plugin> | null;
+  parentField: Field<Plugin> | null;
 
   /**
-   * The array of child fields that were {@link at previously accessed}.
+   * The array of child fields that were {@link at previously accessed}, or `null` if there are no children.
    */
-  readonly children: readonly Field<Plugin>[];
+  children: Field<Plugin>[] | null;
 
   /**
    * The map from an event type to an array of associated subscribers.
-   *
-   * @see {@link on}
    */
   subscribers: { [eventType: string]: Subscriber<Plugin>[] };
 
@@ -228,8 +226,6 @@ export interface ValueAccessor {
 export declare const __PLUGIN__: unique symbol;
 
 export type __PLUGIN__ = typeof __PLUGIN__;
-
-export type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 type Primitive =
   | String

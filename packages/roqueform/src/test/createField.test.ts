@@ -17,7 +17,7 @@ describe('createField', () => {
     expect(field.rootField).toBe(field);
     expect(field.parentField).toBeNull();
     expect(field.children).toBeNull();
-    expect(field.subscribers).toBeNull();
+    expect(field.subscribers).toEqual({});
     expect(field.valueAccessor).toBe(naturalValueAccessor);
   });
 
@@ -89,22 +89,22 @@ describe('createField', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      target: field,
-      origin: field.at('aaa'),
+      targetField: field,
+      originField: field.at('aaa'),
       data: { aaa: 111 },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'change:value',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: 111,
     });
 
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: 111,
     });
   });
@@ -123,22 +123,22 @@ describe('createField', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      target: field,
-      origin: field.at('aaa'),
+      targetField: field,
+      originField: field.at('aaa'),
       data: { aaa: 111 },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'change:value',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: 111,
     });
 
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: 111,
     });
   });
@@ -159,8 +159,8 @@ describe('createField', () => {
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: 111,
     });
   });
@@ -311,8 +311,8 @@ describe('createField', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:value',
-      target: field,
-      origin: field,
+      targetField: field,
+      originField: field,
       data: initialValue,
     });
 

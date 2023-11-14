@@ -38,7 +38,7 @@ describe('uncontrolledPlugin', () => {
     field.ref(element);
 
     expect(field.element).toBe(element);
-    expect(field.elements).toEqual([element]);
+    expect(field.observedElements).toEqual([element]);
   });
 
   test('refFor populates elements', () => {
@@ -51,7 +51,7 @@ describe('uncontrolledPlugin', () => {
     field.refFor(2)(element2);
 
     expect(field.element).toBeNull();
-    expect(field.elements).toEqual([element1, element2]);
+    expect(field.observedElements).toEqual([element1, element2]);
   });
 
   test('ref and refFor can be mixed', () => {
@@ -65,7 +65,7 @@ describe('uncontrolledPlugin', () => {
     field.refFor(2)(element2);
 
     expect(field.element).toBe(element);
-    expect(field.elements).toEqual([element, element1, element2]);
+    expect(field.observedElements).toEqual([element, element1, element2]);
   });
 
   test('ref and refFor can be called with the same element', () => {
@@ -75,7 +75,7 @@ describe('uncontrolledPlugin', () => {
     field.refFor(1)(element);
 
     expect(field.element).toBe(element);
-    expect(field.elements).toEqual([element]);
+    expect(field.observedElements).toEqual([element]);
   });
 
   test('refFor can be called with the same element for different keys', () => {
@@ -85,7 +85,7 @@ describe('uncontrolledPlugin', () => {
     field.refFor(2)(element);
 
     expect(field.element).toBeNull();
-    expect(field.elements).toEqual([element]);
+    expect(field.observedElements).toEqual([element]);
   });
 
   test('ref removes an element when called with null', () => {
@@ -100,7 +100,7 @@ describe('uncontrolledPlugin', () => {
 
     field.ref(null);
 
-    expect(field.elements).toEqual([element1, element2]);
+    expect(field.observedElements).toEqual([element1, element2]);
   });
 
   test('refFor removes an element when called with null', () => {
@@ -114,11 +114,11 @@ describe('uncontrolledPlugin', () => {
 
     field.refFor(1)(null);
 
-    expect(field.elements).toEqual([element2]);
+    expect(field.observedElements).toEqual([element2]);
 
     field.refFor(2)(null);
 
-    expect(field.elements).toEqual([]);
+    expect(field.observedElements).toEqual([]);
   });
 
   test('removed element does not update the field', () => {

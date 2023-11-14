@@ -16,12 +16,12 @@ export interface UncontrolledPlugin {
   element: Element | null;
 
   /**
-   * The array of elements controlled by this field, includes {@link element}.
+   * The array of elements observed by this field, includes {@link element}.
    */
-  elements: readonly Element[];
+  observedElements: Element[];
 
   /**
-   * The accessor that reads and writes the field value from and to {@link elements}.
+   * The accessor that reads and writes the field value from and to {@link observedElements}.
    */
   elementsValueAccessor: ElementsValueAccessor;
 
@@ -42,23 +42,23 @@ export interface UncontrolledPlugin {
 export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
     field.element = null;
-    field.elements = [];
+    field.observedElements = [];
     field.elementsValueAccessor = accessor;
 
-    const elementsMap = new Map();
+    const elementsMap = new Map<unknown, Element>();
     const refsMap = new Map<unknown, (element: Element | null) => void>();
 
     let prevValue = field.value;
 
     const changeListener: EventListener = event => {
-      if (field.elements.includes(event.target as Element)) {
-        field.setValue((prevValue = field.elementsValueAccessor.get(field.elements)));
+      if (field.observedElements.includes(event.target as Element)) {
+        field.setValue((prevValue = field.elementsValueAccessor.get(field.observedElements)));
       }
     };
 
     field.on('change:value', event => {
-      if (field.value !== prevValue && event.targetField === field && field.elements.length !== 0) {
-        field.elementsValueAccessor.set(field.elements, field.value);
+      if (field.value !== prevValue && event.targetField === field && field.observedElements.length !== 0) {
+        field.elementsValueAccessor.set(field.observedElements, field.value);
       }
     });
 
@@ -104,7 +104,7 @@ function swapElements(
   prevElement: Element | null,
   nextElement: Element | null
 ): Element | null {
-  const elements = field.elements as Element[];
+  const elements = field.observedElements;
 
   nextElement = nextElement instanceof Element ? nextElement : null;
 

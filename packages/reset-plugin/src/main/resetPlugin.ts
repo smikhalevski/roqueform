@@ -17,8 +17,8 @@ import isDeepEqual from 'fast-deep-equal';
  */
 export interface ResetPlugin {
   /**
-   * `true` if the field value is different from its initial value basing on {@link equalityChecker equality checker},
-   * or `false` otherwise.
+   * `true` if the field value is different from its initial value basing on
+   * {@link valueEqualityChecker the equality checker}, or `false` otherwise.
    */
   readonly isDirty: boolean;
 
@@ -29,7 +29,7 @@ export interface ResetPlugin {
    * @param value The current value.
    * @returns `true` if initial value is equal to value, or `false` otherwise.
    */
-  equalityChecker: (initialValue: any, value: any) => boolean;
+  valueEqualityChecker: (initialValue: any, value: any) => boolean;
 
   /**
    * Sets the initial value of the field and notifies ancestors and descendants.
@@ -45,7 +45,7 @@ export interface ResetPlugin {
 
   /**
    * Returns all fields that have {@link FieldController.value a value} that is different from
-   * {@link FieldController.initialValue an initial value} basing on {@link equalityChecker equality checker}.
+   * {@link FieldController.initialValue an initial value} basing on {@link valueEqualityChecker the equality checker}.
    *
    * @see {@link isDirty}
    */
@@ -73,10 +73,10 @@ export function resetPlugin(
   return field => {
     Object.defineProperty(field, 'isDirty', {
       configurable: true,
-      get: () => !field.equalityChecker(field.initialValue, field.value),
+      get: () => !field.valueEqualityChecker(field.initialValue, field.value),
     });
 
-    field.equalityChecker = equalityChecker;
+    field.valueEqualityChecker = equalityChecker;
 
     field.setInitialValue = value => {
       setInitialValue(field, value);
@@ -106,22 +106,22 @@ function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void
 }
 
 function propagateInitialValue(
-  origin: Field<ResetPlugin>,
-  target: Field<ResetPlugin>,
+  originField: Field<ResetPlugin>,
+  targetField: Field<ResetPlugin>,
   initialValue: unknown,
   events: Event[]
 ): Event[] {
-  events.push({ type: 'change:initialValue', targetField: target, originField: origin, data: target.initialValue });
+  events.push({ type: 'change:initialValue', targetField, originField, data: targetField.initialValue });
 
-  target.initialValue = initialValue;
+  targetField.initialValue = initialValue;
 
-  if (target.children !== null) {
-    for (const child of target.children) {
-      const childInitialValue = target.valueAccessor.get(initialValue, child.key);
-      if (child !== origin && isEqual(child.initialValue, childInitialValue)) {
+  if (targetField.children !== null) {
+    for (const child of targetField.children) {
+      const childInitialValue = targetField.valueAccessor.get(initialValue, child.key);
+      if (child !== originField && isEqual(child.initialValue, childInitialValue)) {
         continue;
       }
-      propagateInitialValue(origin, child, childInitialValue, events);
+      propagateInitialValue(originField, child, childInitialValue, events);
     }
   }
   return events;

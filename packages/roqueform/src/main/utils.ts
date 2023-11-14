@@ -1,4 +1,4 @@
-import { Event } from './typings';
+import { Event, FieldController } from './typings';
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -42,15 +42,9 @@ export function callOrGet(value: unknown, arg?: unknown) {
  */
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
-    for (let field = event.targetField; field !== null; field = field.parent) {
-      const { subscribers } = field;
-
-      if (subscribers === null) {
-        continue;
-      }
-
-      const typeSubscribers = subscribers[event.type];
-      const globSubscribers = subscribers['*'];
+    for (let ancestor: FieldController | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
+      const typeSubscribers = ancestor.subscribers[event.type];
+      const globSubscribers = ancestor.subscribers['*'];
 
       if (typeSubscribers !== undefined) {
         for (const subscriber of typeSubscribers) {
