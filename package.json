@@ -9,6 +9,7 @@
   },
   "workspaces": [
     "./packages/roqueform",
+    "./packages/annotations-plugin",
     "./packages/constraint-validation-plugin",
     "./packages/doubter-plugin",
     "./packages/react",

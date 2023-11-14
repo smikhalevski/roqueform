@@ -1,7 +1,7 @@
 import { createField } from 'roqueform';
 import { resetPlugin } from '../main';
 
-describe('resetPlugin', () => {
+describe('annotationsPlugin', () => {
   test('field is dirty if the field value is not equal to an initial value', () => {
     const initialValue = { aaa: 111 };
 

@@ -144,7 +144,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
    * @see {@link on}
    * @protected
    */
-  ['subscribers']: Record<string, Subscriber<Plugin>[] | undefined> | null;
+  ['subscribers']: { [eventType: string]: Subscriber<Plugin>[] | undefined } | null;
 
   /**
    * The accessor that reads the field value from the value of the parent fields, and updates parent value.
