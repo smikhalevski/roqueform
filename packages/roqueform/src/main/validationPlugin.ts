@@ -4,9 +4,6 @@ import { dispatchEvents } from './utils';
 const EVENT_CHANGE_ERRORS = 'change:errors';
 const ERROR_ABORT = 'Validation aborted';
 
-const naturalErrorsMerger: ValidationErrorsMerger = (errors, error) =>
-  errors.includes(error) ? errors : errors.concat([error]);
-
 /**
  * The callback that returns the new array of errors that includes the given error, or returns the original errors
  * array if there are no changes.
@@ -79,31 +76,19 @@ export interface ValidationPlugin<Error = any, Options = any> {
    *
    * @param error The error to add.
    */
-  addError(error: Error): this;
+  addError(error: Error): void;
 
   /**
    * Deletes an error associated with this field.
    *
    * @param error The error to delete.
    */
-  deleteError(error: Error): this;
+  deleteError(error: Error): void;
 
   /**
-   * Replaces errors associated with this field with the new array of errors.
-   *
-   * @param errors The array of new errors to set.
+   * Deletes all errors associated with this field.
    */
-  setErrors(errors: Error[]): this;
-
-  /**
-   * Deletes errors associated with this field.
-   */
-  clearErrors(): this;
-
-  /**
-   * Returns all errors associated with this field and its child fields.
-   */
-  getAllErrors(): Error[];
+  clearErrors(): void;
 
   /**
    * Recursively deletes errors associated with this field and all of its child fields.
@@ -111,7 +96,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * @param predicate The callback that returns truthy value if an error must be deleted. If omitted then all errors are
    * deleted.
    */
-  clearAllErrors(predicate?: (error: Error) => any): this;
+  clearAllErrors(predicate?: (error: Error, field: Field<PluginOf<this>>) => boolean): void;
 
   /**
    * Returns all fields that have associated errors.
@@ -143,7 +128,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
   abortValidation(): void;
 
   /**
-   * Subscribes to {@link errors an associated error} changes. {@link Event.data} contains the previous error.
+   * Subscribes to {@link errors an associated error} changes.
    *
    * @param eventType The type of the event.
    * @param subscriber The subscriber that would be triggered.
@@ -151,7 +136,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * @see {@link error}
    * @see {@link isInvalid}
    */
-  on(eventType: 'change:errors', subscriber: Subscriber<PluginOf<this>, Error | null>): Unsubscribe;
+  on(eventType: 'change:errors', subscriber: Subscriber<PluginOf<this>, Error[]>): Unsubscribe;
 
   /**
    * Subscribes to the start of the validation. {@link Event.data} carries the validation that is going to start.
@@ -205,23 +190,23 @@ export interface Validator<Error = any, Options = any> {
 
 export interface ValidationPluginOptions<Error = any, Options = any> {
   /**
-   * The callback or an object with `validate` and optional `validateAsync` methods that applies
-   * validation rules to a provided field.
+   * The validator object or a callback that performs synchronous validation.
    */
   validator: Validator<Error, Options> | Validator<Error, Options>['validate'];
 
   /**
-   * The callback that updates {@link errors}. If omitted then identity based merging is used.
+   * The callback that updates {@link errors}. By default, error is added to the array of errors if it isn't already
+   * contained in the array.
    */
-  errorsMerger: ValidationErrorsMerger<Error>;
+  errorsMerger?: ValidationErrorsMerger<Error>;
 }
 
 /**
  * Enhances the field with validation methods.
  *
- * This plugin is a scaffold for implementing validation. If you don't know how to validate your fields then it is
- * highly likely that this is not the plugin you're looking for. Have a look at
- * [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) instead.
+ * This plugin is a scaffold for implementing validation. If you don't know how to validate your fields then have a look
+ * at [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) before
+ * picking this plugin.
  *
  * @template Error The error.
  * @template Options Options passed to the validator.
@@ -241,52 +226,45 @@ export function validationPlugin<Error = any, Options = void>(
     field.validation = null;
 
     Object.defineProperties(field, {
-      isInvalid: { configurable: true, get: () => getIsInvalid(field) },
+      isInvalid: { configurable: true, get: () => isInvalid(field) },
       isValidating: { configurable: true, get: () => field.validation !== null },
     });
 
     field.addError = error => {
       const prevErrors = field.errors;
       const nextErrors = field.errorsMerger(prevErrors, error);
+
       if (prevErrors !== nextErrors) {
         field.errors = nextErrors;
+
         dispatchEvents([{ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors }]);
       }
-      return field;
     };
 
     field.deleteError = error => {
       const prevErrors = field.errors;
-      const index = prevErrors.indexOf(error);
-      if (index !== -1) {
-        field.errors = prevErrors.slice(0, index).concat(prevErrors.slice(index + 1));
+      const errorIndex = prevErrors.indexOf(error);
+
+      if (errorIndex !== -1) {
+        const nextErrors = prevErrors.slice(0);
+        nextErrors.splice(errorIndex, 1);
+        field.errors = nextErrors;
+
         dispatchEvents([{ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors }]);
       }
-      return field;
-    };
-
-    field.setErrors = errors => {
-      const prevErrors = field.errors;
-
-      let nextErrors: Error[] = [];
-      for (const error of errors) {
-        nextErrors = field.errorsMerger(nextErrors, error);
-      }
-      field.errors = nextErrors;
-      dispatchEvents([{ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors }]);
-      return field;
     };
 
     field.clearErrors = () => {
-      dispatchEvents(clearErrors(field, undefined, []));
-      return field;
-    };
+      const prevErrors = field.errors;
 
-    field.getAllErrors = () => getAllErrors(field, []);
+      if (prevErrors.length !== 0) {
+        field.errors = [];
+        dispatchEvents([{ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors }]);
+      }
+    };
 
     field.clearAllErrors = predicate => {
       dispatchEvents(clearAllErrors(field, predicate, []));
-      return field;
     };
 
     field.getInvalidFields = () => getInvalidFields(field, []);
@@ -301,53 +279,38 @@ export function validationPlugin<Error = any, Options = void>(
   };
 }
 
-function getIsInvalid(field: Field<ValidationPlugin>): boolean {
-  if (field.errors.length !== 0) {
-    return true;
+const naturalErrorsMerger: ValidationErrorsMerger = (errors, error) => {
+  if (!errors.includes(error)) {
+    errors = errors.slice(0);
+    errors.push(error);
   }
-  if (field.children !== null) {
-    for (const child of field.children) {
-      if (getIsInvalid(child)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
+  return errors;
+};
 
-function clearErrors(
+function clearAllErrors(
   field: Field<ValidationPlugin>,
-  predicate: ((error: any) => any) | undefined,
+  predicate: ((error: any, field: Field<ValidationPlugin>) => any) | undefined,
   events: Event[]
 ): Event[] {
   const prevErrors = field.errors;
 
+  let nextErrors;
   if (prevErrors.length !== 0) {
-    let nextErrors: any[] | undefined;
-
-    if (typeof predicate === 'function') {
+    if (predicate !== undefined) {
       for (const error of prevErrors) {
-        if (!predicate(error)) {
+        if (!predicate(error, field)) {
           (nextErrors ||= []).push(error);
         }
       }
     } else {
       nextErrors = [];
     }
-    if (nextErrors !== undefined) {
-      field.errors = nextErrors;
-      events.push({ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors });
-    }
   }
-  return events;
-}
 
-function clearAllErrors(
-  field: Field<ValidationPlugin>,
-  predicate: ((error: any) => any) | undefined,
-  events: Event[]
-): Event[] {
-  clearErrors(field, predicate, events);
+  if (nextErrors !== undefined) {
+    field.errors = nextErrors;
+    events.push({ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors });
+  }
 
   if (field.children !== null) {
     for (const child of field.children) {
@@ -357,16 +320,18 @@ function clearAllErrors(
   return events;
 }
 
-function getAllErrors(field: Field<ValidationPlugin>, errors: any[]): any[] {
+function isInvalid(field: Field<ValidationPlugin>): boolean {
   if (field.errors.length !== 0) {
-    errors.push(...field.errors);
+    return true;
   }
   if (field.children !== null) {
     for (const child of field.children) {
-      getInvalidFields(child, errors);
+      if (isInvalid(child)) {
+        return true;
+      }
     }
   }
-  return errors;
+  return false;
 }
 
 function getInvalidFields(field: Field<ValidationPlugin>, batch: Field<ValidationPlugin>[]): Field<ValidationPlugin>[] {

@@ -1,11 +1,12 @@
-import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodSchema, ZodTypeAny } from 'zod';
+import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
 import {
   Field,
   FieldController,
   PluginInjector,
   Validation,
-  ValidationPlugin,
+  ValidationErrorsMerger,
   validationPlugin,
+  ValidationPlugin,
   Validator,
 } from 'roqueform';
 
@@ -14,56 +15,65 @@ import {
  */
 export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParams>> {
   /**
-   * The Zod validation schema of the root value.
+   * The Zod validation type of the root value.
    */
-  valueSchema: ZodTypeAny;
+  valueType: ZodTypeAny;
 
-  addError(error: ZodIssue | string | null | undefined): void;
+  addError(error: ZodIssue | string): void;
 }
 
 /**
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
  *
- * @param schema The schema that validates the field value.
+ * @param type The type that validates the field value.
  * @template Value The root field value.
  * @returns The validation plugin.
  */
-export function zodPlugin<Value>(schema: ZodSchema<any, any, Value>): PluginInjector<ZodPlugin, Value> {
+export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector<ZodPlugin, Value> {
   let plugin;
 
   return field => {
-    (plugin ||= validationPlugin(zodValidator))(field);
+    (plugin ||= validationPlugin({ validator, errorsMerger }))(field);
 
-    field.valueSchema = field.parentField?.valueSchema || schema;
+    field.valueType = field.parentField?.valueType || type;
 
     const { addError } = field;
 
     field.addError = error => {
-      setError(typeof error === 'string' ? { code: ZodIssueCode.custom, path: getPath(field), message: error } : error);
+      addError(typeof error === 'string' ? { code: ZodIssueCode.custom, path: getPath(field), message: error } : error);
     };
   };
 }
 
-const zodValidator: Validator<ZodIssue, Partial<ParseParams>> = {
+const validator: Validator<ZodIssue, Partial<ParseParams>> = {
   validate(field, options) {
-    const { validation, valueSchema } = field as unknown as Field<ZodPlugin>;
+    const { validation, valueType } = field as unknown as Field<ZodPlugin>;
 
     if (validation !== null) {
-      applyResult(validation, valueSchema.safeParse(getValue(field), options));
+      applyResult(validation, valueType.safeParse(getValue(field), options));
     }
   },
 
   validateAsync(field, options) {
-    const { validation, valueSchema } = field as unknown as Field<ZodPlugin>;
+    const { validation, valueType } = field as unknown as Field<ZodPlugin>;
 
     if (validation !== null) {
-      return valueSchema.safeParseAsync(getValue(field), options).then(result => {
+      return valueType.safeParseAsync(getValue(field), options).then(result => {
         applyResult(validation, result);
       });
     }
 
     return Promise.resolve();
   },
+};
+
+const errorsMerger: ValidationErrorsMerger<ZodIssue> = (errors, error) => {
+  for (const otherError of errors) {
+    if (otherError.code === error.code) {
+      return errors;
+    }
+  }
+  return errors.concat(error);
 };
 
 function getValue(field: Field<ValidationPlugin>): unknown {
@@ -98,6 +108,10 @@ function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnT
   issues: for (const issue of result.error.issues) {
     const { path } = issue;
 
+    if (validation.root.validation !== validation) {
+      // Validation was aborted
+      break;
+    }
     if (path.length < basePath.length) {
       continue;
     }
@@ -111,6 +125,7 @@ function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnT
     for (let i = basePath.length; i < path.length; ++i) {
       child = child.at(path[i]);
     }
-    child.addValidationError(validation, issue);
+
+    child.addError(issue);
   }
 }

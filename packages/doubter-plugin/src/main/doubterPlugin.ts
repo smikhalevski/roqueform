@@ -4,6 +4,7 @@ import {
   FieldController,
   PluginInjector,
   Validation,
+  ValidationErrorsMerger,
   ValidationPlugin,
   validationPlugin,
   Validator,
@@ -19,7 +20,7 @@ export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
    */
   valueShape: Shape | null;
 
-  addError(error: Issue | string | null | undefined): void;
+  addError(error: Issue | string): void;
 }
 
 /**
@@ -32,23 +33,19 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
   let plugin;
 
   return field => {
-    (plugin ||= validationPlugin(doubterValidator))(field);
+    (plugin ||= validationPlugin({ validator, errorsMerger }))(field);
 
     field.valueShape = field.parentField === null ? shape : field.parentField.valueShape?.at(field.key) || null;
 
     const { addError } = field;
 
     field.addError = error => {
-      if (error === null || error === undefined) {
-        setError(error);
-      } else {
-        setError(prependPath(field, typeof error === 'string' ? { message: error, input: field.value } : error));
-      }
+      addError(prependPath(field, typeof error === 'string' ? { message: error, input: field.value } : error));
     };
   };
 }
 
-const doubterValidator: Validator<Issue, ParseOptions> = {
+const validator: Validator<Issue, ParseOptions> = {
   validate(field, options) {
     const { validation, valueShape } = field as unknown as Field<DoubterPlugin>;
 
@@ -70,6 +67,15 @@ const doubterValidator: Validator<Issue, ParseOptions> = {
   },
 };
 
+const errorsMerger: ValidationErrorsMerger<Issue> = (errors, error) => {
+  for (const otherError of errors) {
+    if (error.code !== undefined ? otherError.code === error.code : otherError.message === error.message) {
+      return errors;
+    }
+  }
+  return errors.concat(error);
+};
+
 function prependPath(field: FieldController<any>, issue: Issue): Issue {
   while (field.parentField !== null) {
     (issue.path ||= []).unshift(field.key);
@@ -86,11 +92,15 @@ function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): v
   for (const issue of result.issues) {
     let child = validation.root;
 
+    if (child.validation !== validation) {
+      // Validation was aborted
+      break;
+    }
     if (issue.path !== undefined) {
       for (const key of issue.path) {
         child = child.at(key);
       }
     }
-    child.addValidationError(validation, prependPath(validation.root, issue));
+    child.addError(prependPath(validation.root, issue));
   }
 }

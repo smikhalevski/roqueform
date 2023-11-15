@@ -5,15 +5,14 @@ import { callOrGet, dispatchEvents, Event, Field, PluginInjector, PluginOf, Subs
  *
  * @param annotations Annotations associated with this field.
  * @param patch The patch that must be applied to annotations.
- * @returns The new annotations object that contains original annotations that are partially overridden by the patch.
+ * @returns The new annotations object that contains original annotations that are partially overridden by the patch, or
+ * the original annotations object if nothing has changed.
  * @template Annotations Annotations associated with fields.
  */
-export type AnnotationsPatcher<Annotations extends object = { [annotation: string]: any }> = (
+export type AnnotationsMerger<Annotations extends object = { [annotation: string]: any }> = (
   annotations: Readonly<Annotations>,
   patch: Partial<Readonly<Annotations>>
 ) => Annotations;
-
-const naturalAnnotationsPatcher: AnnotationsPatcher = (annotations, patch) => Object.assign({}, annotations, patch);
 
 /**
  * The plugin added to fields by the {@link annotationsPlugin}.
@@ -29,13 +28,13 @@ export interface AnnotationsPlugin<Annotations extends object = { [annotation: s
   /**
    * The callback that applies patches to field annotations.
    */
-  annotationsPatcher: AnnotationsPatcher<Annotations>;
+  annotationsMerger: AnnotationsMerger<Annotations>;
 
   /**
    * Updates annotations of this field.
    *
    * @param patch The patch that is applied to current annotations, or a callback that receives the current annotations
-   * and returns a patch that must be applied. A patch is applied using {@link annotationsPatcher}.
+   * and returns a patch that must be applied. A patch is applied using {@link annotationsMerger}.
    */
   annotate(patch: Partial<Annotations> | ((annotations: Readonly<Annotations>) => Partial<Annotations>)): void;
 
@@ -43,7 +42,7 @@ export interface AnnotationsPlugin<Annotations extends object = { [annotation: s
    * Updates annotations of this field and all of its child fields.
    *
    * @param patch The patch that is applied to current annotations, or a callback that receives the current annotations
-   * and returns a patch that must be applied. A patch is applied using {@link annotationsPatcher}.
+   * and returns a patch that must be applied. A patch is applied using {@link annotationsMerger}.
    */
   annotateAll(patch: Partial<Annotations> | ((annotations: Readonly<Annotations>) => Partial<Annotations>)): void;
 
@@ -60,39 +59,38 @@ export interface AnnotationsPlugin<Annotations extends object = { [annotation: s
 /**
  * Enhances fields with methods that manage annotations.
  *
- * @param patcher The callback that applies patches to field annotations. By default, patches are applied using
+ * @param annotationsMerger The callback that applies patches to field annotations. By default, patches are applied using
  * [Object.assign](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
  * @template Annotations Annotations associated with fields.
  */
 export function annotationsPlugin<Annotations extends object = { [annotation: string]: any }>(
-  patcher?: AnnotationsPatcher<Partial<Annotations>>
+  annotationsMerger?: AnnotationsMerger<Partial<Annotations>>
 ): PluginInjector<AnnotationsPlugin<Partial<Annotations>>>;
 
 /**
  * Enhances fields with methods that manage annotations.
  *
  * @param annotations The initial annotations that are associated with fields.
- * @param patcher The callback that applies patches to field annotations. By default, patches are applied using
- * [Object.assign](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
+ * @param annotationsMerger The callback that applies patches to field annotations.
  * @template Annotations Annotations associated with fields.
  */
 export function annotationsPlugin<Annotations extends object = { [annotation: string]: any }>(
   annotations: Annotations,
-  patcher?: AnnotationsPatcher<Annotations>
+  annotationsMerger?: AnnotationsMerger<Annotations>
 ): PluginInjector<AnnotationsPlugin<Annotations>>;
 
 export function annotationsPlugin(
-  annotations: AnnotationsPatcher | object = {},
-  patcher = naturalAnnotationsPatcher
+  annotations: AnnotationsMerger | object = {},
+  annotationsMerger = naturalAnnotationsMerger
 ): PluginInjector<AnnotationsPlugin> {
   if (typeof annotations === 'function') {
-    patcher = annotations as AnnotationsPatcher;
+    annotationsMerger = annotations as AnnotationsMerger;
     annotations = {};
   }
 
   return field => {
     field.annotations = annotations;
-    field.annotationsPatcher = patcher;
+    field.annotationsMerger = annotationsMerger;
 
     field.annotate = patch => dispatchEvents(annotate(field, field, patch, false, []));
 
@@ -100,20 +98,33 @@ export function annotationsPlugin(
   };
 }
 
+const naturalAnnotationsMerger: AnnotationsMerger = (prevAnnotations, patch) => {
+  for (const key in patch) {
+    if (patch[key] !== prevAnnotations[key]) {
+      return Object.assign({}, prevAnnotations, patch);
+    }
+  }
+  return prevAnnotations;
+};
+
 function annotate(
-  target: Field<AnnotationsPlugin>,
-  origin: Field<AnnotationsPlugin>,
+  originField: Field<AnnotationsPlugin>,
+  targetField: Field<AnnotationsPlugin>,
   patch: object | ((annotations: object) => object),
   deep: boolean,
   events: Event[]
 ): Event[] {
-  events.push({ type: 'change:annotations', target, origin, data: target.annotations });
+  const prevAnnotations = targetField.annotations;
+  const nextAnnotations = targetField.annotationsMerger(prevAnnotations, callOrGet(patch, targetField.annotations));
 
-  target.annotations = target.annotationsPatcher(target.annotations, callOrGet(patch, target.annotations));
+  if (prevAnnotations !== nextAnnotations) {
+    targetField.annotations = nextAnnotations;
+    events.push({ type: 'change:annotations', targetField, originField, data: prevAnnotations });
+  }
 
-  if (deep && target.children !== null) {
-    for (const child of target.children) {
-      annotate(child, origin, patch, deep, events);
+  if (deep && targetField.children !== null) {
+    for (const child of targetField.children) {
+      annotate(originField, child, patch, deep, events);
     }
   }
   return events;

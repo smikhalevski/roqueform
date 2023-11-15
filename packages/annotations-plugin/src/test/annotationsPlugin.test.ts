@@ -1,5 +1,5 @@
 import { createField } from 'roqueform';
-import { AnnotationsPatcher, annotationsPlugin } from '../main';
+import { AnnotationsMerger, annotationsPlugin } from '../main';
 
 describe('annotationsPlugin', () => {
   test('annotations are an empty object by default', () => {
@@ -89,7 +89,7 @@ describe('annotationsPlugin', () => {
   });
 
   test('uses patcher to apply patches', () => {
-    const patcherMock: AnnotationsPatcher = jest.fn((a, b) => Object.assign({}, a, b));
+    const patcherMock: AnnotationsMerger = jest.fn((a, b) => Object.assign({}, a, b));
 
     const field = createField(111, annotationsPlugin(patcherMock));
 
