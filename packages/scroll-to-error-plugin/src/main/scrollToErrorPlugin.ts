@@ -12,9 +12,9 @@ export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
  */
 export interface ScrollToErrorPlugin {
   /**
-   * An error associated with the field, or `null` if there's no error.
+   * The array of errors associated with this field.
    */
-  error: unknown;
+  errors: unknown;
 
   /**
    * The DOM element associated with the field, or `null` if there's no associated element.
@@ -65,7 +65,6 @@ export interface ScrollToErrorPlugin {
  */
 export function scrollToErrorPlugin(): PluginInjector<ScrollToErrorPlugin> {
   return field => {
-    field.error = null;
     field.element = null;
 
     const { ref } = field;
@@ -98,7 +97,9 @@ function getTargetFields(
   field: Field<ScrollToErrorPlugin>,
   batch: Field<ScrollToErrorPlugin>[]
 ): Field<ScrollToErrorPlugin>[] {
-  if (field.error !== null && field.element !== null && field.element.isConnected) {
+  const { errors } = field;
+
+  if (Array.isArray(errors) && errors.length !== 0 && field.element !== null && field.element.isConnected) {
     const rect = field.element.getBoundingClientRect();
 
     if (rect.top !== 0 || rect.left !== 0 || rect.width !== 0 || rect.height !== 0) {
