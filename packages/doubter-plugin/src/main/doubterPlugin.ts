@@ -40,7 +40,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
     const { addError } = field;
 
     field.addError = error => {
-      addError(prependPath(field, typeof error === 'string' ? { message: error, input: field.value } : error));
+      addError(typeof error === 'string' ? prependPath(field, { message: error, input: field.value }) : error);
     };
   };
 }
@@ -92,15 +92,13 @@ function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): v
   for (const issue of result.issues) {
     let child = validation.rootField;
 
-    if (child.validation !== validation) {
-      // Validation was aborted
-      break;
-    }
     if (issue.path !== undefined) {
       for (const key of issue.path) {
         child = child.at(key);
       }
     }
-    child.addError(prependPath(validation.rootField, issue));
+    if (child.validation === validation) {
+      child.addError(prependPath(validation.rootField, issue));
+    }
   }
 }
