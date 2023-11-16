@@ -35,8 +35,8 @@ describe('annotationsPlugin', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:annotations',
-      target: field,
-      origin: field,
+      targetField: field,
+      originField: field,
       data: { xxx: 222 },
     });
     expect(aaaSubscriberMock).not.toHaveBeenCalled();
@@ -75,15 +75,15 @@ describe('annotationsPlugin', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:annotations',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: { xxx: 222 },
     });
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:annotations',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: { xxx: 222 },
     });
   });
