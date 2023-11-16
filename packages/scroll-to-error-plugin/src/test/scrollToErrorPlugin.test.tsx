@@ -27,10 +27,7 @@ describe('scrollToErrorPlugin', () => {
   test('returns null if there are no errors', () => {
     const field = createField(
       { aaa: 111 },
-      composePlugins(
-        validationPlugin(() => undefined),
-        scrollToErrorPlugin()
-      )
+      composePlugins(validationPlugin({ validator: () => undefined }), scrollToErrorPlugin())
     );
 
     expect(field.scrollToError()).toBe(null);
@@ -39,10 +36,7 @@ describe('scrollToErrorPlugin', () => {
   test('scrolls to error at index with RTL text direction', async () => {
     const rootField = createField(
       { aaa: 111, bbb: 222 },
-      composePlugins(
-        validationPlugin(() => undefined),
-        scrollToErrorPlugin()
-      )
+      composePlugins(validationPlugin({ validator: () => undefined }), scrollToErrorPlugin())
     );
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
@@ -115,10 +109,7 @@ describe('scrollToErrorPlugin', () => {
   test('scrolls to error at index with LTR text direction', async () => {
     const rootField = createField(
       { aaa: 111, bbb: 222 },
-      composePlugins(
-        validationPlugin(() => undefined),
-        scrollToErrorPlugin()
-      )
+      composePlugins(validationPlugin({ validator: () => undefined }), scrollToErrorPlugin())
     );
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
