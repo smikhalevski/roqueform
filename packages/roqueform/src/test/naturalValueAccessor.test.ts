@@ -98,6 +98,14 @@ describe('naturalValueAccessor', () => {
     expect(result).not.toBe(obj);
   });
 
+  test('does not write undefined value to a Set when index is out of bounds', () => {
+    const obj = new Set([111, 222]);
+    const result = naturalValueAccessor.set(obj, 5, 333);
+
+    expect(result).toEqual(new Set([111, 222, 333]));
+    expect(result).not.toBe(obj);
+  });
+
   test('preserves null prototype', () => {
     const obj = Object.create(null);
     obj.aaa = 111;

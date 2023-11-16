@@ -102,14 +102,11 @@ function getOrCreateField(
     field.value = accessor.get(parent.value, key);
     field.initialValue = accessor.get(parent.initialValue, key);
     field.rootField = parent.rootField;
+    (parent.children ||= []).push(field);
   }
 
   if (plugin !== null) {
     plugin(field);
-  }
-
-  if (parent !== null) {
-    (parent.children ||= []).push(field);
   }
   return field;
 }

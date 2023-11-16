@@ -351,22 +351,6 @@ describe('createField', () => {
     field.setValue({ aaa: 222 });
   });
 
-  test('does not cache a child field for which the plugin has thrown an error', () => {
-    const pluginMock = jest.fn();
-    pluginMock.mockImplementationOnce(() => undefined);
-    pluginMock.mockImplementationOnce(() => {
-      throw new Error('expected1');
-    });
-    pluginMock.mockImplementationOnce(() => {
-      throw new Error('expected2');
-    });
-
-    const field = createField({ aaa: 111 }, pluginMock);
-
-    expect(() => field.at('aaa')).toThrow(new Error('expected1'));
-    expect(() => field.at('aaa')).toThrow(new Error('expected2'));
-  });
-
   test('setting field value in a subscriber does not trigger an infinite loop', () => {
     const field = createField(111);
 

@@ -1,5 +1,4 @@
 import { ValueAccessor } from './typings';
-import { isEqual } from './utils';
 
 /**
  * The value accessor that reads and writes key-value pairs to well-known object instances.
@@ -28,6 +27,8 @@ export const naturalValueAccessor: ValueAccessor = {
   },
 
   set(obj, key, value) {
+    let prototype;
+
     if (isPrimitive(obj)) {
       obj = typeof key === 'number' && toArrayIndex(key) !== -1 ? [] : {};
       obj[key] = value;
@@ -35,18 +36,17 @@ export const naturalValueAccessor: ValueAccessor = {
     }
 
     if (Array.isArray(obj)) {
-      if (isEqual(obj[key], value)) {
-        return obj;
+      if (typeof key === 'number' && toArrayIndex(key) !== -1) {
+        obj = obj.slice(0);
+        obj[key] = value;
       }
-      obj = obj.slice(0);
-      obj[key] = value;
       return obj;
     }
 
-    const prototype = Object.getPrototypeOf(obj);
+    prototype = Object.getPrototypeOf(obj);
 
     if (isMapLike(obj)) {
-      return isEqual(obj.get(key), value) ? obj : new prototype.constructor(obj).set(key, value);
+      return new prototype.constructor(obj).set(key, value);
     }
 
     if (isSetLike(obj)) {
@@ -56,18 +56,15 @@ export const naturalValueAccessor: ValueAccessor = {
         return obj;
       }
 
-      const values = Array.from(obj);
+      obj = Array.from(obj);
 
-      if (isEqual(values[key], value)) {
-        return obj;
-      }
-      values[key] = value;
-      return new prototype.constructor(values);
+      // Prevent unexpected undefined values
+      key = Math.min(key, obj.length);
+
+      obj[key] = value;
+      return new prototype.constructor(obj);
     }
 
-    if (isEqual(obj[key], value)) {
-      return obj;
-    }
     obj = Object.assign(Object.create(prototype), obj);
     obj[key] = value;
     return obj;
@@ -75,7 +72,7 @@ export const naturalValueAccessor: ValueAccessor = {
 };
 
 /**
- * Converts `k` to a non-negative integer if it represents a valid array index, or returns -1 if `k` isn't an index.
+ * Returns a non-negative integer if argument represents a valid array index, or returns -1 if argument isn't an index.
  */
 function toArrayIndex(k: any): number {
   return (typeof k === 'number' || (typeof k === 'string' && k === '' + (k = +k))) && k >>> 0 === k ? k : -1;
@@ -101,5 +98,5 @@ function isMapLike(obj: any): obj is Map<unknown, unknown> {
 }
 
 function isSetLike(obj: any): obj is Set<unknown> {
-  return typeof obj.add === 'function' && typeof obj[Symbol.iterator] === 'function';
+  return typeof obj.add === 'function' && typeof Symbol === 'function' && typeof obj[Symbol.iterator] === 'function';
 }
