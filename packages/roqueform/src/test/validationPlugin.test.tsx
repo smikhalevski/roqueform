@@ -6,26 +6,26 @@ describe('validationPlugin', () => {
   };
 
   test('enhances the field', () => {
-    const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
+    const field = createField({ aaa: 111 }, validationPlugin({ validator: noopValidator }));
 
-    expect(field.errors).toBe(null);
+    expect(field.errors.length).toBe(0);
     expect(field.isInvalid).toBe(false);
     expect(field.isValidating).toBe(false);
-    expect(field.errorCount).toBe(0);
-    expect(field.errorOrigin).toBe(0);
     expect(field.validator).toBe(noopValidator);
     expect(field.validation).toBeNull();
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('aaa').errors.length).toBe(0);
   });
 
-  test('sets an error to the root field', () => {
-    const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
+  test('adds an error to the root field', () => {
+    const field = createField({ aaa: 111 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
+
+    const errors = field.errors;
 
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
@@ -33,19 +33,18 @@ describe('validationPlugin', () => {
     field.addError(222);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBe(222);
-    expect(field.errorCount).toBe(1);
-    expect(field.errorOrigin).toBe(2);
+    expect(field.errors).toEqual([222]);
+    expect(field.errors).not.toBe(errors);
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('aaa').errors.length).toBe(0);
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).not.toHaveBeenCalled();
   });
 
-  test('sets an error to the child field', () => {
-    const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
+  test('adds an error to the child field', () => {
+    const field = createField({ aaa: 111 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -56,34 +55,17 @@ describe('validationPlugin', () => {
     field.at('aaa').addError(222);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
-    expect(field.errorCount).toBe(1);
-    expect(field.errorOrigin).toBe(0);
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(222);
-    expect(field.at('aaa').errorCount).toBe(1);
-    expect(field.at('aaa').errorOrigin).toBe(2);
+    expect(field.at('aaa').errors).toEqual([222]);
 
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
   });
 
-  test('deletes an error if null is set', () => {
-    const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
-
-    field.addError(222);
-    field.addError(null);
-
-    expect(field.isInvalid).toBe(false);
-    expect(field.errors).toBeNull();
-
-    expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
-  });
-
-  test('deletes an error from the root field', () => {
-    const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
+  test('does not add duplicated error by default', () => {
+    const field = createField({ aaa: 111 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -91,21 +73,59 @@ describe('validationPlugin', () => {
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
 
-    field.addError(111);
-    field.deleteError();
+    field.addError(222);
+    field.addError(222);
 
-    expect(field.isInvalid).toBe(false);
-    expect(field.errors).toBeNull();
+    expect(field.isInvalid).toBe(true);
+    expect(field.errors).toEqual([222]);
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('aaa').errors.length).toBe(0);
+
+    expect(subscriberMock).toHaveBeenCalledTimes(1);
+    expect(aaaSubscriberMock).not.toHaveBeenCalled();
+  });
+
+  test('uses errorMerger to add a new error', () => {
+    const errors = [333];
+    const errorMergerMock = jest.fn(() => errors);
+
+    const field = createField(
+      { aaa: 111 },
+      validationPlugin({ validator: noopValidator, errorsMerger: errorMergerMock })
+    );
+
+    field.addError(222);
+
+    expect(field.errors).toEqual(errors);
+    expect(errorMergerMock).toHaveBeenCalledTimes(1);
+    expect(errorMergerMock).toHaveBeenNthCalledWith(1, [], 222);
+  });
+
+  test('deletes an error from the root field', () => {
+    const field = createField({ aaa: 111 }, validationPlugin({ validator: noopValidator }));
+
+    const subscriberMock = jest.fn();
+    const aaaSubscriberMock = jest.fn();
+
+    field.on('*', subscriberMock);
+    field.at('aaa').on('*', aaaSubscriberMock);
+
+    field.addError(222);
+    field.deleteError(222);
+
+    expect(field.isInvalid).toBe(false);
+    expect(field.errors.length).toBe(0);
+
+    expect(field.at('aaa').isInvalid).toBe(false);
+    expect(field.at('aaa').errors.length).toBe(0);
 
     expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(aaaSubscriberMock).not.toHaveBeenCalled();
   });
 
   test('deletes an error from the child field', () => {
-    const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
+    const field = createField({ aaa: 111 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -114,20 +134,20 @@ describe('validationPlugin', () => {
     field.at('aaa').on('*', aaaSubscriberMock);
 
     field.at('aaa').addError(222);
-    field.at('aaa').deleteError();
+    field.at('aaa').deleteError(222);
 
     expect(field.isInvalid).toBe(false);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('aaa').errors.length).toBe(0);
 
     expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(2);
   });
 
   test('deletes an error from the child field but parent remains invalid', () => {
-    const field = createField({ aaa: 111, bbb: 222 }, validationPlugin(noopValidator));
+    const field = createField({ aaa: 111, bbb: 222 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -140,16 +160,16 @@ describe('validationPlugin', () => {
     field.at('aaa').addError(333);
     field.at('bbb').addError(444);
 
-    field.at('bbb').deleteError();
+    field.at('bbb').deleteError(444);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(333);
+    expect(field.at('aaa').errors).toEqual([333]);
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').errors).toBeNull();
+    expect(field.at('bbb').errors.length).toBe(0);
 
     expect(subscriberMock).toHaveBeenCalledTimes(3);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
@@ -157,7 +177,7 @@ describe('validationPlugin', () => {
   });
 
   test('clears all errors', () => {
-    const field = createField({ aaa: 111, bbb: 222 }, validationPlugin(noopValidator));
+    const field = createField({ aaa: 111, bbb: 222 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -173,13 +193,13 @@ describe('validationPlugin', () => {
     field.clearAllErrors();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('aaa').errors.length).toBe(0);
 
     expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').errors).toBeNull();
+    expect(field.at('bbb').errors.length).toBe(0);
 
     expect(subscriberMock).toHaveBeenCalledTimes(4);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(2);
@@ -196,7 +216,7 @@ describe('validationPlugin', () => {
           },
         },
       },
-      validationPlugin(noopValidator)
+      validationPlugin({ validator: noopValidator })
     );
 
     field.at('aaa').at('bbb').at('ccc').addError(333);
@@ -205,7 +225,7 @@ describe('validationPlugin', () => {
     field.clearAllErrors();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(false);
     expect(field.at('aaa').at('bbb').isInvalid).toBe(false);
@@ -217,8 +237,10 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111 },
       validationPlugin({
-        validate(field) {
-          field.at('aaa').addValidationError(field.validation!, 222);
+        validator: {
+          validate(field) {
+            field.at('aaa').addError(222);
+          },
         },
       })
     );
@@ -233,42 +255,42 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(222);
+    expect(field.at('aaa').errors).toEqual([222]);
 
     expect(subscriberMock).toHaveBeenCalledTimes(5);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'validation:start',
       targetField: field,
       originField: field,
-      data: { root: field, abortController: null },
+      data: { rootField: field, abortController: null },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'validation:start',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: null },
+      data: { rootField: field, abortController: null },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(3, {
       type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: null,
+      data: [],
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(4, {
       type: 'validation:end',
       targetField: field,
       originField: field,
-      data: { root: field, abortController: null },
+      data: { rootField: field, abortController: null },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(5, {
       type: 'validation:end',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: null },
+      data: { rootField: field, abortController: null },
     });
 
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(3);
@@ -276,27 +298,29 @@ describe('validationPlugin', () => {
       type: 'validation:start',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: null },
+      data: { rootField: field, abortController: null },
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: null,
+      data: [],
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(3, {
       type: 'validation:end',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: null },
+      data: { rootField: field, abortController: null },
     });
   });
 
   test('synchronously validates the root field with a callback validator', () => {
     const field = createField(
       { aaa: 111 },
-      validationPlugin(field => {
-        field.at('aaa').addValidationError(field.validation!, 222);
+      validationPlugin({
+        validator: field => {
+          field.at('aaa').addError(222);
+        },
       })
     );
 
@@ -310,11 +334,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(222);
+    expect(field.at('aaa').errors).toEqual([222]);
 
     expect(subscriberMock).toHaveBeenCalledTimes(5);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(3);
@@ -324,8 +348,10 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111 },
       validationPlugin({
-        validate(field) {
-          field.addValidationError(field.validation!, 222);
+        validator: {
+          validate(field) {
+            field.addError(222);
+          },
         },
       })
     );
@@ -340,30 +366,30 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(222);
+    expect(field.at('aaa').errors).toEqual([222]);
 
     expect(subscriberMock).toHaveBeenCalledTimes(3);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'validation:start',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: { root: field.at('aaa'), abortController: null },
+      data: { rootField: field.at('aaa'), abortController: null },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: null,
+      data: [],
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(3, {
       type: 'validation:end',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: { root: field.at('aaa'), abortController: null },
+      data: { rootField: field.at('aaa'), abortController: null },
     });
 
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(3);
@@ -371,19 +397,19 @@ describe('validationPlugin', () => {
       type: 'validation:start',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: { root: field.at('aaa'), abortController: null },
+      data: { rootField: field.at('aaa'), abortController: null },
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: null,
+      data: [],
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(3, {
       type: 'validation:end',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: { root: field.at('aaa'), abortController: null },
+      data: { rootField: field.at('aaa'), abortController: null },
     });
   });
 
@@ -391,9 +417,11 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111, bbb: 222 },
       validationPlugin({
-        validate(field) {
-          field.at('aaa').addValidationError(field.validation!, 333);
-          field.at('bbb').addValidationError(field.validation!, 444);
+        validator: {
+          validate(field) {
+            field.at('aaa').addError(333);
+            field.at('bbb').addError(444);
+          },
         },
       })
     );
@@ -401,106 +429,25 @@ describe('validationPlugin', () => {
     field.validate();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(333);
+    expect(field.at('aaa').errors).toEqual([333]);
 
     expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').errors).toBe(444);
-  });
-
-  test('clears previous validation errors before validation', () => {
-    const validateMock = jest.fn();
-
-    validateMock.mockImplementationOnce(field => {
-      field.at('aaa').setValidationError(field.validation, 111);
-      field.at('bbb').setValidationError(field.validation, 222);
-    });
-
-    validateMock.mockImplementationOnce(field => {
-      field.at('aaa').setValidationError(field.validation, 111);
-    });
-
-    const field = createField(
-      { aaa: 0, bbb: 'ddd' },
-      validationPlugin({
-        validate: validateMock,
-      })
-    );
-
-    field.validate();
-    field.validate();
-
-    expect(validateMock).toHaveBeenCalledTimes(2);
-
-    expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
-
-    expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(111);
-
-    expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').errors).toBeNull();
-  });
-
-  test('does not clear an error set by the user before validation', () => {
-    const field = createField(
-      { aaa: 0, bbb: 'ddd' },
-      validationPlugin({
-        validate(field) {
-          field.at('aaa').addValidationError(field.validation!, 111);
-        },
-      })
-    );
-
-    field.at('bbb').addError(222);
-
-    field.validate();
-
-    expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
-
-    expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toEqual(111);
-
-    expect(field.at('bbb').isInvalid).toBe(true);
-    expect(field.at('bbb').errors).toBe(222);
-  });
-
-  test('does not set validation errors for transient fields', () => {
-    const field = createField(
-      { aaa: 0, bbb: 'ddd' },
-      validationPlugin({
-        validate(field) {
-          field.at('aaa').addValidationError(field.validation!, 111);
-          field.at('bbb').addValidationError(field.validation!, 222);
-        },
-      })
-    );
-
-    field.at('bbb').setTransientValue('');
-
-    field.validate();
-
-    expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
-
-    expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(111);
-
-    expect(field.at('bbb').isInvalid).toBe(false);
-    expect(field.at('bbb').errors).toBeNull();
+    expect(field.at('bbb').errors).toEqual([444]);
   });
 
   test('asynchronously validates the root field', async () => {
     const field = createField(
       { aaa: 111 },
       validationPlugin({
-        validate: () => undefined,
+        validator: {
+          validate: () => undefined,
 
-        async validateAsync(field) {
-          field.at('aaa').addValidationError(field.validation!, 222);
+          async validateAsync(field) {
+            field.at('aaa').addError(222);
+          },
         },
       })
     );
@@ -522,42 +469,42 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(222);
+    expect(field.at('aaa').errors).toEqual([222]);
 
     expect(subscriberMock).toHaveBeenCalledTimes(5);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'validation:start',
       targetField: field,
       originField: field,
-      data: { root: field, abortController: expect.any(AbortController) },
+      data: { rootField: field, abortController: expect.any(AbortController) },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'validation:start',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: expect.any(AbortController) },
+      data: { rootField: field, abortController: expect.any(AbortController) },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(3, {
       type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: null,
+      data: [],
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(4, {
       type: 'validation:end',
       targetField: field,
       originField: field,
-      data: { root: field, abortController: expect.any(AbortController) },
+      data: { rootField: field, abortController: expect.any(AbortController) },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(5, {
       type: 'validation:end',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: expect.any(AbortController) },
+      data: { rootField: field, abortController: expect.any(AbortController) },
     });
 
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(3);
@@ -565,19 +512,19 @@ describe('validationPlugin', () => {
       type: 'validation:start',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: expect.any(AbortController) },
+      data: { rootField: field, abortController: expect.any(AbortController) },
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'change:errors',
       targetField: field.at('aaa'),
       originField: field.at('aaa'),
-      data: null,
+      data: [],
     });
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(3, {
       type: 'validation:end',
       targetField: field.at('aaa'),
       originField: field,
-      data: { root: field, abortController: expect.any(AbortController) },
+      data: { rootField: field, abortController: expect.any(AbortController) },
     });
   });
 
@@ -585,10 +532,12 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111 },
       validationPlugin({
-        validate: () => undefined,
+        validator: {
+          validate: () => undefined,
 
-        async validateAsync(field) {
-          field.addValidationError(field.validation!, 222);
+          async validateAsync(field) {
+            field.addError(222);
+          },
         },
       })
     );
@@ -608,11 +557,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(true);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toBe(222);
+    expect(field.at('aaa').errors).toEqual([222]);
 
     expect(subscriberMock).toHaveBeenCalledTimes(3);
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(3);
@@ -622,8 +571,10 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111, bbb: 222 },
       validationPlugin({
-        validate() {
-          throw new Error('expected');
+        validator: {
+          validate() {
+            throw new Error('expected');
+          },
         },
       })
     );
@@ -634,21 +585,23 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(false);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('aaa').errors.length).toBe(0);
   });
 
   test('cleans up validation if an async error is thrown', async () => {
     const field = createField(
       { aaa: 111, bbb: 222 },
       validationPlugin({
-        validate: () => undefined,
+        validator: {
+          validate: () => undefined,
 
-        async validateAsync() {
-          throw new Error('expected');
+          async validateAsync() {
+            throw new Error('expected');
+          },
         },
       })
     );
@@ -661,11 +614,11 @@ describe('validationPlugin', () => {
 
     expect(field.isValidating).toBe(false);
     expect(field.isInvalid).toBe(false);
-    expect(field.errors).toBeNull();
+    expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').errors).toBeNull();
+    expect(field.at('aaa').errors.length).toBe(0);
   });
 
   test('aborts validation', async () => {
@@ -674,10 +627,12 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111, bbb: 222 },
       validationPlugin({
-        validate: () => undefined,
+        validator: {
+          validate: () => undefined,
 
-        async validateAsync(field) {
-          lastSignal = field.validation!.abortController!.signal;
+          async validateAsync(field) {
+            lastSignal = field.validation!.abortController!.signal;
+          },
         },
       })
     );
@@ -702,10 +657,12 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111, bbb: 222 },
       validationPlugin({
-        validate: () => undefined,
+        validator: {
+          validate: () => undefined,
 
-        async validateAsync(field) {
-          signals.push(field.validation!.abortController!.signal);
+          async validateAsync(field) {
+            signals.push(field.validation!.abortController!.signal);
+          },
         },
       })
     );
@@ -726,10 +683,12 @@ describe('validationPlugin', () => {
     const field = createField(
       { aaa: 111, bbb: 222 },
       validationPlugin({
-        validate: () => undefined,
+        validator: {
+          validate: () => undefined,
 
-        async validateAsync(field) {
-          signals.push(field.validation!.abortController!.signal);
+          async validateAsync(field) {
+            signals.push(field.validation!.abortController!.signal);
+          },
         },
       })
     );
@@ -744,37 +703,8 @@ describe('validationPlugin', () => {
     expect(signals[1].aborted).toBe(false);
   });
 
-  test('does not apply errors from the aborted validation', async () => {
-    const validateAsyncMock = jest.fn();
-
-    validateAsyncMock.mockImplementationOnce(async field => {
-      field.at('aaa').setValidationError(field.validation, 333);
-    });
-
-    validateAsyncMock.mockImplementationOnce(async field => {
-      field.at('bbb').setValidationError(field.validation, 444);
-    });
-
-    const field = createField(
-      { aaa: 111, bbb: 222 },
-      validationPlugin({
-        validate: () => undefined,
-        validateAsync: validateAsyncMock,
-      })
-    );
-
-    const promise = field.validateAsync();
-
-    await field.validateAsync();
-
-    expect(field.at('aaa').errors).toBeNull();
-    expect(field.at('bbb').errors).toBe(444);
-
-    await expect(promise).rejects.toEqual(new Error('Validation aborted'));
-  });
-
   test('validation can be called in value change subscriber', () => {
-    const field = createField({ aaa: 111 }, validationPlugin(noopValidator));
+    const field = createField({ aaa: 111 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn(() => {
       field.validate();

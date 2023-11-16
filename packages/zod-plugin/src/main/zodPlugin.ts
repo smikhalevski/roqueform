@@ -103,12 +103,12 @@ function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnT
     return;
   }
 
-  const basePath = getPath(validation.root);
+  const basePath = getPath(validation.rootField);
 
   issues: for (const issue of result.error.issues) {
     const { path } = issue;
 
-    if (validation.root.validation !== validation) {
+    if (validation.rootField.validation !== validation) {
       // Validation was aborted
       break;
     }
@@ -121,7 +121,7 @@ function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnT
       }
     }
 
-    let child = validation.root;
+    let child = validation.rootField;
     for (let i = basePath.length; i < path.length; ++i) {
       child = child.at(path[i]);
     }

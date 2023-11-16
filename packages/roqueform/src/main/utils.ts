@@ -43,16 +43,16 @@ export function callOrGet(value: unknown, arg?: unknown) {
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
     for (let ancestor: FieldController | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
-      const typeSubscribers = ancestor.subscribers[event.type];
-      const globSubscribers = ancestor.subscribers['*'];
+      const subscribers1 = ancestor.subscribers[event.type];
+      const subscribers2 = ancestor.subscribers['*'];
 
-      if (typeSubscribers !== undefined) {
-        for (const subscriber of typeSubscribers) {
+      if (subscribers1 !== undefined) {
+        for (const subscriber of subscribers1) {
           subscriber(event);
         }
       }
-      if (globSubscribers !== undefined) {
-        for (const subscriber of globSubscribers) {
+      if (subscribers2 !== undefined) {
+        for (const subscriber of subscribers2) {
           subscriber(event);
         }
       }

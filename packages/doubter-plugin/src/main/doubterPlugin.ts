@@ -90,7 +90,7 @@ function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): v
   }
 
   for (const issue of result.issues) {
-    let child = validation.root;
+    let child = validation.rootField;
 
     if (child.validation !== validation) {
       // Validation was aborted
@@ -101,6 +101,6 @@ function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): v
         child = child.at(key);
       }
     }
-    child.addError(prependPath(validation.root, issue));
+    child.addError(prependPath(validation.rootField, issue));
   }
 }

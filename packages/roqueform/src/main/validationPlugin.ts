@@ -24,7 +24,7 @@ export interface Validation<Plugin = ValidationPlugin> {
   /**
    * The field where the validation was triggered.
    */
-  root: Field<Plugin>;
+  rootField: Field<Plugin>;
 
   /**
    * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
@@ -223,7 +223,7 @@ export function validationPlugin<Error = any, Options = void>(
     field.errors = [];
     field.errorsMerger = errorsMerger;
     field.validator = validator;
-    field.validation = null;
+    field.validation = field.parentField !== null ? field.parentField.validation : null;
 
     Object.defineProperties(field, {
       isInvalid: { configurable: true, get: () => isInvalid(field) },
@@ -349,7 +349,7 @@ function getInvalidFields(field: Field<ValidationPlugin>, batch: Field<Validatio
 function startValidation(field: Field<ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
   field.validation = validation;
 
-  events.push({ type: 'validation:start', targetField: field, originField: validation.root, data: validation });
+  events.push({ type: 'validation:start', targetField: field, originField: validation.rootField, data: validation });
 
   if (field.children !== null) {
     for (const child of field.children) {
@@ -368,14 +368,13 @@ function endValidation(field: Field<ValidationPlugin>, validation: Validation, e
 
   field.validation = null;
 
-  events.push({ type: 'validation:end', targetField: field, originField: validation.root, data: validation });
+  events.push({ type: 'validation:end', targetField: field, originField: validation.rootField, data: validation });
 
   if (field.children !== null) {
     for (const child of field.children) {
       endValidation(child, validation, events);
     }
   }
-
   return events;
 }
 
@@ -383,7 +382,7 @@ function abortValidation(field: Field<ValidationPlugin>, events: Event[]): Event
   const { validation } = field;
 
   if (validation !== null) {
-    endValidation(validation.root, validation, events);
+    endValidation(validation.rootField, validation, events);
     validation.abortController?.abort();
   }
   return events;
@@ -396,7 +395,7 @@ function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
     throw new Error(ERROR_ABORT);
   }
 
-  const validation: Validation = { root: field, abortController: null };
+  const validation: Validation = { rootField: field, abortController: null };
 
   try {
     dispatchEvents(startValidation(field, validation, []));
@@ -420,17 +419,19 @@ function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
     throw new Error(ERROR_ABORT);
   }
   dispatchEvents(endValidation(field, validation, []));
-  return field.isInvalid;
+  return !field.isInvalid;
 }
 
 function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promise<boolean> {
   return new Promise((resolve, reject) => {
+    dispatchEvents(abortValidation(field, []));
+
     if (field.validation !== null) {
       reject(new Error(ERROR_ABORT));
       return;
     }
 
-    const validation: Validation = { root: field, abortController: new AbortController() };
+    const validation: Validation = { rootField: field, abortController: new AbortController() };
 
     try {
       dispatchEvents(startValidation(field, validation, []));
@@ -458,7 +459,7 @@ function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promis
             throw new Error(ERROR_ABORT);
           }
           dispatchEvents(endValidation(field, validation, []));
-          return field.isInvalid;
+          return !field.isInvalid;
         },
         error => {
           dispatchEvents(endValidation(field, validation, []));
