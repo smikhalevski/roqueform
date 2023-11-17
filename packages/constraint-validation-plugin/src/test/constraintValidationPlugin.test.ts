@@ -19,14 +19,14 @@ describe('constraintValidationPlugin', () => {
   test('enhances the field', () => {
     const field = createField({ aaa: 111 }, constraintValidationPlugin());
 
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
     expect(field.element).toBeNull();
     expect(field.isInvalid).toBe(false);
     expect(field.validity).toBeNull();
     expect(field.errorCount).toBe(0);
     expect(field.errorOrigin).toBe(0);
 
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
     expect(field.at('aaa').element).toBeNull();
     expect(field.at('aaa').isInvalid).toBe(false);
     expect(field.at('aaa').validity).toBeNull();
@@ -46,11 +46,11 @@ describe('constraintValidationPlugin', () => {
     field.at('aaa').setError('222');
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
     expect(field.errorCount).toBe(1);
     expect(field.errorOrigin).toBe(0);
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toBe('222');
+    expect(field.at('aaa').errors).toBe('222');
     expect(field.at('aaa').errorCount).toBe(1);
     expect(field.at('aaa').errorOrigin).toBe(2);
 
@@ -70,11 +70,11 @@ describe('constraintValidationPlugin', () => {
     field.setError('222');
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBe('222');
+    expect(field.errors).toBe('222');
     expect(field.errorCount).toBe(1);
     expect(field.errorOrigin).toBe(2);
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
     expect(field.at('aaa').errorCount).toBe(0);
     expect(field.at('aaa').errorOrigin).toBe(0);
 
@@ -106,7 +106,7 @@ describe('constraintValidationPlugin', () => {
     field.deleteError();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
     expect(field.errorCount).toBe(0);
     expect(field.errorOrigin).toBe(0);
     expect(subscriberMock).toHaveBeenCalledTimes(2);
@@ -119,15 +119,15 @@ describe('constraintValidationPlugin', () => {
 
     field.ref(element);
 
-    expect(field.error).toEqual('Constraints not satisfied');
+    expect(field.errors).toEqual('Constraints not satisfied');
 
     field.setError('xxx');
 
-    expect(field.error).toEqual('xxx');
+    expect(field.errors).toEqual('xxx');
 
     field.deleteError();
 
-    expect(field.error).toEqual('Constraints not satisfied');
+    expect(field.errors).toEqual('Constraints not satisfied');
   });
 
   test('clears an error of a child field', () => {
@@ -143,10 +143,10 @@ describe('constraintValidationPlugin', () => {
     field.clearErrors();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').error).toBeNull();
+    expect(field.at('aaa').errors).toBeNull();
   });
 
   test('reports validity of the root field', () => {
@@ -188,10 +188,10 @@ describe('constraintValidationPlugin', () => {
     field.at('aaa').ref(element);
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').error).toEqual('Constraints not satisfied');
+    expect(field.at('aaa').errors).toEqual('Constraints not satisfied');
   });
 
   test('deletes an error when a ref is changed', () => {
@@ -208,7 +208,7 @@ describe('constraintValidationPlugin', () => {
     jest.runAllTimers();
 
     expect(field.isInvalid).toBe(true);
-    expect(field.error).toEqual('Constraints not satisfied');
+    expect(field.errors).toEqual('Constraints not satisfied');
     expect(subscriberMock).toHaveBeenCalledTimes(1);
 
     field.ref(null);
@@ -216,7 +216,7 @@ describe('constraintValidationPlugin', () => {
     jest.runAllTimers();
 
     expect(field.isInvalid).toBe(false);
-    expect(field.error).toBeNull();
+    expect(field.errors).toBeNull();
     expect(subscriberMock).toHaveBeenCalledTimes(2);
   });
 

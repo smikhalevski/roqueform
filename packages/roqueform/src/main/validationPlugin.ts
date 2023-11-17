@@ -294,7 +294,8 @@ function clearAllErrors(
 ): Event[] {
   const prevErrors = field.errors;
 
-  let nextErrors;
+  let nextErrors: unknown[] | undefined;
+
   if (prevErrors.length !== 0) {
     if (predicate !== undefined) {
       for (const error of prevErrors) {

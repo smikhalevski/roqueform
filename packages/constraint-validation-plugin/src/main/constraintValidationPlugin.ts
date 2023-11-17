@@ -1,15 +1,23 @@
 import { dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
 
-const EVENT_CHANGE_ERROR = 'change:errors';
+const EVENT_CHANGE_ERRORS = 'change:errors';
+const ERROR_CODE_CUSTOM = 'custom';
+const ERROR_CODE_CONSTRAINT = 'constraint';
+
+export interface ConstraintError {
+  code?: string;
+  message?: any;
+  meta?: any;
+}
 
 /**
  * The plugin added to fields by the {@link constraintValidationPlugin}.
  */
 export interface ConstraintValidationPlugin {
   /**
-   * A non-empty error message associated with the field, or `null` if there's no error.
+   * The array of errors associated with this field.
    */
-  error: string | null;
+  errors: ConstraintError[];
 
   /**
    * The DOM element associated with the field, or `null` if there's no associated element.
@@ -17,7 +25,7 @@ export interface ConstraintValidationPlugin {
   element: Element | null;
 
   /**
-   * `true` if the field or any of its child fields have {@link error an associated error}, or `false` otherwise.
+   * `true` if the field or any of its child fields have {@link errors an associated error}, or `false` otherwise.
    */
   readonly isInvalid: boolean;
 
@@ -28,19 +36,6 @@ export interface ConstraintValidationPlugin {
   validity: ValidityState | null;
 
   /**
-   * The total number of errors associated with this field and its child fields.
-   */
-  errorCount: number;
-
-  /**
-   * The origin of the associated error:
-   * - 0 if there's no associated error.
-   * - 1 if an error was set by Constraint Validation API;
-   * - 2 if an error was set using {@link ConstraintValidationPlugin.setError};
-   */
-  errorOrigin: 0 | 1 | 2;
-
-  /**
    * Associates the field with the {@link element DOM element}.
    */
   ref(element: Element | null): void;
@@ -48,21 +43,34 @@ export interface ConstraintValidationPlugin {
   /**
    * Associates an error with the field.
    *
-   * @param error The error to set. If `null`, `undefined`, or an empty string then an error is deleted.
+   * @param error The error to add.
    */
-  setError(error: string | null | undefined): void;
+  addError(error: ConstraintError | string): void;
 
   /**
-   * Deletes an error associated with this field. If this field has {@link element an associated element} that supports
-   * [Constraint Validation API](https://developer.mozilla.org/en-US/docs/Web/HTML/Constraint_validation) and the
-   * element has a non-empty `validationMessage` then this message would be immediately set as an error for this field.
+   * Deletes an error associated with this field.
+   *
+   * @param error The error to delete.
    */
-  deleteError(): void;
+  deleteError(error: ConstraintError): void;
+
+  /**
+   * Deletes all errors associated with this field.
+   */
+  clearErrors(): void;
 
   /**
    * Recursively deletes errors associated with this field and all of its child fields.
+   *
+   * @param predicate The callback that returns truthy value if an error must be deleted. If omitted then all errors are
+   * deleted.
    */
-  clearErrors(): void;
+  clearAllErrors(predicate?: (error: ConstraintError, field: Field<PluginOf<this>>) => boolean): void;
+
+  /**
+   * Returns all fields that have associated errors.
+   */
+  getInvalidFields(): Field<PluginOf<this>>[];
 
   /**
    * Shows error message balloon for the first element that is associated with this field or any of its child fields,
@@ -74,17 +82,7 @@ export interface ConstraintValidationPlugin {
   reportValidity(): boolean;
 
   /**
-   * Returns all errors associated with this field and its child fields.
-   */
-  getErrors(): string[];
-
-  /**
-   * Returns all fields that have an error.
-   */
-  getInvalidFields(): Field<PluginOf<this>>[];
-
-  /**
-   * Subscribes to {@link error an associated error} changes of this field or any of its descendants.
+   * Subscribes to {@link errors an associated error} changes of this field or any of its descendants.
    *
    * @param eventType The type of the event.
    * @param subscriber The subscriber that would be triggered.
@@ -92,7 +90,7 @@ export interface ConstraintValidationPlugin {
    * @see {@link error}
    * @see {@link isInvalid}
    */
-  on(eventType: 'change:errors', subscriber: Subscriber<PluginOf<this>, string | null>): Unsubscribe;
+  on(eventType: 'change:errors', subscriber: Subscriber<PluginOf<this>, ConstraintError[]>): Unsubscribe;
 }
 
 /**
@@ -100,19 +98,17 @@ export interface ConstraintValidationPlugin {
  */
 export function constraintValidationPlugin(): PluginInjector<ConstraintValidationPlugin> {
   return field => {
-    field.error = null;
+    field.errors = [];
     field.element = null;
     field.validity = null;
-    field.errorCount = 0;
-    field.errorOrigin = 0;
 
     Object.defineProperties(field, {
-      isInvalid: { configurable: true, get: () => field.errorCount !== 0 },
+      isInvalid: { configurable: true, get: () => isInvalid(field) },
     });
 
     const changeListener = () => {
       if (isValidatable(field.element)) {
-        dispatchEvents(setError(field, field.element.validationMessage, 1, []));
+        dispatchEvents(addOrDeleteConstraintError(field, field.element.validationMessage, []));
       }
     };
 
@@ -145,10 +141,10 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         nextElement.addEventListener('invalid', changeListener);
 
         field.validity = nextElement.validity;
-        setError(field, nextElement.validationMessage, 1, events);
+        addOrDeleteConstraintError(field, nextElement.validationMessage, events);
       } else {
         field.validity = null;
-        deleteError(field, 1, events);
+        addOrDeleteConstraintError(field, '', events);
       }
 
       // Subscribers added in React.useLayoutEffect must receive these events
@@ -162,23 +158,49 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
       }
     };
 
-    field.setError = error => {
-      dispatchEvents(setError(field, error, 2, []));
+    field.addError = error => {
+      const prevErrors = field.errors;
+      const nextErrors = concatErrors(
+        prevErrors,
+        typeof error === 'string' ? { code: ERROR_CODE_CUSTOM, message: error } : error
+      );
+
+      if (prevErrors !== nextErrors) {
+        field.errors = nextErrors;
+
+        dispatchEvents([{ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors }]);
+      }
     };
 
-    field.deleteError = () => {
-      dispatchEvents(deleteError(field, 2, []));
+    field.deleteError = error => {
+      const prevErrors = field.errors;
+      const errorIndex = prevErrors.indexOf(error);
+
+      if (errorIndex !== -1) {
+        const nextErrors = prevErrors.slice(0);
+        nextErrors.splice(errorIndex, 1);
+        field.errors = nextErrors;
+
+        dispatchEvents([{ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors }]);
+      }
     };
 
     field.clearErrors = () => {
-      dispatchEvents(clearErrors(field, []));
+      const prevErrors = field.errors;
+
+      if (prevErrors.length !== 0) {
+        field.errors = [];
+        dispatchEvents([{ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors }]);
+      }
     };
 
-    field.reportValidity = () => reportValidity(field);
-
-    field.getErrors = () => getInvalidFields(field, []).map(field => field.error!);
+    field.clearAllErrors = predicate => {
+      dispatchEvents(clearAllErrors(field, predicate, []));
+    };
 
     field.getInvalidFields = () => getInvalidFields(field, []);
+
+    field.reportValidity = () => reportValidity(field);
   };
 }
 
@@ -192,82 +214,83 @@ type ValidatableElement =
   | HTMLSelectElement
   | HTMLTextAreaElement;
 
-function setError(
-  field: Field<ConstraintValidationPlugin>,
-  error: string | null | undefined,
-  errorOrigin: 1 | 2,
-  events: Event[]
-): Event[] {
-  if (error === null || error === undefined || error.length === 0) {
-    return deleteError(field, errorOrigin, events);
+function concatErrors(errors: ConstraintError[], error: ConstraintError): ConstraintError[] {
+  for (const otherError of errors) {
+    if (otherError.code === error.code) {
+      return errors;
+    }
   }
-
-  const originalError = field.error;
-
-  if (field.errorOrigin > errorOrigin || (originalError === error && field.errorOrigin === errorOrigin)) {
-    return events;
-  }
-
-  if (errorOrigin === 2 && isValidatable(field.element)) {
-    // Custom validation error
-    field.element.setCustomValidity(error);
-  }
-
-  field.error = error;
-  field.errorOrigin = errorOrigin;
-
-  events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
-
-  if (originalError !== null) {
-    return events;
-  }
-
-  field.errorCount++;
-
-  for (let ancestor = field.parentField; ancestor !== null; ancestor = ancestor.parentField) {
-    ancestor.errorCount++;
-  }
-  return events;
+  return errors.concat(error);
 }
 
-function deleteError(field: Field<ConstraintValidationPlugin>, errorOrigin: 1 | 2, events: Event[]): Event[] {
-  const { error: originalError, element } = field;
+function addOrDeleteConstraintError(
+  field: Field<ConstraintValidationPlugin>,
+  message: string,
+  events: Event[]
+): Event[] {
+  const prevErrors = field.errors;
 
-  if (field.errorOrigin > errorOrigin || originalError === null) {
-    return events;
-  }
+  let nextErrors;
+  let errorIndex = -1;
 
-  if (isValidatable(element)) {
-    element.setCustomValidity('');
-
-    if (!element.validity.valid) {
-      field.errorOrigin = 1;
-
-      if (originalError !== (field.error = element.validationMessage)) {
-        events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
-      }
-      return events;
+  for (let i = 0; i < prevErrors.length; ++i) {
+    if (prevErrors[i].code === ERROR_CODE_CONSTRAINT) {
+      errorIndex = i;
+      break;
     }
   }
 
-  field.error = null;
-  field.errorOrigin = 0;
-  field.errorCount--;
-
-  events.push({ type: EVENT_CHANGE_ERROR, targetField: field, originField: field, data: originalError });
-
-  for (let ancestor = field.parentField; ancestor !== null; ancestor = ancestor.parentField) {
-    ancestor.errorCount--;
+  if (errorIndex !== -1) {
+    if (message.length !== 0 && prevErrors[errorIndex].message === message) {
+      // Message didn't change
+      return events;
+    }
+    nextErrors = prevErrors.slice(0);
+    nextErrors.splice(errorIndex, 1);
+    field.errors = nextErrors;
   }
+
+  if (message.length !== 0) {
+    field.errors = nextErrors ||= [];
+    nextErrors.push({ code: ERROR_CODE_CONSTRAINT, message, meta: undefined });
+  }
+
+  if (nextErrors !== undefined) {
+    events.push({ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors });
+  }
+
   return events;
 }
 
-function clearErrors(field: Field<ConstraintValidationPlugin>, events: Event[]): Event[] {
-  deleteError(field, 2, events);
+function clearAllErrors(
+  field: Field<ConstraintValidationPlugin>,
+  predicate: ((error: any, field: Field<ConstraintValidationPlugin>) => any) | undefined,
+  events: Event[]
+): Event[] {
+  const prevErrors = field.errors;
+
+  let nextErrors: ConstraintError[] | undefined;
+
+  if (prevErrors.length !== 0) {
+    if (predicate !== undefined) {
+      for (const error of prevErrors) {
+        if (!predicate(error, field)) {
+          (nextErrors ||= []).push(error);
+        }
+      }
+    } else {
+      nextErrors = [];
+    }
+  }
+
+  if (nextErrors !== undefined) {
+    field.errors = nextErrors;
+    events.push({ type: EVENT_CHANGE_ERRORS, targetField: field, originField: field, data: prevErrors });
+  }
 
   if (field.children !== null) {
     for (const child of field.children) {
-      clearErrors(child, events);
+      clearAllErrors(child, predicate, events);
     }
   }
   return events;
@@ -281,14 +304,28 @@ function reportValidity(field: Field<ConstraintValidationPlugin>): boolean {
       }
     }
   }
-  return isValidatable(field.element) ? field.element.reportValidity() : field.error === null;
+  return isValidatable(field.element) ? field.element.reportValidity() : field.errors.length === 0;
+}
+
+function isInvalid(field: Field<ConstraintValidationPlugin>): boolean {
+  if (field.errors.length !== 0) {
+    return true;
+  }
+  if (field.children !== null) {
+    for (const child of field.children) {
+      if (isInvalid(child)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function getInvalidFields(
   field: Field<ConstraintValidationPlugin>,
   batch: Field<ConstraintValidationPlugin>[]
 ): Field<ConstraintValidationPlugin>[] {
-  if (field.error !== null) {
+  if (field.errors.length !== 0) {
     batch.push(field);
   }
   if (field.children !== null) {

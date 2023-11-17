@@ -46,13 +46,13 @@ export function createField(initialValue?: unknown, plugin?: PluginInjector | Va
 
 function getOrCreateField(
   accessor: ValueAccessor,
-  parent: Field | null,
+  parentField: Field | null,
   key: unknown,
   initialValue: unknown,
   plugin: PluginInjector | null
 ): Field {
-  if (parent !== null && parent.children !== null) {
-    for (const child of parent.children) {
+  if (parentField !== null && parentField.children !== null) {
+    for (const child of parentField.children) {
       if (isEqual(child.key, key)) {
         return child;
       }
@@ -65,7 +65,7 @@ function getOrCreateField(
     initialValue,
     isTransient: false,
     rootField: null!,
-    parentField: parent,
+    parentField,
     children: null,
     subscribers: {},
     valueAccessor: accessor,
@@ -98,11 +98,11 @@ function getOrCreateField(
 
   field.rootField = field;
 
-  if (parent !== null) {
-    field.value = accessor.get(parent.value, key);
-    field.initialValue = accessor.get(parent.initialValue, key);
-    field.rootField = parent.rootField;
-    (parent.children ||= []).push(field);
+  if (parentField !== null) {
+    field.value = accessor.get(parentField.value, key);
+    field.initialValue = accessor.get(parentField.initialValue, key);
+    field.rootField = parentField.rootField;
+    (parentField.children ||= []).push(field);
   }
 
   if (plugin !== null) {

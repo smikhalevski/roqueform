@@ -40,7 +40,9 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
     const { addError } = field;
 
     field.addError = error => {
-      addError(typeof error === 'string' ? prependPath(field, { message: error, input: field.value }) : error);
+      addError(
+        typeof error === 'string' ? prependPath(field, { code: 'custom', message: error, input: field.value }) : error
+      );
     };
   };
 }
@@ -69,7 +71,11 @@ const validator: Validator<Issue, ParseOptions> = {
 
 const errorsMerger: ValidationErrorsMerger<Issue> = (errors, error) => {
   for (const otherError of errors) {
-    if (error.code !== undefined ? otherError.code === error.code : otherError.message === error.message) {
+    if (
+      otherError.code !== undefined && error.code !== undefined
+        ? otherError.code === error.code
+        : otherError.message === error.message
+    ) {
       return errors;
     }
   }

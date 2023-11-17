@@ -36,7 +36,7 @@ export function callOrGet(value: unknown, arg?: unknown) {
 }
 
 /**
- * Dispatches multiple events to field subscribers.
+ * Dispatches events to appropriate subscribers.
  *
  * @param events The array of events to dispatch.
  */
