@@ -4,7 +4,6 @@ import {
   FieldController,
   PluginInjector,
   Validation,
-  ValidationErrorsMerger,
   validationPlugin,
   ValidationPlugin,
   Validator,
@@ -33,7 +32,7 @@ export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector
   let plugin;
 
   return field => {
-    (plugin ||= validationPlugin({ validator, errorsMerger }))(field);
+    (plugin ||= validationPlugin({ validator, concatErrors }))(field);
 
     field.valueType = field.parentField?.valueType || type;
 
@@ -67,14 +66,14 @@ const validator: Validator<ZodIssue, Partial<ParseParams>> = {
   },
 };
 
-const errorsMerger: ValidationErrorsMerger<ZodIssue> = (errors, error) => {
+function concatErrors(errors: ZodIssue[], error: ZodIssue): ZodIssue[] {
   for (const otherError of errors) {
     if (otherError.code === error.code) {
       return errors;
     }
   }
   return errors.concat(error);
-};
+}
 
 function getValue(field: Field<ValidationPlugin>): unknown {
   let value = field.value;

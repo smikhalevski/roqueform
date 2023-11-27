@@ -4,7 +4,6 @@ import {
   FieldController,
   PluginInjector,
   Validation,
-  ValidationErrorsMerger,
   ValidationPlugin,
   validationPlugin,
   Validator,
@@ -33,7 +32,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
   let plugin;
 
   return field => {
-    (plugin ||= validationPlugin({ validator, errorsMerger }))(field);
+    (plugin ||= validationPlugin({ validator, concatErrors }))(field);
 
     field.valueShape = field.parentField === null ? shape : field.parentField.valueShape?.at(field.key) || null;
 
@@ -69,7 +68,7 @@ const validator: Validator<Issue, ParseOptions> = {
   },
 };
 
-const errorsMerger: ValidationErrorsMerger<Issue> = (errors, error) => {
+function concatErrors(errors: Issue[], error: Issue): Issue[] {
   for (const otherError of errors) {
     if (
       otherError.code !== undefined && error.code !== undefined
@@ -80,7 +79,7 @@ const errorsMerger: ValidationErrorsMerger<Issue> = (errors, error) => {
     }
   }
   return errors.concat(error);
-};
+}
 
 function prependPath(field: FieldController<any>, issue: Issue): Issue {
   while (field.parentField !== null) {
