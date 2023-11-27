@@ -1,9 +1,9 @@
 import { createField } from 'roqueform';
-import { AnnotationsMerger, annotationsPlugin } from '../main';
+import { annotationsPlugin } from '../main';
 
 describe('annotationsPlugin', () => {
   test('annotations are an empty object by default', () => {
-    const field = createField({ aaa: 111 }, annotationsPlugin());
+    const field = createField({ aaa: 111 }, annotationsPlugin({}));
 
     expect(field.annotations).toEqual({});
     expect(field.at('aaa').annotations).toEqual({});
@@ -89,13 +89,13 @@ describe('annotationsPlugin', () => {
   });
 
   test('uses patcher to apply patches', () => {
-    const patcherMock: AnnotationsMerger = jest.fn((a, b) => Object.assign({}, a, b));
+    const applyPatchMock = jest.fn((a, b) => Object.assign({}, a, b));
 
-    const field = createField(111, annotationsPlugin(patcherMock));
+    const field = createField(111, annotationsPlugin({}, applyPatchMock));
 
     field.annotate({ xxx: 222 });
 
-    expect(patcherMock).toHaveBeenCalledTimes(1);
-    expect(patcherMock).toHaveBeenNthCalledWith(1, {}, { xxx: 222 });
+    expect(applyPatchMock).toHaveBeenCalledTimes(1);
+    expect(applyPatchMock).toHaveBeenNthCalledWith(1, {}, { xxx: 222 });
   });
 });

@@ -24,11 +24,11 @@ export const App = () => {
   
   const handleSubmit = () => {
     // Disable interface before submit
-    planetField.annotateAll({ isDisabled: true });
+    planetField.annotate({ isDisabled: true }, { recursive: true });
     
     doSubmit(planetField.value).then(() => {
       // Enable interface after submit is completed
-      planetField.annotateAll({ isDisabled: false });
+      planetField.annotate({ isDisabled: false }, { recursive: true });
     });
   };
 
