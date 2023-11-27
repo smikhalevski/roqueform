@@ -486,10 +486,10 @@ userField.error;
 Errors set via the `addError` callback are automatically cleared when the `validate` or `validateAsync` methods are
 called. Errors set via the
 [`addError`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setError) method are preserved as
-is, and you should explicitly call `clearAllErrors` delete them.
+is, and you should explicitly call `clearErrors` delete them.
 
 ```ts
-userField.clearAllErrors();
+userField.clearErrors({ recursive: true });
 ```
 
 # Motivation

@@ -142,7 +142,7 @@ planetField.at('name').deleteError();
 Sometimes it is required to clear errors of the field itself and all of its child fields:
 
 ```ts
-planetField.clearAllErrors();
+planetField.clearErrors({ recursive: true });
 ```
 
 # Custom error messages

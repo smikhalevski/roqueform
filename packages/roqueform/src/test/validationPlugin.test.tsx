@@ -54,7 +54,7 @@ describe('validationPlugin', () => {
 
     field.at('aaa').addError(222);
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -162,7 +162,7 @@ describe('validationPlugin', () => {
 
     field.at('bbb').deleteError(444);
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -176,7 +176,7 @@ describe('validationPlugin', () => {
     expect(bbbSubscriberMock).toHaveBeenCalledTimes(2);
   });
 
-  test('clears all errors', () => {
+  test('clears errors recursively', () => {
     const field = createField({ aaa: 111, bbb: 222 }, validationPlugin({ validator: noopValidator }));
 
     const subscriberMock = jest.fn();
@@ -190,7 +190,7 @@ describe('validationPlugin', () => {
     field.at('aaa').addError(333);
     field.at('bbb').addError(444);
 
-    field.clearAllErrors();
+    field.clearErrors({ recursive: true });
 
     expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
@@ -222,7 +222,7 @@ describe('validationPlugin', () => {
     field.at('aaa').at('bbb').at('ccc').addError(333);
     field.at('aaa').at('bbb').at('ddd').addError(444);
 
-    field.clearAllErrors();
+    field.clearErrors({ recursive: true });
 
     expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
@@ -254,7 +254,7 @@ describe('validationPlugin', () => {
     expect(field.validate()).toBe(false);
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
@@ -333,7 +333,7 @@ describe('validationPlugin', () => {
     expect(field.validate()).toBe(false);
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
@@ -365,7 +365,7 @@ describe('validationPlugin', () => {
     field.at('aaa').validate();
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
@@ -428,7 +428,7 @@ describe('validationPlugin', () => {
 
     field.validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -468,7 +468,7 @@ describe('validationPlugin', () => {
     await expect(promise).resolves.toEqual(false);
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
@@ -556,7 +556,7 @@ describe('validationPlugin', () => {
     await expect(promise).resolves.toEqual(false);
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isValidating).toBe(false);
