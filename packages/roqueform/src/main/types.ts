@@ -28,7 +28,7 @@ export interface Event<Plugin = any, Data = any> {
    * The field that caused this event to be dispatched onto the {@link targetField}.
    *
    * For example, if a child field value is changed and causes the change event to be dispatched for the parent field
-   * as well, then origin is the child field for both change events.
+   * as well, then the origin field is the child field for both change events.
    */
   originField: Field<Plugin>;
 
@@ -131,7 +131,10 @@ export interface FieldController<Plugin = unknown, Value = any> {
   subscribers: { [eventType: string]: Subscriber<Plugin>[] };
 
   /**
-   * The accessor that reads the field value from the value of the parent fields, and updates parent value.
+   * The accessor that reads values of child fields from the value of this field, and updates the value of this field
+   * when child value is changed.
+   *
+   * Child field inherit the parent field accessor when being accessed for the first time.
    *
    * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
    */

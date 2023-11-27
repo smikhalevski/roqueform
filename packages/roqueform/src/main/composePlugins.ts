@@ -1,4 +1,4 @@
-import { PluginInjector } from './typings';
+import { PluginInjector } from './types';
 
 /**
  * @internal

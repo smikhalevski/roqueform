@@ -1,4 +1,4 @@
-import { ValueAccessor } from './typings';
+import { ValueAccessor } from './types';
 
 /**
  * The value accessor that reads and writes key-value pairs to well-known object instances.
@@ -10,8 +10,7 @@ export const naturalValueAccessor: ValueAccessor = {
     }
 
     if (Array.isArray(obj)) {
-      key = toArrayIndex(key);
-      return key !== -1 ? obj[key] : undefined;
+      return toArrayIndex(key) !== -1 ? obj[key] : undefined;
     }
 
     if (isMapLike(obj)) {
@@ -19,8 +18,7 @@ export const naturalValueAccessor: ValueAccessor = {
     }
 
     if (isSetLike(obj)) {
-      key = toArrayIndex(key);
-      return key !== -1 ? Array.from(obj)[key] : undefined;
+      return toArrayIndex(key) !== -1 ? Array.from(obj)[key] : undefined;
     }
 
     return obj[key];

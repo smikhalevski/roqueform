@@ -15,7 +15,7 @@ export {
   FieldController,
   PluginInjector,
   ValueAccessor,
-} from './typings';
+} from './types';
 export { dispatchEvents, isEqual, callOrGet } from './utils';
 export {
   Validator,

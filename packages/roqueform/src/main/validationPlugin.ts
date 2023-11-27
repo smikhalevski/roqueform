@@ -1,4 +1,4 @@
-import { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './typings';
+import { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
 import { dispatchEvents } from './utils';
 
 const EVENT_CHANGE_ERRORS = 'change:errors';
@@ -34,7 +34,7 @@ export interface Validation<Plugin = ValidationPlugin> {
 }
 
 /**
- * The plugin that enables field value validation.
+ * The plugin that enables a field value validation.
  *
  * @template Error The error.
  * @template Options Options passed to the validator.
@@ -48,6 +48,8 @@ export interface ValidationPlugin<Error = any, Options = any> {
   /**
    * The callback that returns the new array of errors that includes the given error, or returns the original errors
    * array if there are no changes.
+   *
+   * Child field inherit the parent field error merger when being accessed for the first time.
    */
   errorsMerger: ValidationErrorsMerger<Error>;
 
@@ -79,7 +81,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
   addError(error: Error): void;
 
   /**
-   * Deletes an error associated with this field.
+   * Deletes an error associated with this field. No-op if an error isn't associated with this field.
    *
    * @param error The error to delete.
    */
@@ -107,8 +109,13 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * Triggers a synchronous field validation. Starting a validation doesn't clear errors that were set during the
    * previous validation. If you want to clear all errors before the validation, use {@link clearAllErrors}.
    *
+   * If this field is currently being validated then the validation {@link abortValidation is aborted} at current
+   * {@link Validation.rootField validation root}.
+   *
+   * {@link Field.isTransient Transient} descendants of this field are excluded from validation.
+   *
    * @param options Options passed to {@link Validator the validator}.
-   * @returns `true` if {@link isInvalid field is valid}, or `false` otherwise.
+   * @returns `true` if {@link isInvalid the field is valid}, or `false` otherwise.
    */
   validate(options?: Options): boolean;
 
@@ -116,14 +123,19 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * Triggers an asynchronous field validation. Starting a validation doesn't clear errors that were set during the
    * previous validation. If you want to clear all errors before the validation, use {@link clearAllErrors}.
    *
+   * If this field is currently being validated then the validation {@link abortValidation is aborted} at current
+   * {@link Validation.rootField validation root}.
+   *
+   * {@link Field.isTransient Transient} descendants of this field are excluded from validation.
+   *
    * @param options Options passed to {@link Validator the validator}.
-   * @returns `true` if {@link isInvalid field is valid}, or `false` otherwise.
+   * @returns `true` if {@link isInvalid the field is valid}, or `false` otherwise.
    */
   validateAsync(options?: Options): Promise<boolean>;
 
   /**
-   * Aborts the async validation of the field, or no-op if there's no pending validation. If the field participates in
-   * pending ancestor field validation then parent validation is aborted.
+   * Aborts the async validation of {@link Validation.rootField the validation root field} associated with this field.
+   * No-op if there's no pending validation.
    */
   abortValidation(): void;
 
@@ -163,7 +175,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
 }
 
 /**
- * The validator implements the validation rules.
+ * The validator to which the field value validation is delegated.
  *
  * @template Error The error.
  * @template Options Options passed to the validator.
@@ -172,15 +184,21 @@ export interface Validator<Error = any, Options = any> {
   /**
    * Applies validation rules to a field.
    *
+   * Before {@link ValidationPlugin.addError adding an error} to the field, check that
+   * {@link ValidationPlugin.validation the validation} didn't change.
+   *
    * @param field The field where {@link ValidationPlugin.validate} was called.
    * @param options The options passed to the {@link ValidationPlugin.validate} method.
    */
   validate(field: Field<ValidationPlugin<Error, Options>>, options: Options | undefined): void;
 
   /**
-   * Applies validation rules to a field. If this callback is omitted, then {@link validate} would be called instead.
+   * Applies validation rules to a field. If this callback is omitted, then {@link Validator.validate} would be called
+   * instead.
    *
-   * Refer to {@link ValidationPlugin.validation} to check that validation wasn't aborted.
+   * Before {@link ValidationPlugin.addError adding an error} to the field, check that
+   * {@link ValidationPlugin.validation the validation} didn't change, and
+   * {@link Validation.abortController wasn't aborted}.
    *
    * @param field The field where {@link ValidationPlugin.validateAsync} was called.
    * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
@@ -195,8 +213,7 @@ export interface ValidationPluginOptions<Error = any, Options = any> {
   validator: Validator<Error, Options> | Validator<Error, Options>['validate'];
 
   /**
-   * The callback that updates {@link errors}. By default, error is added to the array of errors if it isn't already
-   * contained in the array.
+   * The callback that updates {@link ValidationPlugin.errors}. The default merger keeps errors unique.
    */
   errorsMerger?: ValidationErrorsMerger<Error>;
 }
@@ -204,8 +221,8 @@ export interface ValidationPluginOptions<Error = any, Options = any> {
 /**
  * Enhances the field with validation methods.
  *
- * This plugin is a scaffold for implementing validation. If you don't know how to validate your fields then have a look
- * at [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) before
+ * This plugin is a scaffold for implementing validation. Check out
+ * [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) before
  * picking this plugin.
  *
  * @template Error The error.
@@ -220,10 +237,17 @@ export function validationPlugin<Error = any, Options = void>(
   const validator = typeof options.validator === 'function' ? { validate: options.validator } : options.validator;
 
   return field => {
+    const { parentField } = field;
+
     field.errors = [];
     field.errorsMerger = errorsMerger;
     field.validator = validator;
-    field.validation = field.parentField !== null ? field.parentField.validation : null;
+    field.validation = null;
+
+    if (parentField !== null) {
+      field.errorsMerger = parentField.errorsMerger;
+      field.validation = parentField.validation;
+    }
 
     Object.defineProperties(field, {
       isInvalid: { configurable: true, get: () => isInvalid(field) },
@@ -453,20 +477,19 @@ function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promis
       reject(new Error(ERROR_ABORT));
     });
 
-    resolve(
-      Promise.resolve(validateAsync(field, options)).then(
-        () => {
-          if (field.validation !== validation) {
-            throw new Error(ERROR_ABORT);
-          }
+    Promise.resolve(validateAsync(field, options)).then(
+      () => {
+        if (field.validation !== validation) {
+          reject(new Error(ERROR_ABORT));
+        } else {
           dispatchEvents(endValidation(field, validation, []));
-          return !field.isInvalid;
-        },
-        error => {
-          dispatchEvents(endValidation(field, validation, []));
-          throw error;
+          resolve(!field.isInvalid);
         }
-      )
+      },
+      error => {
+        dispatchEvents(endValidation(field, validation, []));
+        reject(error);
+      }
     );
   });
 }

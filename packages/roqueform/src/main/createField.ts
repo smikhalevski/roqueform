@@ -1,4 +1,4 @@
-import { __PLUGIN__, Event, Field, PluginInjector, Subscriber, ValueAccessor } from './typings';
+import { __PLUGIN__, Event, Field, PluginInjector, ValueAccessor } from './types';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalValueAccessor } from './naturalValueAccessor';
 
@@ -67,7 +67,7 @@ function getOrCreateField(
     rootField: null!,
     parentField,
     children: null,
-    subscribers: {},
+    subscribers: Object.create(null),
     valueAccessor: accessor,
 
     setValue: value => {
@@ -85,7 +85,7 @@ function getOrCreateField(
     at: key => getOrCreateField(field.valueAccessor, field, key, null, plugin),
 
     on: (type, subscriber) => {
-      const subscribers: Subscriber[] = (field.subscribers[type] ||= []);
+      const subscribers = (field.subscribers[type] ||= []);
 
       if (!subscribers.includes(subscriber)) {
         subscribers.push(subscriber);
@@ -99,6 +99,8 @@ function getOrCreateField(
   field.rootField = field;
 
   if (parentField !== null) {
+    accessor = parentField.valueAccessor;
+    field.valueAccessor = accessor;
     field.value = accessor.get(parentField.value, key);
     field.initialValue = accessor.get(parentField.initialValue, key);
     field.rootField = parentField.rootField;
@@ -121,7 +123,7 @@ function setValue(field: Field, value: unknown, transient: boolean): void {
   let root = field;
 
   while (root.parentField !== null && !root.isTransient) {
-    value = field.valueAccessor.set(root.parentField.value, root.key, value);
+    value = root.parentField.valueAccessor.set(root.parentField.value, root.key, value);
     root = root.parentField;
   }
 
