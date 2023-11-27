@@ -17,11 +17,4 @@ export {
   ValueAccessor,
 } from './types';
 export { dispatchEvents, isEqual, callOrGet } from './utils';
-export {
-  Validator,
-  Validation,
-  ValidationErrorsMerger,
-  ValidationPlugin,
-  ValidationPluginOptions,
-  validationPlugin,
-} from './validationPlugin';
+export { Validator, Validation, ValidationPlugin, ValidationPluginOptions, validationPlugin } from './validationPlugin';

@@ -5,17 +5,6 @@ const EVENT_CHANGE_ERRORS = 'change:errors';
 const ERROR_ABORT = 'Validation aborted';
 
 /**
- * The callback that returns the new array of errors that includes the given error, or returns the original errors
- * array if there are no changes.
- *
- * @param errors The array of current errors.
- * @param error The new error to add.
- * @returns The new array of errors that includes the given error.
- * @template Error The error.
- */
-export type ValidationErrorsMerger<Error = any> = (errors: Error[], error: Error) => Error[];
-
-/**
  * The pending validation descriptor.
  *
  * @template Plugin The plugin injected into the field.
@@ -56,14 +45,6 @@ export interface ValidationPlugin<Error = any, Options = any> {
    * The array of errors associated with this field.
    */
   errors: Error[];
-
-  /**
-   * The callback that returns the new array of errors that includes the given error, or returns the original errors
-   * array if there are no changes.
-   *
-   * Child field inherit the parent field error merger when being accessed for the first time.
-   */
-  errorsMerger: ValidationErrorsMerger<Error>;
 
   /**
    * `true` if this field has associated errors, or `false` otherwise.
@@ -217,9 +198,15 @@ export interface ValidationPluginOptions<Error = any, Options = any> {
   validator: Validator<Error, Options> | Validator<Error, Options>['validate'];
 
   /**
-   * The callback that updates {@link ValidationPlugin.errors}. The default merger keeps errors unique.
+   * The callback that returns the new array of errors that includes the given error, or returns the original errors
+   * array if there are no changes. By default, only identity-based-unique errors are added.
+   *
+   * @param errors The array of current errors.
+   * @param error The new error to add.
+   * @returns The new array of errors that includes the given error.
+   * @template Error The error.
    */
-  errorsMerger?: ValidationErrorsMerger<Error>;
+  concatErrors?: (errors: Error[], error: Error) => Error[];
 }
 
 /**
@@ -236,22 +223,14 @@ export interface ValidationPluginOptions<Error = any, Options = any> {
 export function validationPlugin<Error = any, Options = void>(
   options: ValidationPluginOptions<Error, Options>
 ): PluginInjector<ValidationPlugin<Error, Options>> {
-  const errorsMerger = options.errorsMerger || naturalErrorsMerger;
-
   const validator = typeof options.validator === 'function' ? { validate: options.validator } : options.validator;
 
+  const concatErrors = options.concatErrors || concatUniqueErrors;
+
   return field => {
-    const { parentField } = field;
-
     field.errors = [];
-    field.errorsMerger = errorsMerger;
     field.validator = validator;
-    field.validation = null;
-
-    if (parentField !== null) {
-      field.errorsMerger = parentField.errorsMerger;
-      field.validation = parentField.validation;
-    }
+    field.validation = field.parentField !== null ? field.parentField.validation : null;
 
     Object.defineProperties(field, {
       isInvalid: { configurable: true, get: () => field.errors.length !== 0 },
@@ -260,7 +239,7 @@ export function validationPlugin<Error = any, Options = void>(
 
     field.addError = error => {
       const prevErrors = field.errors;
-      const nextErrors = field.errorsMerger(prevErrors, error);
+      const nextErrors = concatErrors(prevErrors, error);
 
       if (prevErrors !== nextErrors) {
         field.errors = nextErrors;
@@ -298,13 +277,13 @@ export function validationPlugin<Error = any, Options = void>(
   };
 }
 
-const naturalErrorsMerger: ValidationErrorsMerger = (errors, error) => {
+function concatUniqueErrors<T>(errors: T[], error: T): T[] {
   if (!errors.includes(error)) {
     errors = errors.slice(0);
     errors.push(error);
   }
   return errors;
-};
+}
 
 function clearErrors(
   field: Field<ValidationPlugin>,

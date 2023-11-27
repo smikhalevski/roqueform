@@ -99,10 +99,8 @@ function getOrCreateField(
   field.rootField = field;
 
   if (parentField !== null) {
-    accessor = parentField.valueAccessor;
-    field.valueAccessor = accessor;
-    field.value = accessor.get(parentField.value, key);
-    field.initialValue = accessor.get(parentField.initialValue, key);
+    field.value = parentField.valueAccessor.get(parentField.value, key);
+    field.initialValue = parentField.valueAccessor.get(parentField.initialValue, key);
     field.rootField = parentField.rootField;
     (parentField.children ||= []).push(field);
   }

@@ -131,10 +131,8 @@ export interface FieldController<Plugin = unknown, Value = any> {
   subscribers: { [eventType: string]: Subscriber<Plugin>[] };
 
   /**
-   * The accessor that reads values of child fields from the value of this field, and updates the value of this field
-   * when child value is changed.
-   *
-   * Child field inherit the parent field accessor when being accessed for the first time.
+   * The accessor that reads values of child fields from {@link Field.value the value of this field}, and updates the
+   * value of this field when child value is changed.
    *
    * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
    */

@@ -88,18 +88,18 @@ describe('validationPlugin', () => {
 
   test('uses errorMerger to add a new error', () => {
     const errors = [333];
-    const errorMergerMock = jest.fn(() => errors);
+    const concatErrorsMock = jest.fn(() => errors);
 
     const field = createField(
       { aaa: 111 },
-      validationPlugin({ validator: noopValidator, errorsMerger: errorMergerMock })
+      validationPlugin({ validator: noopValidator, concatErrors: concatErrorsMock })
     );
 
     field.addError(222);
 
     expect(field.errors).toEqual(errors);
-    expect(errorMergerMock).toHaveBeenCalledTimes(1);
-    expect(errorMergerMock).toHaveBeenNthCalledWith(1, [], 222);
+    expect(concatErrorsMock).toHaveBeenCalledTimes(1);
+    expect(concatErrorsMock).toHaveBeenNthCalledWith(1, [], 222);
   });
 
   test('deletes an error from the root field', () => {
