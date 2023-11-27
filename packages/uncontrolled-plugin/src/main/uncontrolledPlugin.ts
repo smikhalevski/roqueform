@@ -16,12 +16,12 @@ export interface UncontrolledPlugin {
   element: Element | null;
 
   /**
-   * The array of elements controlled by this field, includes {@link element}.
+   * The array of elements that are used to derive the field value, includes {@link element}.
    */
-  controlledElements: Element[];
+  targetElements: Element[];
 
   /**
-   * The accessor that reads and writes the field value from and to {@link controlledElements}.
+   * The accessor that reads and writes the field value from and to {@link targetElements}.
    */
   elementsValueAccessor: ElementsValueAccessor;
 
@@ -31,7 +31,11 @@ export interface UncontrolledPlugin {
   ref(element: Element | null): void;
 
   /**
-   * Returns a callback that associates the field with the DOM element under the given key.
+   * Returns a callback that associates the field with the DOM element under the given key. The same callback is
+   * returned when this method is called with the same key.
+   *
+   * @param key The key for which the reference callback must be returned. To associate multiple elements with the same
+   * field, use different keys.
    */
   refFor(key: unknown): (element: Element | null) => void;
 }
@@ -42,7 +46,7 @@ export interface UncontrolledPlugin {
 export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
     field.element = null;
-    field.controlledElements = [];
+    field.targetElements = [];
     field.elementsValueAccessor = accessor;
 
     const elementsMap = new Map<unknown, Element>();
@@ -51,14 +55,14 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
     let prevValue = field.value;
 
     const changeListener: EventListener = event => {
-      if (field.controlledElements.includes(event.target as Element)) {
-        field.setValue((prevValue = field.elementsValueAccessor.get(field.controlledElements)));
+      if (field.targetElements.includes(event.target as Element)) {
+        field.setValue((prevValue = field.elementsValueAccessor.get(field.targetElements)));
       }
     };
 
     field.on('change:value', event => {
-      if (field.value !== prevValue && event.targetField === field && field.controlledElements.length !== 0) {
-        field.elementsValueAccessor.set(field.controlledElements, field.value);
+      if (field.value !== prevValue && event.targetField === field && field.targetElements.length !== 0) {
+        field.elementsValueAccessor.set(field.targetElements, field.value);
       }
     });
 
@@ -104,7 +108,7 @@ function swapElements(
   prevElement: Element | null,
   nextElement: Element | null
 ): Element | null {
-  const elements = field.controlledElements;
+  const elements = field.targetElements;
 
   nextElement = nextElement instanceof Element ? nextElement : null;
 
