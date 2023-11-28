@@ -1,5 +1,9 @@
 import { callOrGet, dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
 
+interface Dict {
+  [key: string]: any;
+}
+
 /**
  * Options of the {@link AnnotationsPlugin.annotate} method.
  */
@@ -47,6 +51,11 @@ export interface AnnotationsPlugin<Annotations extends object> {
 
 /**
  * Enhances fields with methods that manage annotations.
+ */
+export function annotationsPlugin(): PluginInjector<AnnotationsPlugin<Dict>>;
+
+/**
+ * Enhances fields with methods that manage annotations.
  *
  * @param annotations The initial annotations that are associated with fields.
  * @param applyPatch The callback that applies patches to field annotations. By default, patches are applied using
@@ -60,15 +69,15 @@ export function annotationsPlugin<Annotations extends object>(
    *
    * @param annotations Annotations associated with this field.
    * @param patch The patch that must be applied to annotations.
-   * @returns The new annotations object that contains original annotations that are partially overridden by the patch, or
-   * the original annotations object if nothing has changed.
+   * @returns The new annotations object that contains original annotations that are partially overridden by the patch,
+   * or the original annotations object if nothing has changed.
    * @template Annotations Annotations associated with fields.
    */
   applyPatch?: (annotations: Readonly<Annotations>, patch: Readonly<Partial<Annotations>>) => Annotations
 ): PluginInjector<AnnotationsPlugin<Annotations>>;
 
 export function annotationsPlugin(
-  annotations: Dict,
+  annotations = {},
   applyPatch = applyChanges
 ): PluginInjector<AnnotationsPlugin<Dict>> {
   return field => {
@@ -77,8 +86,6 @@ export function annotationsPlugin(
     field.annotate = (patch, options) => dispatchEvents(annotate(field, patch, applyPatch, options, []));
   };
 }
-
-type Dict = Record<string, unknown>;
 
 function applyChanges(annotations: Dict, patch: Dict): Dict {
   for (const key in patch) {
