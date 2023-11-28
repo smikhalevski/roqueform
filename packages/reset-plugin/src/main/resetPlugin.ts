@@ -17,19 +17,9 @@ import isDeepEqual from 'fast-deep-equal';
  */
 export interface ResetPlugin {
   /**
-   * `true` if the field value is different from its initial value basing on
-   * {@link valueEqualityChecker the equality checker}, or `false` otherwise.
+   * `true` if the field value is different from its initial value.
    */
   readonly isDirty: boolean;
-
-  /**
-   * The callback that compares initial value and the current value of the field.
-   *
-   * @param initialValue The initial value.
-   * @param value The current value.
-   * @returns `true` if initial value is equal to value, or `false` otherwise.
-   */
-  valueEqualityChecker: (initialValue: any, value: any) => boolean;
 
   /**
    * Sets the initial value of the field and notifies ancestors and descendants.
@@ -45,7 +35,7 @@ export interface ResetPlugin {
 
   /**
    * Returns all fields that have {@link FieldController.value a value} that is different from
-   * {@link FieldController.initialValue an initial value} basing on {@link valueEqualityChecker the equality checker}.
+   * {@link FieldController.initialValue an initial value}.
    *
    * @see {@link isDirty}
    */
@@ -73,10 +63,8 @@ export function resetPlugin(
   return field => {
     Object.defineProperty(field, 'isDirty', {
       configurable: true,
-      get: () => !field.valueEqualityChecker(field.initialValue, field.value),
+      get: () => !equalityChecker(field.initialValue, field.value),
     });
-
-    field.valueEqualityChecker = equalityChecker;
 
     field.setInitialValue = value => {
       setInitialValue(field, value);
