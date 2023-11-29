@@ -68,7 +68,7 @@ const validator: Validator<Issue, ParseOptions> = {
   },
 };
 
-function concatErrors(errors: Issue[], error: Issue): Issue[] {
+function concatErrors(errors: readonly Issue[], error: Issue): readonly Issue[] {
   for (const otherError of errors) {
     if (
       otherError.code !== undefined && error.code !== undefined
@@ -82,9 +82,8 @@ function concatErrors(errors: Issue[], error: Issue): Issue[] {
 }
 
 function prependPath(field: FieldController<any>, issue: Issue): Issue {
-  while (field.parentField !== null) {
+  for (; field.parentField !== null; field = field.parentField) {
     (issue.path ||= []).unshift(field.key);
-    field = field.parentField;
   }
   return issue;
 }

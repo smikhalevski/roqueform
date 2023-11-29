@@ -66,7 +66,7 @@ const validator: Validator<ZodIssue, Partial<ParseParams>> = {
   },
 };
 
-function concatErrors(errors: ZodIssue[], error: ZodIssue): ZodIssue[] {
+function concatErrors(errors: readonly ZodIssue[], error: ZodIssue): readonly ZodIssue[] {
   for (const otherError of errors) {
     if (otherError.code === error.code) {
       return errors;

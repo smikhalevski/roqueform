@@ -304,7 +304,7 @@ function clearErrors(
 }
 
 function hasErrors(field: Field<ValidationPlugin>): boolean {
-  if (field.errors.length !== 0) {
+  if (field.isInvalid) {
     return true;
   }
   if (field.children !== null) {
@@ -318,7 +318,7 @@ function hasErrors(field: Field<ValidationPlugin>): boolean {
 }
 
 function getInvalidFields(field: Field<ValidationPlugin>, batch: Field<ValidationPlugin>[]): Field<ValidationPlugin>[] {
-  if (field.errors.length !== 0) {
+  if (field.isInvalid) {
     batch.push(field);
   }
   if (field.children !== null) {

@@ -56,7 +56,8 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
 
     const changeListener: EventListener = event => {
       if (field.targetElements.includes(event.target as Element)) {
-        field.setValue((prevValue = field.elementsValueAccessor.get(field.targetElements)));
+        prevValue = field.elementsValueAccessor.get(field.targetElements);
+        field.setValue(prevValue);
       }
     };
 
