@@ -27,14 +27,14 @@ export interface ScrollToErrorPlugin {
   ref(element: Element | null): void;
 
   /**
-   * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
-   * ancestor containers such that the field element is visible to the user.
+   * Scroll to the element that is referenced by an invalid field. Scrolls the field element's ancestor containers such
+   * that the field element is visible to the user.
    *
    * The field `ref` should be populated with an `Element` reference.
    *
-   * @param index The zero-based index of an error to scroll to. A negative index can be used, indicating an offset from
-   * the end of the sequence. `scrollToError(-1)` scroll to the last error. The order of errors is the same as the
-   * visual order of fields left-to-right and top-to-bottom.
+   * @param index The zero-based index of an invalid field to scroll to. A negative index can be used, indicating an
+   * offset from the end of the sequence. `scrollToError(-1)` scroll to the last invalid field. The visual order of
+   * fields is used (by default left-to-right and top-to-bottom).
    * @param alignToTop If `true`, the top of the element will be aligned to the top of the visible area of the
    * scrollable ancestor, otherwise element will be aligned to the bottom of the visible area of the scrollable
    * ancestor.
@@ -43,14 +43,14 @@ export interface ScrollToErrorPlugin {
   scrollToError(index?: number, alignToTop?: boolean): Field<PluginOf<this>> | null;
 
   /**
-   * Scroll to the element that is referenced by a field that has an associated error. Scrolls the field element's
-   * ancestor containers such that the field element is visible to the user.
+   * Scroll to the element that is referenced by an invalid field. Scrolls the field element's ancestor containers such
+   * that the field element is visible to the user.
    *
    * The field `ref` should be populated with an `Element` reference.
    *
-   * @param index The zero-based index of an error to scroll to. A negative index can be used, indicating an offset from
-   * the end of the sequence. `scrollToError(-1)` scroll to the last error. The order of errors is the same as the
-   * visual order of fields left-to-right and top-to-bottom.
+   * @param index The zero-based index of an invalid field to scroll to. A negative index can be used, indicating an
+   * offset from the end of the sequence. `scrollToError(-1)` scroll to the last invalid field. The visual order of
+   * fields is used (by default left-to-right and top-to-bottom).
    * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
    * @returns The field which is scrolled to, or `null` if there's no scroll happening.
    */
