@@ -3,6 +3,11 @@ import { PluginInjector } from './types';
 /**
  * @internal
  */
+export function composePlugins<T, A>(a: PluginInjector<A, T>): PluginInjector<A, T>;
+
+/**
+ * @internal
+ */
 export function composePlugins<T, A, B>(a: PluginInjector<A, T>, b: PluginInjector<B, T>): PluginInjector<A & B, T>;
 
 /**
@@ -57,6 +62,9 @@ export function composePlugins<T, A, B, C, D, E, F>(
 export function composePlugins(...plugins: PluginInjector[]): PluginInjector;
 
 export function composePlugins(...plugins: PluginInjector[]): PluginInjector {
+  if (plugins.length === 1) {
+    return plugins[0];
+  }
   return field => {
     for (const plugin of plugins) {
       plugin(field);
