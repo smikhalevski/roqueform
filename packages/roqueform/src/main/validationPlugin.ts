@@ -44,7 +44,7 @@ export interface ValidationPlugin<Error = any, Options = any> {
   /**
    * The array of errors associated with this field.
    */
-  errors: Error[];
+  errors: readonly Error[];
 
   /**
    * `true` if this field has associated errors, or `false` otherwise.
@@ -206,7 +206,7 @@ export interface ValidationPluginOptions<Error = any, Options = any> {
    * @returns The new array of errors that includes the given error.
    * @template Error The error.
    */
-  concatErrors?: (errors: Error[], error: Error) => Error[];
+  concatErrors?: (errors: readonly Error[], error: Error) => readonly Error[];
 }
 
 /**
@@ -277,10 +277,9 @@ export function validationPlugin<Error = any, Options = void>(
   };
 }
 
-function concatUniqueErrors<T>(errors: T[], error: T): T[] {
+function concatUniqueErrors<T>(errors: readonly T[], error: T): readonly T[] {
   if (!errors.includes(error)) {
-    errors = errors.slice(0);
-    errors.push(error);
+    (errors = errors.slice(0)).push(error);
   }
   return errors;
 }

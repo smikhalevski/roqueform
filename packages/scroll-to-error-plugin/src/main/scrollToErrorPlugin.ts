@@ -14,7 +14,7 @@ export interface ScrollToErrorPlugin {
   /**
    * `true` if this field has associated errors, or `false` otherwise.
    */
-  isInvalid: boolean;
+  isInvalid?: boolean;
 
   /**
    * The DOM element associated with the field, or `null` if there's no associated element.

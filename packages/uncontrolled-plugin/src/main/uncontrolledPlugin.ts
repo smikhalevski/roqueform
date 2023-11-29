@@ -18,7 +18,7 @@ export interface UncontrolledPlugin {
   /**
    * The array of elements that are used to derive the field value, includes {@link element}.
    */
-  targetElements: Element[];
+  targetElements: readonly Element[];
 
   /**
    * The accessor that reads and writes the field value from and to {@link targetElements}.
@@ -108,7 +108,7 @@ function swapElements(
   prevElement: Element | null,
   nextElement: Element | null
 ): Element | null {
-  const elements = field.targetElements;
+  const elements = field.targetElements as Element[];
 
   nextElement = nextElement instanceof Element ? nextElement : null;
 
