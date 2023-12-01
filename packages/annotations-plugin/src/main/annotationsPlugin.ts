@@ -25,7 +25,7 @@ export interface AnnotationsPlugin<Annotations extends object> {
   /**
    * Annotations associated with this field.
    */
-  annotations: Readonly<Annotations>;
+  annotations: Annotations;
 
   /**
    * Updates annotations of this field.

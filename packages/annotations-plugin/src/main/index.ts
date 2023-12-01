@@ -2,4 +2,4 @@
  * @module annotations-plugin
  */
 
-export { annotationsPlugin, AnnotationsPlugin } from './annotationsPlugin';
+export { annotationsPlugin, AnnotateOptions, AnnotationsPlugin } from './annotationsPlugin';
