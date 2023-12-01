@@ -89,9 +89,11 @@ export function errorsPlugin<Error = any>(
   return field => {
     field.errors = [];
 
+    const isInvalid = Object.getOwnPropertyDescriptor(field, 'isInvalid')?.get;
+
     Object.defineProperty(field, 'isInvalid', {
       configurable: true,
-      get: () => field.errors.length !== 0,
+      get: () => (isInvalid !== undefined && isInvalid()) || field.errors.length !== 0,
     });
 
     field.addError = error => {

@@ -60,9 +60,11 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
     field.element = null;
     field.validity = null;
 
+    const isInvalid = Object.getOwnPropertyDescriptor(field, 'isInvalid')?.get;
+
     Object.defineProperty(field, 'isInvalid', {
       configurable: true,
-      get: () => field.validity !== null && !field.validity.valid,
+      get: () => (isInvalid !== undefined && isInvalid()) || (field.validity !== null && !field.validity.valid),
     });
 
     const changeListener = () => {
