@@ -45,6 +45,8 @@ export interface UncontrolledPlugin {
  */
 export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
+    const { ref } = field;
+
     field.element = null;
     field.targetElements = [];
     field.elementsValueAccessor = accessor;
@@ -66,8 +68,6 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
         field.elementsValueAccessor.set(field.targetElements, field.value);
       }
     });
-
-    const { ref } = field;
 
     field.ref = nextElement => {
       const prevElement = field.element;

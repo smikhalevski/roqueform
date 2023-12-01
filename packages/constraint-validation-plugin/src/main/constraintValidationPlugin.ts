@@ -55,6 +55,8 @@ export interface ConstraintValidationPlugin {
  */
 export function constraintValidationPlugin(): PluginInjector<ConstraintValidationPlugin> {
   return field => {
+    const { ref } = field;
+
     field.element = null;
     field.validity = null;
 
@@ -68,8 +70,6 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
     };
 
     field.on('change:value', changeListener);
-
-    const { ref } = field;
 
     field.ref = nextElement => {
       const prevElement = field.element;

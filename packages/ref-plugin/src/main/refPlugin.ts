@@ -56,14 +56,14 @@ export function refPlugin(): PluginInjector<RefPlugin> {
 }
 
 const refPluginInjector: PluginInjector<RefPlugin> = field => {
+  const { ref } = field;
+
   field.element = null;
 
   Object.defineProperty(field, 'isFocused', {
     configurable: true,
     get: () => field.element !== null && field.element === field.element.ownerDocument.activeElement,
   });
-
-  const { ref } = field;
 
   field.ref = element => {
     ref?.(element);

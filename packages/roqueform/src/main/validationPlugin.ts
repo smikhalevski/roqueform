@@ -145,7 +145,6 @@ export function validationPlugin<Options = void>(
   validator = typeof validator === 'function' ? { validate: validator } : validator;
 
   return field => {
-    field.isInvalid = false;
     field.validator = validator as Validator;
     field.validation = field.parentField !== null ? field.parentField.validation : null;
 
