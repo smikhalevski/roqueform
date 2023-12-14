@@ -8,17 +8,17 @@ const external = Object.keys(Object.assign({}, pkg.dependencies, pkg.peerDepende
 
 module.exports = [
   {
-    input: 'src/main/index.ts',
+    input: './src/main/index.ts',
     output: [
-      { file: 'lib/index.js', format: 'cjs' },
-      { file: 'lib/index.mjs', format: 'es' },
+      { file: './lib/index.js', format: 'cjs' },
+      { file: './lib/index.mjs', format: 'es' },
     ],
     plugins: [
       nodeResolve(),
 
       typescript({
         tsconfig: path.resolve(__dirname, 'tsconfig.json'),
-        include: 'src/main/**/*',
+        include: './src/main/**/*',
         compilerOptions: {
           paths: {},
         },
@@ -27,8 +27,8 @@ module.exports = [
     external,
   },
   {
-    input: 'src/main/index.ts',
-    output: { file: 'lib/index.d.ts', format: 'es' },
+    input: './src/main/index.ts',
+    output: { file: './lib/index.d.ts', format: 'es' },
     plugins: [dts.default()],
     external,
   },
