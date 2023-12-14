@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react';
-import { composePlugins, createField, validationPlugin } from 'roqueform';
+import { composePlugins, createField, errorsPlugin, validationPlugin } from 'roqueform';
 import { scrollToErrorPlugin } from '../main';
 
 class DOMRect {
@@ -27,16 +27,23 @@ describe('scrollToErrorPlugin', () => {
   test('returns null if there are no errors', () => {
     const field = createField(
       { aaa: 111 },
-      composePlugins(validationPlugin({ validator: () => undefined }), scrollToErrorPlugin())
+      composePlugins(
+        validationPlugin(() => undefined),
+        scrollToErrorPlugin()
+      )
     );
 
     expect(field.scrollToError()).toBe(null);
   });
 
-  test('scrolls to error at index with RTL text direction', async () => {
+  test('scrolls to error at index with RTL text direction', () => {
     const rootField = createField(
       { aaa: 111, bbb: 222 },
-      composePlugins(validationPlugin({ validator: () => undefined }), scrollToErrorPlugin())
+      composePlugins(
+        validationPlugin(() => undefined),
+        errorsPlugin(),
+        scrollToErrorPlugin()
+      )
     );
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
@@ -51,7 +58,7 @@ describe('scrollToErrorPlugin', () => {
     const aaaScrollIntoViewMock = (aaaElement.scrollIntoView = jest.fn());
     const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = jest.fn());
 
-    await act(() => {
+    act(() => {
       rootField.at('aaa').addError('error1');
       rootField.at('bbb').addError('error2');
     });
@@ -106,10 +113,14 @@ describe('scrollToErrorPlugin', () => {
     bbbScrollIntoViewMock.mockClear();
   });
 
-  test('scrolls to error at index with LTR text direction', async () => {
+  test('scrolls to error at index with LTR text direction', () => {
     const rootField = createField(
       { aaa: 111, bbb: 222 },
-      composePlugins(validationPlugin({ validator: () => undefined }), scrollToErrorPlugin())
+      composePlugins(
+        validationPlugin(() => undefined),
+        errorsPlugin(),
+        scrollToErrorPlugin()
+      )
     );
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
@@ -124,7 +135,7 @@ describe('scrollToErrorPlugin', () => {
     const aaaScrollIntoViewMock = (aaaElement.scrollIntoView = jest.fn());
     const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = jest.fn());
 
-    await act(() => {
+    act(() => {
       rootField.at('aaa').addError('error1');
       rootField.at('bbb').addError('error2');
     });

@@ -19,19 +19,13 @@ describe('constraintValidationPlugin', () => {
   test('enhances the field', () => {
     const field = createField({ aaa: 111 }, constraintValidationPlugin());
 
-    expect(field.errors).toBeNull();
     expect(field.element).toBeNull();
     expect(field.isInvalid).toBe(false);
     expect(field.validity).toBeNull();
-    expect(field.errorCount).toBe(0);
-    expect(field.errorOrigin).toBe(0);
 
-    expect(field.at('aaa').errors).toBeNull();
     expect(field.at('aaa').element).toBeNull();
     expect(field.at('aaa').isInvalid).toBe(false);
     expect(field.at('aaa').validity).toBeNull();
-    expect(field.at('aaa').errorCount).toBe(0);
-    expect(field.at('aaa').errorOrigin).toBe(0);
   });
 
   test('sets an error to the field that does not have an associated element', () => {
