@@ -1,4 +1,4 @@
-import { __PLUGIN__, Event, Field, PluginInjector, ValueAccessor } from './types';
+import type { __PLUGIN__, Event, Field, PluginInjector, ValueAccessor } from './types';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalValueAccessor } from './naturalValueAccessor';
 

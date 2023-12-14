@@ -1,4 +1,4 @@
-import { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
+import type { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
 import { dispatchEvents } from './utils';
 
 const EVENT_CHANGE_ERRORS = 'change:errors';

@@ -1,4 +1,4 @@
-import { Event, FieldController } from './types';
+import type { Event, FieldController } from './types';
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.

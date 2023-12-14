@@ -4,9 +4,13 @@
 
 export { composePlugins } from './composePlugins';
 export { createField } from './createField';
-export { ClearErrorsOptions, ErrorsPlugin, errorsPlugin } from './errorsPlugin';
+export { errorsPlugin } from './errorsPlugin';
 export { naturalValueAccessor } from './naturalValueAccessor';
-export {
+export { dispatchEvents, isEqual, callOrGet } from './utils';
+export { validationPlugin } from './validationPlugin';
+
+export type { ClearErrorsOptions, ErrorsPlugin } from './errorsPlugin';
+export type {
   Field,
   Event,
   Subscriber,
@@ -17,5 +21,4 @@ export {
   PluginInjector,
   ValueAccessor,
 } from './types';
-export { dispatchEvents, isEqual, callOrGet } from './utils';
-export { Validator, Validation, ValidationPlugin, validationPlugin } from './validationPlugin';
+export type { Validator, Validation, ValidationPlugin } from './validationPlugin';

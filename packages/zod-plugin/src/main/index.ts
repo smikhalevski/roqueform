@@ -2,4 +2,5 @@
  * @module zod-plugin
  */
 
-export { zodPlugin, ZodPlugin } from './zodPlugin';
+export { zodPlugin } from './zodPlugin';
+export type { ZodPlugin } from './zodPlugin';

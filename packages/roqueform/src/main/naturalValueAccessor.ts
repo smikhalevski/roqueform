@@ -1,4 +1,4 @@
-import { ValueAccessor } from './types';
+import type { ValueAccessor } from './types';
 
 /**
  * The value accessor that reads and writes key-value pairs to well-known object instances.
