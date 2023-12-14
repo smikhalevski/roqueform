@@ -1,4 +1,4 @@
-import { Field, PluginInjector, PluginOf } from 'roqueform';
+import type { Field, PluginInjector, PluginOf } from 'roqueform';
 
 export interface ScrollToErrorOptions extends ScrollIntoViewOptions {
   /**

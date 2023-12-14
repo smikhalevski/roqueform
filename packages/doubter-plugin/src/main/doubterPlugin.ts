@@ -1,5 +1,8 @@
 import { Err, Issue, Ok, ParseOptions, Shape } from 'doubter';
 import {
+  composePlugins,
+  errorsPlugin,
+  ErrorsPlugin,
   Field,
   FieldController,
   PluginInjector,
@@ -9,10 +12,7 @@ import {
   Validator,
 } from 'roqueform';
 
-/**
- * The plugin added to fields by the {@link doubterPlugin}.
- */
-export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
+interface DoubterErrorsPlugin extends ErrorsPlugin<Issue> {
   /**
    * The shape that Doubter uses to validate {@link FieldController.value the field value}, or `null` if there's no
    * shape for this field.
@@ -21,6 +21,11 @@ export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
 
   addError(error: Issue | string): void;
 }
+
+/**
+ * The plugin added to fields by the {@link doubterPlugin}.
+ */
+export type DoubterPlugin = ValidationPlugin<ParseOptions> & DoubterErrorsPlugin;
 
 /**
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
@@ -32,7 +37,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
   let plugin;
 
   return field => {
-    (plugin ||= validationPlugin({ validator, concatErrors }))(field);
+    (plugin ||= composePlugins(validationPlugin(validator), errorsPlugin(concatErrors)))(field);
 
     field.valueShape = field.parentField === null ? shape : field.parentField.valueShape?.at(field.key) || null;
 
@@ -46,7 +51,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
   };
 }
 
-const validator: Validator<Issue, ParseOptions> = {
+const validator: Validator<ParseOptions> = {
   validate(field, options) {
     const { validation, valueShape } = field as unknown as Field<DoubterPlugin>;
 

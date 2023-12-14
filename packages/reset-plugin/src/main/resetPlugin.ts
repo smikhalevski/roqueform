@@ -1,4 +1,3 @@
-import type { FieldController } from 'roqueform';
 import {
   dispatchEvents,
   Event,

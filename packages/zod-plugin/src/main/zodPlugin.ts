@@ -1,5 +1,8 @@
 import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
 import {
+  composePlugins,
+  errorsPlugin,
+  ErrorsPlugin,
   Field,
   FieldController,
   PluginInjector,
@@ -9,10 +12,7 @@ import {
   Validator,
 } from 'roqueform';
 
-/**
- * The plugin added to fields by the {@link zodPlugin}.
- */
-export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParams>> {
+interface ZodErrorsPlugin extends ErrorsPlugin<ZodIssue> {
   /**
    * The Zod validation type of the root value.
    */
@@ -20,6 +20,11 @@ export interface ZodPlugin extends ValidationPlugin<ZodIssue, Partial<ParseParam
 
   addError(error: ZodIssue | string): void;
 }
+
+/**
+ * The plugin added to fields by the {@link zodPlugin}.
+ */
+export type ZodPlugin = ValidationPlugin<Partial<ParseParams>> & ZodErrorsPlugin;
 
 /**
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
@@ -32,7 +37,7 @@ export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector
   let plugin;
 
   return field => {
-    (plugin ||= validationPlugin({ validator, concatErrors }))(field);
+    (plugin ||= composePlugins(validationPlugin(validator), errorsPlugin(concatErrors)))(field);
 
     field.valueType = field.parentField?.valueType || type;
 
@@ -44,7 +49,7 @@ export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector
   };
 }
 
-const validator: Validator<ZodIssue, Partial<ParseParams>> = {
+const validator: Validator<Partial<ParseParams>> = {
   validate(field, options) {
     const { validation, valueType } = field as unknown as Field<ZodPlugin>;
 

@@ -1,4 +1,4 @@
-import { Field, PluginInjector } from 'roqueform';
+import type { Field, PluginInjector } from 'roqueform';
 import { createElementsValueAccessor, ElementsValueAccessor } from './createElementsValueAccessor';
 
 /**
