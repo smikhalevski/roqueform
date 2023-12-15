@@ -5,7 +5,7 @@ import { dispatchEvents, Field, PluginInjector, PluginOf, Subscriber, Unsubscrib
  */
 export interface ConstraintValidationPlugin {
   /**
-   * The DOM element that supports the Constraint Validation API associated with the field, or `null` if there's no
+   * The DOM element that supports the Constraint validation API associated with the field, or `null` if there's no
    * such element.
    */
   validatedElement: ValidatableElement | null;
@@ -52,7 +52,7 @@ export interface ConstraintValidationPlugin {
 }
 
 /**
- * A DOM element which supports Constraint Validation API.
+ * A DOM element which supports Constraint validation API.
  */
 export type ValidatableElement =
   | HTMLButtonElement
@@ -65,7 +65,8 @@ export type ValidatableElement =
   | HTMLTextAreaElement;
 
 /**
- * Enhances fields with Constraint Validation API methods.
+ * Enhances fields with
+ * the [Constraint validation API.](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) methods.
  */
 export function constraintValidationPlugin(): PluginInjector<ConstraintValidationPlugin> {
   return field => {

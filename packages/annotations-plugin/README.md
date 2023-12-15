@@ -14,39 +14,39 @@ Annotations allow to associate arbitrary data with fields.
 import { createField } from 'roqueform';
 import { annotationsPlugin } from '@roqueform/annotations-plugin';
 
-const field = createField(
+const planetField = createField(
   { name: 'Pluto' },
   annotationsPlugin({ isDisabled: false })
 );
 
-field.at('name').isDisabled; // ⮕ false
+planetField.at('name').isDisabled // ⮕ false
 ```
 
 Update annotations for a single field:
 
 ```ts
-field.annotate({ isDisabled: true });
+planetField.annotate({ isDisabled: true });
 
-field.isDisabled; // ⮕ true
+planetField.isDisabled // ⮕ true
 
-field.at('name').isDisabled; // ⮕ false
+planetField.at('name').isDisabled // ⮕ false
 ```
 
 Annotate field and all of its children recursively:
 
 ```ts
-field.annotate({ isDisabled: true }, { recursive: true });
+planetField.annotate({ isDisabled: true }, { recursive: true });
 
-field.isDisabled; // ⮕ true
+planetField.isDisabled // ⮕ true
 
 // 🌕 The child field was annotated along with its parent
-field.at('name').isDisabled; // ⮕ true
+planetField.at('name').isDisabled // ⮕ true
 ```
 
 Annotations can be updated using a callback. This is especially useful in conjunction with recursive flag:
 
 ```ts
-field.annotate(
+planetField.annotate(
   field => {
     // Toggle disabled flag for the field and its children
     return { isDisabled: !field.annotations.isDisabled };
@@ -58,7 +58,7 @@ field.annotate(
 Subscribe to annotation changes:
 
 ```ts
-field.subscribe('change:annotations', event => {
+planetField.subscribe('change:annotations', event => {
   event.target.annotations;
   // ⮕ { isDisabled: boolean }
 });
