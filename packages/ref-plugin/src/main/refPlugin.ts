@@ -10,9 +10,9 @@ export interface RefPlugin {
   element: Element | null;
 
   /**
-   * `true` if {@link element the DOM element} or any of its descendants have focus, `false` otherwise.
+   * `true` if {@link element the DOM element} is focused, or `false` otherwise.
    */
-  readonly hasFocus: boolean;
+  readonly isFocused: boolean;
 
   /**
    * Associates the field with the {@link element DOM element}.
@@ -31,14 +31,14 @@ export interface RefPlugin {
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
    *
-   * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
+   * @param options The [scroll options](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1).
    */
   scrollIntoView(options?: ScrollIntoViewOptions): void;
 
   /**
    * Focuses the field element.
    *
-   * @param options [The focus options.](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus#options)
+   * @param options The [scroll options](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1).
    */
   focus(options?: FocusOptions): void;
 
@@ -52,38 +52,40 @@ export interface RefPlugin {
  * Enables field-element association and simplifies focus control.
  */
 export function refPlugin(): PluginInjector<RefPlugin> {
-  return field => {
-    field.element = null;
-
-    Object.defineProperty(field, 'hasFocus', {
-      configurable: true,
-      get: () => field.element !== null && field.element.contains(field.element.ownerDocument.activeElement),
-    });
-
-    const { ref } = field;
-
-    field.ref = element => {
-      ref?.(element);
-      field.element = element instanceof Element ? element : null;
-    };
-
-    field.scrollIntoView = options => {
-      field.element?.scrollIntoView(options);
-    };
-
-    field.focus = options => {
-      if (isFocusable(field.element)) {
-        field.element.focus(options);
-      }
-    };
-
-    field.blur = () => {
-      if (isFocusable(field.element)) {
-        field.element.blur();
-      }
-    };
-  };
+  return refPluginInjector;
 }
+
+const refPluginInjector: PluginInjector<RefPlugin> = field => {
+  const { ref } = field;
+
+  field.element = null;
+
+  Object.defineProperty(field, 'isFocused', {
+    configurable: true,
+    get: () => field.element !== null && field.element === field.element.ownerDocument.activeElement,
+  });
+
+  field.ref = element => {
+    ref?.(element);
+    field.element = element instanceof Element ? element : null;
+  };
+
+  field.scrollIntoView = options => {
+    field.element?.scrollIntoView(options);
+  };
+
+  field.focus = options => {
+    if (isFocusable(field.element)) {
+      field.element.focus(options);
+    }
+  };
+
+  field.blur = () => {
+    if (isFocusable(field.element)) {
+      field.element.blur();
+    }
+  };
+};
 
 function isFocusable(element: Element | null): element is HTMLElement | SVGElement {
   return element !== null && 'tabIndex' in element && typeof element.tabIndex === 'number';

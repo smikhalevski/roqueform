@@ -1,7 +1,7 @@
 import { createField } from 'roqueform';
 import { resetPlugin } from '../main';
 
-describe('annotationsPlugin', () => {
+describe('resetPlugin', () => {
   test('field is dirty if the field value is not equal to an initial value', () => {
     const initialValue = { aaa: 111 };
 
@@ -55,14 +55,14 @@ describe('annotationsPlugin', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(2);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:initialValue',
-      target: field,
-      origin: field,
+      targetField: field,
+      originField: field,
       data: { aaa: 111 },
     });
     expect(subscriberMock).toHaveBeenNthCalledWith(2, {
       type: 'change:initialValue',
-      target: field.at('aaa'),
-      origin: field,
+      targetField: field.at('aaa'),
+      originField: field,
       data: 111,
     });
 

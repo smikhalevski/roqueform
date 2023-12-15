@@ -1,6 +1,8 @@
 import { Err, Issue, Ok, ParseOptions, Shape } from 'doubter';
 import {
-  Field,
+  composePlugins,
+  errorsPlugin,
+  ErrorsPlugin,
   FieldController,
   PluginInjector,
   Validation,
@@ -9,20 +11,20 @@ import {
   Validator,
 } from 'roqueform';
 
-/**
- * The plugin added to fields by the {@link doubterPlugin}.
- */
-export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
+interface ValueShapePlugin {
   /**
    * The shape that Doubter uses to validate {@link FieldController.value the field value}, or `null` if there's no
    * shape for this field.
-   *
-   * @protected
    */
-  ['shape']: Shape | null;
+  valueShape: Shape | null;
 
-  setError(error: Issue | string | null | undefined): void;
+  addError(error: Issue | string): void;
 }
+
+/**
+ * The plugin added to fields by the {@link doubterPlugin}.
+ */
+export type DoubterPlugin = ValidationPlugin<ParseOptions> & ErrorsPlugin<Issue> & ValueShapePlugin;
 
 /**
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
@@ -31,39 +33,37 @@ export interface DoubterPlugin extends ValidationPlugin<Issue, ParseOptions> {
  * @template Value The root field value.
  */
 export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<DoubterPlugin, Value> {
-  let plugin;
+  return validationPlugin(composePlugins(errorsPlugin(concatErrors), valueShapePlugin(shape)), validator);
+}
 
+function valueShapePlugin(rootShape: Shape): PluginInjector<ValueShapePlugin> {
   return field => {
-    (plugin ||= validationPlugin(doubterValidator))(field);
+    field.valueShape = field.parentField === null ? rootShape : field.parentField.valueShape?.at(field.key) || null;
 
-    field.shape = field.parent === null ? shape : field.parent.shape?.at(field.key) || null;
+    const { addError } = field;
 
-    const { setError } = field;
-
-    field.setError = error => {
-      if (error === null || error === undefined) {
-        setError(error);
-      } else {
-        setError(prependPath(field, typeof error === 'string' ? { message: error, input: field.value } : error));
-      }
+    field.addError = error => {
+      addError(
+        typeof error === 'string' ? prependPath(field, { code: 'custom', message: error, input: field.value }) : error
+      );
     };
   };
 }
 
-const doubterValidator: Validator<Issue, ParseOptions> = {
+const validator: Validator<ParseOptions, DoubterPlugin> = {
   validate(field, options) {
-    const { validation, shape } = field as unknown as Field<DoubterPlugin>;
+    const { validation, valueShape } = field;
 
-    if (validation !== null && shape !== null) {
-      applyResult(validation, shape.try(field.value, Object.assign({ verbose: true }, options)));
+    if (validation !== null && valueShape !== null) {
+      applyResult(validation, valueShape.try(field.value, Object.assign({ verbose: true }, options)));
     }
   },
 
   validateAsync(field, options) {
-    const { validation, shape } = field as unknown as Field<DoubterPlugin>;
+    const { validation, valueShape } = field;
 
-    if (validation !== null && shape !== null) {
-      return shape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
+    if (validation !== null && valueShape !== null) {
+      return valueShape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
         applyResult(validation, result);
       });
     }
@@ -72,10 +72,22 @@ const doubterValidator: Validator<Issue, ParseOptions> = {
   },
 };
 
+function concatErrors(errors: readonly Issue[], error: Issue): readonly Issue[] {
+  for (const otherError of errors) {
+    if (
+      otherError.code !== undefined && error.code !== undefined
+        ? otherError.code === error.code
+        : otherError.message === error.message
+    ) {
+      return errors;
+    }
+  }
+  return errors.concat(error);
+}
+
 function prependPath(field: FieldController<any>, issue: Issue): Issue {
-  while (field.parent !== null) {
+  for (; field.parentField !== null; field = field.parentField) {
     (issue.path ||= []).unshift(field.key);
-    field = field.parent;
   }
   return issue;
 }
@@ -86,13 +98,15 @@ function applyResult(validation: Validation<DoubterPlugin>, result: Err | Ok): v
   }
 
   for (const issue of result.issues) {
-    let child = validation.root;
+    let child = validation.rootField;
 
     if (issue.path !== undefined) {
       for (const key of issue.path) {
         child = child.at(key);
       }
     }
-    child.setValidationError(validation, prependPath(validation.root, issue));
+    if (child.validation === validation) {
+      child.addError(prependPath(validation.rootField, issue));
+    }
   }
 }

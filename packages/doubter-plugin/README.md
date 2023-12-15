@@ -128,7 +128,7 @@ planetField.at('name').error;
 You can manually associate an error with the field:
 
 ```ts
-planetField.at('name').setError({ message: 'Oh, snap!' });
+planetField.at('name').addError({ message: 'Oh, snap!' });
 ```
 
 This may come handy when you want to mix client-side and server-side validation.
@@ -142,7 +142,7 @@ planetField.at('name').deleteError();
 Sometimes it is required to clear errors of the field itself and all of its child fields:
 
 ```ts
-planetField.clearErrors();
+planetField.clearErrors({ recursive: true });
 ```
 
 # Custom error messages

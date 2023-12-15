@@ -1,9 +1,6 @@
-import { Event, Field, PluginInjector, Subscriber, ValueAccessor } from './typings';
+import type { __PLUGIN__, Event, Field, NoInfer, PluginInjector, ValueAccessor } from './types';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalValueAccessor } from './naturalValueAccessor';
-
-// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
-type NoInfer<T> = T extends infer T ? T : never;
 
 /**
  * Creates the new field instance.
@@ -25,7 +22,7 @@ export function createField<Value>(initialValue: Value, accessor?: ValueAccessor
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injected into the field.
+ * @param plugin The plugin injector that enhances the field.
  * @param accessor Resolves values for child fields.
  * @template Value The root field initial value.
  * @template Plugin The plugin injected into the field.
@@ -46,46 +43,46 @@ export function createField(initialValue?: unknown, plugin?: PluginInjector | Va
 
 function getOrCreateField(
   accessor: ValueAccessor,
-  parent: Field | null,
+  parentField: Field | null,
   key: unknown,
   initialValue: unknown,
   plugin: PluginInjector | null
 ): Field {
-  let child: Field;
-
-  if (parent !== null && parent.childrenMap !== null && (child = parent.childrenMap.get(key)!) !== undefined) {
-    return child;
+  if (parentField !== null && parentField.children !== null) {
+    for (const child of parentField.children) {
+      if (isEqual(child.key, key)) {
+        return child;
+      }
+    }
   }
 
-  child = {
+  const field = {
     key,
     value: initialValue,
     initialValue,
     isTransient: false,
-    root: null!,
-    parent,
+    rootField: null!,
+    parentField,
     children: null,
-    childrenMap: null,
-    subscribers: null,
+    subscribers: Object.create(null),
     valueAccessor: accessor,
-    plugin,
 
     setValue: value => {
-      setValue(child, callOrGet(value, child.value), false);
+      setValue(field, callOrGet(value, field.value), false);
     },
 
     setTransientValue: value => {
-      setValue(child, callOrGet(value, child.value), true);
+      setValue(field, callOrGet(value, field.value), true);
     },
 
     propagate: () => {
-      setValue(child, child.value, false);
+      setValue(field, field.value, false);
     },
 
-    at: key => getOrCreateField(child.valueAccessor, child, key, null, plugin),
+    at: key => getOrCreateField(field.valueAccessor, field, key, null, plugin),
 
     on: (type, subscriber) => {
-      const subscribers: Subscriber[] = ((child.subscribers ||= Object.create(null))[type] ||= []);
+      const subscribers = (field.subscribers[type] ||= []);
 
       if (!subscribers.includes(subscriber)) {
         subscribers.push(subscriber);
@@ -94,24 +91,21 @@ function getOrCreateField(
         subscribers.splice(subscribers.indexOf(subscriber), 1);
       };
     },
-  } satisfies Omit<Field, '__plugin__'> as unknown as Field;
+  } satisfies Omit<Field, __PLUGIN__> as unknown as Field;
 
-  child.root = child;
+  field.rootField = field;
 
-  if (parent !== null) {
-    child.root = parent.root;
-    child.value = accessor.get(parent.value, key);
-    child.initialValue = accessor.get(parent.initialValue, key);
+  if (parentField !== null) {
+    field.value = parentField.valueAccessor.get(parentField.value, key);
+    field.initialValue = parentField.valueAccessor.get(parentField.initialValue, key);
+    field.rootField = parentField.rootField;
+    (parentField.children ||= []).push(field);
   }
 
-  plugin?.(child);
-
-  if (parent !== null) {
-    ((parent.children ||= []) as Field[]).push(child);
-    ((parent.childrenMap ||= new Map()) as Map<unknown, Field>).set(child.key, child);
+  if (plugin !== null) {
+    plugin(field);
   }
-
-  return child;
+  return field;
 }
 
 function setValue(field: Field, value: unknown, transient: boolean): void {
@@ -121,32 +115,32 @@ function setValue(field: Field, value: unknown, transient: boolean): void {
 
   field.isTransient = transient;
 
-  let changeRoot = field;
+  let root = field;
 
-  while (changeRoot.parent !== null && !changeRoot.isTransient) {
-    value = field.valueAccessor.set(changeRoot.parent.value, changeRoot.key, value);
-    changeRoot = changeRoot.parent;
+  while (root.parentField !== null && !root.isTransient) {
+    value = root.parentField.valueAccessor.set(root.parentField.value, root.key, value);
+    root = root.parentField;
   }
 
-  dispatchEvents(propagateValue(field, changeRoot, value, []));
+  dispatchEvents(propagateValue(field, root, value, []));
 }
 
-function propagateValue(origin: Field, target: Field, value: unknown, events: Event[]): Event[] {
-  events.push({ type: 'change:value', target, origin, data: target.value });
+function propagateValue(originField: Field, targetField: Field, value: unknown, events: Event[]): Event[] {
+  events.push({ type: 'change:value', targetField, originField, data: targetField.value });
 
-  target.value = value;
+  targetField.value = value;
 
-  if (target.children !== null) {
-    for (const child of target.children) {
+  if (targetField.children !== null) {
+    for (const child of targetField.children) {
       if (child.isTransient) {
         continue;
       }
 
-      const childValue = target.valueAccessor.get(value, child.key);
-      if (child !== origin && isEqual(child.value, childValue)) {
+      const childValue = targetField.valueAccessor.get(value, child.key);
+      if (child !== originField && isEqual(child.value, childValue)) {
         continue;
       }
-      propagateValue(origin, child, childValue, events);
+      propagateValue(originField, child, childValue, events);
     }
   }
   return events;

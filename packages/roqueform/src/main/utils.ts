@@ -1,4 +1,4 @@
-import { Event } from './typings';
+import type { Event, FieldController } from './types';
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -36,29 +36,23 @@ export function callOrGet(value: unknown, arg?: unknown) {
 }
 
 /**
- * Dispatches multiple events to field subscribers.
+ * Dispatches events to appropriate subscribers.
  *
  * @param events The array of events to dispatch.
  */
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
-    for (let field = event.target; field !== null; field = field.parent) {
-      const { subscribers } = field;
+    for (let ancestor: FieldController | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
+      const subscribers1 = ancestor.subscribers[event.type];
+      const subscribers2 = ancestor.subscribers['*'];
 
-      if (subscribers === null) {
-        continue;
-      }
-
-      const typeSubscribers = subscribers[event.type];
-      const globSubscribers = subscribers['*'];
-
-      if (typeSubscribers !== undefined) {
-        for (const subscriber of typeSubscribers) {
+      if (subscribers1 !== undefined) {
+        for (const subscriber of subscribers1) {
           subscriber(event);
         }
       }
-      if (globSubscribers !== undefined) {
-        for (const subscriber of globSubscribers) {
+      if (subscribers2 !== undefined) {
+        for (const subscriber of subscribers2) {
           subscriber(event);
         }
       }

@@ -39,7 +39,7 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/reset-plugin#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/annotations-plugin#readme",
   "peerDependencies": {
     "roqueform": "^4.0.0"
   }

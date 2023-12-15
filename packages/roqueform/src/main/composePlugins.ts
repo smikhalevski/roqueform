@@ -1,4 +1,9 @@
-import { PluginInjector } from './typings';
+import type { PluginInjector } from './types';
+
+/**
+ * @internal
+ */
+export function composePlugins<T, A>(a: PluginInjector<A, T>): PluginInjector<A, T>;
 
 /**
  * @internal
@@ -57,6 +62,9 @@ export function composePlugins<T, A, B, C, D, E, F>(
 export function composePlugins(...plugins: PluginInjector[]): PluginInjector;
 
 export function composePlugins(...plugins: PluginInjector[]): PluginInjector {
+  if (plugins.length === 1) {
+    return plugins[0];
+  }
   return field => {
     for (const plugin of plugins) {
       plugin(field);

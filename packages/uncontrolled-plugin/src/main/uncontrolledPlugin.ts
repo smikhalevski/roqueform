@@ -1,4 +1,4 @@
-import { Field, PluginInjector } from 'roqueform';
+import type { Field, PluginInjector } from 'roqueform';
 import { createElementsValueAccessor, ElementsValueAccessor } from './createElementsValueAccessor';
 
 /**
@@ -16,26 +16,14 @@ export interface UncontrolledPlugin {
   element: Element | null;
 
   /**
-   * The array of elements controlled by this field, includes {@link element}.
-   *
-   * @protected
+   * The array of elements that are used to derive the field value, includes {@link element}.
    */
-  ['elements']: readonly Element[];
+  targetElements: readonly Element[];
 
   /**
-   * The map from a key passed to {@link refFor} to a corresponding element. If {@link refFor} was called with `null`
-   * then a key is deleted from this map.
-   *
-   * @protected
+   * The accessor that reads and writes the field value from and to {@link targetElements}.
    */
-  ['elementsMap']: ReadonlyMap<unknown, Element>;
-
-  /**
-   * The accessor that reads and writes the field value from and to {@link elements}.
-   *
-   * @protected
-   */
-  ['elementsValueAccessor']: ElementsValueAccessor;
+  elementsValueAccessor: ElementsValueAccessor;
 
   /**
    * Associates the field with the DOM element.
@@ -43,7 +31,11 @@ export interface UncontrolledPlugin {
   ref(element: Element | null): void;
 
   /**
-   * Returns a callback that associates the field with the DOM element under the given key in {@link elementsMap}.
+   * Returns a callback that associates the field with the DOM element under the given key. The same callback is
+   * returned when this method is called with the same key.
+   *
+   * @param key The key for which the reference callback must be returned. To associate multiple elements with the same
+   * field, use different keys.
    */
   refFor(key: unknown): (element: Element | null) => void;
 }
@@ -53,28 +45,29 @@ export interface UncontrolledPlugin {
  */
 export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInjector<UncontrolledPlugin> {
   return field => {
+    const { ref } = field;
+
     field.element = null;
-    field.elements = [];
-    field.elementsMap = new Map();
+    field.targetElements = [];
     field.elementsValueAccessor = accessor;
 
+    const elementsMap = new Map<unknown, Element>();
     const refsMap = new Map<unknown, (element: Element | null) => void>();
 
     let prevValue = field.value;
 
     const changeListener: EventListener = event => {
-      if (field.elements.includes(event.target as Element)) {
-        field.setValue((prevValue = field.elementsValueAccessor.get(field.elements)));
+      if (field.targetElements.includes(event.target as Element)) {
+        prevValue = field.elementsValueAccessor.get(field.targetElements);
+        field.setValue(prevValue);
       }
     };
 
     field.on('change:value', event => {
-      if (field.value !== prevValue && event.target === field && field.elements.length !== 0) {
-        field.elementsValueAccessor.set(field.elements, field.value);
+      if (field.value !== prevValue && event.targetField === field && field.targetElements.length !== 0) {
+        field.elementsValueAccessor.set(field.targetElements, field.value);
       }
     });
-
-    const { ref } = field;
 
     field.ref = nextElement => {
       const prevElement = field.element;
@@ -89,7 +82,6 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
 
       if (ref === undefined) {
         ref = nextElement => {
-          const elementsMap = field.elementsMap as Map<unknown, Element>;
           const prevElement = elementsMap.get(key) || null;
 
           nextElement = swapElements(field, changeListener, prevElement, nextElement);
@@ -117,7 +109,7 @@ function swapElements(
   prevElement: Element | null,
   nextElement: Element | null
 ): Element | null {
-  const elements = field.elements as Element[];
+  const elements = field.targetElements as Element[];
 
   nextElement = nextElement instanceof Element ? nextElement : null;
 

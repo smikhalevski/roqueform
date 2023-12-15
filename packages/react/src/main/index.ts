@@ -2,6 +2,7 @@
  * @module react
  */
 
-export * from './ValueAccessorContext';
-export * from './FieldRenderer';
-export * from './useField';
+export { ValueAccessorContext } from './ValueAccessorContext';
+export { FieldRenderer } from './FieldRenderer';
+export { useField } from './useField';
+export type { FieldRendererProps } from './FieldRenderer';

@@ -1,4 +1,3 @@
-import type { FieldController } from 'roqueform';
 import {
   dispatchEvents,
   Event,
@@ -17,20 +16,9 @@ import isDeepEqual from 'fast-deep-equal';
  */
 export interface ResetPlugin {
   /**
-   * `true` if the field value is different from its initial value basing on {@link equalityChecker equality checker},
-   * or `false` otherwise.
+   * `true` if the field value is different from its initial value.
    */
   readonly isDirty: boolean;
-
-  /**
-   * The callback that compares initial value and the current value of the field.
-   *
-   * @param initialValue The initial value.
-   * @param value The current value.
-   * @returns `true` if initial value is equal to value, or `false` otherwise.
-   * @protected
-   */
-  ['equalityChecker']: (initialValue: any, value: any) => boolean;
 
   /**
    * Sets the initial value of the field and notifies ancestors and descendants.
@@ -46,7 +34,7 @@ export interface ResetPlugin {
 
   /**
    * Returns all fields that have {@link FieldController.value a value} that is different from
-   * {@link FieldController.initialValue an initial value} basing on {@link equalityChecker equality checker}.
+   * {@link FieldController.initialValue an initial value}.
    *
    * @see {@link isDirty}
    */
@@ -74,10 +62,8 @@ export function resetPlugin(
   return field => {
     Object.defineProperty(field, 'isDirty', {
       configurable: true,
-      get: () => !field.equalityChecker(field.initialValue, field.value),
+      get: () => !equalityChecker(field.initialValue, field.value),
     });
-
-    field.equalityChecker = equalityChecker;
 
     field.setInitialValue = value => {
       setInitialValue(field, value);
@@ -98,31 +84,31 @@ function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void
 
   let root = field;
 
-  while (root.parent !== null) {
-    initialValue = field.valueAccessor.set(root.parent.value, root.key, initialValue);
-    root = root.parent;
+  while (root.parentField !== null) {
+    initialValue = field.valueAccessor.set(root.parentField.value, root.key, initialValue);
+    root = root.parentField;
   }
 
   dispatchEvents(propagateInitialValue(field, root, initialValue, []));
 }
 
 function propagateInitialValue(
-  origin: Field<ResetPlugin>,
-  target: Field<ResetPlugin>,
+  originField: Field<ResetPlugin>,
+  targetField: Field<ResetPlugin>,
   initialValue: unknown,
   events: Event[]
 ): Event[] {
-  events.push({ type: 'change:initialValue', target, origin, data: target.initialValue });
+  events.push({ type: 'change:initialValue', targetField, originField, data: targetField.initialValue });
 
-  target.initialValue = initialValue;
+  targetField.initialValue = initialValue;
 
-  if (target.children !== null) {
-    for (const child of target.children) {
-      const childInitialValue = target.valueAccessor.get(initialValue, child.key);
-      if (child !== origin && isEqual(child.initialValue, childInitialValue)) {
+  if (targetField.children !== null) {
+    for (const child of targetField.children) {
+      const childInitialValue = targetField.valueAccessor.get(initialValue, child.key);
+      if (child !== originField && isEqual(child.initialValue, childInitialValue)) {
         continue;
       }
-      propagateInitialValue(origin, child, childInitialValue, events);
+      propagateInitialValue(originField, child, childInitialValue, events);
     }
   }
   return events;

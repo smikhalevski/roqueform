@@ -2,4 +2,5 @@
  * @module scroll-to-error-plugin
  */
 
-export * from './scrollToErrorPlugin';
+export { scrollToErrorPlugin } from './scrollToErrorPlugin';
+export type { ScrollToErrorPlugin, ScrollToErrorOptions } from './scrollToErrorPlugin';

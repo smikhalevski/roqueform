@@ -26,7 +26,7 @@ export function useField<Value>(initialValue: Value | (() => Value)): Field<Valu
  * Creates the new field enhanced by a plugin.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injected into the field.
+ * @param plugin The plugin injector that enhances the field.
  * @returns The {@link Field} instance.
  * @template Value The root field value.
  * @template Plugin The plugin injected into the field.

@@ -1,9 +1,9 @@
 import { createField } from 'roqueform';
-import { AnnotationsPatcher, annotationsPlugin } from '../main';
+import { annotationsPlugin } from '../main';
 
 describe('annotationsPlugin', () => {
   test('annotations are an empty object by default', () => {
-    const field = createField({ aaa: 111 }, annotationsPlugin());
+    const field = createField({ aaa: 111 }, annotationsPlugin({}));
 
     expect(field.annotations).toEqual({});
     expect(field.at('aaa').annotations).toEqual({});
@@ -35,8 +35,8 @@ describe('annotationsPlugin', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:annotations',
-      target: field,
-      origin: field,
+      targetField: field,
+      originField: field,
       data: { xxx: 222 },
     });
     expect(aaaSubscriberMock).not.toHaveBeenCalled();
@@ -75,27 +75,27 @@ describe('annotationsPlugin', () => {
     expect(subscriberMock).toHaveBeenCalledTimes(1);
     expect(subscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:annotations',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: { xxx: 222 },
     });
     expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
     expect(aaaSubscriberMock).toHaveBeenNthCalledWith(1, {
       type: 'change:annotations',
-      target: field.at('aaa'),
-      origin: field.at('aaa'),
+      targetField: field.at('aaa'),
+      originField: field.at('aaa'),
       data: { xxx: 222 },
     });
   });
 
   test('uses patcher to apply patches', () => {
-    const patcherMock: AnnotationsPatcher = jest.fn((a, b) => Object.assign({}, a, b));
+    const applyPatchMock = jest.fn((a, b) => Object.assign({}, a, b));
 
-    const field = createField(111, annotationsPlugin(patcherMock));
+    const field = createField(111, annotationsPlugin({}, applyPatchMock));
 
     field.annotate({ xxx: 222 });
 
-    expect(patcherMock).toHaveBeenCalledTimes(1);
-    expect(patcherMock).toHaveBeenNthCalledWith(1, {}, { xxx: 222 });
+    expect(applyPatchMock).toHaveBeenCalledTimes(1);
+    expect(applyPatchMock).toHaveBeenNthCalledWith(1, {}, { xxx: 222 });
   });
 });

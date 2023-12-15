@@ -2,4 +2,5 @@
  * @module constraint-validation-plugin
  */
 
-export * from './constraintValidationPlugin';
+export { constraintValidationPlugin } from './constraintValidationPlugin';
+export type { ConstraintValidationPlugin } from './constraintValidationPlugin';

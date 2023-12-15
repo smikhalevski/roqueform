@@ -1,5 +1,5 @@
 /**
- * The field that manages a value and related data. Fields can be {@link PluginInjector enhanced by plugins} that
+ * The field that manages a value and associated data. Fields can be {@link PluginInjector enhanced by plugins} that
  * provide integration with rendering frameworks, validation libraries, and other tools.
  *
  * @template Plugin The plugin injected into the field.
@@ -20,26 +20,26 @@ export interface Event<Plugin = any, Data = any> {
   type: string;
 
   /**
-   * The field onto which the event was dispatched. Usually, this is the field which has changed.
+   * The field onto which this event was dispatched.
    */
-  target: Field<Plugin>;
+  targetField: Field<Plugin>;
 
   /**
-   * The field that caused this event to be dispatched onto {@link target the target field}.
+   * The field that caused this event to be dispatched onto the {@link targetField}.
    *
-   * For example: if a child field value is set, then the parent field value to updated as well. For all events
-   * dispatched in this scenario, the origin is the child field.
+   * For example, if a child field value is changed and causes the change event to be dispatched for the parent field
+   * as well, then the origin field is the child field for both change events.
    */
-  origin: Field<Plugin>;
+  originField: Field<Plugin>;
 
   /**
-   * The {@link type type-specific} data related to the {@link target target field}.
+   * The {@link type type-specific} data related to the {@link targetField}.
    */
   data: Data;
 }
 
 /**
- * The callback that receives events dispatched by {@link Field a field}.
+ * The callback that receives events dispatched by a {@link Field}.
  *
  * @param event The dispatched event.
  * @template Plugin The plugin injected into the field.
@@ -60,7 +60,7 @@ export type Unsubscribe = () => void;
  *
  * @template T The field to infer plugin of.
  */
-export type PluginOf<T> = '__plugin__' extends keyof T ? T['__plugin__'] : unknown;
+export type PluginOf<T> = __PLUGIN__ extends keyof T ? T[__PLUGIN__] : unknown;
 
 /**
  * Infers the value of the field.
@@ -83,15 +83,15 @@ export interface FieldController<Plugin = unknown, Value = any> {
    *
    * Use {@link PluginOf PluginOf<this>} in plugin interfaces to infer the plugin type.
    *
-   * @internal
+   * @hidden
    */
-  readonly ['__plugin__']: Plugin;
+  readonly [__PLUGIN__]: Plugin;
 
   /**
-   * The key in the {@link parent parent value} that corresponds to the value of this field, or `null` if there's no
-   * parent.
+   * The key in the {@link parentField parent value} that corresponds to the value of this field, or `null` if there's
+   * no parent.
    */
-  readonly key: any;
+  key: any;
 
   /**
    * The current value of the field.
@@ -112,56 +112,31 @@ export interface FieldController<Plugin = unknown, Value = any> {
 
   /**
    * The root field.
-   *
-   * @protected
    */
-  ['root']: Field<Plugin>;
+  rootField: Field<Plugin>;
 
   /**
    * The parent field, or `null` if this is the root field.
-   *
-   * @protected
    */
-  ['parent']: Field<Plugin> | null;
+  parentField: Field<Plugin> | null;
 
   /**
-   * The array of immediate child fields that were {@link at previously accessed}, or `null` if there are no children.
-   *
-   * @protected
+   * The array of child fields that were {@link at previously accessed}, or `null` if there are no children.
    */
-  ['children']: readonly Field<Plugin>[] | null;
+  children: Field<Plugin>[] | null;
 
   /**
-   * Mapping from a key to a corresponding child field, or `null` if there are no children.
-   *
-   * @protected
+   * The map from an event type to an array of associated subscribers.
    */
-  ['childrenMap']: ReadonlyMap<unknown, Field<Plugin>> | null;
+  subscribers: { [eventType: string]: Subscriber<Plugin>[] };
 
   /**
-   * The map from an event type to an array of associated subscribers, or `null` if no subscribers were added.
-   *
-   * @see {@link on}
-   * @protected
-   */
-  ['subscribers']: { [eventType: string]: Subscriber<Plugin>[] | undefined } | null;
-
-  /**
-   * The accessor that reads the field value from the value of the parent fields, and updates parent value.
+   * The accessor that reads values of child fields from {@link Field.value the value of this field}, and updates the
+   * value of this field when child value is changed.
    *
    * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
-   * @protected
    */
-  ['valueAccessor']: ValueAccessor;
-
-  /**
-   * The plugin that is applied to this field and all child fields when they are accessed, or `null` field isn't
-   * enhanced by a plugin.
-   *
-   * @see [Authoring a plugin](https://github.com/smikhalevski/roqueform#authoring-a-plugin)
-   * @protected
-   */
-  ['plugin']: PluginInjector<Plugin, Value> | null;
+  valueAccessor: ValueAccessor;
 
   /**
    * Updates the field value and notifies both ancestors and child fields about the change. If the field withholds
@@ -230,24 +205,31 @@ export type PluginInjector<Plugin = unknown, Value = any> = (field: Field<Plugin
  */
 export interface ValueAccessor {
   /**
-   * Returns the value that corresponds to `key` in `obj`.
+   * Returns the value that corresponds to key.
    *
    * @param obj An arbitrary object from which the value must be read. May be `undefined` or `null`.
    * @param key The key to read.
-   * @returns The value in `obj` that corresponds to the `key`.
+   * @returns The value that corresponds to the key.
    */
   get(obj: any, key: any): any;
 
   /**
-   * Returns the object updated where the `key` is associated with `value`.
+   * Returns the object updated where the key is associated with the new value.
    *
    * @param obj The object to update. May be `undefined` or `null`.
    * @param key The key to write.
-   * @param value The value to associate with the `key`.
+   * @param value The value to associate with the key.
    * @returns The updated object.
    */
   set(obj: any, key: any, value: any): any;
 }
+
+// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
+export type NoInfer<T> = T extends infer T ? T : never;
+
+export declare const __PLUGIN__: unique symbol;
+
+export type __PLUGIN__ = typeof __PLUGIN__;
 
 type Primitive =
   | String

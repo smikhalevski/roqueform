@@ -1,21 +1,30 @@
-import { createElement, Fragment, ReactElement, ReactNode, useLayoutEffect, useReducer, useRef } from 'react';
+import {
+  createElement,
+  Fragment,
+  isValidElement,
+  ReactElement,
+  ReactNode,
+  useLayoutEffect,
+  useReducer,
+  useRef,
+} from 'react';
 import { callOrGet, FieldController, ValueOf } from 'roqueform';
 
 /**
  * Properties of the {@link FieldRenderer} component.
  *
- * @template RenderedField The rendered field.
+ * @template Field The rendered field.
  */
-export interface FieldRendererProps<RenderedField extends FieldController<any>> {
+export interface FieldRendererProps<Field extends FieldController<any>> {
   /**
    * The field that triggers re-renders.
    */
-  field: RenderedField;
+  field: Field;
 
   /**
    * The render function that receive a rendered field as an argument.
    */
-  children: (field: RenderedField) => ReactNode;
+  children: (field: Field) => ReactNode;
 
   /**
    * If set to `true` then {@link FieldRenderer} is re-rendered whenever the {@link field} itself, its parent fields or
@@ -31,44 +40,46 @@ export interface FieldRendererProps<RenderedField extends FieldController<any>> 
    *
    * @param value The new field value.
    */
-  onChange?: (value: ValueOf<RenderedField>) => void;
+  onChange?: (value: ValueOf<Field>) => void;
 }
 
 /**
  * The component that subscribes to the field instance and re-renders its children when the field is notified.
  *
- * @template RenderedField The rendered field.
+ * @template Field The rendered field.
  */
-export function FieldRenderer<RenderedField extends FieldController<any>>(
-  props: FieldRendererProps<RenderedField>
-): ReactElement {
+export function FieldRenderer<Field extends FieldController<any>>(props: FieldRendererProps<Field>): ReactElement {
   const { field, eagerlyUpdated } = props;
 
   const [, rerender] = useReducer(reduceCount, 0);
-  const handleChangeRef = useRef<FieldRendererProps<RenderedField>['onChange']>();
+  const handleChangeRef = useRef<FieldRendererProps<Field>['onChange']>();
 
   handleChangeRef.current = props.onChange;
 
-  useLayoutEffect(
-    () =>
-      field.on('*', event => {
-        if (eagerlyUpdated || event.origin === field) {
-          rerender();
-        }
-        if (field.isTransient || event.type !== 'change:value' || event.target !== field) {
-          // The non-transient value of this field didn't change
-          return;
-        }
+  if (typeof window !== 'undefined') {
+    useLayoutEffect(
+      () =>
+        field.on('*', event => {
+          if (eagerlyUpdated || event.originField === field) {
+            rerender();
+          }
+          if (field.isTransient || event.type !== 'change:value' || event.targetField !== field) {
+            // The non-transient value of this field didn't change
+            return;
+          }
 
-        const handleChange = handleChangeRef.current;
-        if (typeof handleChange === 'function') {
-          handleChange(field.value);
-        }
-      }),
-    [field, eagerlyUpdated]
-  );
+          const handleChange = handleChangeRef.current;
+          if (typeof handleChange === 'function') {
+            handleChange(field.value);
+          }
+        }),
+      [field, eagerlyUpdated]
+    );
+  }
 
-  return createElement(Fragment, null, callOrGet(props.children, field));
+  const children = callOrGet(props.children, field);
+
+  return isValidElement(children) ? children : createElement(Fragment, null, children);
 }
 
 function reduceCount(count: number): number {
