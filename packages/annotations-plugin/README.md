@@ -6,6 +6,8 @@ Manages [Roqueform](https://github.com/smikhalevski/roqueform#readme) field anno
 npm install --save-prod @roqueform/annotations-plugin
 ```
 
+# Overview
+
 🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/annotations_plugin.html)
 
 Annotations allow to associate arbitrary data with fields.
@@ -19,7 +21,7 @@ const planetField = createField(
   annotationsPlugin({ isDisabled: false })
 );
 
-planetField.at('name').isDisabled // ⮕ false
+planetField.at('name').annotations.isDisabled // ⮕ false
 ```
 
 Update annotations for a single field:
@@ -27,9 +29,9 @@ Update annotations for a single field:
 ```ts
 planetField.annotate({ isDisabled: true });
 
-planetField.isDisabled // ⮕ true
+planetField.annotations.isDisabled // ⮕ true
 
-planetField.at('name').isDisabled // ⮕ false
+planetField.at('name').annotations.isDisabled // ⮕ false
 ```
 
 Annotate field and all of its children recursively:
@@ -37,10 +39,10 @@ Annotate field and all of its children recursively:
 ```ts
 planetField.annotate({ isDisabled: true }, { recursive: true });
 
-planetField.isDisabled // ⮕ true
+planetField.annotations.isDisabled // ⮕ true
 
 // 🌕 The child field was annotated along with its parent
-planetField.at('name').isDisabled // ⮕ true
+planetField.at('name').annotations.isDisabled // ⮕ true
 ```
 
 Annotations can be updated using a callback. This is especially useful in conjunction with recursive flag:

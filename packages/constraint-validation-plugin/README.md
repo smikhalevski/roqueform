@@ -7,6 +7,8 @@ Integrates [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields 
 npm install --save-prod @roqueform/constraint-validation-plugin
 ```
 
+# Overview
+
 🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/constraint_validation_plugin.html)
 
 This plugin works doesn't require any rendering framework. It subscribes to events dispatched by a DOM element passed to
@@ -19,7 +21,10 @@ import { FieldRenderer, useField } from '@roqueform/react';
 import { constraintValidationPlugin } from '@roqueform/constraint-validation-plugin';
 
 export const App = () => {
-  const planetField = useField({ name: 'Mars' }, constraintValidationPlugin());
+  const planetField = useField(
+    { name: 'Mars' },
+    constraintValidationPlugin()
+  );
 
   return (
     <FieldRenderer field={planetField.at('name')}>
@@ -50,7 +55,8 @@ planetField.getInvalidFields();
 // ⮕ [planetField.at('name')]
 ```
 
-Show an error message balloon for the first element that is associated with this field or any of its child fields:
+Show an error message balloon for the first invalid element that is associated with this field or any of its child
+fields:
 
 ```ts
 planetField.reportValidity();
