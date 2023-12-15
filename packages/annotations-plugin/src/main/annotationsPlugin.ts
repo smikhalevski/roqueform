@@ -1,7 +1,7 @@
 import { callOrGet, dispatchEvents, Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
 
-interface Dict {
-  [key: string]: any;
+interface ReadonlyDict {
+  readonly [key: string]: any;
 }
 
 /**
@@ -52,7 +52,7 @@ export interface AnnotationsPlugin<Annotations extends object> {
 /**
  * Enhances fields with methods that manage annotations.
  */
-export function annotationsPlugin(): PluginInjector<AnnotationsPlugin<Dict>>;
+export function annotationsPlugin(): PluginInjector<AnnotationsPlugin<ReadonlyDict>>;
 
 /**
  * Enhances fields with methods that manage annotations.
@@ -79,7 +79,7 @@ export function annotationsPlugin<Annotations extends object>(
 export function annotationsPlugin(
   annotations = {},
   applyPatch = applyChanges
-): PluginInjector<AnnotationsPlugin<Dict>> {
+): PluginInjector<AnnotationsPlugin<ReadonlyDict>> {
   return field => {
     field.annotations = annotations;
 
@@ -87,7 +87,7 @@ export function annotationsPlugin(
   };
 }
 
-function applyChanges(annotations: Dict, patch: Dict): Dict {
+function applyChanges(annotations: ReadonlyDict, patch: ReadonlyDict): ReadonlyDict {
   for (const key in patch) {
     if (patch[key] !== annotations[key]) {
       return Object.assign(Object.create(Object.getPrototypeOf(annotations)), annotations, patch);
@@ -97,9 +97,9 @@ function applyChanges(annotations: Dict, patch: Dict): Dict {
 }
 
 function annotate(
-  field: Field<AnnotationsPlugin<Dict>>,
-  patch: Dict | ((annotations: Dict) => Dict),
-  applyPatch: (annotations: Dict, patch: Dict) => Dict,
+  field: Field<AnnotationsPlugin<ReadonlyDict>>,
+  patch: ReadonlyDict | ((annotations: ReadonlyDict) => ReadonlyDict),
+  applyPatch: (annotations: ReadonlyDict, patch: ReadonlyDict) => ReadonlyDict,
   options: AnnotateOptions | undefined,
   events: Event[]
 ): Event[] {
