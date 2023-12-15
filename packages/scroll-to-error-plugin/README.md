@@ -7,34 +7,30 @@ associated validation error.
 npm install --save-prod @roqueform/scroll-to-error-plugin
 ```
 
-# Usage example
+# Overview
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_scroll_to_error_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin.html)
 
-This plugin works in conjunction with [a validation plugin](../../#plugins-and-integrations). If an element associated
-with the field is displayed and an `error` isn't `null` than `scrollToError()` would scroll the viewport, so the element
-is reveled on the screen.
+This plugin works best in conjunction with an [`errorsPlugin`](../../#validation-scaffolding) or any of the
+[validation plugins](../../#plugins-and-integrations). If an element associated with the field via
+[`ref`](https://smikhalevski.github.io/roqueform/interfaces/scroll_to_error_plugin.ScrollToErrorPlugin.html#ref) is
+displayed and an the field is invalid than `scrollToError()` would scroll the viewport, so the element is reveled on the
+screen.
 
-The example below uses [Doubter](https://github.com/smikhalevski/doubter#readme) shapes and
-[Doubter plugin](../doubter-plugin#readme) for validation.
+This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
+[the React integration](../react#readme).
 
 ```tsx
 import { SyntheticEvent, useEffect } from 'react';
-import { composePlugins } from 'roqueform';
+import { composePlugins, errorsPlugin } from 'roqueform';
 import { FieldRenderer, useField } from '@roqueform/react';
-import { doubterPlugin } from '@roqueform/doubter-plugin';
 import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
-import * as d from 'doubter';
-
-const planetShape = d.object({
-  name: d.string().min(1),
-});
 
 export const App = () => {
   const planetField = useField(
-    { name: '' },
+    { name: 'Mars' },
     composePlugins(
-      doubterPlugin(planetShape),
+      errorsPlugin(),
       scrollToErrorPlugin()
     )
   );
@@ -42,16 +38,20 @@ export const App = () => {
   const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
 
-    if (planetField.validate()) {
-      // The valid form value to submit.
-      planetField.value;
+    if (planetField.getInvalidFields().length === 0) {
+      // Submit the valid form value.
+      doSubmit(planetField.value);
     } else {
-      // Errors are associated with fields automatically.
-      // Scroll to the error that is closest to the top left conrner of the document.
+      // Scroll to the invalid field that is closest to the top left conrner of the document.
       planetField.scrollToError(0, { behavior: 'smooth' });
     }
   };
 
+  useEffect(() => {
+    // Mark field as invalid.
+    planetField.at('name').addError('Too far away');
+  }, []);
+  
   return (
     <form onSubmit={handleSubmit}>
 
@@ -66,8 +66,7 @@ export const App = () => {
                 nameField.setValue(event.target.value);
               }}
             />
-
-            {nameField.error?.message}
+            {nameField.errors}
           </>
         )}
       </FieldRenderer>
