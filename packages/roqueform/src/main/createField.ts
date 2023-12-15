@@ -1,9 +1,6 @@
-import type { __PLUGIN__, Event, Field, PluginInjector, ValueAccessor } from './types';
+import type { __PLUGIN__, Event, Field, NoInfer, PluginInjector, ValueAccessor } from './types';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 import { naturalValueAccessor } from './naturalValueAccessor';
-
-// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
-type NoInfer<T> = T extends infer T ? T : never;
 
 /**
  * Creates the new field instance.

@@ -1,25 +1,7 @@
-import type { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
+import type { Event, Field, NoInfer, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
 import { dispatchEvents } from './utils';
 
 const ERROR_ABORT = 'Validation aborted';
-
-/**
- * The pending validation descriptor.
- *
- * @template Plugin The plugin injected into the field.
- */
-export interface Validation<Plugin = ValidationPlugin> {
-  /**
-   * The field where the validation was triggered.
-   */
-  rootField: Field<Plugin>;
-
-  /**
-   * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
-   * the validation is synchronous.
-   */
-  abortController: AbortController | null;
-}
 
 /**
  * The plugin that enables a field value validation.
@@ -27,7 +9,10 @@ export interface Validation<Plugin = ValidationPlugin> {
  * @template Options Options passed to the validator.
  */
 export interface ValidationPlugin<Options = any> {
-  isInvalid?: boolean;
+  /**
+   * `true` if this field has an invalid value, or `false` otherwise.
+   */
+  isInvalid: boolean;
 
   /**
    * `true` if the validation is pending, or `false` otherwise.
@@ -101,11 +86,30 @@ export interface ValidationPlugin<Options = any> {
 }
 
 /**
+ * The pending validation descriptor.
+ *
+ * @template Plugin The plugin injected into the field.
+ */
+export interface Validation<Plugin = any> {
+  /**
+   * The field where the validation was triggered.
+   */
+  rootField: Field<Plugin>;
+
+  /**
+   * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
+   * the validation is synchronous.
+   */
+  abortController: AbortController | null;
+}
+
+/**
  * The validator to which the field value validation is delegated.
  *
  * @template Options Options passed to the validator.
+ * @template Plugin The plugin injected into the field.
  */
-export interface Validator<Options = any> {
+export interface Validator<Options = any, Plugin = unknown> {
   /**
    * Applies validation rules to a field.
    *
@@ -114,7 +118,7 @@ export interface Validator<Options = any> {
    * @param field The field where {@link ValidationPlugin.validate} was called.
    * @param options The options passed to the {@link ValidationPlugin.validate} method.
    */
-  validate(field: Field<ValidationPlugin<Options>>, options: Options | undefined): void;
+  validate?(field: Field<ValidationPlugin<Options> & Plugin>, options: Options | undefined): void;
 
   /**
    * Applies validation rules to a field. If this callback is omitted, then {@link Validator.validate} would be called
@@ -126,7 +130,7 @@ export interface Validator<Options = any> {
    * @param field The field where {@link ValidationPlugin.validateAsync} was called.
    * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
    */
-  validateAsync?(field: Field<ValidationPlugin<Options>>, options: Options | undefined): Promise<void>;
+  validateAsync?(field: Field<ValidationPlugin<Options> & Plugin>, options: Options | undefined): Promise<void>;
 }
 
 /**
@@ -139,14 +143,43 @@ export interface Validator<Options = any> {
  * @param validator The validator object or a callback that performs synchronous validation.
  * @template Options Options passed to the validator.
  */
-export function validationPlugin<Options = void>(
-  validator: Validator<Options> | Validator<Options>['validate']
-): PluginInjector<ValidationPlugin<Options>> {
-  validator = typeof validator === 'function' ? { validate: validator } : validator;
+export function validationPlugin<Options>(validator: Validator<Options>): PluginInjector<ValidationPlugin<Options>>;
+
+/**
+ * Enhances the field with validation methods.
+ *
+ * This plugin is a scaffold for implementing validation. Check out
+ * [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) before
+ * picking this plugin.
+ *
+ * @param plugin The plugin that is available inside a validator.
+ * @param validator The validator object or a callback that performs synchronous validation.
+ * @template Plugin The plugin that is available inside a validator.
+ * @template Options Options passed to the validator.
+ */
+export function validationPlugin<Plugin, Options>(
+  plugin: PluginInjector<Plugin>,
+  validator: Validator<Options, NoInfer<Plugin>>
+): PluginInjector<ValidationPlugin<Options> & Plugin>;
+
+export function validationPlugin(
+  plugin: Validator | PluginInjector | undefined,
+  validator?: Validator
+): PluginInjector<ValidationPlugin> {
+  if (typeof plugin !== 'function') {
+    validator = plugin;
+    plugin = undefined;
+  }
 
   return field => {
-    field.validator = validator as Validator;
+    (plugin as Function)?.(field);
+
+    field.validator = validator!;
     field.validation = field.parentField !== null ? field.parentField.validation : null;
+
+    if (!field.hasOwnProperty('isInvalid')) {
+      field.isInvalid = false;
+    }
 
     Object.defineProperty(field, 'isValidating', {
       configurable: true,
@@ -220,6 +253,12 @@ function abortValidation(field: Field<ValidationPlugin>, events: Event[]): Event
 }
 
 function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
+  const { validate } = field.validator;
+
+  if (validate === undefined) {
+    throw new Error("Sync validation isn't supported");
+  }
+
   dispatchEvents(abortValidation(field, []));
 
   if (field.validation !== null) {
@@ -240,7 +279,7 @@ function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
   }
 
   try {
-    field.validator.validate(field, options);
+    validate.call(field.validator, field, options);
   } catch (error) {
     dispatchEvents(endValidation(field, validation, []));
     throw error;
@@ -255,6 +294,13 @@ function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
 
 function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promise<boolean> {
   return new Promise((resolve, reject) => {
+    const validateAsync = field.validator.validateAsync || field.validator.validate;
+
+    if (validateAsync === undefined) {
+      reject(new Error("Async validation isn't supported"));
+      return;
+    }
+
     dispatchEvents(abortValidation(field, []));
 
     if (field.validation !== null) {
@@ -277,13 +323,11 @@ function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promis
       return;
     }
 
-    const { validate, validateAsync = validate } = field.validator;
-
     validation.abortController.signal.addEventListener('abort', () => {
       reject(new Error(ERROR_ABORT));
     });
 
-    Promise.resolve(validateAsync(field, options)).then(
+    Promise.resolve(validateAsync.call(field.validator, field, options)).then(
       () => {
         if (field.validation !== validation) {
           reject(new Error(ERROR_ABORT));

@@ -10,6 +10,7 @@ export { dispatchEvents, isEqual, callOrGet } from './utils';
 export { validationPlugin } from './validationPlugin';
 
 export type { ClearErrorsOptions, ErrorsPlugin } from './errorsPlugin';
+export type { Validator, Validation, ValidationPlugin } from './validationPlugin';
 export type {
   Field,
   Event,
@@ -21,4 +22,3 @@ export type {
   PluginInjector,
   ValueAccessor,
 } from './types';
-export type { Validator, Validation, ValidationPlugin } from './validationPlugin';
