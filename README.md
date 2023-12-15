@@ -448,9 +448,9 @@ your validation on top of it.
 ```ts
 import { validationPlugin } from 'roqueform';
 
-const plugin = validationPlugin((field, addError) => {
+const plugin = validationPlugin((field, setError) => {
   if (!field.at('name').value) {
-    addError(field.at('name'), 'Name must not be empty');
+    setError(field.at('name'), 'Name must not be empty');
   }
 });
 
@@ -468,28 +468,28 @@ userField.at('name').error;
 
 This plugin does all the heavy lifting related to field updates, manual validation error management, async validation
 abortions, etc. The plugin takes a validator callback, or an object that has a `validate` method and an optional
-`validateAsync` method. The validator receives a field that must be validated and a `addError` callback that tells
+`validateAsync` method. The validator receives a field that must be validated and a `setError` callback that tells
 Roqueform that an error should be associated with a particular field.
 
 You can manually associate an error with a filed:
 
 ```ts
 // Manually associate an error for a field
-userField.addError('Some useful message');
+userField.setError('Some useful message');
 
 userField.error;
 // ⮕ 'Some useful message'
 ```
 
-`validatePlugin` distinguishes errors set via the `addError` callback passed to a plugin, and errors set via the
-[`Field.addError`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setError) method.
-Errors set via the `addError` callback are automatically cleared when the `validate` or `validateAsync` methods are
+`validatePlugin` distinguishes errors set via the `setError` callback passed to a plugin, and errors set via the
+[`Field.setError`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setError) method.
+Errors set via the `setError` callback are automatically cleared when the `validate` or `validateAsync` methods are
 called. Errors set via the
-[`addError`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setError) method are preserved as
+[`setError`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setError) method are preserved as
 is, and you should explicitly call `clearErrors` delete them.
 
 ```ts
-userField.clearErrors({ recursive: true });
+userField.clearErrors();
 ```
 
 # Motivation
