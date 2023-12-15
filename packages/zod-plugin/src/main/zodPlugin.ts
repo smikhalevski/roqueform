@@ -1,4 +1,3 @@
-import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
 import {
   composePlugins,
   errorsPlugin,
@@ -11,8 +10,9 @@ import {
   ValidationPlugin,
   Validator,
 } from 'roqueform';
+import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
 
-interface ZodErrorsPlugin extends ErrorsPlugin<ZodIssue> {
+interface ValueTypePlugin {
   /**
    * The Zod validation type of the root value.
    */
@@ -24,7 +24,7 @@ interface ZodErrorsPlugin extends ErrorsPlugin<ZodIssue> {
 /**
  * The plugin added to fields by the {@link zodPlugin}.
  */
-export type ZodPlugin = ValidationPlugin<Partial<ParseParams>> & ZodErrorsPlugin;
+export type ZodPlugin = ValidationPlugin<Partial<ParseParams>> & ErrorsPlugin<ZodIssue> & ValueTypePlugin;
 
 /**
  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
@@ -34,12 +34,12 @@ export type ZodPlugin = ValidationPlugin<Partial<ParseParams>> & ZodErrorsPlugin
  * @returns The validation plugin.
  */
 export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector<ZodPlugin, Value> {
-  let plugin;
+  return validationPlugin(composePlugins(errorsPlugin(concatErrors), valueTypePlugin(type)), validator);
+}
 
+function valueTypePlugin(rootType: ZodType): PluginInjector<ValueTypePlugin> {
   return field => {
-    (plugin ||= composePlugins(validationPlugin(validator), errorsPlugin(concatErrors)))(field);
-
-    field.valueType = field.parentField?.valueType || type;
+    field.valueType = field.parentField?.valueType || rootType;
 
     const { addError } = field;
 
@@ -49,9 +49,9 @@ export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector
   };
 }
 
-const validator: Validator<Partial<ParseParams>> = {
+const validator: Validator<Partial<ParseParams>, ZodPlugin> = {
   validate(field, options) {
-    const { validation, valueType } = field as unknown as Field<ZodPlugin>;
+    const { validation, valueType } = field;
 
     if (validation !== null) {
       applyResult(validation, valueType.safeParse(getValue(field), options));
@@ -59,7 +59,7 @@ const validator: Validator<Partial<ParseParams>> = {
   },
 
   validateAsync(field, options) {
-    const { validation, valueType } = field as unknown as Field<ZodPlugin>;
+    const { validation, valueType } = field;
 
     if (validation !== null) {
       return valueType.safeParseAsync(getValue(field), options).then(result => {
@@ -80,7 +80,7 @@ function concatErrors(errors: readonly ZodIssue[], error: ZodIssue): readonly Zo
   return errors.concat(error);
 }
 
-function getValue(field: Field<ValidationPlugin>): unknown {
+function getValue(field: Field<ZodPlugin>): unknown {
   let value = field.value;
   let transient = false;
 

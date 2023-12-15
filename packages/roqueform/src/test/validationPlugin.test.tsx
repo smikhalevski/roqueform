@@ -20,7 +20,7 @@ describe('validationPlugin', () => {
     expect(field.validate()).toBe(false);
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(false);
+    expect(field.isInvalid).toBe(undefined);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -85,7 +85,7 @@ describe('validationPlugin', () => {
     field.at('aaa').validate();
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(false);
+    expect(field.isInvalid).toBe(undefined);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -145,7 +145,7 @@ describe('validationPlugin', () => {
     await expect(promise).resolves.toEqual(false);
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(false);
+    expect(field.isInvalid).toBe(undefined);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -215,7 +215,7 @@ describe('validationPlugin', () => {
     await expect(promise).resolves.toEqual(false);
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(false);
+    expect(field.isInvalid).toBe(undefined);
 
     expect(field.at('aaa').isValidating).toBe(false);
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -239,10 +239,10 @@ describe('validationPlugin', () => {
     expect(() => field.validate()).toThrow(new Error('expected'));
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(false);
+    expect(field.isInvalid).toBe(undefined);
 
     expect(field.at('aaa').isValidating).toBe(false);
-    expect(field.at('aaa').isInvalid).toBe(false);
+    expect(field.at('aaa').isInvalid).toBe(undefined);
   });
 
   test('cleans up validation if an async error is thrown', async () => {
@@ -262,10 +262,10 @@ describe('validationPlugin', () => {
     await expect(promise).rejects.toEqual(new Error('expected'));
 
     expect(field.isValidating).toBe(false);
-    expect(field.isInvalid).toBe(false);
+    expect(field.isInvalid).toBe(undefined);
 
     expect(field.at('aaa').isValidating).toBe(false);
-    expect(field.at('aaa').isInvalid).toBe(false);
+    expect(field.at('aaa').isInvalid).toBe(undefined);
   });
 
   test('aborts validation', async () => {

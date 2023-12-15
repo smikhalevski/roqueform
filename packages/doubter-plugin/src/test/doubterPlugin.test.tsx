@@ -43,7 +43,7 @@ describe('doubterPlugin', () => {
 
     field.at('aaa').addError(issue);
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -55,11 +55,11 @@ describe('doubterPlugin', () => {
 
     field.at('aaa').addError('xxx');
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toEqual([{ message: 'xxx', input: 0, path: ['aaa'] }]);
+    expect(field.at('aaa').errors).toEqual([{ code: 'custom', message: 'xxx', input: 0, path: ['aaa'] }]);
   });
 
   test('validates the root field', () => {
@@ -67,7 +67,7 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -88,7 +88,7 @@ describe('doubterPlugin', () => {
 
     field.at('aaa').validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -109,7 +109,7 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -144,7 +144,7 @@ describe('doubterPlugin', () => {
 
     field.validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);

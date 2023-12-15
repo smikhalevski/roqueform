@@ -12,7 +12,7 @@ export interface ValidationPlugin<Options = any> {
   /**
    * `true` if this field has an invalid value, or `false` otherwise.
    */
-  isInvalid: boolean;
+  isInvalid?: boolean;
 
   /**
    * `true` if the validation is pending, or `false` otherwise.
@@ -109,7 +109,7 @@ export interface Validation<Plugin = any> {
  * @template Options Options passed to the validator.
  * @template Plugin The plugin injected into the field.
  */
-export interface Validator<Options = any, Plugin = unknown> {
+export interface Validator<Options = any, Plugin = any> {
   /**
    * Applies validation rules to a field.
    *
@@ -118,7 +118,7 @@ export interface Validator<Options = any, Plugin = unknown> {
    * @param field The field where {@link ValidationPlugin.validate} was called.
    * @param options The options passed to the {@link ValidationPlugin.validate} method.
    */
-  validate?(field: Field<ValidationPlugin<Options> & Plugin>, options: Options | undefined): void;
+  validate?(field: Field<Plugin>, options: Options | undefined): void;
 
   /**
    * Applies validation rules to a field. If this callback is omitted, then {@link Validator.validate} would be called
@@ -130,7 +130,7 @@ export interface Validator<Options = any, Plugin = unknown> {
    * @param field The field where {@link ValidationPlugin.validateAsync} was called.
    * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
    */
-  validateAsync?(field: Field<ValidationPlugin<Options> & Plugin>, options: Options | undefined): Promise<void>;
+  validateAsync?(field: Field<Plugin>, options: Options | undefined): Promise<void>;
 }
 
 /**
@@ -143,7 +143,9 @@ export interface Validator<Options = any, Plugin = unknown> {
  * @param validator The validator object or a callback that performs synchronous validation.
  * @template Options Options passed to the validator.
  */
-export function validationPlugin<Options>(validator: Validator<Options>): PluginInjector<ValidationPlugin<Options>>;
+export function validationPlugin<Options>(
+  validator: Validator<Options, ValidationPlugin<Options>>
+): PluginInjector<ValidationPlugin<Options>>;
 
 /**
  * Enhances the field with validation methods.
@@ -159,7 +161,7 @@ export function validationPlugin<Options>(validator: Validator<Options>): Plugin
  */
 export function validationPlugin<Plugin, Options>(
   plugin: PluginInjector<Plugin>,
-  validator: Validator<Options, NoInfer<Plugin>>
+  validator: Validator<Options, ValidationPlugin<Options> & NoInfer<Plugin>>
 ): PluginInjector<ValidationPlugin<Options> & Plugin>;
 
 export function validationPlugin(
@@ -176,10 +178,6 @@ export function validationPlugin(
 
     field.validator = validator!;
     field.validation = field.parentField !== null ? field.parentField.validation : null;
-
-    if (!field.hasOwnProperty('isInvalid')) {
-      field.isInvalid = false;
-    }
 
     Object.defineProperty(field, 'isValidating', {
       configurable: true,

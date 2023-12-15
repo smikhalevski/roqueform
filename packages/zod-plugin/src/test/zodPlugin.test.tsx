@@ -59,7 +59,7 @@ describe('zodPlugin', () => {
 
     field.validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -81,7 +81,7 @@ describe('zodPlugin', () => {
 
     field.at('aaa').validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -103,7 +103,7 @@ describe('zodPlugin', () => {
 
     field.validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(true);
@@ -138,7 +138,7 @@ describe('zodPlugin', () => {
 
     field.at('bbb').validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(false);
@@ -164,7 +164,7 @@ describe('zodPlugin', () => {
     field.at('bbb').setTransientValue('ccc');
     field.at('bbb').validate();
 
-    expect(field.isInvalid).toBe(true);
+    expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(false);

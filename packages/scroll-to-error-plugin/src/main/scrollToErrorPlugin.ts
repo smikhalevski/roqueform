@@ -51,7 +51,7 @@ export interface ScrollToErrorPlugin {
    * @param index The zero-based index of an invalid field to scroll to. A negative index can be used, indicating an
    * offset from the end of the sequence. `scrollToError(-1)` scroll to the last invalid field. The visual order of
    * fields is used (by default left-to-right and top-to-bottom).
-   * @param options [The scroll options.](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1)
+   * @param options The [scroll options](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1).
    * @returns The field which is scrolled to, or `null` if there's no scroll happening.
    */
   scrollToError(index?: number, options?: ScrollToErrorOptions): Field<PluginOf<this>> | null;

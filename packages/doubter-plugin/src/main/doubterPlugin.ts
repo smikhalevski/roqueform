@@ -3,7 +3,6 @@ import {
   composePlugins,
   errorsPlugin,
   ErrorsPlugin,
-  Field,
   FieldController,
   PluginInjector,
   Validation,
@@ -12,7 +11,7 @@ import {
   Validator,
 } from 'roqueform';
 
-interface DoubterErrorsPlugin extends ErrorsPlugin<Issue> {
+interface ValueShapePlugin {
   /**
    * The shape that Doubter uses to validate {@link FieldController.value the field value}, or `null` if there's no
    * shape for this field.
@@ -25,7 +24,7 @@ interface DoubterErrorsPlugin extends ErrorsPlugin<Issue> {
 /**
  * The plugin added to fields by the {@link doubterPlugin}.
  */
-export type DoubterPlugin = ValidationPlugin<ParseOptions> & DoubterErrorsPlugin;
+export type DoubterPlugin = ValidationPlugin<ParseOptions> & ErrorsPlugin<Issue> & ValueShapePlugin;
 
 /**
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
@@ -34,12 +33,12 @@ export type DoubterPlugin = ValidationPlugin<ParseOptions> & DoubterErrorsPlugin
  * @template Value The root field value.
  */
 export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<DoubterPlugin, Value> {
-  let plugin;
+  return validationPlugin(composePlugins(errorsPlugin(concatErrors), valueShapePlugin(shape)), validator);
+}
 
+function valueShapePlugin(rootShape: Shape): PluginInjector<ValueShapePlugin> {
   return field => {
-    (plugin ||= composePlugins(validationPlugin(validator), errorsPlugin(concatErrors)))(field);
-
-    field.valueShape = field.parentField === null ? shape : field.parentField.valueShape?.at(field.key) || null;
+    field.valueShape = field.parentField === null ? rootShape : field.parentField.valueShape?.at(field.key) || null;
 
     const { addError } = field;
 
@@ -51,9 +50,9 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<D
   };
 }
 
-const validator: Validator<ParseOptions> = {
+const validator: Validator<ParseOptions, DoubterPlugin> = {
   validate(field, options) {
-    const { validation, valueShape } = field as unknown as Field<DoubterPlugin>;
+    const { validation, valueShape } = field;
 
     if (validation !== null && valueShape !== null) {
       applyResult(validation, valueShape.try(field.value, Object.assign({ verbose: true }, options)));
@@ -61,7 +60,7 @@ const validator: Validator<ParseOptions> = {
   },
 
   validateAsync(field, options) {
-    const { validation, valueShape } = field as unknown as Field<DoubterPlugin>;
+    const { validation, valueShape } = field;
 
     if (validation !== null && valueShape !== null) {
       return valueShape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {

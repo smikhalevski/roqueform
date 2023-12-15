@@ -3,6 +3,7 @@
     "declaration": true,
     "moduleResolution": "Node",
     "isolatedModules": true,
+    "esModuleInterop": true,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "strict": true,

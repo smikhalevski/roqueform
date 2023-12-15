@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react';
-import { composePlugins, createField, errorsPlugin, validationPlugin } from 'roqueform';
+import { composePlugins, createField, errorsPlugin } from 'roqueform';
 import { scrollToErrorPlugin } from '../main';
 
 class DOMRect {
@@ -25,26 +25,13 @@ class DOMRect {
 
 describe('scrollToErrorPlugin', () => {
   test('returns null if there are no errors', () => {
-    const field = createField(
-      { aaa: 111 },
-      composePlugins(
-        validationPlugin(() => undefined),
-        scrollToErrorPlugin()
-      )
-    );
+    const field = createField({ aaa: 111 }, scrollToErrorPlugin());
 
     expect(field.scrollToError()).toBe(null);
   });
 
   test('scrolls to error at index with RTL text direction', () => {
-    const rootField = createField(
-      { aaa: 111, bbb: 222 },
-      composePlugins(
-        validationPlugin(() => undefined),
-        errorsPlugin(),
-        scrollToErrorPlugin()
-      )
-    );
+    const rootField = createField({ aaa: 111, bbb: 222 }, composePlugins(errorsPlugin(), scrollToErrorPlugin()));
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
     const bbbElement = document.body.appendChild(document.createElement('input'));
@@ -114,14 +101,7 @@ describe('scrollToErrorPlugin', () => {
   });
 
   test('scrolls to error at index with LTR text direction', () => {
-    const rootField = createField(
-      { aaa: 111, bbb: 222 },
-      composePlugins(
-        validationPlugin(() => undefined),
-        errorsPlugin(),
-        scrollToErrorPlugin()
-      )
-    );
+    const rootField = createField({ aaa: 111, bbb: 222 }, composePlugins(errorsPlugin(), scrollToErrorPlugin()));
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
     const bbbElement = document.body.appendChild(document.createElement('input'));

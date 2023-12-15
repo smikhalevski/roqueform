@@ -5,9 +5,10 @@ import { dispatchEvents, Field, PluginInjector, PluginOf, Subscriber, Unsubscrib
  */
 export interface ConstraintValidationPlugin {
   /**
-   * The DOM element associated with the field, or `null` if there's no associated element.
+   * The DOM element that supports the Constraint Validation API associated with the field, or `null` if there's no
+   * such element.
    */
-  element: Element | null;
+  validatedElement: ValidatableElement | null;
 
   /**
    * `true` if this field has {@link validity a validity issue}, or `false` otherwise.
@@ -15,8 +16,8 @@ export interface ConstraintValidationPlugin {
   readonly isInvalid: boolean;
 
   /**
-   * The [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState), or `null` if there's no
-   * associated element, or it doesn't support Constraint Validation API.
+   * The copy of the last reported [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState)
+   * read from the {@link validatedElement}, or `null` if there's no associated validatable element.
    */
   validity: ValidityState | null;
 
@@ -51,13 +52,26 @@ export interface ConstraintValidationPlugin {
 }
 
 /**
+ * A DOM element which supports Constraint Validation API.
+ */
+export type ValidatableElement =
+  | HTMLButtonElement
+  | HTMLFieldSetElement
+  | HTMLFormElement
+  | HTMLInputElement
+  | HTMLObjectElement
+  | HTMLOutputElement
+  | HTMLSelectElement
+  | HTMLTextAreaElement;
+
+/**
  * Enhances fields with Constraint Validation API methods.
  */
 export function constraintValidationPlugin(): PluginInjector<ConstraintValidationPlugin> {
   return field => {
     const { ref } = field;
 
-    field.element = null;
+    field.validatedElement = null;
     field.validity = null;
 
     const isInvalid = Object.getOwnPropertyDescriptor(field, 'isInvalid')?.get;
@@ -74,7 +88,7 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
     field.on('change:value', changeListener);
 
     field.ref = nextElement => {
-      const prevElement = field.element;
+      const prevElement = field.validatedElement;
 
       ref?.(nextElement);
 
@@ -82,7 +96,7 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         return;
       }
 
-      field.element = nextElement = nextElement instanceof Element ? nextElement : null;
+      field.validatedElement = nextElement = isValidatable(nextElement) ? nextElement : null;
 
       if (prevElement !== null) {
         prevElement.removeEventListener('input', changeListener);
@@ -94,11 +108,7 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
         nextElement.addEventListener('change', changeListener);
       }
 
-      if (typeof queueMicrotask !== 'undefined') {
-        queueMicrotask(changeListener);
-      } else {
-        setTimeout(changeListener, 0);
-      }
+      setTimeout(changeListener, 0);
     };
 
     field.getInvalidFields = () => getInvalidFields(field, []);
@@ -107,21 +117,11 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
   };
 }
 
-type ValidatableElement =
-  | HTMLButtonElement
-  | HTMLFieldSetElement
-  | HTMLFormElement
-  | HTMLInputElement
-  | HTMLObjectElement
-  | HTMLOutputElement
-  | HTMLSelectElement
-  | HTMLTextAreaElement;
-
 function applyValidity(field: Field<ConstraintValidationPlugin>): void {
   const prevValidity = field.validity;
-  const nextValidity = isValidatable(field.element) ? cloneValidity(field.element.validity) : null;
+  const nextValidity = field.validatedElement !== null ? cloneValidity(field.validatedElement.validity) : null;
 
-  if (isEqualValidity(prevValidity, nextValidity)) {
+  if (!isEqualValidity(prevValidity, nextValidity)) {
     field.validity = nextValidity;
 
     dispatchEvents([{ type: 'change:validity', targetField: field, originField: field, data: prevValidity }]);
@@ -136,7 +136,7 @@ function reportValidity(field: Field<ConstraintValidationPlugin>): boolean {
       }
     }
   }
-  return isValidatable(field.element) ? field.element.reportValidity() : !field.isInvalid;
+  return field.validatedElement === null || field.validatedElement.reportValidity();
 }
 
 function getInvalidFields(
