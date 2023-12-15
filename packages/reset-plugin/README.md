@@ -6,51 +6,35 @@ Manages [Roqueform](https://github.com/smikhalevski/roqueform#readme) field init
 npm install --save-prod @roqueform/reset-plugin
 ```
 
-# Usage example
+# Overview
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_reset_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/reset_plugin.html)
+
+Update the initial value of a field:
+
+```ts
+import { createField } from 'roqueform';
+import { resetPlugin } from '@roqueform/reset-plugin';
+
+const planetField = createField({ name: 'Pluto' }, resetPlugin());
+
+planetField.setInitialValue({ name: 'Mars' });
+
+planetField.at('name').initialValue;
+// ⮕ 'Mars'
+```
 
 The field is considered dirty when its value differs from the initial value. Values are compared using an equality
 checker function passed to the `resetPlugin`. By default, values are compared using
 [fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal).
 
-```tsx
-import { FieldRenderer, useField } from '@roqueform/react';
-import { resetPlugin } from '@roqueform/reset-plugin';
+```ts
+planetField.at('name').isDirty // ⮕ true
+```
 
-export const App = () => {
-  const planetField = useField({ name: 'Pluto' }, resetPlugin());
+Get the array of all dirty fields:
 
-  return (
-    <form>
-
-      <FieldRenderer field={planetField.at('name')}>
-        {nameField => (
-          <input
-            value={nameField.value}
-            onChange={event => {
-              nameField.setValue(event.target.value);
-            }}
-          />
-        )}
-      </FieldRenderer>
-
-      <button
-        type="submit"
-        disabled={!planetField.isDirty}
-      >
-        {'Submit'}
-      </button>
-
-      <button
-        type="button"
-        // Reset the field to its initial value 
-        onClick={planetField.reset}
-      >
-        {'Reset'}
-      </button>
-
-    </form>
-  );
-};
+```ts
+planetField.getDirtyFields();
+// ⮕ [planetField.at('name')]
 ```
