@@ -6,59 +6,60 @@ Manages [Roqueform](https://github.com/smikhalevski/roqueform#readme) field anno
 npm install --save-prod @roqueform/annotations-plugin
 ```
 
-# Usage example
-
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_annotations_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/annotations_plugin.html)
 
 Annotations allow to associate arbitrary data with fields.
 
-```tsx
-import { FieldRenderer, useField } from '@roqueform/react';
+```ts
+import { createField } from 'roqueform';
 import { annotationsPlugin } from '@roqueform/annotations-plugin';
 
-export const App = () => {
-  const planetField = useField(
-    { name: 'Pluto' },
-    annotationsPlugin({ isDisabled: false })
-  );
-  
-  const handleSubmit = () => {
-    // Disable interface before submit
-    planetField.annotate({ isDisabled: true }, { recursive: true });
-    
-    doSubmit(planetField.value).then(() => {
-      // Enable interface after submit is completed
-      planetField.annotate({ isDisabled: false }, { recursive: true });
-    });
-  };
+const field = createField(
+  { name: 'Pluto' },
+  annotationsPlugin({ isDisabled: false })
+);
 
-  return (
-    <form onSubmit={handleSubmit}>
+field.at('name').isDisabled; // ⮕ false
+```
 
-      <FieldRenderer field={planetField.at('name')}>
-        {nameField => (
-          <input
-            disabled={nameField.annotations.isDisabled}
-            value={nameField.value}
-            onChange={event => {
-              nameField.setValue(event.target.value);
-            }}
-          />
-        )}
-      </FieldRenderer>
+Update annotations for a single field:
 
-      <FieldRenderer field={planetField}>
-        {() => (
-          <button
-            type="submit"
-            disabled={planetField.annotations.isDisabled}
-          >
-            {'Submit'}
-          </button>
-        )}
-      </FieldRenderer>
+```ts
+field.annotate({ isDisabled: true });
 
-    </form>
-  );
-};
+field.isDisabled; // ⮕ true
+
+field.at('name').isDisabled; // ⮕ false
+```
+
+Annotate field and all of its children recursively:
+
+```ts
+field.annotate({ isDisabled: true }, { recursive: true });
+
+field.isDisabled; // ⮕ true
+
+// 🌕 The child field was annotated along with its parent
+field.at('name').isDisabled; // ⮕ true
+```
+
+Annotations can be updated using a callback. This is especially useful in conjunction with recursive flag:
+
+```ts
+field.annotate(
+  field => {
+    // Toggle disabled flag for the field and its children
+    return { isDisabled: !field.annotations.isDisabled };
+  },
+  { recursive: true }
+);
+```
+
+Subscribe to annotation changes:
+
+```ts
+field.subscribe('change:annotations', event => {
+  event.target.annotations;
+  // ⮕ { isDisabled: boolean }
+});
 ```

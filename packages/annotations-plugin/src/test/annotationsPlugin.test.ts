@@ -55,7 +55,7 @@ describe('annotationsPlugin', () => {
     expect(field.annotations.xxx).toBe(333);
 
     expect(patchMock).toHaveBeenCalledTimes(1);
-    expect(patchMock).toHaveBeenNthCalledWith(1, { xxx: 222 });
+    expect(patchMock).toHaveBeenNthCalledWith(1, field);
   });
 
   test('patches child field annotations', () => {

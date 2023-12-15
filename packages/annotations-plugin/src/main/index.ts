@@ -1,4 +1,10 @@
 /**
+ * Manages Roqueform field annotations.
+ *
+ * ```sh
+ * npm install --save-prod @roqueform/annotations-plugin
+ * ```
+ *
  * @module annotations-plugin
  */
 

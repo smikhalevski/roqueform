@@ -61,7 +61,7 @@ export interface ErrorsPlugin<Error = any> {
    * @param eventType The type of the event.
    * @param subscriber The subscriber that would be triggered.
    * @returns The callback to unsubscribe the subscriber.
-   * @see {@link error}
+   * @see {@link errors}
    * @see {@link isInvalid}
    */
   on(eventType: 'change:errors', subscriber: Subscriber<PluginOf<this>, Error[]>): Unsubscribe;

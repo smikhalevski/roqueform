@@ -35,7 +35,7 @@ export interface AnnotationsPlugin<Annotations extends object> {
    * @param options Additional options.
    */
   annotate(
-    patch: Partial<Annotations> | ((annotations: Readonly<Annotations>) => Partial<Annotations>),
+    patch: Partial<Annotations> | ((field: PluginOf<this>) => Partial<Annotations>),
     options?: AnnotateOptions
   ): void;
 
@@ -104,7 +104,7 @@ function annotate(
   events: Event[]
 ): Event[] {
   const prevAnnotations = field.annotations;
-  const nextAnnotations = applyPatch(prevAnnotations, callOrGet(patch, field.annotations));
+  const nextAnnotations = applyPatch(prevAnnotations, callOrGet(patch, field));
 
   if (prevAnnotations !== nextAnnotations) {
     field.annotations = nextAnnotations;

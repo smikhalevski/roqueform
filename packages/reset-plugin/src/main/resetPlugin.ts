@@ -33,15 +33,15 @@ export interface ResetPlugin {
   reset(): void;
 
   /**
-   * Returns all fields that have {@link FieldController.value a value} that is different from
-   * {@link FieldController.initialValue an initial value}.
+   * Returns all fields that have {@link roqueform!FieldController.value a value} that is different from
+   * {@link roqueform!FieldController.initialValue an initial value}.
    *
    * @see {@link isDirty}
    */
   getDirtyFields(): Field<PluginOf<this>>[];
 
   /**
-   * Subscribes to changes of {@link FieldController.initialValue the initial value}.
+   * Subscribes to changes of {@link roqueform!FieldController.initialValue the initial value}.
    *
    * @param eventType The type of the event.
    * @param subscriber The subscriber that would be triggered.
