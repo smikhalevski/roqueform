@@ -11,9 +11,9 @@ npm install --save-prod @roqueform/constraint-validation-plugin
 
 🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/constraint_validation_plugin.html)
 
-This plugin works doesn't require any rendering framework. It subscribes to events dispatched by a DOM element passed to
-the [`ref`](https://smikhalevski.github.io/roqueform/interfaces/constraint_validation_plugin.ConstraintValidationPlugin.html#ref)
-method. To simplify the usage example, we're going to use [the Roqueform React integration](../react).
+This plugin doesn't require any rendering framework. It subscribes to events that are dispatched by a DOM element passed
+to the [`ref`](https://smikhalevski.github.io/roqueform/interfaces/constraint_validation_plugin.ConstraintValidationPlugin.html#ref)
+method. To simplify the usage example, we're going to use [the React integration](../react).
 
 ```tsx
 import { useEffect } from 'react';
