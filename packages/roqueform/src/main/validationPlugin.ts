@@ -38,7 +38,7 @@ export interface ValidationPlugin<Options = any> {
    * {@link Field.isTransient Transient} descendants of this field are excluded from validation.
    *
    * @param options Options passed to {@link Validator the validator}.
-   * @returns `true` if this field or any of it descendants have an associated error, or `false` otherwise.
+   * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
    */
   validate(options?: Options): boolean;
 
@@ -51,7 +51,7 @@ export interface ValidationPlugin<Options = any> {
    * {@link Field.isTransient Transient} descendants of this field are excluded from validation.
    *
    * @param options Options passed to {@link Validator the validator}.
-   * @returns `true` if this field or any of it descendants have an associated error, or `false` otherwise.
+   * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
    */
   validateAsync(options?: Options): Promise<boolean>;
 

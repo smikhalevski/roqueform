@@ -18,7 +18,7 @@ export interface ClearErrorsOptions {
 /**
  * The plugin that enables a field errors.
  *
- * @template Error The error.
+ * @template Error The error associated with the field.
  */
 export interface ErrorsPlugin<Error = any> {
   /**
@@ -72,7 +72,7 @@ export interface ErrorsPlugin<Error = any> {
  *
  * @param concatErrors The callback that returns the new array of errors that includes the given error, or returns the
  * original errors array if there are no changes. By default, only identity-based-unique errors are added.
- * @template Error The error.
+ * @template Error The error associated with the field.
  */
 export function errorsPlugin<Error = any>(
   /**
@@ -82,7 +82,7 @@ export function errorsPlugin<Error = any>(
    * @param errors The array of current errors.
    * @param error The new error to add.
    * @returns The new array of errors that includes the given error.
-   * @template Error The error.
+   * @template Error The error associated with the field.
    */
   concatErrors: (errors: readonly Error[], error: Error) => readonly Error[] = concatUniqueErrors
 ): PluginInjector<ErrorsPlugin<Error>> {

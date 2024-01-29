@@ -16,7 +16,6 @@ to the [`ref`](https://smikhalevski.github.io/roqueform/interfaces/constraint_va
 method. To simplify the usage example, we're going to use [the React integration](../react#readme).
 
 ```tsx
-import { useEffect } from 'react';
 import { FieldRenderer, useField } from '@roqueform/react';
 import { constraintValidationPlugin } from '@roqueform/constraint-validation-plugin';
 

@@ -11,7 +11,7 @@ npm install --save-prod @roqueform/scroll-to-error-plugin
 
 🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/scroll_to_error_plugin.html)
 
-This plugin works best in conjunction with an [`errorsPlugin`](../../#validation-scaffolding) or any of the
+This plugin works best in conjunction with the [`errorsPlugin`](../../#validation-scaffolding) or any of the
 [validation plugins](../../#plugins-and-integrations). If an element associated with the field via
 [`ref`](https://smikhalevski.github.io/roqueform/interfaces/scroll_to_error_plugin.ScrollToErrorPlugin.html#ref) is
 displayed and an the field is invalid than `scrollToError()` would scroll the viewport, so the element is reveled on the

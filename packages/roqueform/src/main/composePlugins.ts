@@ -57,7 +57,7 @@ export function composePlugins<T, A, B, C, D, E, F>(
  * Composes multiple plugin callbacks into a single callback.
  *
  * @param plugins The array of plugin injectors to compose.
- * @returns The plugins injector that sequentially applies all provided injectors into a field.
+ * @returns The plugins injector that sequentially applies all provided injectors to a field.
  */
 export function composePlugins(...plugins: PluginInjector[]): PluginInjector;
 

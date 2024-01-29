@@ -9,14 +9,17 @@ Validates [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields w
 npm install --save-prod @roqueform/doubter-plugin
 ```
 
-- [Usage example](#usage-example)
+- [Overview](#overview)
 - [Validating fields](#validating-fields)
 - [Managing errors manually](#managing-errors-manually)
 - [Custom error messages](#custom-error-messages)
 
-# Usage example
+# Overview
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_doubter_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/doubter_plugin.html)
+
+This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
+[the React integration](../react#readme).
 
 ```tsx
 import { SyntheticEvent } from 'react';
@@ -29,7 +32,10 @@ const planetShape = d.object({
 });
 
 export const App = () => {
-  const planetField = useField({ name: '' }, doubterPlugin(planetShape));
+  const planetField = useField(
+    { name: '' },
+    doubterPlugin(planetShape)
+  );
 
   const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
@@ -38,6 +44,8 @@ export const App = () => {
       // If your shapes transform the input, you can safely parse
       // the field value after it was successfully validated.
       const value = planetShape.parse(planetField.value);
+      
+      doSubmit(value);
     } else {
       // Errors are associated with fields automatically.
     }
@@ -57,7 +65,7 @@ export const App = () => {
               aria-invalid={nameField.isInvalid}
             />
 
-            {nameField.error?.message}
+            {nameField.errors[0]?.message}
           </>
         )}
       </FieldRenderer>
@@ -90,7 +98,10 @@ Create a new field and enhance it with the plugin:
 import { useField } from '@roqueform/react';
 import { doubterPlugin } from '@roqueform/doubter-plugin';
 
-const planetField = useField({ name: 'Mars' }, doubterPlugin(planetShape));
+const planetField = useField(
+  { name: 'Mars' },
+  doubterPlugin(planetShape)
+);
 ```
 
 The type of the field value is inferred from the provided shape, so the field value is statically checked.
@@ -100,6 +111,9 @@ When you call the `validate` method, it triggers validation of the field and all
 
 ```ts
 planetField.at('name').validate();
+// ⮕ false
+
+planetField.at('name').errors;
 // ⮕ [{ message: 'Must have the minimum length of 5', … }]
 ```
 
@@ -107,20 +121,13 @@ In this example, `planetField.value` _is not_ validated, and `planetField.at('na
 
 > [!NOTE]\
 > It's safe to trigger validation of a single text field on every keystroke, since validation doesn't have to process
-> the whole form state.
+> the state of the whole form.
 
 To detect whether the field, or any of its child fields contain a validation error:
 
 ```ts
 planetField.isInvalid;
 // ⮕ true
-```
-
-To retrieve an error associated with a particular field:
-
-```ts
-planetField.at('name').error;
-// ⮕ { message: 'Must have the minimum length of 5', … }
 ```
 
 # Managing errors manually
@@ -131,18 +138,16 @@ You can manually associate an error with the field:
 planetField.at('name').addError({ message: 'Oh, snap!' });
 ```
 
-This may come handy when you want to mix client-side and server-side validation.
+This may come handy when you want to mix client-side and server-side validation: when you receive errors as a server
+response, use `addError` to associate them with form fields.
 
-To delete an error for the particular field:
-
-```ts
-planetField.at('name').deleteError();
-```
-
-Sometimes it is required to clear errors of the field itself and all of its child fields:
+If a string is provided as an error, then it becomes an error message. The error code in this case is set to "custom":
 
 ```ts
-planetField.clearErrors({ recursive: true });
+planetField.addError('Illegal planet');
+
+planetField.errors;
+// ⮕ [{ code: 'custom', message: 'Illegal planet' }]
 ```
 
 # Custom error messages
@@ -159,7 +164,8 @@ const valueShape = d.array(d.string(), 'Expected an array').min(3, 'Not enough e
 const field = useField([], doubterPlugin(valueShape));
 
 field.validate();
+// ⮕ false
 
-field.error;
-// ⮕ { message: 'Not enough elements', … }
+field.errors;
+// ⮕ [{ message: 'Not enough elements', … }]
 ```

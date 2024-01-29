@@ -6,9 +6,12 @@ Validates [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields w
 npm install --save-prod @roqueform/zod-plugin
 ```
 
-# Usage example
+# Overview
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_zod_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/zod_plugin.html)
+
+This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
+[the React integration](../react#readme).
 
 ```tsx
 import { SyntheticEvent } from 'react';
@@ -21,7 +24,10 @@ const planetSchema = z.object({
 });
 
 export const App = () => {
-  const planetField = useField({ name: '' }, zodPlugin(planetSchema));
+  const planetField = useField(
+    { name: '' },
+    zodPlugin(planetSchema)
+  );
 
   const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
@@ -30,6 +36,8 @@ export const App = () => {
       // If your shapes have transformations or refinements, you can safely parse
       // the field value after it was successfully validated.
       const value = planetSchema.parse(planetField.value);
+      
+      doSubmit(value);
     } else {
       // Errors are associated with fields automatically.
     }
@@ -48,7 +56,7 @@ export const App = () => {
               }}
             />
 
-            {nameField.error?.message}
+            {nameField.errors[0]?.message}
           </>
         )}
       </FieldRenderer>

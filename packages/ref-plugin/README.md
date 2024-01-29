@@ -14,7 +14,6 @@ This plugin doesn't require any rendering framework. To simplify the usage examp
 [the React integration](../react#readme).
 
 ```tsx
-import { useEffect } from 'react';
 import { FieldRenderer, useField } from '@roqueform/react';
 import { refPlugin } from '@roqueform/ref-plugin';
 

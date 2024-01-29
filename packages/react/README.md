@@ -83,7 +83,8 @@ const planetField = useField({ planet: 'Pluto' }, errorsPlugin());
 planetField.addError('Too far away');
 ```
 
-The `FieldRenderer` component subscribes to the given field instance and re-renders children when the field is notified:
+The `FieldRenderer` component subscribes to the given field instance and re-renders children when an event is dispatched
+onto the field:
 
 ```tsx
 import { FieldRenderer, useField } from '@roqueform/react';

@@ -12,12 +12,19 @@ import {
 } from 'roqueform';
 import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
 
-interface ValueTypePlugin {
+export interface ValueTypePlugin {
   /**
    * The Zod validation type of the root value.
    */
   valueType: ZodTypeAny;
 
+  /**
+   * Associates an error with the field.
+   *
+   * If a string is provided it becomes an error message. The error code in this case is set to "custom".
+   *
+   * @param error The error to add.
+   */
   addError(error: ZodIssue | string): void;
 }
 

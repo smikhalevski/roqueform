@@ -9,4 +9,4 @@
  */
 
 export { doubterPlugin } from './doubterPlugin';
-export type { DoubterPlugin } from './doubterPlugin';
+export type { DoubterPlugin, ValueShapePlugin } from './doubterPlugin';

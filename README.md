@@ -24,6 +24,7 @@ npm install --save-prod roqueform
 - [Accessors](#accessors)
 - [Authoring a plugin](#authoring-a-plugin)
 - [Composing plugins](#composing-plugins)
+- [Errors plugin](#errors-plugin)
 - [Validation scaffolding plugin](#validation-scaffolding-plugin)
 - [Motivation](#motivation)
 
@@ -54,17 +55,19 @@ npm install --save-prod roqueform
 - [zod-plugin](./packages/zod-plugin#readme)<br/>
   Validates fields with [Zod](https://zod.dev/) schemas.
 
+- [annotations-plugin](./packages/annotations-plugin#readme)<br/>
+  Adds support of custom annotations to fields.
+
 # Core features
 
-Roqueform core features are framework-agnostic since they don't rely on the rendering process. The central piece of
-Roqueform is the concept of a field. A field holds a value and provides a means to update it. Let's start by creating a
-field:
+Roqueform core features don't rely on the rendering process. The central piece of Roqueform is the concept of a field.
+A field holds a value and provides a means to update it. Let's start by creating a field:
 
 ```ts
 import { createField } from 'roqueform';
 
 const field = createField();
-// ⮕ Field<any>
+// ⮕ Field<unknown, any>
 ```
 
 A value can be set to and retrieved from the field:
@@ -80,7 +83,7 @@ Provide the initial value for a field:
 
 ```ts
 const ageField = createField(42);
-// ⮕ Field<number>
+// ⮕ Field<unknown, number>
 
 ageField.value;
 // ⮕ 42
@@ -93,8 +96,12 @@ interface Planet {
   name: string;
 }
 
-const universeField = createField<{ planets?: Planet[] }>();
-// ⮕ Field<{ planets?: Planet[] } | undefined>
+interface Universe {
+  planets: Planet[];
+}
+
+const universeField = createField<Universe>();
+// ⮕ Field<unknown, Universe | undefined>
 
 universeField.value;
 // ⮕ undefined
@@ -104,7 +111,7 @@ Derive a new field from the existing one:
 
 ```ts
 const planetsField = universeField.at('planets');
-// ⮕ Field<Planet[] | undefined>
+// ⮕ Field<unknown, Planet[] | undefined>
 ```
 
 `planetsField` is a child field, and it is linked to its parent `universeField`.
@@ -117,9 +124,9 @@ planetsField.parent;
 // ⮕ universeField
 ```
 
-Fields returned by the [`at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#at) method have a
-stable identity. This means that you can invoke `at` with the same key multiple times and the same field instance is
-returned:
+Fields returned by the [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#at)
+method have a stable identity. This means that you can invoke `at` with the same key multiple times and the same field
+instance is returned:
 
 ```ts
 universeField.at('planets');
@@ -133,7 +140,7 @@ The child field has all the same functionality as its parent, so you can derive 
 
 ```ts
 planetsField.at(0).at('name');
-// ⮕ Field<string>
+// ⮕ Field<unknown, string>
 ```
 
 When a value is set to a child field, a parent field value is also updated. If parent field doesn't have a value yet,
@@ -149,8 +156,8 @@ universeField.value;
 // ⮕ { planets: [{ name: 'Mars' }] }
 ```
 
-By default, for a string key a parent object is created, and for a number key a parent array is created. You can change
-this behaviour with [custom accessors](#accessors).
+By default, for a string key a parent object is created, and for a valid array index key a parent array is created. You
+can change this behaviour with [custom accessors](#accessors).
 
 When a value is set to a parent field, child fields are also updated:
 
@@ -168,34 +175,21 @@ nameField.value;
 
 # Subscriptions
 
-You can subscribe a subscriber to a field updates. The returned callback would unsubscribe the subscriber.
+You can subscribe events dispatched onto the field. The returned callback would unsubscribe the subscriber.
 
 ```ts
-const unsubscribe = planetsField.on('*', (updatedField, currentField) => {
-  // Handle the update
+const unsubscribe = planetsField.on('change:value', event => {
+  // Handle the event
 });
 // ⮕ () => void
 ```
 
-Subscribers are called with two arguments:
+The [`Field.on`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#on) method
+associates the event subscriber with an event type. All events that are dispatched onto fields have the share
+[`Event`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Event.html).
 
-<dl>
-<dt><code>updatedField</code></dt>
-<dd>
-
-The field that initiated the update. In this example it can be `planetsField` itself, any of its child fields, or any
-of its ancestor fields.
-
-</dd>
-<dt><code>currentField</code></dt>
-<dd>
-
-The field to which the subscriber is subscribed. In this example it is `planetsField`.
-
-</dd>
-</dl>
-
-Subscribers are called when a field value is changed or [when a plugin mutates the field object](#authoring-a-plugin).
+By default, a field dispatches only events with `change:value` type, when the field value is changed via
+[`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#setValue).
 The root field and all child fields are updated before subscribers are called, so it's safe to read field values in a
 subscriber.
 
@@ -203,7 +197,7 @@ Fields use [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevalue
 value has changed.
 
 ```ts
-planetsField.at(0).at('name').on('*', subscriber);
+planetsField.at(0).at('name').on('change:value', subscriber);
 
 // ✅ The subscriber is called
 planetsField.at(0).at('name').setValue('Mercury');
@@ -212,11 +206,31 @@ planetsField.at(0).at('name').setValue('Mercury');
 planetsField.at(0).setValue({ name: 'Mercury' });
 ```
 
+Plugins may introduce dispatch their own events:
+
+```ts
+import { createField, errorsPlugin } from 'roqueform';
+
+const field = createField({ name: 'Bill' }, errorsPlugin());
+
+field.on('change:errors', event => {
+  // Handle changed errors
+});
+```
+
+Subscribe to all events dispatched onto the field:
+
+```ts
+planetsField.on('*', event => {
+  // Handle all events
+});
+```
+
 # Transient updates
 
-When you call [`setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setValue) on a field
-then subscribers of its ancestors and its updated child fields are triggered. To manually control the update propagation
-to fields ancestors, you can use transient updates.
+When you call [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#setValue)
+on a field then subscribers of its ancestors and its updated child fields are triggered. To manually control the update
+propagation to fields ancestors, you can use transient updates.
 
 When a value of a child field is set transiently, values of its ancestors _aren't_ immediately updated.
 
@@ -241,17 +255,18 @@ avatarField.at('eyeColor').isTransient;
 ```
 
 To propagate the transient value contained by the child field to its parent, use
-the [`dispatch`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#dispatch) method:
+the [`Field.propagate`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#propagate)
+method:
 
 ```ts
-avatarField.at('eyeColor').dispatch();
+avatarField.at('eyeColor').propagate();
 
 avatarField.value;
 // ⮕ { eyeColor: 'green' }
 ```
 
 `setTransientValue` can be called multiple times, but only the most recent update is propagated to the parent field
-after the `dispatch` call.
+after the `propagate` call.
 
 When a child field is in a transient state, its value as observed from the parent may differ from the actual value:
 
@@ -268,10 +283,10 @@ planetsField.at(1).value;
 // ⮕ 'Venus'
 ```
 
-Values are synchronized after the update is dispatched:
+Values are synchronized after the update is propagated:
 
 ```ts
-planetsField.at(1).disaptch();
+planetsField.at(1).propagate();
 
 planetsField.value[1];
 // ⮕ 'Venus'
@@ -285,14 +300,14 @@ planetsField.at(1).value;
 [`ValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html) creates, reads and updates
 field values.
 
-- When the new field is child via
-  [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#at) method, the field value is
-  read from the value of the parent field using the
+- When the child field is accessed via
+  [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#at) method for the
+  first time, its value is read from the value of the parent field using the
   [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
 
 - When a field value is updated via
-  [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setValue), then the parent
-  field value is updated with the value returned from the
+  [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#setValue), then
+  the parent field value is updated with the value returned from the
   [`ValueAccessor.set`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#set) method. If the
   updated field has child fields, their values are updated with values returned from the
   [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
@@ -306,9 +321,9 @@ import { createField, naturalValueAccessor } from 'roqueform';
 const field = createField(['Mars', 'Venus'], naturalValueAccessor);
 ```
 
-`naturalValueAccessor` supports plain object, array, `Map`-like, and `Set`-like instances.
+`naturalValueAccessor` supports plain objects, class instances, arrays, `Map`-like, and `Set`-like instances.
 
-If the field value object has `add` and `Symbol.iterator` methods, it is treated as a `Set`:
+If the field value object has `add` and `Symbol.iterator` methods, it is treated as a `Set` instance:
 
 ```ts
 const usersField = createField(new Set(['Bill', 'Rich']));
@@ -320,7 +335,7 @@ usersField.at(1).value;
 // ⮕ 'Rich'
 ```
 
-If the field value object has `get` and `set` methods, it is treated as a `Map`:
+If the field value object has `get` and `set` methods, it is treated as a `Map` instance:
 
 ```ts
 const planetsField = createField(new Map([
@@ -349,27 +364,24 @@ carsField.value;
 
 # Authoring a plugin
 
-Plugin is a function that receives a field instance, an accessor, and a callback to notify the field subscribers about
-changes. To illustrate how plugins work, let's create a simple plugin that enriches a field with a DOM element
-reference.
+Plugins are applied to a field using a
+[`PluginInjector`](https://smikhalevski.github.io/roqueform/types/roqueform.PluginInjector.html) callback. This callback
+receives a mutable plugin instance and should enrich it with the plugin functionality. To illustrate how plugins work,
+let's create a simple plugin that enriches a field with a DOM element reference.
 
 ```ts
-import { Plugin } from 'roqueform';
+import { PluginInjector } from 'roqueform';
 
-const elementPlugin: Plugin<{ element: Element | null }> = field => {
+const injectMyPlugin: PluginInjector<{ element: Element | null }> = field => {
   field.element = null;
 };
 ```
 
-> [!IMPORTANT]\
-> The plugin function directly mutates the field instance. This is required since multiple plugins may be updating the
-> same field and may need to share the same field identity.
-
 To apply the plugin to a field, pass it to the field factory:
 
 ```ts
-const planetField = createField({ name: 'Mars' }, elementPlugin);
-// ⮕ Field<{ name: string }, { element: Element | null }>
+const planetField = createField({ name: 'Mars' }, injectMyPlugin);
+// ⮕ Field<{ element: Element | null }, { name: string }>
 
 planetField.element;
 // ⮕ null
@@ -383,11 +395,10 @@ planetField.at('name').element
 ```
 
 We can now assign a DOM element reference to an `element` property, so we can later access an element through a field.
-But with the current implementation, there's no way to notify field consumers that the value of the `element` property
-has changed. Let's update the plugin implementation to trigger subscribers.
+Let's update the plugin implementation to notify subscribers that the element has changed.
 
 ```ts
-import { Plugin } from 'roqueform';
+import { PluginInjector, dispatchEvents } from 'roqueform';
 
 interface ElementPlugin {
 
@@ -396,14 +407,24 @@ interface ElementPlugin {
   setElement(element: Element | null): void;
 }
 
-const elementPlugin: Plugin<ElementPlugin> = (field, accessor, notify) => {
+const injectMyPlugin: PluginInjector<ElementPlugin> = field => {
   field.element = null;
 
   field.setElement = element => {
+    if (field.element === element) {
+      // Element is unchanged
+      return;
+    }
+
     field.element = element;
-    
-    // 🟡 Synchronously triggers subscribers
-    notify();
+
+    // Synchronously triggers associated subscribers
+    dispatchEvents([{
+      type: 'changed:element',
+      targetField: field,
+      originField: field,
+      data: null
+    }]);
   };
 };
 ```
@@ -411,11 +432,10 @@ const elementPlugin: Plugin<ElementPlugin> = (field, accessor, notify) => {
 Now when `setElement` is called on a field, its subscribers would be invoked.
 
 ```ts
-const planetField = createField({ name: 'Mars' }, elementPlugin);
+const planetField = createField({ name: 'Mars' }, injectMyPlugin);
 
-planetField.at('name').on('*', (updatedField, currentField) => {
-  // Handle the update
-  currentField.element;
+planetField.at('name').on('changed:element', event => {
+  event.targetField.element;
   // ⮕ document.body
 });
 
@@ -431,65 +451,92 @@ To combine multiple plugins into a single function, use the
 import { createField, composePlugins } from 'roqueform';
 
 createField(['Mars'], composePlugins(plugin1, plugin2));
-// ⮕ Field<string[], …>
+// ⮕ Field<…, string[]>
+```
+
+# Errors plugin
+
+Roqueform is shipped with the plugin that allows to associate errors with fields
+[`errorsPlugin`](https://smikhalevski.github.io/roqueform/variables/roqueform.errorsPlugin.html).
+
+```ts
+import { errorsPlugin } from 'roqueform';
+
+const userField = createField({ name: '' }, errorsPlugin());
+
+userField.at('name').addError('Too short');
+
+userField.at('name').errors;
+// ⮕ ['Too short']
+```
+
+Get all invalid fields:
+
+```ts
+userField.getInvalidFields();
+// ⮕ [userField.at('name')]
 ```
 
 # Validation scaffolding plugin
 
-Roqueform a shipped with validation scaffolding plugin
+Roqueform is shipped with the validation scaffolding plugin
 [`validatePlugin`](https://smikhalevski.github.io/roqueform/variables/roqueform.validatePlugin.html), so you can build
 your validation on top of it.
 
 > [!NOTE]\
-> This plugin provides a low-level functionality. Prefer [constraint-validation-plugin](#plugins-and-integrations),
-> [doubter-plugin](#plugins-and-integrations), or [zod-plugin](#plugins-and-integrations) or other high-level
-> validation plugin.
+> This plugin provides a low-level functionality. Prefer
+> [constraint-validation-plugin](./packages/constraint-validation-plugin), [doubter-plugin](./packages/doubter-plugin),
+> or [zod-plugin](./packages/zod-plugin) or other high-level validation plugin.
 
 ```ts
 import { validationPlugin } from 'roqueform';
 
-const plugin = validationPlugin((field, setError) => {
-  if (!field.at('name').value) {
-    setError(field.at('name'), 'Name must not be empty');
+const plugin = validationPlugin({
+  validate(field) {
+    if (!field.at('name').value) {
+      field.at('name').isInvalid = true;
+    }
   }
 });
 
 const userField = createField({ name: '' }, plugin);
 
 userField.validate();
-// ⮕ ['Name must not be empty']
+// ⮕ false
 
-userField.error;
-// ⮕ null
-
-userField.at('name').error;
-// ⮕ 'Name must not be empty'
+userField.at('name').isInvalid;
+// ⮕ true
 ```
 
-This plugin does all the heavy lifting related to field updates, manual validation error management, async validation
-abortions, etc. The plugin takes a validator callback, or an object that has a `validate` method and an optional
-`validateAsync` method. The validator receives a field that must be validated and a `setError` callback that tells
-Roqueform that an error should be associated with a particular field.
+The plugin takes an object that has `validate` and `validateAsync` methods. Both methods receive a field that must be
+validated and should update `isInvalid` of the field or any of its children.
 
-You can manually associate an error with a filed:
-
-```ts
-// Manually associate an error for a field
-userField.setError('Some useful message');
-
-userField.error;
-// ⮕ 'Some useful message'
-```
-
-`validatePlugin` distinguishes errors set via the `setError` callback passed to a plugin, and errors set via the
-[`Field.setError`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setError) method.
-Errors set via the `setError` callback are automatically cleared when the `validate` or `validateAsync` methods are
-called. Errors set via the
-[`setError`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html#setError) method are preserved as
-is, and you should explicitly call `clearErrors` delete them.
+Validation plugin works best in conjunction with [the errors plugin](#errors-plugin). The latter would update
+`isInvalid` when an error is added or deleted:
 
 ```ts
-userField.clearErrors();
+import { validationPlugin } from 'roqueform';
+
+const plugin = validationPlugin(
+  // Make errors plugin available inside the validator
+  errorsPlugin(),
+  {
+    validate(field) {
+      if (!field.at('name').value) {
+        // Add an error to the invalid field
+        field.at('name').addError('Must not be blank')
+      }
+    }
+  }
+);
+
+const userField = createField({ name: '' }, plugin);
+
+userField.validate();
+// ⮕ false
+
+userField.at('name').errors;
+// ⮕ ['Must not be blank']
 ```
 
 # Motivation
