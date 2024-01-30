@@ -20,6 +20,7 @@ npm install --save-prod roqueform
 
 - [Plugins and integrations](#plugins-and-integrations)
 - [Core features](#core-features)
+- [Events and subscriptions](#events-and-subscriptions)
 - [Transient updates](#transient-updates)
 - [Accessors](#accessors)
 - [Authoring a plugin](#authoring-a-plugin)
@@ -56,12 +57,13 @@ npm install --save-prod roqueform
   Validates fields with [Zod](https://zod.dev/) schemas.
 
 - [annotations-plugin](./packages/annotations-plugin#readme)<br/>
-  Adds support of custom annotations to fields.
+  Enables custom annotations and metadata for fields.
 
 # Core features
 
-Roqueform core features don't rely on the rendering process. The central piece of Roqueform is the concept of a field.
-A field holds a value and provides a means to update it. Let's start by creating a field:
+The central piece of Roqueform is the concept of a field. A field holds a value and provides a means to update it.
+
+Let's start by creating a field:
 
 ```ts
 import { createField } from 'roqueform';
@@ -107,7 +109,7 @@ universeField.value;
 // ⮕ undefined
 ```
 
-Derive a new field from the existing one:
+Retrieve a child field by its key:
 
 ```ts
 const planetsField = universeField.at('planets');
@@ -136,7 +138,7 @@ universeField.at('planets');
 So most of the time you don't need to store a child field in a variable if you already have a reference to a parent
 field.
 
-The child field has all the same functionality as its parent, so you can derive a new field from it as well:
+The child field has all the same functionality as its parent, so you can access its children as well:
 
 ```ts
 planetsField.at(0).at('name');
@@ -144,7 +146,7 @@ planetsField.at(0).at('name');
 ```
 
 When a value is set to a child field, a parent field value is also updated. If parent field doesn't have a value yet,
-Roqueform would infer its type from on the child field key.
+Roqueform would infer its type from a key of the child field.
 
 ```ts
 universeField.value;
@@ -156,8 +158,8 @@ universeField.value;
 // ⮕ { planets: [{ name: 'Mars' }] }
 ```
 
-By default, for a string key a parent object is created, and for a valid array index key a parent array is created. You
-can change this behaviour with [custom accessors](#accessors).
+By default, for a key that is a numeric array index, a parent array is created, otherwise an object is created. You can
+change this behaviour with [custom accessors](#accessors).
 
 When a value is set to a parent field, child fields are also updated:
 
@@ -173,13 +175,13 @@ nameField.value;
 // ⮕ 'Venus'
 ```
 
-# Subscriptions
+# Events and subscriptions
 
-You can subscribe events dispatched onto the field. The returned callback would unsubscribe the subscriber.
+You can subscribe events dispatched onto the field.
 
 ```ts
 const unsubscribe = planetsField.on('change:value', event => {
-  // Handle the event
+  // Handle the field value change
 });
 // ⮕ () => void
 ```
@@ -188,13 +190,29 @@ The [`Field.on`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.F
 associates the event subscriber with an event type. All events that are dispatched onto fields have the share
 [`Event`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Event.html).
 
-By default, a field dispatches only events with `change:value` type, when the field value is changed via
+Without plugins, fields can dispatch events with
+[`change:value`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#on.on-2) type. This
+event is dispatched when the field value is changed via
 [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#setValue).
-The root field and all child fields are updated before subscribers are called, so it's safe to read field values in a
-subscriber.
 
-Fields use [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison to detect that the
-value has changed.
+Plugins may dispatch their own events. Here's an example of the
+[`change:errors`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ErrorsPlugin.html#on.on-1) event
+introduced by the [`errorsPlugin`](#errors-plugin).
+
+```ts
+import { createField, errorsPlugin } from 'roqueform';
+
+const field = createField({ name: 'Bill' }, errorsPlugin());
+
+field.on('change:errors', event => {
+  // Handle error change
+});
+
+field.addError('Illegal user');
+```
+
+The root field and all child fields are updated before `change:value` subscribers are called, so it's safe to read field
+values in a subscriber. Fields use [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison to detect that the value has changed.
 
 ```ts
 planetsField.at(0).at('name').on('change:value', subscriber);
@@ -206,19 +224,7 @@ planetsField.at(0).at('name').setValue('Mercury');
 planetsField.at(0).setValue({ name: 'Mercury' });
 ```
 
-Plugins may introduce dispatch their own events:
-
-```ts
-import { createField, errorsPlugin } from 'roqueform';
-
-const field = createField({ name: 'Bill' }, errorsPlugin());
-
-field.on('change:errors', event => {
-  // Handle changed errors
-});
-```
-
-Subscribe to all events dispatched onto the field:
+Subscribe to all events dispatched onto the field using the glob event type:
 
 ```ts
 planetsField.on('*', event => {
@@ -254,8 +260,8 @@ avatarField.at('eyeColor').isTransient;
 // ⮕ true
 ```
 
-To propagate the transient value contained by the child field to its parent, use
-the [`Field.propagate`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#propagate)
+To propagate the transient value contained by the child field to its parent, use the
+[`Field.propagate`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#propagate)
 method:
 
 ```ts
@@ -265,10 +271,11 @@ avatarField.value;
 // ⮕ { eyeColor: 'green' }
 ```
 
-`setTransientValue` can be called multiple times, but only the most recent update is propagated to the parent field
-after the `propagate` call.
+[`Field.setTransientValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#setTransientValue)
+can be called multiple times, but only the most recent update is propagated to the parent field after the `propagate`
+call.
 
-When a child field is in a transient state, its value as observed from the parent may differ from the actual value:
+When a child field is in a transient state, its value visible from the parent may differ from the actual value:
 
 ```ts
 const planetsField = createField(['Mars', 'Pluto']);
@@ -278,7 +285,7 @@ planetsField.at(1).setTransientValue('Venus');
 planetsField.value[1];
 // ⮕ 'Pluto'
 
-// 🟡 Transient value is different
+// 🟡 Transient value isn't visible from the parent
 planetsField.at(1).value;
 // ⮕ 'Venus'
 ```
@@ -297,8 +304,8 @@ planetsField.at(1).value;
 
 # Accessors
 
-[`ValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html) creates, reads and updates
-field values.
+[`ValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html) creates, reads and
+updates field values.
 
 - When the child field is accessed via
   [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldController.html#at) method for the
@@ -321,7 +328,12 @@ import { createField, naturalValueAccessor } from 'roqueform';
 const field = createField(['Mars', 'Venus'], naturalValueAccessor);
 ```
 
-`naturalValueAccessor` supports plain objects, class instances, arrays, `Map`-like, and `Set`-like instances.
+`naturalValueAccessor` supports:
+- plain objects,
+- class instances,
+- arrays,
+- `Map`-like,
+- `Set`-like instances.
 
 If the field value object has `add` and `Symbol.iterator` methods, it is treated as a `Set` instance:
 
@@ -350,8 +362,8 @@ planetsField.at('green').value;
 // ⮕ 'Earth'
 ```
 
-When the field is updated, a parent field value is inferred from the key: for a positive integer key a parent array is
-created, otherwise, an object is created.
+When the field is updated, a parent field value is inferred from the key: for a key that is a numeric array index,
+a parent array is created, otherwise an object is created.
 
 ```ts
 const carsField = createField();
@@ -372,7 +384,12 @@ let's create a simple plugin that enriches a field with a DOM element reference.
 ```ts
 import { PluginInjector } from 'roqueform';
 
-const injectMyPlugin: PluginInjector<{ element: Element | null }> = field => {
+interface ElementPlugin {
+  element: Element | null;
+}
+
+const injectElementPlugin: PluginInjector<ElementPlugin> = field => {
+  // Update field with plugin functionality
   field.element = null;
 };
 ```
@@ -380,14 +397,18 @@ const injectMyPlugin: PluginInjector<{ element: Element | null }> = field => {
 To apply the plugin to a field, pass it to the field factory:
 
 ```ts
-const planetField = createField({ name: 'Mars' }, injectMyPlugin);
+const planetField = createField(
+  { name: 'Mars' },
+  injectElementPlugin
+);
 // ⮕ Field<{ element: Element | null }, { name: string }>
 
 planetField.element;
 // ⮕ null
 ```
 
-The plugin would be called for each child field when it is first accessed:
+The plugin is applied to the `planetField` itself and each of its child fields when they are accessed for the first
+time:
 
 ```ts
 planetField.at('name').element
@@ -395,44 +416,47 @@ planetField.at('name').element
 ```
 
 We can now assign a DOM element reference to an `element` property, so we can later access an element through a field.
-Let's update the plugin implementation to notify subscribers that the element has changed.
+
+Plugins may dispatch custom events. Let's update the plugin implementation to notify subscribers that the element has
+changed.
 
 ```ts
 import { PluginInjector, dispatchEvents } from 'roqueform';
 
 interface ElementPlugin {
-
-  readonly element: Element | null;
+  element: Element | null;
 
   setElement(element: Element | null): void;
 }
 
-const injectMyPlugin: PluginInjector<ElementPlugin> = field => {
+const injectElementPlugin: PluginInjector<ElementPlugin> = field => {
   field.element = null;
 
   field.setElement = element => {
-    if (field.element === element) {
-      // Element is unchanged
-      return;
+    if (field.element !== element) {
+      field.element = element;
+
+      // Synchronously trigger associated subscribers
+      dispatchEvents([{
+        type: 'changed:element',
+        targetField: field,
+        originField: field,
+        data: null
+      }]);
     }
-
-    field.element = element;
-
-    // Synchronously triggers associated subscribers
-    dispatchEvents([{
-      type: 'changed:element',
-      targetField: field,
-      originField: field,
-      data: null
-    }]);
   };
 };
 ```
 
-Now when `setElement` is called on a field, its subscribers would be invoked.
+Here we used [`dispatchEvents`](https://smikhalevski.github.io/roqueform/functions/roqueform.dispatchEvents.html) helper
+that invokes subscribers for provided events. So when `setElement` is called on a field, its subscribers would be
+notified about element changes:
 
 ```ts
-const planetField = createField({ name: 'Mars' }, injectMyPlugin);
+const planetField = createField(
+  { name: 'Mars' },
+  injectElementPlugin
+);
 
 planetField.at('name').on('changed:element', event => {
   event.targetField.element;
@@ -445,7 +469,7 @@ planetField.at('name').setElement(document.body);
 # Composing plugins
 
 To combine multiple plugins into a single function, use the
-[`composePlugins`](https://smikhalevski.github.io/roqueform/variables/roqueform.composePlugins.html) helper:
+[`composePlugins`](https://smikhalevski.github.io/roqueform/functions/roqueform.composePlugins.html) helper:
 
 ```ts
 import { createField, composePlugins } from 'roqueform';
@@ -457,7 +481,7 @@ createField(['Mars'], composePlugins(plugin1, plugin2));
 # Errors plugin
 
 Roqueform is shipped with the plugin that allows to associate errors with fields
-[`errorsPlugin`](https://smikhalevski.github.io/roqueform/variables/roqueform.errorsPlugin.html).
+[`errorsPlugin`](https://smikhalevski.github.io/roqueform/functions/roqueform.errorsPlugin.html).
 
 ```ts
 import { errorsPlugin } from 'roqueform';
@@ -480,8 +504,8 @@ userField.getInvalidFields();
 # Validation scaffolding plugin
 
 Roqueform is shipped with the validation scaffolding plugin
-[`validatePlugin`](https://smikhalevski.github.io/roqueform/variables/roqueform.validatePlugin.html), so you can build
-your validation on top of it.
+[`validationPlugin`](https://smikhalevski.github.io/roqueform/functions/roqueform.validationPlugin.html), so you can
+build your validation on top of it.
 
 > [!NOTE]\
 > This plugin provides a low-level functionality. Prefer
@@ -508,8 +532,9 @@ userField.at('name').isInvalid;
 // ⮕ true
 ```
 
-The plugin takes an object that has `validate` and `validateAsync` methods. Both methods receive a field that must be
-validated and should update `isInvalid` of the field or any of its children.
+The plugin takes a [`Validator`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Validator.html) that has
+`validate` and `validateAsync` methods. Both methods receive a field that must be validated and should update the
+`isInvalid` property of the field or any of its children when needed.
 
 Validation plugin works best in conjunction with [the errors plugin](#errors-plugin). The latter would update
 `isInvalid` when an error is added or deleted:
@@ -534,6 +559,9 @@ const userField = createField({ name: '' }, plugin);
 
 userField.validate();
 // ⮕ false
+
+userField.at('name').isInvalid;
+// ⮕ true
 
 userField.at('name').errors;
 // ⮕ ['Must not be blank']
