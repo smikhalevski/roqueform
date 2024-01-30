@@ -11,13 +11,20 @@ import {
   Validator,
 } from 'roqueform';
 
-interface ValueShapePlugin {
+export interface ValueShapePlugin {
   /**
    * The shape that Doubter uses to validate {@link FieldController.value the field value}, or `null` if there's no
    * shape for this field.
    */
   valueShape: Shape | null;
 
+  /**
+   * Associates an error with the field.
+   *
+   * If a string is provided it becomes an error message. The error code in this case is set to "custom".
+   *
+   * @param error The error to add.
+   */
   addError(error: Issue | string): void;
 }
 

@@ -1,4 +1,8 @@
 /**
+ * ```sh
+ * npm install --save-prod roqueform
+ * ```
+ *
  * @module roqueform
  */
 

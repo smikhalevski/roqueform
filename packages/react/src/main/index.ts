@@ -1,4 +1,10 @@
 /**
+ * Hooks and components to integrate Roqueform with React.
+ *
+ * ```sh
+ * npm install --save-prod @roqueform/react
+ * ```
+ *
  * @module react
  */
 

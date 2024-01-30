@@ -14,21 +14,12 @@
   "tsconfig": "./tsconfig.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": [
-    "./packages/roqueform/src/main/index.ts",
-    "./packages/annotations-plugin/src/main/index.ts",
-    "./packages/constraint-validation-plugin/src/main/index.ts",
-    "./packages/doubter-plugin/src/main/index.ts",
-    "./packages/react/src/main/index.ts",
-    "./packages/ref-plugin/src/main/index.ts",
-    "./packages/reset-plugin/src/main/index.ts",
-    "./packages/scroll-to-error-plugin/src/main/index.ts",
-    "./packages/uncontrolled-plugin/src/main/index.ts",
-    "./packages/zod-plugin/src/main/index.ts"
+    "./packages/*/src/main/index.ts"
   ],
   "externalSymbolLinkMappings": {
     "doubter": {
-      "Issue": "https://smikhalevski.github.io/doubter/latest/classes/core.Issue.html",
-      "ParseOptions": "https://smikhalevski.github.io/doubter/latest/classes/core.ParseOptions.html",
+      "Issue": "https://smikhalevski.github.io/doubter/latest/interfaces/core.Issue.html",
+      "ParseOptions": "https://smikhalevski.github.io/doubter/latest/interfaces/core.ParseOptions.html",
       "Shape": "https://smikhalevski.github.io/doubter/latest/classes/core.Shape.html"
     },
     "typescript": {

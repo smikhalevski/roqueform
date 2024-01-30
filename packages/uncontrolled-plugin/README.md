@@ -9,18 +9,21 @@ DOM elements.
 npm install --save-prod @roqueform/uncontrolled-plugin
 ```
 
-# Usage example
+# Overview
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_uncontrolled_plugin.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/uncontrolled_plugin.html)
+
+This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
+[the React integration](../react#readme).
 
 ```tsx
-import { SyntheticEvent } from 'react';
+import type { SyntheticEvent } from 'react';
 import { useField } from '@roqueform/react';
 import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
 
 export const App = () => {
   const planetField = useField(
-    { planet: 'Mars', properties: { color: 'red' } },
+    { name: 'Mars', properties: { color: 'red' } },
     uncontrolledPlugin()
   );
 
@@ -28,15 +31,15 @@ export const App = () => {
     event.preventDefault();
 
     // The field value is always in sync with the input element value.
-    planetField.value;
+    doSubmit(planetField.value);
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      {'Planet:'}
+      {'Planet name:'}
       <input
         type="text"
-        ref={field.at('planet').ref}
+        ref={field.at('name').ref}
       />
       <br/>
 
@@ -45,9 +48,10 @@ export const App = () => {
         <label>
           <input
             type="radio"
-            name="color-property"
+            // 🌕 An arbitrary name of a radio group
+            name="property-color"
             value={color}
-            ref={field.at('properties').at('color').ref}
+            ref={field.at('properties').at('color').refFor(color)}
           />
           {color}
         </label>
@@ -57,9 +61,10 @@ export const App = () => {
 };
 ```
 
-# Value coercion
-To associate field with a form element, pass
-[`Field.ref`](https://smikhalevski.github.io/roqueform/interfaces/_roqueform_ref_plugin.RefPlugin.html#ref)
+# Referencing elements
+
+To associate field with an element, pass
+[`ref`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.UncontrolledPlugin.html#ref)
 as a `ref` attribute of an `input`, `textarea`, or any other form element:
 
 ```tsx
@@ -67,32 +72,36 @@ as a `ref` attribute of an `input`, `textarea`, or any other form element:
 ```
 
 The plugin would synchronize the field value with the value of an input element. When the input value is changed and
-`change` or `input` event is dispatched, `field` is updated with the corresponding value.
+`change` or `input` event is dispatched, the `field` is updated with the corresponding value.
 
-If you have a set of radio buttons, or checkboxes that update a single field, provide the same `ref` to all
-inputs, `uncontrolledPlugin` would use them a source of values.
+If you have a set of radio buttons, or checkboxes that update a single field, use
+[`refFor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.UncontrolledPlugin.html#refFor) with
+a distinct key. `refFor` always returns the same ref callback for the same key. `uncontrolledPlugin` would use elements
+passed to ref callbacks to derive a value.
 
 ```ts
 const namesField = useField(['Mars', 'Pluto'], uncontrolledPlugin());
 ```
 
-The plugin relies only on `value` attribute, so `name` and other attributes are optional:
+The plugin derives the field value from the element's `value` attribute:
 
 ```tsx
 <form>
   <input
     type="checkbox"
     value="Mars"
-    ref={namesField.ref}
+    // 🌕 The unique key associated with this is 1.
+    ref={namesField.refFor(1)}
   />
   <input
     type="checkbox"
     value="Pluto"
-    // 🟡 Note that the same ref is passed to two inputs
-    ref={namesField.ref}
+    ref={namesField.refFor(2)}
   />
 </form>
 ```
+
+# Value coercion
 
 By default, `uncontrolledPlugin` uses the opinionated element value accessor that applies following coercion rules to
 values of form elements:
@@ -134,7 +143,9 @@ import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
 const personField = useField(
   { dateOfBirth: 316310400000 },
   uncontrolledPlugin(
-    createElementsValueAccessor({ dateFormat: 'timestamp' })
+    createElementsValueAccessor({
+      dateFormat: 'timestamp'
+    })
   )
 );
 ```

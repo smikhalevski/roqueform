@@ -1,4 +1,10 @@
 /**
+ * Updates Roqueform fields by listening to change events of associated DOM elements.
+ *
+ * ```sh
+ * npm install --save-prod @roqueform/uncontrolled-plugin
+ * ```
+ *
  * @module uncontrolled-plugin
  */
 

@@ -30,7 +30,7 @@ describe('scrollToErrorPlugin', () => {
     expect(field.scrollToError()).toBe(null);
   });
 
-  test('scrolls to error at index with RTL text direction', () => {
+  test('scrolls to error at index with LTR text direction', () => {
     const rootField = createField({ aaa: 111, bbb: 222 }, composePlugins(errorsPlugin(), scrollToErrorPlugin()));
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
@@ -100,7 +100,7 @@ describe('scrollToErrorPlugin', () => {
     bbbScrollIntoViewMock.mockClear();
   });
 
-  test('scrolls to error at index with LTR text direction', () => {
+  test('scrolls to error at index with RTL text direction', () => {
     const rootField = createField({ aaa: 111, bbb: 222 }, composePlugins(errorsPlugin(), scrollToErrorPlugin()));
 
     const aaaElement = document.body.appendChild(document.createElement('input'));
@@ -121,14 +121,14 @@ describe('scrollToErrorPlugin', () => {
     });
 
     // Scroll to 0
-    rootField.scrollToError(0, { direction: 'ltr' });
+    rootField.scrollToError(0, { direction: 'rtl' });
     expect(aaaScrollIntoViewMock).not.toHaveBeenCalled();
     expect(bbbScrollIntoViewMock).toHaveBeenCalledTimes(1);
     aaaScrollIntoViewMock.mockClear();
     bbbScrollIntoViewMock.mockClear();
 
     // Scroll to 1
-    rootField.scrollToError(1, { direction: 'ltr' });
+    rootField.scrollToError(1, { direction: 'rtl' });
     expect(aaaScrollIntoViewMock).toHaveBeenCalledTimes(1);
     expect(bbbScrollIntoViewMock).not.toHaveBeenCalled();
     aaaScrollIntoViewMock.mockClear();

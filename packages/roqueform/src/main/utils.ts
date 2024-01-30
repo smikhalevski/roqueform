@@ -42,6 +42,10 @@ export function callOrGet(value: unknown, arg?: unknown) {
  */
 export function dispatchEvents(events: readonly Event[]): void {
   for (const event of events) {
+    if (event.type === '*') {
+      continue;
+    }
+
     for (let ancestor: FieldController | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
       const subscribers1 = ancestor.subscribers[event.type];
       const subscribers2 = ancestor.subscribers['*'];

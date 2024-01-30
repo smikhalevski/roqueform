@@ -75,14 +75,14 @@ export function scrollToErrorPlugin(): PluginInjector<ScrollToErrorPlugin> {
     };
 
     field.scrollToError = (index = 0, options) => {
-      const rtl = options === null || typeof options !== 'object' || options.direction !== 'ltr';
+      const ltr = options === null || typeof options !== 'object' || options.direction !== 'rtl';
       const targets = getTargetFields(field, []);
 
       if (targets.length === 0) {
         return null;
       }
 
-      const target = sortByBoundingRect(targets, rtl)[index < 0 ? targets.length + index : index];
+      const target = sortByBoundingRect(targets, ltr)[index < 0 ? targets.length + index : index];
 
       if (target !== undefined) {
         target.element!.scrollIntoView(options);
@@ -112,7 +112,7 @@ function getTargetFields(
   return batch;
 }
 
-function sortByBoundingRect(fields: Field<ScrollToErrorPlugin>[], rtl: boolean): Field<ScrollToErrorPlugin>[] {
+function sortByBoundingRect(fields: Field<ScrollToErrorPlugin>[], ltr: boolean): Field<ScrollToErrorPlugin>[] {
   if (fields.length === 0) {
     return fields;
   }
@@ -135,6 +135,6 @@ function sortByBoundingRect(fields: Field<ScrollToErrorPlugin>[], rtl: boolean):
     const x1 = Math.round(rect1.left + scrollX - clientX);
     const x2 = Math.round(rect2.left + scrollX - clientX);
 
-    return y1 - y2 || (rtl ? x1 - x2 : x2 - x1);
+    return y1 - y2 || (ltr ? x1 - x2 : x2 - x1);
   });
 }

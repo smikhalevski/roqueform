@@ -6,12 +6,15 @@ Hooks and components to integrate [Roqueform](https://github.com/smikhalevski/ro
 npm install --save-prod @roqueform/react
 ```
 
-# Usage example
+# Overview
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/_roqueform_react.html)
+🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/react.html)
+
+[`useField`](https://smikhalevski.github.io/roqueform/functions/react.useField.html) hook has the same signature as the 
+[`createField`](https://smikhalevski.github.io/roqueform/functions/roqueform.createField.html) function:
 
 ```tsx
-import { SyntheticEvent } from 'react';
+import type { SyntheticEvent } from 'react';
 import { FieldRenderer, useField } from '@roqueform/react';
 
 export const App = () => {
@@ -21,7 +24,7 @@ export const App = () => {
     event.preventDefault();
 
     // Submit the field value
-    planetField.value;
+    doSubmit(planetField.value);
   };
 
   return (
@@ -48,21 +51,19 @@ export const App = () => {
 };
 ```
 
-# `useField`
-
-`useField` is hook that returns a [`Field`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Field.html)
-instance that is preserved between re-renders.
+`useField` hook returns a [`Field`](https://smikhalevski.github.io/roqueform/types/roqueform.Field.html) instance that
+is preserved between re-renders.
 
 ```ts
 useField();
-// ⮕ Field<any>
+// ⮕ Field
 ```
 
 You can provide the initial value for a field.
 
 ```ts
 useField({ planet: 'Mars' });
-// ⮕ Field<{ planet: string }>
+// ⮕ Field<unknown, { planet: string }>
 ```
 
 If you pass a callback as an initial value, it would be invoked when the field is initialized.
@@ -75,14 +76,15 @@ Pass [a plugin](../../#plugins-and-integrations) as the second argument of the `
 
 ```ts
 import { useField } from '@roqueform/react';
-import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
+import { errorsPlugin } from 'roqueform';
 
-useField({ planet: 'Pluto' }, uncontrolledPlugin());
+const planetField = useField({ planet: 'Pluto' }, errorsPlugin());
+
+planetField.addError('Too far away');
 ```
 
-# `FieldRenderer`
-
-The `FieldRenderer` component subscribes to the given field instance and re-renders children when the field is notified:
+The `FieldRenderer` component subscribes to the given field instance and re-renders children when an event is dispatched
+onto the field:
 
 ```tsx
 import { FieldRenderer, useField } from '@roqueform/react';
@@ -109,7 +111,7 @@ const App = () => {
 When a user updates the input value, the `nameField` is updated and `FieldRenderer` component is re-rendered. The single
 argument of the `children` render function is the field passed as a `field` prop to the `FieldRenderer` component.
 
-## Eager and lazy re-renders
+# Eager and lazy re-renders
 
 Let's consider the form with two `FieldRenderer` elements. One of them renders the value of the root field and the other
 one renders an input that updates the child field:
@@ -154,24 +156,24 @@ whenever its value was affected.
 
 Now both fields are re-rendered when user edits the input text.
 
-## Reacting to changes
+# Reacting to changes
 
 You can use an `onChange` handler that is triggered only when the field value was updated
 [non-transiently](../../#transient-updates).
 
 ```tsx
 <FieldRenderer
-  field={rootField.at('bar')}
+  field={planetField.at('name')}
   onChange={value => {
-    // Handle the value change
+    // Handle the non-transient name changes
   }}
 >
-  {barField => (
+  {nameField => (
     <input
       type="text"
-      value={barField.value}
+      value={nameField.value}
       onChange={event => {
-        barField.setValue(event.target.value);
+        nameField.setValue(event.target.value);
       }}
     />
   )}
