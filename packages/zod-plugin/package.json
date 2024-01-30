@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/zod-plugin",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Validates Roqueform fields with Zod schemas.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
@@ -43,7 +43,7 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/zod-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^4.0.0",
+    "roqueform": "^5.0.0",
     "zod": "^3.19.1"
   }
 }

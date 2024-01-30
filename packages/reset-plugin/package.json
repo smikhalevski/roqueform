@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/reset-plugin",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "description": "Manages Roqueform field initial value and dirty status.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
@@ -44,6 +44,6 @@
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/reset-plugin#readme",
   "peerDependencies": {
     "fast-deep-equal": "^3.1.3",
-    "roqueform": "^4.0.0"
+    "roqueform": "^5.0.0"
   }
 }

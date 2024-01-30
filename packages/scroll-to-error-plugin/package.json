@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/scroll-to-error-plugin",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Roqueform plugin that enables scrolling to a field that has an associated validation error.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
@@ -44,6 +44,6 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/scroll-to-error-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^4.0.0"
+    "roqueform": "^5.0.0"
   }
 }
