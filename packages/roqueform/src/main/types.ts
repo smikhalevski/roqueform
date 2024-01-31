@@ -225,7 +225,7 @@ export interface ValueAccessor {
 }
 
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
-export type NoInfer<T> = T extends infer T ? T : never;
+export type NoInfer<T> = [T][T extends any ? 0 : never];
 
 export declare const __PLUGIN__: unique symbol;
 
