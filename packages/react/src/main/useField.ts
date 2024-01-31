@@ -11,7 +11,7 @@ type NoInfer<T> = T extends infer T ? T : never;
  * @returns The {@link Field} instance.
  * @template Value The root field value.
  */
-export function useField<Value = any>(): Field<Value | undefined>;
+export function useField<Value = any>(): Field<unknown, Value | undefined>;
 
 /**
  * Creates the new field.
@@ -20,7 +20,7 @@ export function useField<Value = any>(): Field<Value | undefined>;
  * @returns The {@link Field} instance.
  * @template Value The root field value.
  */
-export function useField<Value>(initialValue: Value | (() => Value)): Field<Value>;
+export function useField<Value>(initialValue: Value | (() => Value)): Field<unknown, Value>;
 
 /**
  * Creates the new field enhanced by a plugin.
