@@ -3,55 +3,58 @@ import type { PluginInjector } from './types';
 /**
  * @internal
  */
-export function composePlugins<T, A>(a: PluginInjector<A, T>): PluginInjector<A, T>;
+export function composePlugins<P1, V1>(a: PluginInjector<P1, V1>): PluginInjector<P1, V1>;
 
 /**
  * @internal
  */
-export function composePlugins<T, A, B>(a: PluginInjector<A, T>, b: PluginInjector<B, T>): PluginInjector<A & B, T>;
+export function composePlugins<P1, V1, P2, V2>(
+  a: PluginInjector<P1, V1>,
+  b: PluginInjector<P2, V2>
+): PluginInjector<P1 & P2, V1 & V2>;
 
 /**
  * @internal
  */
-export function composePlugins<T, A, B, C>(
-  a: PluginInjector<A, T>,
-  b: PluginInjector<B, T>,
-  c: PluginInjector<C, T>
-): PluginInjector<A & B & C, T>;
+export function composePlugins<P1, V1, P2, V2, P3, V3>(
+  a: PluginInjector<P1, V1>,
+  b: PluginInjector<P2, V2>,
+  c: PluginInjector<P3, V3>
+): PluginInjector<P1 & P2 & P3, V1 & V2 & V3>;
 
 /**
  * @internal
  */
-export function composePlugins<T, A, B, C, D>(
-  a: PluginInjector<A, T>,
-  b: PluginInjector<B, T>,
-  c: PluginInjector<C, T>,
-  d: PluginInjector<D, T>
-): PluginInjector<A & B & C & D, T>;
+export function composePlugins<P1, V1, P2, V2, P3, V3, P4, V4>(
+  a: PluginInjector<P1, V1>,
+  b: PluginInjector<P2, V2>,
+  c: PluginInjector<P3, V3>,
+  d: PluginInjector<P4, V4>
+): PluginInjector<P1 & P2 & P3 & P4, V1 & V2 & V3 & V4>;
 
 /**
  * @internal
  */
-export function composePlugins<T, A, B, C, D, E>(
-  a: PluginInjector<A, T>,
-  b: PluginInjector<B, T>,
-  c: PluginInjector<C, T>,
-  d: PluginInjector<D, T>,
-  e: PluginInjector<E, T>
-): PluginInjector<A & B & C & D & E, T>;
+export function composePlugins<P1, V1, P2, V2, P3, V3, P4, V4, P5, V5>(
+  a: PluginInjector<P1, V1>,
+  b: PluginInjector<P2, V2>,
+  c: PluginInjector<P3, V3>,
+  d: PluginInjector<P4, V4>,
+  e: PluginInjector<P5, V5>
+): PluginInjector<P1 & P2 & P3 & P4 & P5, V1 & V2 & V3 & V4 & V5>;
 
 /**
  * @internal
  */
-export function composePlugins<T, A, B, C, D, E, F>(
-  a: PluginInjector<A, T>,
-  b: PluginInjector<B, T>,
-  c: PluginInjector<C, T>,
-  d: PluginInjector<D, T>,
-  e: PluginInjector<E, T>,
-  f: PluginInjector<F, T>,
-  ...other: PluginInjector<any, T>[]
-): PluginInjector<A & B & C & D & E & F, T>;
+export function composePlugins<P1, V1, P2, V2, P3, V3, P4, V4, P5, V5, P6, V6>(
+  a: PluginInjector<P1, V1>,
+  b: PluginInjector<P2, V2>,
+  c: PluginInjector<P3, V3>,
+  d: PluginInjector<P4, V4>,
+  e: PluginInjector<P5, V5>,
+  f: PluginInjector<P6, V6>,
+  ...other: PluginInjector<any, any>[]
+): PluginInjector<P1 & P2 & P3 & P4 & P5 & P6, V1 & V2 & V3 & V4 & V5 & V6>;
 
 /**
  * Composes multiple plugin callbacks into a single callback.

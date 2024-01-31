@@ -36,6 +36,11 @@ export function useField<Value, Plugin>(
   plugin: PluginInjector<Plugin, NoInfer<Value>>
 ): Field<Plugin, Value>;
 
+export function useField<Value, Plugin>(
+  initialValue: Value | (() => Value),
+  plugin: PluginInjector<Plugin>
+): Field<Plugin, Value>;
+
 export function useField(initialValue?: unknown, plugin?: PluginInjector) {
   const accessor = useContext(ValueAccessorContext);
 

@@ -159,10 +159,10 @@ export function validationPlugin<Options>(
  * @template Plugin The plugin that is available inside a validator.
  * @template Options Options passed to the validator.
  */
-export function validationPlugin<Plugin, Options>(
-  plugin: PluginInjector<Plugin>,
+export function validationPlugin<Plugin, Value, Options>(
+  plugin: PluginInjector<Plugin, Value>,
   validator: Validator<Options, ValidationPlugin<Options> & NoInfer<Plugin>>
-): PluginInjector<ValidationPlugin<Options> & Plugin>;
+): PluginInjector<ValidationPlugin<Options> & Plugin, Value>;
 
 export function validationPlugin(
   plugin: Validator | PluginInjector | undefined,

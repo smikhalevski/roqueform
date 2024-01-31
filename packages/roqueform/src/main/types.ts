@@ -198,7 +198,7 @@ export interface FieldController<Plugin = unknown, Value = any> {
  * @template Plugin The plugin injected into the field.
  * @template Value The root field value.
  */
-export type PluginInjector<Plugin = unknown, Value = any> = (field: Field<Plugin, Value>) => void;
+export type PluginInjector<Plugin = unknown, Value = unknown> = (field: Field<Plugin, Value>) => void;
 
 /**
  * The abstraction used by the {@link Field} to read and write object properties.

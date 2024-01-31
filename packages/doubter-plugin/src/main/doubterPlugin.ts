@@ -11,7 +11,7 @@ import {
   Validator,
 } from 'roqueform';
 
-export interface ValueShapePlugin {
+export interface DoubterShapePlugin {
   /**
    * The shape that Doubter uses to validate {@link FieldController.value the field value}, or `null` if there's no
    * shape for this field.
@@ -31,7 +31,7 @@ export interface ValueShapePlugin {
 /**
  * The plugin added to fields by the {@link doubterPlugin}.
  */
-export type DoubterPlugin = ValidationPlugin<ParseOptions> & ErrorsPlugin<Issue> & ValueShapePlugin;
+export type DoubterPlugin = ValidationPlugin<ParseOptions> & ErrorsPlugin<Issue> & DoubterShapePlugin;
 
 /**
  * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
@@ -40,10 +40,10 @@ export type DoubterPlugin = ValidationPlugin<ParseOptions> & ErrorsPlugin<Issue>
  * @template Value The root field value.
  */
 export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<DoubterPlugin, Value> {
-  return validationPlugin(composePlugins(errorsPlugin(concatErrors), valueShapePlugin(shape)), validator);
+  return validationPlugin(composePlugins(errorsPlugin(concatErrors), doubterShapePlugin(shape)), validator);
 }
 
-function valueShapePlugin(rootShape: Shape): PluginInjector<ValueShapePlugin> {
+function doubterShapePlugin<Value>(rootShape: Shape<Value, any>): PluginInjector<DoubterShapePlugin, Value> {
   return field => {
     field.valueShape = field.parentField === null ? rootShape : field.parentField.valueShape?.at(field.key) || null;
 

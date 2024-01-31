@@ -33,6 +33,12 @@ export function createField<Value, Plugin>(
   accessor?: ValueAccessor
 ): Field<Plugin, Value>;
 
+export function createField<Value, Plugin>(
+  initialValue: Value,
+  plugin: PluginInjector<Plugin>,
+  accessor?: ValueAccessor
+): Field<Plugin, Value>;
+
 export function createField(initialValue?: unknown, plugin?: PluginInjector | ValueAccessor, accessor?: ValueAccessor) {
   if (typeof plugin !== 'function') {
     accessor = plugin;

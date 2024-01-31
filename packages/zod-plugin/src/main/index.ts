@@ -9,4 +9,4 @@
  */
 
 export { zodPlugin } from './zodPlugin';
-export type { ZodPlugin, ValueTypePlugin } from './zodPlugin';
+export type { ZodPlugin, ZodTypePlugin } from './zodPlugin';
