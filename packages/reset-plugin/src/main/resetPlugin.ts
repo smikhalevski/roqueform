@@ -33,21 +33,21 @@ export interface ResetPlugin {
   reset(): void;
 
   /**
-   * Returns all fields that have {@link roqueform!FieldController.value a value} that is different from
-   * {@link roqueform!FieldController.initialValue an initial value}.
+   * Returns all fields that have {@link roqueform!FieldBase.value a value} that is different from
+   * {@link roqueform!FieldBase.initialValue an initial value}.
    *
    * @see {@link isDirty}
    */
-  getDirtyFields(): Field<PluginOf<this>>[];
+  getDirtyFields(): Field<any, PluginOf<this>>[];
 
   /**
-   * Subscribes to changes of {@link roqueform!FieldController.initialValue the initial value}.
+   * Subscribes to changes of {@link roqueform!FieldBase.initialValue the initial value}.
    *
    * @param eventType The type of the event.
    * @param subscriber The subscriber that would be triggered.
    * @returns The callback to unsubscribe the subscriber.
    */
-  on(eventType: 'change:initialValue', subscriber: Subscriber<PluginOf<this>>): Unsubscribe;
+  on(eventType: 'change:initialValue', subscriber: Subscriber<any, PluginOf<this>>): Unsubscribe;
 }
 
 /**
@@ -77,7 +77,7 @@ export function resetPlugin(
   };
 }
 
-function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void {
+function setInitialValue(field: Field<unknown, ResetPlugin>, initialValue: unknown): void {
   if (isEqual(field.initialValue, initialValue)) {
     return;
   }
@@ -93,8 +93,8 @@ function setInitialValue(field: Field<ResetPlugin>, initialValue: unknown): void
 }
 
 function propagateInitialValue(
-  originField: Field<ResetPlugin>,
-  targetField: Field<ResetPlugin>,
+  originField: Field<unknown, ResetPlugin>,
+  targetField: Field<unknown, ResetPlugin>,
   initialValue: unknown,
   events: Event[]
 ): Event[] {
@@ -114,7 +114,10 @@ function propagateInitialValue(
   return events;
 }
 
-function getDirtyFields(field: Field<ResetPlugin>, batch: Field<ResetPlugin>[]): Field<ResetPlugin>[] {
+function getDirtyFields(
+  field: Field<unknown, ResetPlugin>,
+  batch: Field<unknown, ResetPlugin>[]
+): Field<unknown, ResetPlugin>[] {
   if (field.isDirty) {
     batch.push(field);
   }

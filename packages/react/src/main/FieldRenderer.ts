@@ -8,23 +8,23 @@ import {
   useReducer,
   useRef,
 } from 'react';
-import { callOrGet, FieldController, ValueOf } from 'roqueform';
+import { callOrGet, Field, ValueOf } from 'roqueform';
 
 /**
  * Properties of the {@link FieldRenderer} component.
  *
  * @template Field The rendered field.
  */
-export interface FieldRendererProps<Field extends FieldController<any>> {
+export interface FieldRendererProps<F extends Field> {
   /**
    * The field that triggers re-renders.
    */
-  field: Field;
+  field: F;
 
   /**
    * The render function that receive a rendered field as an argument.
    */
-  children: (field: Field) => ReactNode;
+  children: (field: F) => ReactNode;
 
   /**
    * If set to `true` then {@link FieldRenderer} is re-rendered whenever the {@link field} itself, its parent fields or
@@ -40,7 +40,7 @@ export interface FieldRendererProps<Field extends FieldController<any>> {
    *
    * @param value The new field value.
    */
-  onChange?: (value: ValueOf<Field>) => void;
+  onChange?: (value: ValueOf<F>) => void;
 }
 
 /**
@@ -49,11 +49,11 @@ export interface FieldRendererProps<Field extends FieldController<any>> {
  *
  * @template Field The rendered field.
  */
-export function FieldRenderer<Field extends FieldController<any>>(props: FieldRendererProps<Field>): ReactElement {
+export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): ReactElement {
   const { field, eagerlyUpdated } = props;
 
   const [, rerender] = useReducer(reduceCount, 0);
-  const handleChangeRef = useRef<FieldRendererProps<Field>['onChange']>();
+  const handleChangeRef = useRef<FieldRendererProps<F>['onChange']>();
 
   handleChangeRef.current = props.onChange;
 

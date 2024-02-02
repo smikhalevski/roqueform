@@ -1,5 +1,5 @@
-import { ElementsValueAccessor, uncontrolledPlugin } from '../main';
-import { composePlugins, createField } from 'roqueform';
+import { ElementsValueAccessor, type UncontrolledPlugin, uncontrolledPlugin } from '../main';
+import { composePlugins, createField, type PluginInjector } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
 
 describe('uncontrolledPlugin', () => {
@@ -15,7 +15,7 @@ describe('uncontrolledPlugin', () => {
 
   test('invokes ref from the preceding plugin', () => {
     const refMock = jest.fn();
-    const pluginMock = jest.fn(field => {
+    const pluginMock: PluginInjector<{ ref: UncontrolledPlugin['ref'] }> = jest.fn(field => {
       field.ref = refMock;
     });
 

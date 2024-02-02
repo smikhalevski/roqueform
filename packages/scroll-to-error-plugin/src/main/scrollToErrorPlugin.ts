@@ -40,7 +40,7 @@ export interface ScrollToErrorPlugin {
    * ancestor.
    * @returns The field which is scrolled to, or `null` if there's no scroll happening.
    */
-  scrollToError(index?: number, alignToTop?: boolean): Field<PluginOf<this>> | null;
+  scrollToError(index?: number, alignToTop?: boolean): Field<any, PluginOf<this>> | null;
 
   /**
    * Scroll to the element that is referenced by an invalid field. Scrolls the field element's ancestor containers such
@@ -54,7 +54,7 @@ export interface ScrollToErrorPlugin {
    * @param options The [scroll options](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView#sect1).
    * @returns The field which is scrolled to, or `null` if there's no scroll happening.
    */
-  scrollToError(index?: number, options?: ScrollToErrorOptions): Field<PluginOf<this>> | null;
+  scrollToError(index?: number, options?: ScrollToErrorOptions): Field<any, PluginOf<this>> | null;
 }
 
 /**
@@ -94,9 +94,9 @@ export function scrollToErrorPlugin(): PluginInjector<ScrollToErrorPlugin> {
 }
 
 function getTargetFields(
-  field: Field<ScrollToErrorPlugin>,
-  batch: Field<ScrollToErrorPlugin>[]
-): Field<ScrollToErrorPlugin>[] {
+  field: Field<unknown, ScrollToErrorPlugin>,
+  batch: Field<unknown, ScrollToErrorPlugin>[]
+): Field<unknown, ScrollToErrorPlugin>[] {
   if (field.isInvalid && field.element !== null && field.element.isConnected) {
     const rect = field.element.getBoundingClientRect();
 
@@ -112,7 +112,10 @@ function getTargetFields(
   return batch;
 }
 
-function sortByBoundingRect(fields: Field<ScrollToErrorPlugin>[], ltr: boolean): Field<ScrollToErrorPlugin>[] {
+function sortByBoundingRect(
+  fields: Field<unknown, ScrollToErrorPlugin>[],
+  ltr: boolean
+): Field<unknown, ScrollToErrorPlugin>[] {
   if (fields.length === 0) {
     return fields;
   }

@@ -3,7 +3,7 @@ import {
   composePlugins,
   errorsPlugin,
   ErrorsPlugin,
-  FieldController,
+  Field,
   PluginInjector,
   Validation,
   ValidationPlugin,
@@ -13,7 +13,7 @@ import {
 
 export interface DoubterShapePlugin {
   /**
-   * The shape that Doubter uses to validate {@link FieldController.value the field value}, or `null` if there's no
+   * The shape that Doubter uses to validate {@link FieldBase.value the field value}, or `null` if there's no
    * shape for this field.
    */
   valueShape: Shape | null;
@@ -92,7 +92,7 @@ function concatErrors(errors: readonly Issue[], error: Issue): readonly Issue[] 
   return errors.concat(error);
 }
 
-function prependPath(field: FieldController<any>, issue: Issue): Issue {
+function prependPath(field: Field, issue: Issue): Issue {
   for (; field.parentField !== null; field = field.parentField) {
     (issue.path ||= []).unshift(field.key);
   }

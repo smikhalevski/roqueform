@@ -3,7 +3,7 @@ import {
   errorsPlugin,
   ErrorsPlugin,
   Field,
-  FieldController,
+  FieldBase,
   PluginInjector,
   Validation,
   validationPlugin,
@@ -99,7 +99,7 @@ function getValue(field: Field<ZodPlugin>): unknown {
   return value;
 }
 
-function getPath(field: FieldController<any>): any[] {
+function getPath(field: FieldBase): any[] {
   const path = [];
 
   while (field.parentField !== null) {

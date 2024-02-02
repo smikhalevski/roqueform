@@ -22,7 +22,7 @@ export type {
   Unsubscribe,
   PluginOf,
   ValueOf,
-  FieldController,
+  FieldBase,
   PluginInjector,
   ValueAccessor,
 } from './types';

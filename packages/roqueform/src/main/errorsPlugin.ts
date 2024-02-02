@@ -53,7 +53,7 @@ export interface ErrorsPlugin<Error = any> {
   /**
    * Returns all fields that have associated errors.
    */
-  getInvalidFields(): Field<PluginOf<this>>[];
+  getInvalidFields(): Field<any, PluginOf<this>>[];
 
   /**
    * Subscribes to {@link errors an associated error} changes.
@@ -64,7 +64,7 @@ export interface ErrorsPlugin<Error = any> {
    * @see {@link errors}
    * @see {@link isInvalid}
    */
-  on(eventType: 'change:errors', subscriber: Subscriber<PluginOf<this>, Error[]>): Unsubscribe;
+  on(eventType: 'change:errors', subscriber: Subscriber<Error[], PluginOf<this>>): Unsubscribe;
 }
 
 /**
@@ -135,7 +135,11 @@ function concatUniqueErrors<T>(errors: readonly T[], error: T): readonly T[] {
   return errors;
 }
 
-function clearErrors(field: Field<ErrorsPlugin>, options: ClearErrorsOptions | undefined, events: Event[]): Event[] {
+function clearErrors(
+  field: Field<unknown, ErrorsPlugin>,
+  options: ClearErrorsOptions | undefined,
+  events: Event[]
+): Event[] {
   const prevErrors = field.errors;
 
   if (prevErrors.length !== 0) {
@@ -150,7 +154,10 @@ function clearErrors(field: Field<ErrorsPlugin>, options: ClearErrorsOptions | u
   return events;
 }
 
-function getInvalidFields(field: Field<ErrorsPlugin>, batch: Field<ErrorsPlugin>[]): Field<ErrorsPlugin>[] {
+function getInvalidFields(
+  field: Field<unknown, ErrorsPlugin>,
+  batch: Field<unknown, ErrorsPlugin>[]
+): Field<unknown, ErrorsPlugin>[] {
   if (field.isInvalid) {
     batch.push(field);
   }
