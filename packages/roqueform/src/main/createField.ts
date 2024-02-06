@@ -1,13 +1,13 @@
+import { naturalValueAccessor } from './naturalValueAccessor';
 import type { __PLUGIN__, Event, Field, NoInfer, PluginInjector, ValueAccessor } from './types';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
-import { naturalValueAccessor } from './naturalValueAccessor';
 
 /**
  * Creates the new field instance.
  *
  * @template Value The root field value.
  */
-export function createField<Value = any>(): Field<unknown, Value | undefined>;
+export function createField<Value = any>(): Field<Value | undefined>;
 
 /**
  * Creates the new field instance.
@@ -16,7 +16,22 @@ export function createField<Value = any>(): Field<unknown, Value | undefined>;
  * @param accessor Resolves values for child fields.
  * @template Value The root field value.
  */
-export function createField<Value>(initialValue: Value, accessor?: ValueAccessor): Field<unknown, Value>;
+export function createField<Value>(initialValue: Value, accessor?: ValueAccessor): Field<Value>;
+
+/**
+ * Creates the new field instance.
+ *
+ * @param initialValue The initial value assigned to the field.
+ * @param plugin The plugin injector that enhances the field.
+ * @param accessor Resolves values for child fields.
+ * @template Value The root field initial value.
+ * @template Plugin The plugin injected into the field.
+ */
+export function createField<Value, Plugin>(
+  initialValue: Value,
+  plugin: PluginInjector<Plugin>,
+  accessor?: ValueAccessor
+): Field<Value, Plugin>;
 
 /**
  * Creates the new field instance.
@@ -31,7 +46,7 @@ export function createField<Value, Plugin>(
   initialValue: Value,
   plugin: PluginInjector<Plugin, NoInfer<Value>>,
   accessor?: ValueAccessor
-): Field<Plugin, Value>;
+): Field<Value, Plugin>;
 
 export function createField(initialValue?: unknown, plugin?: PluginInjector | ValueAccessor, accessor?: ValueAccessor) {
   if (typeof plugin !== 'function') {

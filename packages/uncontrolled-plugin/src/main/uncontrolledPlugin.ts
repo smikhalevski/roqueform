@@ -104,7 +104,7 @@ export function uncontrolledPlugin(accessor = elementsValueAccessor): PluginInje
 }
 
 function swapElements(
-  field: Field<UncontrolledPlugin>,
+  field: Field<unknown, UncontrolledPlugin>,
   changeListener: EventListener,
   prevElement: Element | null,
   nextElement: Element | null

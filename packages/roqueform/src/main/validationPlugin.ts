@@ -70,7 +70,7 @@ export interface ValidationPlugin<Options = any> {
    * @see {@link validation}
    * @see {@link isValidating}
    */
-  on(eventType: 'validation:start', subscriber: Subscriber<PluginOf<this>, Validation<PluginOf<this>>>): Unsubscribe;
+  on(eventType: 'validation:start', subscriber: Subscriber<Validation<PluginOf<this>>, PluginOf<this>>): Unsubscribe;
 
   /**
    * Subscribes to the end of the validation. Check {@link isInvalid} to detect the actual validity status.
@@ -82,7 +82,7 @@ export interface ValidationPlugin<Options = any> {
    * @see {@link validation}
    * @see {@link isValidating}
    */
-  on(eventType: 'validation:end', subscriber: Subscriber<PluginOf<this>, Validation<PluginOf<this>>>): Unsubscribe;
+  on(eventType: 'validation:end', subscriber: Subscriber<Validation<PluginOf<this>>, PluginOf<this>>): Unsubscribe;
 }
 
 /**
@@ -94,7 +94,7 @@ export interface Validation<Plugin = any> {
   /**
    * The field where the validation was triggered.
    */
-  rootField: Field<Plugin>;
+  rootField: Field<any, Plugin>;
 
   /**
    * The abort controller associated with the pending {@link Validator.validateAsync async validation}, or `null` if
@@ -118,7 +118,7 @@ export interface Validator<Options = any, Plugin = any> {
    * @param field The field where {@link ValidationPlugin.validate} was called.
    * @param options The options passed to the {@link ValidationPlugin.validate} method.
    */
-  validate?(field: Field<Plugin>, options: Options | undefined): void;
+  validate?(field: Field<any, Plugin>, options: Options | undefined): void;
 
   /**
    * Applies validation rules to a field. If this callback is omitted, then {@link Validator.validate} would be called
@@ -130,7 +130,7 @@ export interface Validator<Options = any, Plugin = any> {
    * @param field The field where {@link ValidationPlugin.validateAsync} was called.
    * @param options The options passed to the {@link ValidationPlugin.validateAsync} method.
    */
-  validateAsync?(field: Field<Plugin>, options: Options | undefined): Promise<void>;
+  validateAsync?(field: Field<any, Plugin>, options: Options | undefined): Promise<void>;
 }
 
 /**
@@ -159,10 +159,10 @@ export function validationPlugin<Options>(
  * @template Plugin The plugin that is available inside a validator.
  * @template Options Options passed to the validator.
  */
-export function validationPlugin<Plugin, Options>(
-  plugin: PluginInjector<Plugin>,
+export function validationPlugin<Plugin, Value, Options>(
+  plugin: PluginInjector<Plugin, Value>,
   validator: Validator<Options, ValidationPlugin<Options> & NoInfer<Plugin>>
-): PluginInjector<ValidationPlugin<Options> & Plugin>;
+): PluginInjector<ValidationPlugin<Options> & Plugin, Value>;
 
 export function validationPlugin(
   plugin: Validator | PluginInjector | undefined,
@@ -194,7 +194,7 @@ export function validationPlugin(
   };
 }
 
-function containsInvalid(field: Field<ValidationPlugin>): boolean {
+function containsInvalid(field: Field<unknown, ValidationPlugin>): boolean {
   if (field.isInvalid) {
     return true;
   }
@@ -208,7 +208,7 @@ function containsInvalid(field: Field<ValidationPlugin>): boolean {
   return false;
 }
 
-function startValidation(field: Field<ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
+function startValidation(field: Field<unknown, ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
   field.validation = validation;
 
   events.push({ type: 'validation:start', targetField: field, originField: validation.rootField, data: validation });
@@ -223,7 +223,7 @@ function startValidation(field: Field<ValidationPlugin>, validation: Validation,
   return events;
 }
 
-function endValidation(field: Field<ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
+function endValidation(field: Field<unknown, ValidationPlugin>, validation: Validation, events: Event[]): Event[] {
   if (field.validation !== validation) {
     return events;
   }
@@ -240,7 +240,7 @@ function endValidation(field: Field<ValidationPlugin>, validation: Validation, e
   return events;
 }
 
-function abortValidation(field: Field<ValidationPlugin>, events: Event[]): Event[] {
+function abortValidation(field: Field<unknown, ValidationPlugin>, events: Event[]): Event[] {
   const { validation } = field;
 
   if (validation !== null) {
@@ -250,7 +250,7 @@ function abortValidation(field: Field<ValidationPlugin>, events: Event[]): Event
   return events;
 }
 
-function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
+function validate(field: Field<unknown, ValidationPlugin>, options: unknown): boolean {
   const { validate } = field.validator;
 
   if (validate === undefined) {
@@ -290,7 +290,7 @@ function validate(field: Field<ValidationPlugin>, options: unknown): boolean {
   return !containsInvalid(field);
 }
 
-function validateAsync(field: Field<ValidationPlugin>, options: unknown): Promise<boolean> {
+function validateAsync(field: Field<unknown, ValidationPlugin>, options: unknown): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const validateAsync = field.validator.validateAsync || field.validator.validate;
 

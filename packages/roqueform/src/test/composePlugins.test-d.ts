@@ -1,13 +1,48 @@
-import { expectType } from 'tsd';
 import { composePlugins, createField, PluginInjector } from 'roqueform';
+import { expectNotAssignable, expectType } from 'tsd';
 
-declare const plugin1: PluginInjector<{ xxx: number }>;
-declare const plugin2: PluginInjector<{ yyy: boolean }>;
+interface Aaa {
+  aaa: string;
+}
 
-expectType<PluginInjector<{ xxx: number } & { yyy: boolean }>>(composePlugins(plugin1, plugin2));
+interface Bbb {
+  bbb: number;
+}
 
-const field = createField({ aaa: 111 }, composePlugins(plugin1, plugin2));
+interface Ccc {
+  ccc: number;
+}
 
-expectType<{ aaa: number }>(field.value);
-expectType<number>(field.xxx);
-expectType<boolean>(field.yyy);
+declare const plugin1: PluginInjector;
+declare const plugin2: PluginInjector<Aaa>;
+declare const plugin3: PluginInjector<Bbb, Ccc>;
+
+expectNotAssignable<PluginInjector>({} as PluginInjector<Aaa>);
+
+expectNotAssignable<PluginInjector>({} as PluginInjector<Aaa, Bbb>);
+
+expectNotAssignable<PluginInjector>({} as PluginInjector<unknown, Aaa>);
+
+expectType<PluginInjector>(composePlugins(plugin1));
+
+expectType<PluginInjector>(composePlugins(plugin1, plugin1));
+
+expectType<PluginInjector<Aaa>>(composePlugins(plugin2, plugin2, plugin2, plugin2, plugin2, plugin2, plugin2, plugin2));
+
+expectType<PluginInjector<Aaa>>(composePlugins(plugin1, plugin2));
+
+expectType<PluginInjector<Bbb, Ccc>>(composePlugins(plugin1, plugin3));
+
+expectType<PluginInjector<Aaa & Bbb, Ccc>>(composePlugins(plugin2, plugin3));
+
+expectType<PluginInjector<Aaa & Bbb, Ccc>>(composePlugins(plugin3, plugin2));
+
+expectNotAssignable<PluginInjector<Aaa & Bbb>>(composePlugins(plugin2, plugin3));
+
+expectNotAssignable<PluginInjector<unknown, Ccc>>(composePlugins(plugin2, plugin3));
+
+const field = createField({ ccc: 111 }, composePlugins(plugin2, plugin3));
+
+expectType<Ccc>(field.value);
+expectType<string>(field.aaa);
+expectType<number>(field.bbb);

@@ -16,13 +16,13 @@ export { validationPlugin } from './validationPlugin';
 export type { ClearErrorsOptions, ErrorsPlugin } from './errorsPlugin';
 export type { Validator, Validation, ValidationPlugin } from './validationPlugin';
 export type {
-  Field,
+  BareField,
   Event,
+  Field,
+  PluginInjector,
+  PluginOf,
   Subscriber,
   Unsubscribe,
-  PluginOf,
-  ValueOf,
-  FieldController,
-  PluginInjector,
   ValueAccessor,
+  ValueOf,
 } from './types';

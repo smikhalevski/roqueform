@@ -38,7 +38,7 @@ export interface ConstraintValidationPlugin {
   /**
    * Returns all invalid fields.
    */
-  getInvalidFields(): Field<PluginOf<this>>[];
+  getInvalidFields(): Field<any, PluginOf<this>>[];
 
   /**
    * Subscribes to {@link validity the validity} changes of this field or any of its descendants.
@@ -48,7 +48,7 @@ export interface ConstraintValidationPlugin {
    * @returns The callback to unsubscribe the subscriber.
    * @see {@link isInvalid}
    */
-  on(eventType: 'change:validity', subscriber: Subscriber<PluginOf<this>, ValidityState | null>): Unsubscribe;
+  on(eventType: 'change:validity', subscriber: Subscriber<ValidityState | null, PluginOf<this>>): Unsubscribe;
 }
 
 /**
@@ -118,7 +118,7 @@ export function constraintValidationPlugin(): PluginInjector<ConstraintValidatio
   };
 }
 
-function applyValidity(field: Field<ConstraintValidationPlugin>): void {
+function applyValidity(field: Field<unknown, ConstraintValidationPlugin>): void {
   const prevValidity = field.validity;
   const nextValidity = field.validatedElement !== null ? cloneValidity(field.validatedElement.validity) : null;
 
@@ -129,7 +129,7 @@ function applyValidity(field: Field<ConstraintValidationPlugin>): void {
   }
 }
 
-function reportValidity(field: Field<ConstraintValidationPlugin>): boolean {
+function reportValidity(field: Field<unknown, ConstraintValidationPlugin>): boolean {
   if (field.children !== null) {
     for (const child of field.children) {
       if (!reportValidity(child)) {
@@ -141,9 +141,9 @@ function reportValidity(field: Field<ConstraintValidationPlugin>): boolean {
 }
 
 function getInvalidFields(
-  field: Field<ConstraintValidationPlugin>,
-  batch: Field<ConstraintValidationPlugin>[]
-): Field<ConstraintValidationPlugin>[] {
+  field: Field<unknown, ConstraintValidationPlugin>,
+  batch: Field<unknown, ConstraintValidationPlugin>[]
+): Field<unknown, ConstraintValidationPlugin>[] {
   if (field.isInvalid) {
     batch.push(field);
   }

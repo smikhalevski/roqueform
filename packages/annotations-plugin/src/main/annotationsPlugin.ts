@@ -46,7 +46,7 @@ export interface AnnotationsPlugin<Annotations extends object> {
    * @param subscriber The subscriber that would be triggered.
    * @returns The callback to unsubscribe the subscriber.
    */
-  on(eventType: 'change:annotations', subscriber: Subscriber<PluginOf<this>, Annotations>): Unsubscribe;
+  on(eventType: 'change:annotations', subscriber: Subscriber<Annotations, PluginOf<this>>): Unsubscribe;
 }
 
 /**
@@ -97,7 +97,7 @@ function applyChanges(annotations: ReadonlyDict, patch: ReadonlyDict): ReadonlyD
 }
 
 function annotate(
-  field: Field<AnnotationsPlugin<ReadonlyDict>>,
+  field: Field<unknown, AnnotationsPlugin<ReadonlyDict>>,
   patch: ReadonlyDict | ((annotations: ReadonlyDict) => ReadonlyDict),
   applyPatch: (annotations: ReadonlyDict, patch: ReadonlyDict) => ReadonlyDict,
   options: AnnotateOptions | undefined,
