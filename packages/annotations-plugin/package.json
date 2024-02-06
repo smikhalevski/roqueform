@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/annotations-plugin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Manages Roqueform field annotations.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
@@ -41,6 +41,6 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/annotations-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^5.0.0"
+    "roqueform": "^5.1.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/constraint-validation-plugin",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Integrates Roqueform fields with the Constraint validation API.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
@@ -40,6 +40,6 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/constraint-validation-plugin#readme",
   "peerDependencies": {
-    "roqueform": "^5.0.0"
+    "roqueform": "^5.1.0"
   }
 }
