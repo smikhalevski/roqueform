@@ -5,15 +5,15 @@
  * @template Value The field value.
  * @template Plugin The plugin injected into the field.
  */
-export type Field<Value = any, Plugin = any> = FieldBase<Value, PreferAny<Plugin>> & PreferUnknown<Plugin>;
+export type Field<Value = any, Plugin = any> = BareField<Value, PreferAny<Plugin>> & PreferUnknown<Plugin>;
 
 /**
- * The field controller provides the core field functionality.
+ * The bare field provides the core field functionality.
  *
  * @template Value The field value.
  * @template Plugin The plugin injected into the field.
  */
-export interface FieldBase<Value = any, Plugin = any> {
+export interface BareField<Value = any, Plugin = any> {
   /**
    * Holds the plugin type for inference.
    *
@@ -175,8 +175,7 @@ export type Unsubscribe = () => void;
 /**
  * Infers plugins that were injected into a field
  *
- * Use `PluginOf<this>` in plugin interfaces to infer all plugin interfaces that were intersected with the field
- * controller.
+ * Use `PluginOf<this>` in plugin interfaces to infer all plugin interfaces that were intersected with the bare field.
  *
  * @template T The field to infer plugin of.
  */

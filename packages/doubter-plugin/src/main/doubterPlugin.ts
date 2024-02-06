@@ -13,7 +13,7 @@ import {
 
 export interface DoubterShapePlugin {
   /**
-   * The shape that Doubter uses to validate {@link FieldBase.value the field value}, or `null` if there's no
+   * The shape that Doubter uses to validate {@link roqueform!BareField.value the field value}, or `null` if there's no
    * shape for this field.
    */
   valueShape: Shape | null;

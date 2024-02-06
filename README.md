@@ -126,7 +126,7 @@ planetsField.parent;
 // ⮕ universeField
 ```
 
-Fields returned by the [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#at)
+Fields returned by the [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#at)
 method have a stable identity. This means that you can invoke `at` with the same key multiple times and the same field
 instance is returned:
 
@@ -186,14 +186,14 @@ const unsubscribe = planetsField.on('change:value', event => {
 // ⮕ () => void
 ```
 
-The [`Field.on`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#on) method
+The [`Field.on`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#on) method
 associates the event subscriber with an event type. All events that are dispatched onto fields have the share
 [`Event`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Event.html).
 
 Without plugins, fields can dispatch events with
-[`change:value`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#on.on-2) type. This
+[`change:value`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#on.on-2) type. This
 event is dispatched when the field value is changed via
-[`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#setValue).
+[`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#setValue).
 
 Plugins may dispatch their own events. Here's an example of the
 [`change:errors`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ErrorsPlugin.html#on.on-1) event
@@ -234,7 +234,7 @@ planetsField.on('*', event => {
 
 # Transient updates
 
-When you call [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#setValue)
+When you call [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#setValue)
 on a field then subscribers of its ancestors and its updated child fields are triggered. To manually control the update
 propagation to fields ancestors, you can use transient updates.
 
@@ -261,7 +261,7 @@ avatarField.at('eyeColor').isTransient;
 ```
 
 To propagate the transient value contained by the child field to its parent, use the
-[`Field.propagate`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#propagate)
+[`Field.propagate`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#propagate)
 method:
 
 ```ts
@@ -271,7 +271,7 @@ avatarField.value;
 // ⮕ { eyeColor: 'green' }
 ```
 
-[`Field.setTransientValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#setTransientValue)
+[`Field.setTransientValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#setTransientValue)
 can be called multiple times, but only the most recent update is propagated to the parent field after the `propagate`
 call.
 
@@ -308,12 +308,12 @@ planetsField.at(1).value;
 updates field values.
 
 - When the child field is accessed via
-  [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#at) method for the
+  [`Field.at`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#at) method for the
   first time, its value is read from the value of the parent field using the
   [`ValueAccessor.get`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#get) method.
 
 - When a field value is updated via
-  [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldBase.html#setValue), then
+  [`Field.setValue`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.BareField.html#setValue), then
   the parent field value is updated with the value returned from the
   [`ValueAccessor.set`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Accessor.html#set) method. If the
   updated field has child fields, their values are updated with values returned from the

@@ -1,3 +1,4 @@
+import isDeepEqual from 'fast-deep-equal';
 import {
   dispatchEvents,
   Event,
@@ -9,7 +10,6 @@ import {
   Unsubscribe,
   ValueOf,
 } from 'roqueform';
-import isDeepEqual from 'fast-deep-equal';
 
 /**
  * The plugin added to fields by the {@link resetPlugin}.
@@ -33,15 +33,15 @@ export interface ResetPlugin {
   reset(): void;
 
   /**
-   * Returns all fields that have {@link roqueform!FieldBase.value a value} that is different from
-   * {@link roqueform!FieldBase.initialValue an initial value}.
+   * Returns all fields that have {@link roqueform!BareField.value a value} that is different from
+   * {@link roqueform!BareField.initialValue an initial value}.
    *
    * @see {@link isDirty}
    */
   getDirtyFields(): Field<any, PluginOf<this>>[];
 
   /**
-   * Subscribes to changes of {@link roqueform!FieldBase.initialValue the initial value}.
+   * Subscribes to changes of {@link roqueform!BareField.initialValue the initial value}.
    *
    * @param eventType The type of the event.
    * @param subscriber The subscriber that would be triggered.

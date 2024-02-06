@@ -1,4 +1,4 @@
-import type { Event, FieldBase } from './types';
+import type { Event, Field } from './types';
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -46,7 +46,7 @@ export function dispatchEvents(events: readonly Event[]): void {
       continue;
     }
 
-    for (let ancestor: FieldBase | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
+    for (let ancestor: Field | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
       const subscribers1 = ancestor.subscribers[event.type];
       const subscribers2 = ancestor.subscribers['*'];
 
