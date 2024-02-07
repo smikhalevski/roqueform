@@ -231,7 +231,6 @@ type Primitive =
   | String
   | Number
   | Boolean
-  | BigInt
   | Symbol
   | Function
   | Date
