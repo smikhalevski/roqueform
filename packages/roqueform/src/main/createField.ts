@@ -1,5 +1,5 @@
 import { naturalValueAccessor } from './naturalValueAccessor';
-import type { __PLUGIN__, Event, Field, NoInfer, PluginInjector, ValueAccessor } from './types';
+import type { __plugin, Event, Field, NoInfer, PluginInjector, ValueAccessor } from './types';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 
 /**
@@ -106,7 +106,7 @@ function getOrCreateField(
         subscribers.splice(subscribers.indexOf(subscriber), 1);
       };
     },
-  } satisfies Omit<Field, __PLUGIN__> as unknown as Field;
+  } satisfies Omit<Field, __plugin> as unknown as Field;
 
   field.rootField = field;
 

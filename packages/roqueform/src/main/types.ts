@@ -20,8 +20,9 @@ export interface BareField<Value = any, Plugin = any> {
    * Use {@link PluginOf PluginOf<this>} in plugin interfaces to infer the plugin type.
    *
    * @hidden
+   * @internal
    */
-  readonly [__PLUGIN__]: Plugin;
+  readonly [__plugin]: Plugin;
 
   /**
    * The key in the {@link parentField parent value} that corresponds to the value of this field, or `null` if there's
@@ -179,7 +180,7 @@ export type Unsubscribe = () => void;
  *
  * @template T The field to infer plugin of.
  */
-export type PluginOf<T> = __PLUGIN__ extends keyof T ? T[__PLUGIN__] : any;
+export type PluginOf<T> = __plugin extends keyof T ? T[__plugin] : any;
 
 /**
  * Infers the value of the field.
@@ -223,9 +224,9 @@ export interface ValueAccessor {
   set(obj: any, key: any, value: any): any;
 }
 
-declare const __PLUGIN__: unique symbol;
+declare const __plugin: unique symbol;
 
-export type __PLUGIN__ = typeof __PLUGIN__;
+export type __plugin = typeof __plugin;
 
 type Primitive =
   | String
