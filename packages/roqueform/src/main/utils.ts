@@ -1,4 +1,6 @@
+import type { ErrorsPlugin } from './errorsPlugin';
 import type { Event, Field } from './types';
+import type { ValidationPlugin } from './validationPlugin';
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -62,4 +64,18 @@ export function dispatchEvents(events: readonly Event[]): void {
       }
     }
   }
+}
+
+export function containsInvalid(field: Field<unknown, ValidationPlugin> | Field<unknown, ErrorsPlugin>): boolean {
+  if (field.isInvalid) {
+    return true;
+  }
+  if (field.children !== null) {
+    for (const child of field.children) {
+      if (containsInvalid(child)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

@@ -1,5 +1,5 @@
 import type { Event, Field, NoInfer, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
-import { dispatchEvents } from './utils';
+import { containsInvalid, dispatchEvents } from './utils';
 
 const ERROR_ABORT = 'Validation aborted';
 
@@ -192,20 +192,6 @@ export function validationPlugin(
       dispatchEvents(abortValidation(field, []));
     };
   };
-}
-
-function containsInvalid(field: Field<unknown, ValidationPlugin>): boolean {
-  if (field.isInvalid) {
-    return true;
-  }
-  if (field.children !== null) {
-    for (const child of field.children) {
-      if (containsInvalid(child)) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 function startValidation(field: Field<unknown, ValidationPlugin>, validation: Validation, events: Event[]): Event[] {

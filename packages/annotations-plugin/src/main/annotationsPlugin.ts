@@ -83,7 +83,9 @@ export function annotationsPlugin(
   return field => {
     field.annotations = annotations;
 
-    field.annotate = (patch, options) => dispatchEvents(annotate(field, patch, applyPatch, options, []));
+    field.annotate = (patch, options) => {
+      dispatchEvents(annotate(field, patch, applyPatch, options, []));
+    };
   };
 }
 

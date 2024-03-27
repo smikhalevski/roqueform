@@ -1,5 +1,5 @@
 import type { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
-import { dispatchEvents } from './utils';
+import { containsInvalid, dispatchEvents } from './utils';
 
 const EVENT_CHANGE_ERRORS = 'change:errors';
 
@@ -30,6 +30,11 @@ export interface ErrorsPlugin<Error = any> {
    * `true` if this field has associated errors, or `false` otherwise.
    */
   readonly isInvalid: boolean;
+
+  /**
+   * Returns `true` if this field or any of its descendants are {@link isInvalid invalid}. Otherwise, returns `false`.
+   */
+  containsInvalid(): boolean;
 
   /**
    * Associates an error with the field.
@@ -95,6 +100,8 @@ export function errorsPlugin<Error = any>(
       configurable: true,
       get: () => (isInvalid !== undefined && isInvalid()) || field.errors.length !== 0,
     });
+
+    field.containsInvalid = () => containsInvalid(field);
 
     field.addError = error => {
       const prevErrors = field.errors;
