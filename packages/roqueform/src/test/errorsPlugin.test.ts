@@ -103,7 +103,7 @@ describe('errorsPlugin', () => {
     field.addError(222);
     field.deleteError(222);
 
-    expect(field.isInvalid).toBe(false);
+    expect(field.isInvalid()).toBe(false);
     expect(field.errors.length).toBe(0);
 
     expect(field.at('aaa').isInvalid).toBe(false);

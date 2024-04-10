@@ -5,18 +5,6 @@ interface ReadonlyDict {
 }
 
 /**
- * Options of the {@link AnnotationsPlugin.annotate} method.
- */
-export interface AnnotateOptions {
-  /**
-   * If `true` then patch is applied to this field and all of its descendant fields.
-   *
-   * @default false
-   */
-  recursive?: boolean;
-}
-
-/**
  * The plugin added to fields by the {@link annotationsPlugin}.
  *
  * @template Annotations Annotations associated with fields.
@@ -36,7 +24,14 @@ export interface AnnotationsPlugin<Annotations extends object> {
    */
   annotate(
     patch: Partial<Annotations> | ((field: PluginOf<this>) => Partial<Annotations>),
-    options?: AnnotateOptions
+    options?: {
+      /**
+       * If `true` then patch is applied to this field and all of its descendant fields.
+       *
+       * @default false
+       */
+      recursive?: boolean;
+    }
   ): void;
 
   /**
@@ -102,7 +97,7 @@ function annotate(
   field: Field<unknown, AnnotationsPlugin<ReadonlyDict>>,
   patch: ReadonlyDict | ((annotations: ReadonlyDict) => ReadonlyDict),
   applyPatch: (annotations: ReadonlyDict, patch: ReadonlyDict) => ReadonlyDict,
-  options: AnnotateOptions | undefined,
+  options: { recursive?: boolean } | undefined,
   events: Event[]
 ): Event[] {
   const prevAnnotations = field.annotations;

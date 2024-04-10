@@ -16,9 +16,9 @@ import {
  */
 export interface ResetPlugin {
   /**
-   * `true` if the field value is different from its initial value.
+   * Returns `true` if the field value is different from its initial value.
    */
-  readonly isDirty: boolean;
+  isDirty(): boolean;
 
   /**
    * Sets the initial value of the field and notifies ancestors and descendants.
@@ -60,10 +60,7 @@ export function resetPlugin(
   equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
 ): PluginInjector<ResetPlugin> {
   return field => {
-    Object.defineProperty(field, 'isDirty', {
-      configurable: true,
-      get: () => !equalityChecker(field.initialValue, field.value),
-    });
+    field.isDirty = () => !equalityChecker(field.initialValue, field.value);
 
     field.setInitialValue = value => {
       setInitialValue(field, value);
@@ -118,7 +115,7 @@ function getDirtyFields(
   field: Field<unknown, ResetPlugin>,
   batch: Field<unknown, ResetPlugin>[]
 ): Field<unknown, ResetPlugin>[] {
-  if (field.isDirty) {
+  if (field.isDirty()) {
     batch.push(field);
   }
   if (field.children !== null) {

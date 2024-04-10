@@ -1,4 +1,5 @@
 import { dispatchEvents, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from 'roqueform';
+import { containsInvalid } from 'roqueform/src/main/utils';
 
 /**
  * The plugin added to fields by the {@link constraintValidationPlugin}.
@@ -11,15 +12,22 @@ export interface ConstraintValidationPlugin {
   validatedElement: ValidatableElement | null;
 
   /**
-   * `true` if this field has {@link validity a validity issue}, or `false` otherwise.
-   */
-  readonly isInvalid: boolean;
-
-  /**
    * The copy of the last reported [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState)
    * read from the {@link validatedElement}, or `null` if there's no associated validatable element.
    */
   validity: ValidityState | null;
+
+  /**
+   * Returns `true` if this field has {@link validity a validity issue}, or `false` otherwise.
+   */
+  isInvalid(options?: {
+    /**
+     * If `true` then errors are deleted for this field and all of its descendant fields.
+     *
+     * @default false
+     */
+    recursive?: boolean;
+  }): boolean;
 
   /**
    * Associates the field with the {@link element DOM element}.
@@ -70,23 +78,21 @@ export type ValidatableElement =
  */
 export function constraintValidationPlugin(): PluginInjector<ConstraintValidationPlugin> {
   return field => {
-    const { ref } = field;
+    const { ref, isInvalid } = field;
 
     field.validatedElement = null;
     field.validity = null;
-
-    const isInvalid = Object.getOwnPropertyDescriptor(field, 'isInvalid')?.get;
-
-    Object.defineProperty(field, 'isInvalid', {
-      configurable: true,
-      get: () => (isInvalid !== undefined && isInvalid()) || (field.validity !== null && !field.validity.valid),
-    });
 
     const changeListener = () => {
       applyValidity(field);
     };
 
     field.on('change:value', changeListener);
+
+    field.isInvalid = options =>
+      options !== undefined && options.recursive
+        ? containsInvalid(field)
+        : (isInvalid !== undefined && isInvalid()) || (field.validity !== null && !field.validity.valid);
 
     field.ref = nextElement => {
       const prevElement = field.validatedElement;
@@ -144,7 +150,7 @@ function getInvalidFields(
   field: Field<unknown, ConstraintValidationPlugin>,
   batch: Field<unknown, ConstraintValidationPlugin>[]
 ): Field<unknown, ConstraintValidationPlugin>[] {
-  if (field.isInvalid) {
+  if (field.isInvalid()) {
     batch.push(field);
   }
   if (field.children !== null) {

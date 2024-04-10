@@ -10,16 +10,6 @@ const ERROR_ABORT = 'Validation aborted';
  */
 export interface ValidationPlugin<Options = any> {
   /**
-   * `true` if this field has an invalid value, or `false` otherwise.
-   */
-  isInvalid?: boolean;
-
-  /**
-   * `true` if the validation is pending, or `false` otherwise.
-   */
-  readonly isValidating: boolean;
-
-  /**
    * The validator to which the field value validation is delegated.
    */
   validator: Validator;
@@ -28,6 +18,16 @@ export interface ValidationPlugin<Options = any> {
    * The pending validation, or `null` if there's no pending validation.
    */
   validation: Validation<PluginOf<this>> | null;
+
+  /**
+   * Returns `true` if this field has an invalid value, or `false` otherwise.
+   */
+  isInvalid(): boolean;
+
+  /**
+   * Returns `true` if the validation is pending, or `false` otherwise.
+   */
+  isValidating(): boolean;
 
   /**
    * Triggers a synchronous field validation.
@@ -179,10 +179,9 @@ export function validationPlugin(
     field.validator = validator!;
     field.validation = field.parentField !== null ? field.parentField.validation : null;
 
-    Object.defineProperty(field, 'isValidating', {
-      configurable: true,
-      get: () => field.validation !== null,
-    });
+    field.isInvalid ||= () => false;
+
+    field.isValidating = () => field.validation !== null;
 
     field.validate = options => validate(field, options);
 

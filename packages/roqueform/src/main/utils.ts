@@ -1,3 +1,4 @@
+import type { ConstraintValidationPlugin } from '@roqueform/constraint-validation-plugin/src/main';
 import type { ErrorsPlugin } from './errorsPlugin';
 import type { Event, Field } from './types';
 import type { ValidationPlugin } from './validationPlugin';
@@ -66,8 +67,10 @@ export function dispatchEvents(events: readonly Event[]): void {
   }
 }
 
-export function containsInvalid(field: Field<unknown, ValidationPlugin> | Field<unknown, ErrorsPlugin>): boolean {
-  if (field.isInvalid) {
+export function containsInvalid(
+  field: Field<unknown, ValidationPlugin> | Field<unknown, ErrorsPlugin> | Field<unknown, ConstraintValidationPlugin>
+): boolean {
+  if (field.isInvalid()) {
     return true;
   }
   if (field.children !== null) {

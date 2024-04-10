@@ -4,18 +4,6 @@ import { containsInvalid, dispatchEvents } from './utils';
 const EVENT_CHANGE_ERRORS = 'change:errors';
 
 /**
- * Options of the {@link ErrorsPlugin.clearErrors} method.
- */
-export interface ClearErrorsOptions {
-  /**
-   * If `true` then errors are deleted for this field and all of its descendant fields.
-   *
-   * @default false
-   */
-  recursive?: boolean;
-}
-
-/**
  * The plugin that enables a field errors.
  *
  * @template Error The error associated with the field.
@@ -27,14 +15,16 @@ export interface ErrorsPlugin<Error = any> {
   errors: readonly Error[];
 
   /**
-   * `true` if this field has associated errors, or `false` otherwise.
+   * Returns `true` if this field has associated errors, or `false` otherwise.
    */
-  readonly isInvalid: boolean;
-
-  /**
-   * Returns `true` if this field or any of its descendants are {@link isInvalid invalid}. Otherwise, returns `false`.
-   */
-  containsInvalid(): boolean;
+  isInvalid(options?: {
+    /**
+     * If `true` then errors are deleted for this field and all of its descendant fields.
+     *
+     * @default false
+     */
+    recursive?: boolean;
+  }): boolean;
 
   /**
    * Associates an error with the field.
@@ -53,7 +43,14 @@ export interface ErrorsPlugin<Error = any> {
   /**
    * Deletes all errors associated with this field.
    */
-  clearErrors(options?: ClearErrorsOptions): void;
+  clearErrors(options?: {
+    /**
+     * If `true` then errors are deleted for this field and all of its descendant fields.
+     *
+     * @default false
+     */
+    recursive?: boolean;
+  }): void;
 
   /**
    * Returns all fields that have associated errors.
@@ -92,16 +89,14 @@ export function errorsPlugin<Error = any>(
   concatErrors: (errors: readonly Error[], error: Error) => readonly Error[] = concatUniqueErrors
 ): PluginInjector<ErrorsPlugin<Error>> {
   return field => {
+    const { isInvalid } = field;
+
     field.errors = [];
 
-    const isInvalid = Object.getOwnPropertyDescriptor(field, 'isInvalid')?.get;
-
-    Object.defineProperty(field, 'isInvalid', {
-      configurable: true,
-      get: () => (isInvalid !== undefined && isInvalid()) || field.errors.length !== 0,
-    });
-
-    field.containsInvalid = () => containsInvalid(field);
+    field.isInvalid = options =>
+      options !== undefined && options.recursive
+        ? containsInvalid(field)
+        : (isInvalid !== undefined && isInvalid()) || field.errors.length !== 0;
 
     field.addError = error => {
       const prevErrors = field.errors;
@@ -144,7 +139,7 @@ function concatUniqueErrors<T>(errors: readonly T[], error: T): readonly T[] {
 
 function clearErrors(
   field: Field<unknown, ErrorsPlugin>,
-  options: ClearErrorsOptions | undefined,
+  options: { recursive?: boolean } | undefined,
   events: Event[]
 ): Event[] {
   const prevErrors = field.errors;
@@ -165,7 +160,7 @@ function getInvalidFields(
   field: Field<unknown, ErrorsPlugin>,
   batch: Field<unknown, ErrorsPlugin>[]
 ): Field<unknown, ErrorsPlugin>[] {
-  if (field.isInvalid) {
+  if (field.isInvalid()) {
     batch.push(field);
   }
   if (field.children !== null) {
