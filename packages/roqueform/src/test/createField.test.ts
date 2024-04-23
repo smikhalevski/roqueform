@@ -48,6 +48,20 @@ describe('createField', () => {
     expect(field.at('aaa')).toBe(field.at('aaa'));
   });
 
+  test('returns a field at key with the default value', () => {
+    const field = createField<{ aaa?: number }>({}).at('aaa', 111);
+
+    expect(field.value).toBe(111);
+    expect(field.initialValue).toBe(undefined);
+  });
+
+  test('default value does not override a defined value', () => {
+    const field = createField({ aaa: 222 }).at('aaa', 111);
+
+    expect(field.value).toBe(222);
+    expect(field.initialValue).toBe(222);
+  });
+
   test('sets a value to a root field', () => {
     const field = createField(111);
 

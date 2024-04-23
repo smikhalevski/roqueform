@@ -104,10 +104,11 @@ export interface BareField<Value = any, Plugin = any> {
    * {@link value the current value}.
    *
    * @param key The key in the value of this field.
+   * @param defaultValue The default value used if the value at given key is `undefined`.
    * @returns The child field instance.
    * @template Key The key in the value of this field.
    */
-  at<Key extends KeyOf<Value>>(key: Key): Field<ValueAt<Value, Key>, Plugin>;
+  at<Key extends KeyOf<Value>>(key: Key, defaultValue?: ValueAt<Value, Key>): Field<ValueAt<Value, Key>, Plugin>;
 
   /**
    * Subscribes to all events.

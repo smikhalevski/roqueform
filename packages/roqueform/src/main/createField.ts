@@ -94,7 +94,7 @@ function getOrCreateField(
       setValue(field, field.value, false);
     },
 
-    at: key => getOrCreateField(field.valueAccessor, field, key, null, plugin),
+    at: (key, defaultValue) => getOrCreateField(field.valueAccessor, field, key, defaultValue, plugin),
 
     on: (type, subscriber) => {
       const subscribers = (field.subscribers[type] ||= []);
@@ -111,7 +111,12 @@ function getOrCreateField(
   field.rootField = field;
 
   if (parentField !== null) {
-    field.value = parentField.valueAccessor.get(parentField.value, key);
+    const derivedValue = parentField.valueAccessor.get(parentField.value, key);
+
+    if (derivedValue !== undefined) {
+      field.value = derivedValue;
+    }
+
     field.initialValue = parentField.valueAccessor.get(parentField.initialValue, key);
     field.rootField = parentField.rootField;
     (parentField.children ||= []).push(field);
