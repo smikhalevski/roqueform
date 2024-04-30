@@ -5,7 +5,7 @@ describe('resetPlugin', () => {
   test('field is dirty if the field value is not equal to an initial value', () => {
     const initialValue = { aaa: 111 };
 
-    const field = createField(initialValue, resetPlugin());
+    const field = createField(initialValue, [resetPlugin()]);
 
     expect(field.initialValue).toBe(initialValue);
     expect(field.at('aaa').initialValue).toBe(111);
@@ -24,7 +24,7 @@ describe('resetPlugin', () => {
   test('field is not dirty it has the value that is deeply equal to the initial value', () => {
     const initialValue = { aaa: 111 };
 
-    const field = createField(initialValue, resetPlugin());
+    const field = createField(initialValue, [resetPlugin()]);
 
     field.at('aaa').setValue(222);
 
@@ -43,7 +43,7 @@ describe('resetPlugin', () => {
 
     const initialValue = { aaa: 111 };
 
-    const field = createField(initialValue, resetPlugin());
+    const field = createField(initialValue, [resetPlugin()]);
 
     field.on('change:initialValue', subscriberMock);
     field.at('aaa').on('change:initialValue', aaaSubscriberMock);
@@ -74,7 +74,7 @@ describe('resetPlugin', () => {
   });
 
   test('child field is dirty if its value was updated before the Field instance was created', () => {
-    const field = createField({ aaa: 111 }, resetPlugin());
+    const field = createField({ aaa: 111 }, [resetPlugin()]);
 
     field.setValue({ aaa: 222 });
 
@@ -82,7 +82,7 @@ describe('resetPlugin', () => {
   });
 
   test('resets to the initial value', () => {
-    const field = createField({ aaa: 111 }, resetPlugin());
+    const field = createField({ aaa: 111 }, [resetPlugin()]);
 
     field.at('aaa').setValue(222);
 

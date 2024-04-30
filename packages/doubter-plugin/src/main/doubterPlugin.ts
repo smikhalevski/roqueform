@@ -1,6 +1,5 @@
 import { Err, Issue, Ok, ParseOptions, Shape } from 'doubter';
 import {
-  composePlugins,
   errorsPlugin,
   ErrorsPlugin,
   Field,
@@ -40,7 +39,11 @@ export type DoubterPlugin = ValidationPlugin<ParseOptions> & ErrorsPlugin<Issue>
  * @template Value The root field value.
  */
 export function doubterPlugin<Value>(shape: Shape<Value, any>): PluginInjector<DoubterPlugin, Value> {
-  return validationPlugin(composePlugins(errorsPlugin(concatErrors), doubterShapePlugin(shape)), validator);
+  return field => {
+    errorsPlugin(concatErrors)(field);
+    doubterShapePlugin(shape)(field);
+    validationPlugin(validator)(field);
+  };
 }
 
 function doubterShapePlugin<Value>(rootShape: Shape<Value, any>): PluginInjector<DoubterShapePlugin, Value> {

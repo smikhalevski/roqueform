@@ -6,7 +6,6 @@
  * @module roqueform
  */
 
-export { composePlugins } from './composePlugins';
 export { createField } from './createField';
 export { errorsPlugin } from './errorsPlugin';
 export { naturalValueAccessor } from './naturalValueAccessor';
@@ -25,4 +24,5 @@ export type {
   Unsubscribe,
   ValueAccessor,
   ValueOf,
+  InferPlugin,
 } from './types';

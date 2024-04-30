@@ -202,6 +202,11 @@ export type ValueOf<T> = 'value' extends keyof T ? T['value'] : any;
 export type PluginInjector<Plugin = unknown, Value = unknown> = (field: Field<PreferAny<Value>, Plugin>) => void;
 
 /**
+ * Infers a plugin from a {@link PluginInjector}.
+ */
+export type InferPlugin<Injector> = UnionToIntersection<Injector extends PluginInjector<infer Plugin> ? Plugin : never>;
+
+/**
  * The abstraction used by the {@link Field} to read and write object properties.
  */
 export interface ValueAccessor {
@@ -283,9 +288,4 @@ export type PreferUnknown<T> = 0 extends 1 & T ? unknown : T;
  */
 export type PreferAny<T> = unknown extends T ? any : T;
 
-/**
- * Poor Man's NoInfer polyfill.
- */
-// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
-// https://devblogs.microsoft.com/typescript/announcing-typescript-5-4-beta/#the-noinfer-utility-type
-export type NoInfer<T> = [T][T extends any ? 0 : never];
+type UnionToIntersection<T> = (T extends any ? (x: T) => any : never) extends (x: infer R) => any ? R : never;

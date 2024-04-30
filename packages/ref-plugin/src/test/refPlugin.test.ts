@@ -1,16 +1,16 @@
-import { composePlugins, createField } from 'roqueform';
+import { createField, type Field } from 'roqueform';
 import { refPlugin } from '../main';
 
 describe('refPlugin', () => {
   test('adds an element property to the field', () => {
-    const field = createField({ aaa: 111 }, refPlugin());
+    const field = createField({ aaa: 111 }, [refPlugin()]);
 
     expect(field.element).toBeNull();
     expect(field.at('aaa').element).toBeNull();
   });
 
   test('ref updates an element property', () => {
-    const field = createField({ aaa: 111 }, refPlugin());
+    const field = createField({ aaa: 111 }, [refPlugin()]);
     const element = document.createElement('input');
 
     field.ref(element);
@@ -21,10 +21,10 @@ describe('refPlugin', () => {
   test('preserves the ref from preceding plugin', () => {
     const refMock = jest.fn();
 
-    const field = createField(
-      { aaa: 111 },
-      composePlugins(field => Object.assign(field, { ref: refMock }), refPlugin())
-    );
+    const field = createField({ aaa: 111 }, [
+      (field: Field<any, {}>) => Object.assign(field, { ref: refMock }),
+      refPlugin(),
+    ]);
 
     field.ref(document.body);
 

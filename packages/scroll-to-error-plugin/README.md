@@ -22,18 +22,15 @@ This plugin doesn't require any rendering framework. To simplify the usage examp
 
 ```tsx
 import { SyntheticEvent, useEffect } from 'react';
-import { composePlugins, errorsPlugin } from 'roqueform';
+import { errorsPlugin } from 'roqueform';
 import { FieldRenderer, useField } from '@roqueform/react';
 import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
 
 export const App = () => {
-  const planetField = useField(
-    { name: 'Mars' },
-    composePlugins(
-      errorsPlugin(),
-      scrollToErrorPlugin()
-    )
-  );
+  const planetField = useField({ name: 'Mars' }, [
+    errorsPlugin(),
+    scrollToErrorPlugin()
+  ]);
 
   const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault();

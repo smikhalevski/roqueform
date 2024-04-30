@@ -19,7 +19,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('enhances the field', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+    const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
     expect(field.validatedElement).toBeNull();
     expect(field.isInvalid).toBe(false);
@@ -31,7 +31,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('reports validity of the root field', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+    const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
     field.ref(element);
 
@@ -45,7 +45,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('reports validity of the child field', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+    const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
     field.at('aaa').ref(element);
 
@@ -61,7 +61,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('deletes an error when a ref is changed', () => {
-    const field = createField(111, constraintValidationPlugin());
+    const field = createField(111, [constraintValidationPlugin()]);
 
     const subscriberMock = jest.fn();
 
@@ -85,7 +85,7 @@ describe('constraintValidationPlugin', () => {
   });
 
   test('notifies the field when the value is changed', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+    const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();

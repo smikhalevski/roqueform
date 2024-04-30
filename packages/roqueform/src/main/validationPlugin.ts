@@ -1,4 +1,4 @@
-import type { Event, Field, NoInfer, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
+import type { Event, Field, PluginInjector, PluginOf, Subscriber, Unsubscribe } from './types';
 import { dispatchEvents } from './utils';
 
 const ERROR_ABORT = 'Validation aborted';
@@ -145,37 +145,8 @@ export interface Validator<Options = any, Plugin = any> {
  */
 export function validationPlugin<Options>(
   validator: Validator<Options, ValidationPlugin<Options>>
-): PluginInjector<ValidationPlugin<Options>>;
-
-/**
- * Enhances the field with validation methods.
- *
- * This plugin is a scaffold for implementing validation. Check out
- * [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) before
- * picking this plugin.
- *
- * @param plugin The plugin that is available inside a validator.
- * @param validator The validator object or a callback that performs synchronous validation.
- * @template Plugin The plugin that is available inside a validator.
- * @template Options Options passed to the validator.
- */
-export function validationPlugin<Plugin, Value, Options>(
-  plugin: PluginInjector<Plugin, Value>,
-  validator: Validator<Options, ValidationPlugin<Options> & NoInfer<Plugin>>
-): PluginInjector<ValidationPlugin<Options> & Plugin, Value>;
-
-export function validationPlugin(
-  plugin: Validator | PluginInjector | undefined,
-  validator?: Validator
-): PluginInjector<ValidationPlugin> {
-  if (typeof plugin !== 'function') {
-    validator = plugin;
-    plugin = undefined;
-  }
-
+): PluginInjector<ValidationPlugin<Options>> {
   return field => {
-    (plugin as Function)?.(field);
-
     field.validator = validator!;
     field.validation = field.parentField !== null ? field.parentField.validation : null;
 

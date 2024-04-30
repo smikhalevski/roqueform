@@ -336,7 +336,7 @@ describe('createField', () => {
   test('applies a plugin to the root field', () => {
     const pluginMock = jest.fn();
 
-    const field = createField(111, pluginMock);
+    const field = createField(111, [pluginMock]);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
     expect(pluginMock).toHaveBeenNthCalledWith(1, field);
@@ -345,7 +345,7 @@ describe('createField', () => {
   test('applies a plugin to the child field', () => {
     const pluginMock = jest.fn();
 
-    const field = createField({ aaa: 111 }, pluginMock);
+    const field = createField({ aaa: 111 }, [pluginMock]);
 
     const aaaField = field.at('aaa');
 

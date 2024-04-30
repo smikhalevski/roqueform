@@ -466,18 +466,6 @@ planetField.at('name').on('changed:element', event => {
 planetField.at('name').setElement(document.body);
 ```
 
-# Composing plugins
-
-To combine multiple plugins into a single function, use the
-[`composePlugins`](https://smikhalevski.github.io/roqueform/functions/roqueform.composePlugins.html) helper:
-
-```ts
-import { createField, composePlugins } from 'roqueform';
-
-createField(['Mars'], composePlugins(plugin1, plugin2));
-// ⮕ Field<string[], …>
-```
-
 # Errors plugin
 
 Roqueform is shipped with the plugin that allows to associate errors with fields

@@ -3,7 +3,7 @@ import { annotationsPlugin } from '../main';
 
 describe('annotationsPlugin', () => {
   test('annotations are an empty object by default', () => {
-    const field = createField({ aaa: 111 }, annotationsPlugin({}));
+    const field = createField({ aaa: 111 }, [annotationsPlugin({})]);
 
     expect(field.annotations).toEqual({});
     expect(field.at('aaa').annotations).toEqual({});
@@ -12,7 +12,7 @@ describe('annotationsPlugin', () => {
   test('populates annotations with defaults', () => {
     const initialValue = { aaa: 111 };
 
-    const field = createField(initialValue, annotationsPlugin({ xxx: 222 }));
+    const field = createField(initialValue, [annotationsPlugin({ xxx: 222 })]);
 
     expect(field.annotations.xxx).toBe(222);
     expect(field.at('aaa').annotations.xxx).toBe(222);
@@ -22,7 +22,7 @@ describe('annotationsPlugin', () => {
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
 
-    const field = createField({ aaa: 111 }, annotationsPlugin({ xxx: 222 }));
+    const field = createField({ aaa: 111 }, [annotationsPlugin({ xxx: 222 })]);
 
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
@@ -46,7 +46,7 @@ describe('annotationsPlugin', () => {
     const patchMock = jest.fn(() => ({ xxx: 333 }));
     const subscriberMock = jest.fn();
 
-    const field = createField(111, annotationsPlugin({ xxx: 222 }));
+    const field = createField(111, [annotationsPlugin({ xxx: 222 })]);
 
     field.on('*', subscriberMock);
 
@@ -62,7 +62,7 @@ describe('annotationsPlugin', () => {
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
 
-    const field = createField({ aaa: 111 }, annotationsPlugin({ xxx: 222 }));
+    const field = createField({ aaa: 111 }, [annotationsPlugin({ xxx: 222 })]);
 
     field.on('*', subscriberMock);
     field.at('aaa').on('*', aaaSubscriberMock);
@@ -91,7 +91,7 @@ describe('annotationsPlugin', () => {
   test('uses patcher to apply patches', () => {
     const applyPatchMock = jest.fn((a, b) => Object.assign({}, a, b));
 
-    const field = createField(111, annotationsPlugin({}, applyPatchMock));
+    const field = createField(111, [annotationsPlugin({}, applyPatchMock)]);
 
     field.annotate({ xxx: 222 });
 

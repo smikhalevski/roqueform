@@ -2,7 +2,7 @@ import { createField, errorsPlugin } from '../main';
 
 describe('errorsPlugin', () => {
   test('enhances the field', () => {
-    const field = createField({ aaa: 111 }, errorsPlugin());
+    const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
     expect(field.errors.length).toBe(0);
     expect(field.isInvalid).toBe(false);
@@ -12,7 +12,7 @@ describe('errorsPlugin', () => {
   });
 
   test('adds an error to the root field', () => {
-    const field = createField({ aaa: 111 }, errorsPlugin());
+    const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -36,7 +36,7 @@ describe('errorsPlugin', () => {
   });
 
   test('adds an error to the child field', () => {
-    const field = createField({ aaa: 111 }, errorsPlugin());
+    const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -57,7 +57,7 @@ describe('errorsPlugin', () => {
   });
 
   test('does not add duplicated error by default', () => {
-    const field = createField({ aaa: 111 }, errorsPlugin());
+    const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -82,7 +82,7 @@ describe('errorsPlugin', () => {
     const errors = [333];
     const concatErrorsMock = jest.fn(() => errors);
 
-    const field = createField({ aaa: 111 }, errorsPlugin(concatErrorsMock));
+    const field = createField({ aaa: 111 }, [errorsPlugin(concatErrorsMock)]);
 
     field.addError(222);
 
@@ -92,7 +92,7 @@ describe('errorsPlugin', () => {
   });
 
   test('deletes an error from the root field', () => {
-    const field = createField({ aaa: 111 }, errorsPlugin());
+    const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -114,7 +114,7 @@ describe('errorsPlugin', () => {
   });
 
   test('deletes an error from the child field', () => {
-    const field = createField({ aaa: 111 }, errorsPlugin());
+    const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -136,7 +136,7 @@ describe('errorsPlugin', () => {
   });
 
   test('deletes an error from the child field but parent remains invalid', () => {
-    const field = createField({ aaa: 111, bbb: 222 }, errorsPlugin());
+    const field = createField({ aaa: 111, bbb: 222 }, [errorsPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -166,7 +166,7 @@ describe('errorsPlugin', () => {
   });
 
   test('clears errors recursively', () => {
-    const field = createField({ aaa: 111, bbb: 222 }, errorsPlugin());
+    const field = createField({ aaa: 111, bbb: 222 }, [errorsPlugin()]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -205,7 +205,7 @@ describe('errorsPlugin', () => {
           },
         },
       },
-      errorsPlugin()
+      [errorsPlugin()]
     );
 
     field.at('aaa').at('bbb').at('ccc').addError(333);

@@ -1,5 +1,4 @@
 import {
-  composePlugins,
   errorsPlugin,
   ErrorsPlugin,
   Field,
@@ -40,7 +39,11 @@ export type ZodPlugin = ValidationPlugin<Partial<ParseParams>> & ErrorsPlugin<Zo
  * @returns The validation plugin.
  */
 export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector<ZodPlugin, Value> {
-  return validationPlugin(composePlugins(errorsPlugin(concatErrors), zodTypePlugin(type)), validator);
+  return field => {
+    errorsPlugin(concatErrors)(field);
+    zodTypePlugin(type)(field);
+    validationPlugin(validator)(field);
+  };
 }
 
 function zodTypePlugin<Value>(rootType: ZodType<any, any, Value>): PluginInjector<ZodTypePlugin, Value> {

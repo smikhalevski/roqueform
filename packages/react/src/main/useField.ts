@@ -1,9 +1,7 @@
 import { useContext, useRef } from 'react';
+import type { InferPlugin } from 'roqueform';
 import { callOrGet, createField, Field, PluginInjector } from 'roqueform';
 import { ValueAccessorContext } from './ValueAccessorContext';
-
-// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#type-inference-in-conditional-types
-type NoInfer<T> = [T][T extends any ? 0 : never];
 
 /**
  * Creates the new field.
@@ -26,32 +24,18 @@ export function useField<Value>(initialValue: Value | (() => Value)): Field<Valu
  * Creates the new field enhanced by a plugin.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injector that enhances the field.
+ * @param plugins The array of plugin injectors that enhances the field.
  * @returns The {@link Field} instance.
  * @template Value The root field value.
  * @template Plugin The plugin injected into the field.
  */
-export function useField<Value, Plugin>(
+export function useField<Value, Plugins extends PluginInjector<any>[]>(
   initialValue: Value | (() => Value),
-  plugin: PluginInjector<Plugin>
-): Field<Value, Plugin>;
+  plugins?: Plugins
+): Field<Value, InferPlugin<Plugins[number]>>;
 
-/**
- * Creates the new field enhanced by a plugin.
- *
- * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injector that enhances the field.
- * @returns The {@link Field} instance.
- * @template Value The root field value.
- * @template Plugin The plugin injected into the field.
- */
-export function useField<Value, Plugin>(
-  initialValue: Value | (() => Value),
-  plugin: PluginInjector<Plugin, NoInfer<Value>>
-): Field<Value, Plugin>;
-
-export function useField(initialValue?: unknown, plugin?: PluginInjector) {
+export function useField(initialValue?: unknown, plugins?: PluginInjector[]) {
   const accessor = useContext(ValueAccessorContext);
 
-  return (useRef<Field>().current ||= createField(callOrGet(initialValue), plugin!, accessor));
+  return (useRef<Field>().current ||= createField(callOrGet(initialValue), plugins, accessor));
 }

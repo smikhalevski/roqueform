@@ -1,15 +1,14 @@
-import { createField, errorsPlugin, validationPlugin } from '../main';
+import { createField, type ErrorsPlugin, errorsPlugin, type Field, validationPlugin } from '../main';
 
 describe('validationPlugin', () => {
   test('synchronously validates the root field', () => {
-    const field = createField(
-      { aaa: 111 },
+    const field = createField({ aaa: 111 }, [
       validationPlugin({
         validate(field) {
           field.at('aaa').isInvalid = true;
         },
-      })
-    );
+      }),
+    ]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -67,14 +66,13 @@ describe('validationPlugin', () => {
   });
 
   test('synchronously validates the child field', () => {
-    const field = createField(
-      { aaa: 111 },
+    const field = createField({ aaa: 111 }, [
       validationPlugin({
         validate(field) {
           field.isInvalid = true;
         },
-      })
-    );
+      }),
+    ]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -120,14 +118,13 @@ describe('validationPlugin', () => {
   });
 
   test('asynchronously validates the root field', async () => {
-    const field = createField(
-      { aaa: 111 },
+    const field = createField({ aaa: 111 }, [
       validationPlugin({
         async validateAsync(field) {
           field.at('aaa').isInvalid = true;
         },
-      })
-    );
+      }),
+    ]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -192,14 +189,13 @@ describe('validationPlugin', () => {
   });
 
   test('asynchronously validates the child field', async () => {
-    const field = createField(
-      { aaa: 111 },
+    const field = createField({ aaa: 111 }, [
       validationPlugin({
         async validateAsync(field) {
           field.isInvalid = true;
         },
-      })
-    );
+      }),
+    ]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -225,14 +221,13 @@ describe('validationPlugin', () => {
   });
 
   test('cleans up validation if a sync error is thrown', () => {
-    const field = createField(
-      { aaa: 111, bbb: 222 },
+    const field = createField({ aaa: 111, bbb: 222 }, [
       validationPlugin({
         validate() {
           throw new Error('expected');
         },
-      })
-    );
+      }),
+    ]);
 
     field.at('aaa');
 
@@ -246,14 +241,13 @@ describe('validationPlugin', () => {
   });
 
   test('cleans up validation if an async error is thrown', async () => {
-    const field = createField(
-      { aaa: 111, bbb: 222 },
+    const field = createField({ aaa: 111, bbb: 222 }, [
       validationPlugin({
         async validateAsync() {
           throw new Error('expected');
         },
-      })
-    );
+      }),
+    ]);
 
     field.at('aaa');
 
@@ -271,14 +265,13 @@ describe('validationPlugin', () => {
   test('aborts validation', async () => {
     let lastSignal: AbortSignal | undefined;
 
-    const field = createField(
-      { aaa: 111, bbb: 222 },
+    const field = createField({ aaa: 111, bbb: 222 }, [
       validationPlugin({
         async validateAsync(field) {
           lastSignal = field.validation!.abortController!.signal;
         },
-      })
-    );
+      }),
+    ]);
 
     const promise = field.validateAsync();
 
@@ -297,14 +290,13 @@ describe('validationPlugin', () => {
   test('aborts pending validation when invoked on the same field', async () => {
     const signals: AbortSignal[] = [];
 
-    const field = createField(
-      { aaa: 111, bbb: 222 },
+    const field = createField({ aaa: 111, bbb: 222 }, [
       validationPlugin({
         async validateAsync(field) {
           signals.push(field.validation!.abortController!.signal);
         },
-      })
-    );
+      }),
+    ]);
 
     const promise = field.validateAsync();
 
@@ -319,14 +311,13 @@ describe('validationPlugin', () => {
   test('child field validation aborts the parent validation', async () => {
     const signals: AbortSignal[] = [];
 
-    const field = createField(
-      { aaa: 111, bbb: 222 },
+    const field = createField({ aaa: 111, bbb: 222 }, [
       validationPlugin({
         async validateAsync(field) {
           signals.push(field.validation!.abortController!.signal);
         },
-      })
-    );
+      }),
+    ]);
 
     const promise = field.validateAsync();
     const aaaPromise = field.at('aaa').validateAsync();
@@ -339,12 +330,11 @@ describe('validationPlugin', () => {
   });
 
   test('validation can be called in value change subscriber', () => {
-    const field = createField(
-      { aaa: 111 },
+    const field = createField({ aaa: 111 }, [
       validationPlugin({
         validate() {},
-      })
-    );
+      }),
+    ]);
 
     const subscriberMock = jest.fn(() => {
       field.validate();
@@ -358,14 +348,14 @@ describe('validationPlugin', () => {
   });
 
   test('synchronously validates the root field and adds errors using errorsPlugin', () => {
-    const field = createField(
-      { aaa: 111 },
-      validationPlugin(errorsPlugin(), {
+    const field = createField({ aaa: 111 }, [
+      errorsPlugin(),
+      validationPlugin({
         validate(field) {
-          field.at('aaa').addError(222);
+          (field.at('aaa') as unknown as Field<any, ErrorsPlugin>).addError(222);
         },
-      })
-    );
+      }),
+    ]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();
@@ -437,14 +427,14 @@ describe('validationPlugin', () => {
   });
 
   test('asynchronously validates the root field and adds errors using errorsPlugin', async () => {
-    const field = createField(
-      { aaa: 111 },
-      validationPlugin(errorsPlugin(), {
+    const field = createField({ aaa: 111 }, [
+      errorsPlugin(),
+      validationPlugin({
         async validateAsync(field) {
-          field.at('aaa').addError(222);
+          (field.at('aaa') as unknown as Field<any, ErrorsPlugin>).addError(222);
         },
-      })
-    );
+      }),
+    ]);
 
     const subscriberMock = jest.fn();
     const aaaSubscriberMock = jest.fn();

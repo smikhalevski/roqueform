@@ -1,5 +1,5 @@
 import { naturalValueAccessor } from './naturalValueAccessor';
-import type { __plugin, Event, Field, NoInfer, PluginInjector, ValueAccessor } from './types';
+import type { __plugin, Event, Field, InferPlugin, PluginInjector, ValueAccessor } from './types';
 import { callOrGet, dispatchEvents, isEqual } from './utils';
 
 /**
@@ -22,38 +22,27 @@ export function createField<Value>(initialValue: Value, accessor?: ValueAccessor
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injector that enhances the field.
+ * @param plugins The array of plugin injectors that enhances the field.
  * @param accessor Resolves values for child fields.
  * @template Value The root field initial value.
  * @template Plugin The plugin injected into the field.
  */
-export function createField<Value, Plugin>(
+export function createField<Value, Plugins extends PluginInjector<any>[]>(
   initialValue: Value,
-  plugin: PluginInjector<Plugin>,
+  plugins?: Plugins,
   accessor?: ValueAccessor
-): Field<Value, Plugin>;
+): Field<Value, InferPlugin<Plugins[number]>>;
 
-/**
- * Creates the new field instance.
- *
- * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injector that enhances the field.
- * @param accessor Resolves values for child fields.
- * @template Value The root field initial value.
- * @template Plugin The plugin injected into the field.
- */
-export function createField<Value, Plugin>(
-  initialValue: Value,
-  plugin: PluginInjector<Plugin, NoInfer<Value>>,
+export function createField(
+  initialValue?: unknown,
+  plugins?: PluginInjector[] | ValueAccessor,
   accessor?: ValueAccessor
-): Field<Value, Plugin>;
-
-export function createField(initialValue?: unknown, plugin?: PluginInjector | ValueAccessor, accessor?: ValueAccessor) {
-  if (typeof plugin !== 'function') {
-    accessor = plugin;
-    plugin = undefined;
+) {
+  if (!Array.isArray(plugins)) {
+    accessor = plugins;
+    plugins = undefined;
   }
-  return getOrCreateField(accessor || naturalValueAccessor, null, null, initialValue, plugin || null);
+  return getOrCreateField(accessor || naturalValueAccessor, null, null, initialValue, plugins);
 }
 
 function getOrCreateField(
@@ -61,7 +50,7 @@ function getOrCreateField(
   parentField: Field | null,
   key: unknown,
   initialValue: unknown,
-  plugin: PluginInjector | null
+  plugins: PluginInjector[] | undefined
 ): Field {
   if (parentField !== null && parentField.children !== null) {
     for (const child of parentField.children) {
@@ -94,7 +83,7 @@ function getOrCreateField(
       setValue(field, field.value, false);
     },
 
-    at: (key, defaultValue) => getOrCreateField(field.valueAccessor, field, key, defaultValue, plugin),
+    at: (key, defaultValue) => getOrCreateField(field.valueAccessor, field, key, defaultValue, plugins),
 
     on: (type, subscriber) => {
       const subscribers = (field.subscribers[type] ||= []);
@@ -122,8 +111,10 @@ function getOrCreateField(
     (parentField.children ||= []).push(field);
   }
 
-  if (plugin !== null) {
-    plugin(field);
+  if (plugins !== undefined) {
+    for (const plugin of plugins) {
+      plugin(field);
+    }
   }
   return field;
 }

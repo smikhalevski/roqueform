@@ -1,5 +1,5 @@
 import { ElementsValueAccessor, type UncontrolledPlugin, uncontrolledPlugin } from '../main';
-import { composePlugins, createField, type PluginInjector } from 'roqueform';
+import { createField, type PluginInjector } from 'roqueform';
 import { fireEvent } from '@testing-library/dom';
 
 describe('uncontrolledPlugin', () => {
@@ -19,7 +19,7 @@ describe('uncontrolledPlugin', () => {
       field.ref = refMock;
     });
 
-    const field = createField({ aaa: 111 }, composePlugins(pluginMock, uncontrolledPlugin()));
+    const field = createField({ aaa: 111 }, [pluginMock, uncontrolledPlugin()]);
 
     expect(pluginMock).toHaveBeenCalledTimes(1);
     expect(pluginMock).toHaveBeenNthCalledWith(1, field);
@@ -33,7 +33,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('ref populates elements', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
 
     field.ref(element);
 
@@ -42,7 +42,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('refFor populates elements', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
 
     const element1 = document.createElement('input');
     const element2 = document.createElement('textarea');
@@ -55,7 +55,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('ref and refFor can be mixed', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
 
     const element1 = document.createElement('input');
     const element2 = document.createElement('textarea');
@@ -69,7 +69,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('ref and refFor can be called with the same element', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
 
     field.ref(element);
     field.refFor(1)(element);
@@ -79,7 +79,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('refFor can be called with the same element for different keys', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
 
     field.refFor(1)(element);
     field.refFor(2)(element);
@@ -89,7 +89,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('ref removes an element when called with null', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
 
     const element1 = document.createElement('input');
     const element2 = document.createElement('textarea');
@@ -104,7 +104,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('refFor removes an element when called with null', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
 
     const element1 = document.createElement('input');
     const element2 = document.createElement('textarea');
@@ -122,7 +122,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('removed element does not update the field', () => {
-    const field = createField(111, uncontrolledPlugin());
+    const field = createField(111, [uncontrolledPlugin()]);
     const setValueSpy = jest.spyOn(field, 'setValue');
 
     field.ref(element);
@@ -136,7 +136,7 @@ describe('uncontrolledPlugin', () => {
 
   test('updates field value when input value changes', () => {
     const subscriberMock = jest.fn();
-    const field = createField({ aaa: 111 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, [uncontrolledPlugin()]);
 
     element.type = 'number';
 
@@ -150,7 +150,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('updates input value when field value changes', () => {
-    const field = createField({ aaa: 111 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, [uncontrolledPlugin()]);
 
     field.at('aaa').ref(element);
     field.at('aaa').setValue(222);
@@ -159,7 +159,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('sets the initial value to the element', () => {
-    const field = createField({ aaa: 111 }, uncontrolledPlugin());
+    const field = createField({ aaa: 111 }, [uncontrolledPlugin()]);
 
     element.type = 'number';
 
@@ -169,7 +169,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('input element uses input event', () => {
-    const field = createField('aaa', uncontrolledPlugin());
+    const field = createField('aaa', [uncontrolledPlugin()]);
     const setValueSpy = jest.spyOn(field, 'setValue');
 
     field.ref(element);
@@ -184,7 +184,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('textarea element uses input event', () => {
-    const field = createField('aaa', uncontrolledPlugin());
+    const field = createField('aaa', [uncontrolledPlugin()]);
     const setValueSpy = jest.spyOn(field, 'setValue');
     const element = document.body.appendChild(document.createElement('textarea'));
 
@@ -200,7 +200,7 @@ describe('uncontrolledPlugin', () => {
   });
 
   test('select element uses input event', () => {
-    const field = createField('aaa', uncontrolledPlugin());
+    const field = createField('aaa', [uncontrolledPlugin()]);
     const setValueSpy = jest.spyOn(field, 'setValue');
     const element = document.body.appendChild(document.createElement('select'));
 
@@ -221,7 +221,7 @@ describe('uncontrolledPlugin', () => {
       set: jest.fn(),
     };
 
-    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
 
     field.at('aaa').ref(element);
 
@@ -240,7 +240,7 @@ describe('uncontrolledPlugin', () => {
       set: jest.fn(),
     };
 
-    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
 
     field.at('aaa').setValue(222);
 
@@ -256,7 +256,7 @@ describe('uncontrolledPlugin', () => {
     const element1 = document.createElement('input');
     const element2 = document.createElement('textarea');
 
-    const field = createField({ aaa: 111 }, uncontrolledPlugin(accessorMock));
+    const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
 
     field.at('aaa').refFor(1)(element1);
 
