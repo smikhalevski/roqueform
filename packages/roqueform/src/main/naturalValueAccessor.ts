@@ -86,8 +86,8 @@ function isPrimitive(obj: any): boolean {
     obj instanceof String ||
     obj instanceof Number ||
     obj instanceof Boolean ||
-    obj instanceof BigInt ||
-    obj instanceof Symbol
+    (typeof BigInt !== 'undefined' && obj instanceof BigInt) ||
+    (typeof Symbol !== 'undefined' && obj instanceof Symbol)
   );
 }
 
