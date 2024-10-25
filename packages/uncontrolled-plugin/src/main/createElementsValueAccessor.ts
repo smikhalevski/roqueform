@@ -57,7 +57,7 @@ export interface ElementsValueAccessorOptions {
    *
    * <dl>
    *   <dt><i>"object"</i></dt>
-   *   <dd><p>A valid {@link !Date Date} instance, or <code>null</code> if empty.</p></dd>
+   *   <dd><p>A valid {@link !Date} instance, or <code>null</code> if empty.</p></dd>
    *
    *   <dt><i>"timestamp"</i></dt>
    *   <dd><p>A timestamp number.</p></dd>
@@ -120,8 +120,8 @@ export interface ElementsValueAccessorOptions {
  * - Image input → string value of the
  * <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src">value</a>
  * attribute;
- * - File input → {@link !File File} or `null` if no file selected, file inputs are read-only;
- * - Multi-file input → array of {@link !File File};
+ * - File input → {@link !File} or `null` if no file selected, file inputs are read-only;
+ * - Multi-file input → array of {@link !File};
  * - Others → The _value_ attribute, or `null` if element doesn't support it;
  * - `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to _value_ attribute.
  */

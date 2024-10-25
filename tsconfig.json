@@ -9,22 +9,14 @@
     "strict": true,
     "target": "ES5",
     "module": "ES6",
-    "lib": [
-      "ES6"
-    ],
+    "lib": ["ES6"],
     "jsx": "react",
     "outDir": "./lib",
     "baseUrl": ".",
     "paths": {
-      "roqueform": [
-        "./packages/roqueform/src/main"
-      ],
-      "@roqueform/*": [
-        "./packages/*/src/main"
-      ]
+      "roqueform": ["./packages/roqueform/src/main"],
+      "@roqueform/*": ["./packages/*/src/main"]
     }
   },
-  "include": [
-    "./packages/*/src/**/*"
-  ]
+  "include": ["./packages/*/src/**/*"]
 }

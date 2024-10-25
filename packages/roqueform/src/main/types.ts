@@ -68,8 +68,8 @@ export interface BareField<Value = any, Plugin = any> {
   subscribers: { [eventType: string]: Subscriber<any, Plugin>[] };
 
   /**
-   * The accessor that reads values of child fields from {@link Field.value the value of this field}, and updates the
-   * value of this field when child value is changed.
+   * The accessor that reads values of child fields from {@link BareField.value the value of this field}, and updates
+   * the value of this field when child value is changed.
    *
    * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
    */

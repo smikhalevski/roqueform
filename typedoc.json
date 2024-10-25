@@ -13,21 +13,16 @@
   },
   "tsconfig": "./tsconfig.json",
   "customCss": "./node_modules/typedoc-custom-css/custom.css",
-  "entryPoints": [
-    "./packages/*/src/main/index.ts"
-  ],
+  "entryPoints": ["./packages/*/src/main/index.ts"],
+  "plugin": ["typedoc-plugin-mdn-links"],
   "externalSymbolLinkMappings": {
     "doubter": {
       "Issue": "https://smikhalevski.github.io/doubter/latest/interfaces/core.Issue.html",
       "ParseOptions": "https://smikhalevski.github.io/doubter/latest/interfaces/core.ParseOptions.html",
       "Shape": "https://smikhalevski.github.io/doubter/latest/classes/core.Shape.html"
-    },
-    "typescript": {
-      "Promise": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
-    },
-    "global": {
-      "Date": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
-      "File": "https://developer.mozilla.org/en-US/docs/Web/API/File"
     }
+  },
+  "compilerOptions": {
+    "skipLibCheck": true
   }
 }

@@ -35,7 +35,7 @@ export interface ValidationPlugin<Options = any> {
    * If this field is currently being validated then the validation {@link abortValidation is aborted} at current
    * {@link Validation.rootField validation root}.
    *
-   * {@link Field.isTransient Transient} descendants of this field are excluded from validation.
+   * {@link BareField.isTransient Transient} descendants of this field are excluded from validation.
    *
    * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
@@ -48,7 +48,7 @@ export interface ValidationPlugin<Options = any> {
    * If this field is currently being validated then the validation {@link abortValidation is aborted} at current
    * {@link Validation.rootField validation root}.
    *
-   * {@link Field.isTransient Transient} descendants of this field are excluded from validation.
+   * {@link BareField.isTransient Transient} descendants of this field are excluded from validation.
    *
    * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
