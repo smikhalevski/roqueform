@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/react",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Hooks and components to integrate Roqueform with React.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
