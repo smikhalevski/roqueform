@@ -40,5 +40,8 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform#readme"
+  "homepage": "https://github.com/smikhalevski/roqueform#readme",
+  "dependencies": {
+    "parallel-universe": "^6.1.2"
+  }
 }
