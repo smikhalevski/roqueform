@@ -29,21 +29,17 @@ export interface ElementsValueAccessorOptions {
    * <dl>
    *   <dt><i>"boolean"</i></dt>
    *   <dd><p>A single checkbox is a boolean, multiple checkboxes are an array of booleans.</p></dd>
-   *
    *   <dt><i>"booleanArray"</i></dt>
    *   <dd><p>An array of booleans.</p></dd>
-   *
    *   <dt><i>"value"</i></dt>
    *   <dd><p>A single checkbox is a
    *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value">value</a>
    *   attribute if checked, or <code>null</code> if unchecked, multiple checkboxes are an array of checked values.
    *   </p></dd>
-   *
    *   <dt><i>"valueArray"</i></dt>
    *   <dd><p>An array of
    *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value">value</a>
    *   attributes.</p></dd>
-   *
    *   <dt><i>"auto"</i></dt>
    *   <dd><p>A single checkbox is a boolean, multiple checkboxes are an array of checked values.</p></dd>
    * </dl>
@@ -57,22 +53,17 @@ export interface ElementsValueAccessorOptions {
    *
    * <dl>
    *   <dt><i>"object"</i></dt>
-   *   <dd><p>A valid {@link !Date} instance, or <code>null</code> if empty.</p></dd>
-   *
+   *   <dd><p>A valid {@link Date} instance, or <code>null</code> if empty.</p></dd>
    *   <dt><i>"timestamp"</i></dt>
    *   <dd><p>A timestamp number.</p></dd>
-   *
    *   <dt><i>"value"</i></dt>
    *   <dd><p>The
    *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value">value</a>
    *   attribute, or <code>null</code> if empty.</p></dd>
-   *
    *   <dt><i>"iso"</i></dt>
    *   <dd><p>An ISO date string.</p></dd>
-   *
    *   <dt><i>"utc"</i></dt>
    *   <dd><p>A UTC date string.</p></dd>
-   *
    *   <dt><i>"gmt"</i></dt>
    *   <dd><p>A GMT date string.</p></dd>
    * </dl>
@@ -87,7 +78,6 @@ export interface ElementsValueAccessorOptions {
    * <dl>
    *   <dt><i>"number"</i></dt>
    *   <dd><p>The number of milliseconds passed from the start of the day.</p></dd>
-   *
    *   <dt><i>"value"</i></dt>
    *   <dd><p>The
    *   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time#value">value</a>
@@ -104,19 +94,19 @@ export interface ElementsValueAccessorOptions {
  *
  * By default:
  *
- * | Elements | Value |
- * | --- | --- |
- * | Single checkbox | `boolean`, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}. |
- * | Multiple checkboxes | An array of [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value) attributes of checked checkboxes, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}. |
- * | Radio buttons | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value) attribute of a radio button that is checked or `null` if no radio buttons are checked. |
- * | Number input | `number`, or `null` if empty. |
- * | Range input | `number` |
- * | Date input | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value) attribute, or `null` if empty, see {@link ElementsValueAccessorOptions.dateFormat dateFormat}. |
- * | Time input | A time string, or `null` if empty, see {@link ElementsValueAccessorOptions.timeFormat timeFormat}. |
- * | Image input | A string value of the [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src) attribute. |
- * | File input | {@link File} or `null` if no file selected, file inputs are read-only. |
- * | Multi-file input | An array of {@link File}. |
- * | Other | The `value` attribute, or `null` if element doesn't support it. |
+ * | Elements            | Value                                                                                                                                                                                                           |
+ * |---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+ * | Single checkbox     | `boolean` See {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}.                                                                                                                              |
+ * | Multiple checkboxes | An array of [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value) attributes of checked checkboxes. See {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}. |
+ * | Radio buttons       | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value) attribute of a radio button that is checked or `null` if no radio buttons are checked.                               |
+ * | Number input        | `number`, or `null` if empty.                                                                                                                                                                                   |
+ * | Range input         | `number`                                                                                                                                                                                                        |
+ * | Date input          | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value) attribute, or `null` if empty. See {@link ElementsValueAccessorOptions.dateFormat dateFormat}.                        |
+ * | Time input          | A time string, or `null` if empty. See {@link ElementsValueAccessorOptions.timeFormat timeFormat}.                                                                                                              |
+ * | Image input         | A string value of the [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src) attribute.                                                                                           |
+ * | File input          | {@link File} or `null` if no file selected, file inputs are read-only.                                                                                                                                          |
+ * | Multi-file input    | An array of {@link File}.                                                                                                                                                                                       |
+ * | Other               | The `value` attribute, or `null` if element doesn't support it.                                                                                                                                                 |
  *
  * `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
  */
@@ -142,10 +132,12 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
         if (element.tagName !== 'INPUT' || element.type !== 'checkbox') {
           continue;
         }
+
         if (checkboxFormat === 'boolean' || checkboxFormat === 'booleanArray') {
           values.push(element.checked);
           continue;
         }
+
         if (element.checked) {
           values.push(element.value);
         }
@@ -187,9 +179,11 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
     if (type === 'time') {
       return valueAsNumber !== valueAsNumber ? null : timeFormat === 'number' ? valueAsNumber : element.value;
     }
+
     if (type === 'image') {
       return element.src;
     }
+
     if (type === 'file') {
       return element.multiple ? toArray(element.files) : element.files.length !== 0 ? element.files.item(0) : null;
     }
@@ -215,10 +209,12 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
         if (element.tagName !== 'INPUT' || element.type !== 'checkbox') {
           continue;
         }
+
         if (Array.isArray(value)) {
           element.checked = typeof value[i] === 'boolean' ? value[i] : value.indexOf(element.value) !== -1;
           continue;
         }
+
         element.checked =
           typeof value === 'boolean' ? value : typeof value === 'string' ? element.value === value : false;
       }
@@ -249,10 +245,12 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
       if (typeof value === 'string') {
         value = (valueAsNumber = +value) === valueAsNumber ? valueAsNumber : new Date(value).getTime();
       }
+
       if (isFinite(value)) {
         element.valueAsNumber = +value;
         return;
       }
+
       element.value = '';
       return;
     }
@@ -265,10 +263,12 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
       }
       return;
     }
+
     if (type === 'image') {
       element.src = toString(value);
       return;
     }
+
     if (type === 'file') {
       return;
     }

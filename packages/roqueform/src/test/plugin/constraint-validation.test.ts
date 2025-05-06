@@ -1,111 +1,109 @@
-import { createField } from '../../../lib';
-import { constraintValidationPlugin } from '../../../../constraint-validation-plugin/src/main';
 import { fireEvent } from '@testing-library/dom';
+import { createField } from '../../main';
+import { constraintValidationPlugin } from '../../main/plugin/constraint-validation';
 
 jest.useFakeTimers();
 
-describe('constraintValidationPlugin', () => {
-  let element: HTMLInputElement;
+let element: HTMLInputElement;
 
-  beforeEach(() => {
-    element = document.body.appendChild(document.createElement('input'));
-    element.required = true;
-    element.value = 'test';
-  });
+beforeEach(() => {
+  element = document.body.appendChild(document.createElement('input'));
+  element.required = true;
+  element.value = 'test';
+});
 
-  afterEach(() => {
-    jest.clearAllTimers();
-    element.remove();
-  });
+afterEach(() => {
+  jest.clearAllTimers();
+  element.remove();
+});
 
-  test('enhances the field', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+test('enhances the field', () => {
+  const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
-    expect(field.validatedElement).toBeNull();
-    expect(field.isInvalid).toBe(false);
-    expect(field.validity).toBeNull();
+  expect(field.validatedElement).toBeNull();
+  expect(field.isInvalid).toBe(false);
+  expect(field.validity).toBeNull();
 
-    expect(field.at('aaa').validatedElement).toBeNull();
-    expect(field.at('aaa').isInvalid).toBe(false);
-    expect(field.at('aaa').validity).toBeNull();
-  });
+  expect(field.at('aaa').validatedElement).toBeNull();
+  expect(field.at('aaa').isInvalid).toBe(false);
+  expect(field.at('aaa').validity).toBeNull();
+});
 
-  test('reports validity of the root field', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+test('reports validity of the root field', () => {
+  const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
-    field.ref(element);
+  field.ref(element);
 
-    expect(field.reportValidity()).toBe(true);
-    expect(field.at('aaa').reportValidity()).toBe(true);
+  expect(field.reportValidity()).toBe(true);
+  expect(field.at('aaa').reportValidity()).toBe(true);
 
-    element.value = '';
+  element.value = '';
 
-    expect(field.reportValidity()).toBe(false);
-    expect(field.at('aaa').reportValidity()).toBe(true);
-  });
+  expect(field.reportValidity()).toBe(false);
+  expect(field.at('aaa').reportValidity()).toBe(true);
+});
 
-  test('reports validity of the child field', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+test('reports validity of the child field', () => {
+  const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
-    field.at('aaa').ref(element);
+  field.at('aaa').ref(element);
 
-    element.value = '';
+  element.value = '';
 
-    expect(field.reportValidity()).toBe(false);
-    expect(field.at('aaa').reportValidity()).toBe(false);
+  expect(field.reportValidity()).toBe(false);
+  expect(field.at('aaa').reportValidity()).toBe(false);
 
-    element.value = 'test';
+  element.value = 'test';
 
-    expect(field.reportValidity()).toBe(true);
-    expect(field.at('aaa').reportValidity()).toBe(true);
-  });
+  expect(field.reportValidity()).toBe(true);
+  expect(field.at('aaa').reportValidity()).toBe(true);
+});
 
-  test('deletes an error when a ref is changed', () => {
-    const field = createField(111, constraintValidationPlugin());
+test('deletes an error when a ref is changed', () => {
+  const field = createField(111, [constraintValidationPlugin()]);
 
-    const subscriberMock = jest.fn();
+  const listenerMock = jest.fn();
 
-    field.on('change:validity', subscriberMock);
+  field.subscribe(listenerMock);
 
-    element.value = '';
+  element.value = '';
 
-    field.ref(element);
+  field.ref(element);
 
-    jest.runAllTimers();
+  jest.runAllTimers();
 
-    expect(field.isInvalid).toBe(true);
-    expect(subscriberMock).toHaveBeenCalledTimes(1);
+  expect(field.isInvalid).toBe(true);
+  expect(listenerMock).toHaveBeenCalledTimes(1);
 
-    field.ref(null);
+  field.ref(null);
 
-    jest.runAllTimers();
+  jest.runAllTimers();
 
-    expect(field.isInvalid).toBe(false);
-    expect(subscriberMock).toHaveBeenCalledTimes(2);
-  });
+  expect(field.isInvalid).toBe(false);
+  expect(listenerMock).toHaveBeenCalledTimes(2);
+});
 
-  test('notifies the field when the value is changed', () => {
-    const field = createField({ aaa: 111 }, constraintValidationPlugin());
+test('notifies the field when the value is changed', () => {
+  const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
-    const subscriberMock = jest.fn();
-    const aaaSubscriberMock = jest.fn();
+  const listenerMock = jest.fn();
+  const aaaListenerMock = jest.fn();
 
-    field.on('change:validity', subscriberMock);
-    field.at('aaa').on('change:validity', aaaSubscriberMock);
+  field.subscribe(listenerMock);
+  field.at('aaa').subscribe(aaaListenerMock);
 
-    expect(element.validationMessage).toBe('');
-    expect(subscriberMock).not.toHaveBeenCalled();
+  expect(element.validationMessage).toBe('');
+  expect(listenerMock).not.toHaveBeenCalled();
 
-    field.at('aaa').ref(element);
+  field.at('aaa').ref(element);
 
-    jest.runAllTimers();
+  jest.runAllTimers();
 
-    expect(subscriberMock).toHaveBeenCalledTimes(1);
-    expect(field.at('aaa').isInvalid).toBe(false);
+  expect(listenerMock).toHaveBeenCalledTimes(1);
+  expect(field.at('aaa').isInvalid).toBe(false);
 
-    fireEvent.change(element, { target: { value: '' } });
+  fireEvent.change(element, { target: { value: '' } });
 
-    expect(subscriberMock).toHaveBeenCalledTimes(2);
-    expect(aaaSubscriberMock).toHaveBeenCalledTimes(2);
-  });
+  expect(listenerMock).toHaveBeenCalledTimes(2);
+  expect(aaaListenerMock).toHaveBeenCalledTimes(2);
 });

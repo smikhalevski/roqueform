@@ -37,7 +37,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): FieldPlugin<Valu
   };
 }
 
-// function doubterShapePlugin<Value>(rootShape: Shape<Value, any>): PluginInjector<DoubterShapePlugin, Value> {
+// function doubterShapePlugin<Value>(rootShape: Shape<Value, any>): FieldPlugin<DoubterShapePlugin, Value> {
 //   return field => {
 //     field.valueShape = field.parentField === null ? rootShape : field.parentField.valueShape?.at(field.key) || null;
 //

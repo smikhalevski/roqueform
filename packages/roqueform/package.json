@@ -58,7 +58,7 @@
     "build": "rollup --config && cp package.json ../../README.md ../../LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
     "clean": "rimraf lib",
     "test": "jest --config ../../jest.config.js",
-    "test:definitions": "tsd --files './src/test/**/*.test-d.ts'"
+    "test:definitions": "tsd --typings lib/index.d.ts --files 'src/test/**/*.test-d.ts'"
   },
   "repository": {
     "type": "git",

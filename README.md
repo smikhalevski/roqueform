@@ -180,7 +180,7 @@ nameField.value;
 You can subscribe events dispatched onto the field.
 
 ```ts
-const unsubscribe = planetsField.on('change:value', event => {
+const unsubscribe = planetsField.on('valueChanged', event => {
   // Handle the field value change
 });
 // ⮕ () => void
@@ -215,7 +215,7 @@ The root field and all child fields are updated before `change:value` subscriber
 values in a subscriber. Fields use [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison to detect that the value has changed.
 
 ```ts
-planetsField.at(0).at('name').on('change:value', subscriber);
+planetsField.at(0).at('name').on('valueChanged', subscriber);
 
 // ✅ The subscriber is called
 planetsField.at(0).at('name').setValue('Mercury');
@@ -227,7 +227,7 @@ planetsField.at(0).setValue({ name: 'Mercury' });
 Subscribe to all events dispatched onto the field using the glob event type:
 
 ```ts
-planetsField.on('*', event => {
+planetsField.subscribe(event => {
   // Handle all events
 });
 ```
@@ -377,18 +377,18 @@ carsField.value;
 # Authoring a plugin
 
 Plugins are applied to a field using a
-[`PluginInjector`](https://smikhalevski.github.io/roqueform/types/roqueform.PluginInjector.html) callback. This callback
+[`FieldPlugin`](https://smikhalevski.github.io/roqueform/types/roqueform.FieldPlugin.html) callback. This callback
 receives a mutable plugin instance and should enrich it with the plugin functionality. To illustrate how plugins work,
 let's create a simple plugin that enriches a field with a DOM element reference.
 
 ```ts
-import { PluginInjector } from 'roqueform';
+import { FieldPlugin } from 'roqueform';
 
 interface ElementPlugin {
   element: Element | null;
 }
 
-const injectElementPlugin: PluginInjector<ElementPlugin> = field => {
+const injectElementPlugin: FieldPlugin<ElementPlugin> = field => {
   // Update field with plugin functionality
   field.element = null;
 };
@@ -421,7 +421,7 @@ Plugins may dispatch custom events. Let's update the plugin implementation to no
 changed.
 
 ```ts
-import { PluginInjector, dispatchEvents } from 'roqueform';
+import { FieldPlugin, dispatchEvents } from 'roqueform';
 
 interface ElementPlugin {
   element: Element | null;
@@ -429,7 +429,7 @@ interface ElementPlugin {
   setElement(element: Element | null): void;
 }
 
-const injectElementPlugin: PluginInjector<ElementPlugin> = field => {
+const injectElementPlugin: FieldPlugin<ElementPlugin> = field => {
   field.element = null;
 
   field.setElement = element => {
@@ -439,9 +439,9 @@ const injectElementPlugin: PluginInjector<ElementPlugin> = field => {
       // Synchronously trigger associated subscribers
       dispatchEvents([{
         type: 'changed:element',
-        targetField: field,
-        originField: field,
-        data: null
+        target: field,
+        relatedTarget: field,
+        payload: null
       }]);
     }
   };
@@ -459,7 +459,7 @@ const planetField = createField(
 );
 
 planetField.at('name').on('changed:element', event => {
-  event.targetField.element;
+  event.target.element;
   // ⮕ document.body
 });
 
@@ -622,7 +622,7 @@ planetField.at('name').annotations.isDisabled // ⮕ false
 Annotate field and all of its children recursively:
 
 ```ts
-planetField.annotate({ isDisabled: true }, { recursive: true });
+planetField.annotate({ isDisabled: true }, { isRecursive: true });
 
 planetField.annotations.isDisabled // ⮕ true
 
@@ -638,14 +638,14 @@ planetField.annotate(
     // Toggle disabled flag for the field and its children
     return { isDisabled: !field.annotations.isDisabled };
   },
-  { recursive: true }
+  { isRecursive: true }
 );
 ```
 
 Subscribe to annotation changes:
 
 ```ts
-planetField.subscribe('change:annotations', event => {
+planetField.subscribe('annotationsChanged', event => {
   event.target.annotations;
   // ⮕ { isDisabled: boolean }
 });
@@ -972,29 +972,21 @@ The plugin derives the field value from the element's `value` attribute:
 By default, `uncontrolledPlugin` uses the opinionated element value accessor that applies following coercion rules to
 values of form elements:
 
-- Single checkbox → boolean;
+| Elements            | Value                                                                                                                                                                                                           |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Single checkbox     | `boolean`, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}.                                                                                                                              |
+| Multiple checkboxes | An array of [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value) attributes of checked checkboxes, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}. |
+| Radio buttons       | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value) attribute of a radio button that is checked or `null` if no radio buttons are checked.                               |
+| Number input        | `number`, or `null` if empty.                                                                                                                                                                                   |
+| Range input         | `number`                                                                                                                                                                                                        |
+| Date input          | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value) attribute, or `null` if empty, see {@link ElementsValueAccessorOptions.dateFormat dateFormat}.                        |
+| Time input          | A time string, or `null` if empty, see {@link ElementsValueAccessorOptions.timeFormat timeFormat}.                                                                                                              |
+| Image input         | A string value of the [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src) attribute.                                                                                           |
+| File input          | {@link File} or `null` if no file selected, file inputs are read-only.                                                                                                                                          |
+| Multi-file input    | An array of {@link File}.                                                                                                                                                                                       |
+| Other               | The `value` attribute, or `null` if element doesn't support it.                                                                                                                                                 |
 
-- Multiple checkboxes → an array of `value` attributes of checked checkboxes;
-
-- Radio buttons → the `value` attribute of a radio button that is checked or `null` if no radio buttons are checked;
-
-- Number input → number, or `null` if empty;
-
-- Range input → number;
-
-- Date input → the `value` attribute, or `null` if empty;
-
-- Time input → a time string, or `null` if empty;
-
-- Image input → string value of the `src` attribute;
-
-- File input → `File` or `null` if no file selected, file inputs are read-only;
-
-- Multi-file input → array of `File`;
-
-- Others → `value` attribute, or `null` if element doesn't support it;
-
-- `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
+`null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
 
 This behaviour can be changed by passing a custom
 [`ElementsValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessor.html)

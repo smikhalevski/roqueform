@@ -60,11 +60,11 @@ export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): Re
   if (typeof window !== 'undefined') {
     useLayoutEffect(
       () =>
-        field.on('*', event => {
-          if (eagerlyUpdated || event.originField === field) {
+        field.subscribe(event => {
+          if (eagerlyUpdated || event.relatedTarget === field) {
             rerender();
           }
-          if (field.isTransient || event.type !== 'change:value' || event.targetField !== field) {
+          if (field.isTransient || event.type !== 'valueChanged' || event.target !== field) {
             // The non-transient value of this field didn't change
             return;
           }

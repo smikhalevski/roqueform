@@ -52,10 +52,10 @@ export interface RefMixin {
  * Enables field-element association and simplifies focus control.
  */
 export default function refPlugin(): FieldPlugin<any, RefMixin> {
-  return refPluginInjector;
+  return refFieldPlugin;
 }
 
-const refPluginInjector: FieldPlugin<any, RefMixin> = field => {
+const refFieldPlugin: FieldPlugin<any, RefMixin> = field => {
   const { ref } = field;
 
   field.element = null;

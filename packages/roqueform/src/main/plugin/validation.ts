@@ -10,6 +10,11 @@ const ERROR_ABORT = 'Validation was aborted';
  */
 export interface ValidationMixin<Options = any> {
   /**
+   * `true` if this field has an invalid value, or `false` otherwise.
+   */
+  isInvalid?: boolean;
+
+  /**
    * `true` if the validation is pending, or `false` otherwise.
    */
   readonly isValidating: boolean;
@@ -35,7 +40,7 @@ export interface ValidationMixin<Options = any> {
    * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
    */
-  validate(options: Options): void;
+  validate(options: Options): boolean;
 
   /**
    * Triggers an asynchronous field validation.
@@ -48,7 +53,7 @@ export interface ValidationMixin<Options = any> {
    * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
    */
-  validateAsync(options: Options): Promise<void>;
+  validateAsync(options: Options): Promise<boolean>;
 
   /**
    * Aborts the async validation of {@link Validation.rootField the validation root field} associated with this field.
@@ -80,7 +85,7 @@ export interface Validation<Mixin = any> {
  * @template Options Options passed to the validator.
  * @template Mixin The mixin added to the field.
  */
-export interface Validator<Options = void, Mixin = any> {
+export interface Validator<Options = void, Mixin = ValidationMixin<Options>> {
   /**
    * Applies validation rules to a field.
    *
@@ -138,6 +143,20 @@ export default function validationPlugin<Options = void>(
   };
 }
 
+function containsInvalid(field: Field<unknown, ValidationMixin>): boolean {
+  if (field.isInvalid) {
+    return true;
+  }
+  if (field.children !== null) {
+    for (const child of field.children) {
+      if (containsInvalid(child)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function startValidation(
   field: Field<any, ValidationMixin>,
   validation: Validation,
@@ -184,7 +203,7 @@ function abortValidation(field: Field<unknown, ValidationMixin>, events: FieldEv
   return events;
 }
 
-function validate(field: Field<unknown, ValidationMixin>, options: unknown): void {
+function validate(field: Field<unknown, ValidationMixin>, options: unknown): boolean {
   const { validate } = field.validator;
 
   if (validate === undefined) {
@@ -222,9 +241,10 @@ function validate(field: Field<unknown, ValidationMixin>, options: unknown): voi
   }
 
   publishEvents(finishValidation(field, validation, []));
+  return !containsInvalid(field);
 }
 
-function validateAsync(field: Field<unknown, ValidationMixin>, options: unknown): Promise<void> {
+function validateAsync(field: Field<unknown, ValidationMixin>, options: unknown): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const validateAsync = field.validator.validateAsync || field.validator.validate;
 
@@ -265,7 +285,7 @@ function validateAsync(field: Field<unknown, ValidationMixin>, options: unknown)
           reject(AbortError(ERROR_ABORT));
         } else {
           publishEvents(finishValidation(field, validation, []));
-          resolve();
+          resolve(!containsInvalid(field));
         }
       },
       error => {

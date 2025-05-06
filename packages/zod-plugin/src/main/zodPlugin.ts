@@ -3,7 +3,7 @@ import {
   errorsPlugin,
   ErrorsPlugin,
   Field,
-  PluginInjector,
+  FieldPlugin,
   Validation,
   validationPlugin,
   ValidationPlugin,
@@ -39,11 +39,11 @@ export type ZodPlugin = ValidationPlugin<Partial<ParseParams>> & ErrorsPlugin<Zo
  * @template Value The root field value.
  * @returns The validation plugin.
  */
-export function zodPlugin<Value>(type: ZodType<any, any, Value>): PluginInjector<ZodPlugin, Value> {
+export function zodPlugin<Value>(type: ZodType<any, any, Value>): FieldPlugin<ZodPlugin, Value> {
   return validationPlugin(composePlugins(errorsPlugin(concatErrors), zodTypePlugin(type)), validator);
 }
 
-function zodTypePlugin<Value>(rootType: ZodType<any, any, Value>): PluginInjector<ZodTypePlugin, Value> {
+function zodTypePlugin<Value>(rootType: ZodType<any, any, Value>): FieldPlugin<ZodTypePlugin, Value> {
   return field => {
     field.valueType = field.parentField?.valueType || rootType;
 

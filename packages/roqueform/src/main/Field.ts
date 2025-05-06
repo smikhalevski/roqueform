@@ -180,7 +180,7 @@ export class FieldImpl<Value, Mixin> {
    * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
    */
   setTransientValue(value: Value | ((prevValue: Value) => Value)): void {
-    setValue(this, callOrGet(value, this.value), false);
+    setValue(this, callOrGet(value, this.value), true);
   }
 
   /**
@@ -207,13 +207,16 @@ export class FieldImpl<Value, Mixin> {
       }
     }
 
-    const initialValue = this._valueAccessor.get(this.value, key);
+    const { _valueAccessor, _plugins } = this;
 
-    const value = initialValue !== undefined ? initialValue : defaultValue;
+    const initialValue = _valueAccessor.get(this.initialValue, key);
+    const value = _valueAccessor.get(this.value, key);
 
-    const field = new FieldImpl(this as Field, key, value, this._valueAccessor, this._plugins) as Field<any, Mixin>;
+    const field = new FieldImpl(this as Field, key, initialValue, _valueAccessor, _plugins) as Field<any, Mixin>;
 
-    for (const plugin of this._plugins) {
+    field.value = value !== undefined ? value : defaultValue;
+
+    for (const plugin of _plugins) {
       plugin(field);
     }
 
@@ -263,7 +266,7 @@ function setValue(field: Field, value: unknown, isTransient: boolean): void {
 }
 
 function propagateValue(target: Field, relatedTarget: Field, value: unknown, events: FieldEvent[]): FieldEvent[] {
-  events.push(new FieldEvent('valueChanged', target, relatedTarget));
+  events.push(new FieldEvent('valueChanged', target, relatedTarget, target.value));
 
   target.value = value;
 
@@ -287,7 +290,7 @@ function propagateValue(target: Field, relatedTarget: Field, value: unknown, eve
 /**
  * Returns `unknown` if `T` is `any`, otherwise returns `T` as is.
  */
-type AnyToUnknown<T> = 0 extends 1 & T ? unknown : T;
+export type AnyToUnknown<T> = 0 extends 1 & T ? unknown : T;
 
 type Primitive =
   | String
@@ -309,7 +312,7 @@ type Primitive =
  * The union of all keys of `T`, or `never` if keys cannot be extracted.
  */
 // prettier-ignore
-type KeyOf<T> =
+export type KeyOf<T> =
   T extends Primitive ? never :
   T extends { set(key: any, value: any): any, get(key: infer K): any } ? K :
   T extends { add(value: any): any, [Symbol.iterator]: Function } ? number :
@@ -322,7 +325,7 @@ type KeyOf<T> =
  * The value that corresponds to a `Key` in an object `T`, or `undefined` if there's no such key.
  */
 // prettier-ignore
-type ValueAt<T, Key> =
+export type ValueAt<T, Key> =
   T extends Primitive ? undefined :
   T extends { set(key: any, value: any): any, get(key: infer K): infer V } ? Key extends K ? V : undefined :
   T extends { add(value: infer V): any, [Symbol.iterator]: Function } ? Key extends number ? V | undefined : undefined :

@@ -1,97 +1,97 @@
-import { createField } from '../../../lib';
-import { resetPlugin } from '@roqueform/reset-plugin/src/main';
+import { createField, FieldEvent } from '../../main';
+import resetPlugin from '../../main/plugin/reset';
 
-describe('resetPlugin', () => {
-  test('field is dirty if the field value is not equal to an initial value', () => {
-    const initialValue = { aaa: 111 };
+test('field is dirty if the field value is not equal to an initial value', () => {
+  const initialValue = { aaa: 111 };
 
-    const field = createField(initialValue, resetPlugin());
+  const field = createField(initialValue, [resetPlugin()]);
 
-    expect(field.initialValue).toBe(initialValue);
-    expect(field.at('aaa').initialValue).toBe(111);
+  expect(field.initialValue).toBe(initialValue);
+  expect(field.at('aaa').initialValue).toBe(111);
 
-    field.at('aaa').setValue(222);
+  field.at('aaa').setValue(222);
 
-    expect(field.at('aaa').isDirty).toBe(true);
-    expect(field.isDirty).toBe(true);
+  expect(field.at('aaa').isDirty).toBe(true);
+  expect(field.isDirty).toBe(true);
 
-    field.setValue(initialValue);
+  field.setValue(initialValue);
 
-    expect(field.at('aaa').isDirty).toBe(false);
-    expect(field.isDirty).toBe(false);
-  });
+  expect(field.at('aaa').isDirty).toBe(false);
+  expect(field.isDirty).toBe(false);
+});
 
-  test('field is not dirty it has the value that is deeply equal to the initial value', () => {
-    const initialValue = { aaa: 111 };
+test('field is not dirty if it has the value that is deeply equal to the initial value', () => {
+  const initialValue = { aaa: 111 };
 
-    const field = createField(initialValue, resetPlugin());
+  const field = createField(initialValue, [resetPlugin()]);
 
-    field.at('aaa').setValue(222);
+  field.at('aaa').setValue(222);
 
-    expect(field.at('aaa').isDirty).toBe(true);
-    expect(field.isDirty).toBe(true);
+  expect(field.at('aaa').isDirty).toBe(true);
+  expect(field.isDirty).toBe(true);
 
-    field.setValue({ aaa: 111 });
+  field.setValue({ aaa: 111 });
 
-    expect(field.at('aaa').isDirty).toBe(false);
-    expect(field.isDirty).toBe(false);
-  });
+  expect(field.at('aaa').isDirty).toBe(false);
+  expect(field.isDirty).toBe(false);
+});
 
-  test('updates the initial value and notifies fields', () => {
-    const subscriberMock = jest.fn();
-    const aaaSubscriberMock = jest.fn();
+test('updates the initial value and notifies fields', () => {
+  const listenerMock = jest.fn();
+  const aaaListenerMock = jest.fn();
 
-    const initialValue = { aaa: 111 };
+  const initialValue = { aaa: 111 };
 
-    const field = createField(initialValue, resetPlugin());
+  const field = createField(initialValue, [resetPlugin()]);
 
-    field.on('change:initialValue', subscriberMock);
-    field.at('aaa').on('change:initialValue', aaaSubscriberMock);
+  field.subscribe(listenerMock);
+  field.at('aaa').subscribe(aaaListenerMock);
 
-    const initialValue2 = { aaa: 222 };
+  const initialValue2 = { aaa: 222 };
 
-    field.setInitialValue(initialValue2);
+  field.setInitialValue(initialValue2);
 
-    expect(subscriberMock).toHaveBeenCalledTimes(2);
-    expect(subscriberMock).toHaveBeenNthCalledWith(1, {
-      type: 'change:initialValue',
-      targetField: field,
-      originField: field,
-      data: { aaa: 111 },
-    });
-    expect(subscriberMock).toHaveBeenNthCalledWith(2, {
-      type: 'change:initialValue',
-      targetField: field.at('aaa'),
-      originField: field,
-      data: 111,
-    });
+  expect(listenerMock).toHaveBeenCalledTimes(2);
+  expect(listenerMock).toHaveBeenNthCalledWith(1, {
+    type: 'initialValueChanged',
+    target: field,
+    relatedTarget: field,
+    currentTarget: field,
+    payload: { aaa: 111 },
+  } satisfies FieldEvent);
+  expect(listenerMock).toHaveBeenNthCalledWith(2, {
+    type: 'initialValueChanged',
+    target: field.at('aaa'),
+    relatedTarget: field,
+    currentTarget: field.at('aaa'),
+    payload: 111,
+  } satisfies FieldEvent);
 
-    expect(aaaSubscriberMock).toHaveBeenCalledTimes(1);
-    expect(field.at('aaa').initialValue).toBe(222);
-    expect(field.at('aaa').isDirty).toBe(true);
-    expect(field.initialValue).toBe(initialValue2);
-    expect(field.isDirty).toBe(true);
-  });
+  expect(aaaListenerMock).toHaveBeenCalledTimes(1);
+  expect(field.at('aaa').initialValue).toBe(222);
+  expect(field.at('aaa').isDirty).toBe(true);
+  expect(field.initialValue).toBe(initialValue2);
+  expect(field.isDirty).toBe(true);
+});
 
-  test('child field is dirty if its value was updated before the Field instance was created', () => {
-    const field = createField({ aaa: 111 }, resetPlugin());
+test('child field is dirty if its value was updated before the Field instance was created', () => {
+  const field = createField({ aaa: 111 }, [resetPlugin()]);
 
-    field.setValue({ aaa: 222 });
+  field.setValue({ aaa: 222 });
 
-    expect(field.at('aaa').isDirty).toBe(true);
-  });
+  expect(field.at('aaa').isDirty).toBe(true);
+});
 
-  test('resets to the initial value', () => {
-    const field = createField({ aaa: 111 }, resetPlugin());
+test('resets to the initial value', () => {
+  const field = createField({ aaa: 111 }, [resetPlugin()]);
 
-    field.at('aaa').setValue(222);
+  field.at('aaa').setValue(222);
 
-    expect(field.isDirty).toBe(true);
-    expect(field.at('aaa').isDirty).toBe(true);
+  expect(field.isDirty).toBe(true);
+  expect(field.at('aaa').isDirty).toBe(true);
 
-    field.reset();
+  field.reset();
 
-    expect(field.at('aaa').isDirty).toBe(false);
-    expect(field.isDirty).toBe(false);
-  });
+  expect(field.at('aaa').isDirty).toBe(false);
+  expect(field.isDirty).toBe(false);
 });

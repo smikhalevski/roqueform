@@ -1,8 +1,5 @@
 import { expectType } from 'tsd';
-import { type ErrorsPlugin, errorsPlugin, PluginInjector, ValidationPlugin, validationPlugin } from 'roqueform';
+import { FieldPlugin } from '../../main';
+import validationPlugin, { ValidationMixin } from '../../main/plugin/validation';
 
-expectType<PluginInjector<ValidationPlugin<unknown>>>(validationPlugin({ validate() {} }));
-
-expectType<PluginInjector<ErrorsPlugin & ValidationPlugin<unknown>>>(
-  validationPlugin(errorsPlugin(), { validate() {} })
-);
+expectType<FieldPlugin<any, ValidationMixin<unknown>>>(validationPlugin({ validate() {} }));
