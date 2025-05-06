@@ -8,7 +8,7 @@
  * @module react
  */
 
-export { ValueAccessorContext } from './ValueAccessorContext';
-export { FieldRenderer } from './FieldRenderer';
+export { FieldRenderer, type FieldRendererProps } from './FieldRenderer';
 export { useField } from './useField';
-export type { FieldRendererProps } from './FieldRenderer';
+export { useFieldSubscription, type FieldSubscriptionOptions } from './useFieldSubscription';
+export { ValueAccessorContext } from './ValueAccessorContext';

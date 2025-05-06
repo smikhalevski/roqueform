@@ -2,23 +2,20 @@
   "name": "@roqueform/react",
   "version": "2.1.1",
   "description": "Hooks and components to integrate Roqueform with React.",
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
-  "types": "./lib/index.d.ts",
+  "main": "./index.js",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
     },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
-  "files": [
-    "lib"
-  ],
   "scripts": {
-    "build": "rollup --config ../roqueform/rollup.config.js",
+    "build": "rollup --config && cp package.json README.md ../../LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
     "clean": "rimraf lib",
     "test": "jest --config ../../jest.config.js"
   },
@@ -31,9 +28,7 @@
     "react",
     "form",
     "field",
-    "plugin",
-    "dom",
-    "ref"
+    "plugin"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",

@@ -1,5 +1,6 @@
 import { naturalValueAccessor } from './naturalValueAccessor';
 import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './Field';
+import { callOrGet } from './utils';
 
 /**
  * Creates the new field instance.
@@ -14,7 +15,7 @@ export function createField<Value = any>(): Field<Value | undefined>;
  * @param initialValue The initial value assigned to the field.
  * @template Value The root field value.
  */
-export function createField<Value>(initialValue: Value): Field<Value>;
+export function createField<Value>(initialValue: Value | (() => Value)): Field<Value>;
 
 /**
  * Creates the new field instance.
@@ -26,13 +27,13 @@ export function createField<Value>(initialValue: Value): Field<Value>;
  * @template Plugins The array of plugins applied to the field and its children.
  */
 export function createField<Value extends PluginsValue<Plugins>, Plugins extends FieldPlugin[]>(
-  initialValue: Value,
+  initialValue: Value | (() => Value),
   plugins: Plugins,
   accessor?: ValueAccessor
 ): Field<Value, PluginsMixin<Plugins>>;
 
 export function createField(initialValue?: any, plugins: FieldPlugin[] = [], accessor = naturalValueAccessor): Field {
-  const field = new FieldImpl(null, null, initialValue, accessor, plugins);
+  const field = new FieldImpl(null, null, callOrGet(initialValue), accessor, plugins);
 
   for (const plugin of plugins) {
     plugin(field);

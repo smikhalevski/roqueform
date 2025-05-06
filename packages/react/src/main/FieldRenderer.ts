@@ -1,21 +1,13 @@
-import {
-  createElement,
-  Fragment,
-  isValidElement,
-  ReactElement,
-  ReactNode,
-  useLayoutEffect,
-  useReducer,
-  useRef,
-} from 'react';
-import { callOrGet, Field, ValueOf } from 'roqueform';
+import { ReactNode } from 'react';
+import { Field } from 'roqueform';
+import { FieldSubscriptionOptions, useFieldSubscription } from './useFieldSubscription';
 
 /**
  * Properties of the {@link FieldRenderer} component.
  *
  * @template Field The rendered field.
  */
-export interface FieldRendererProps<F extends Field> {
+export interface FieldRendererProps<F extends Field> extends FieldSubscriptionOptions<F> {
   /**
    * The field that triggers re-renders.
    */
@@ -25,22 +17,6 @@ export interface FieldRendererProps<F extends Field> {
    * The render function that receive a rendered field as an argument.
    */
   children: (field: F) => ReactNode;
-
-  /**
-   * If set to `true` then {@link FieldRenderer} is re-rendered whenever the {@link field} itself, its parent fields or
-   * descendant fields are updated. If set to `false` then {@link FieldRenderer} re-rendered only if the field was
-   * directly changed (updates from parent and descendants are ignored, even if they affect the value of the field).
-   *
-   * @default false
-   */
-  eagerlyUpdated?: boolean;
-
-  /**
-   * Triggered when the field value received a non-transient update.
-   *
-   * @param value The new field value.
-   */
-  onChange?: (value: ValueOf<F>) => void;
 }
 
 /**
@@ -49,40 +25,6 @@ export interface FieldRendererProps<F extends Field> {
  *
  * @template Field The rendered field.
  */
-export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): ReactElement {
-  const { field, eagerlyUpdated } = props;
-
-  const [, rerender] = useReducer(reduceCount, 0);
-  const handleChangeRef = useRef<FieldRendererProps<F>['onChange']>();
-
-  handleChangeRef.current = props.onChange;
-
-  if (typeof window !== 'undefined') {
-    useLayoutEffect(
-      () =>
-        field.subscribe(event => {
-          if (eagerlyUpdated || event.relatedTarget === field) {
-            rerender();
-          }
-          if (field.isTransient || event.type !== 'valueChanged' || event.target !== field) {
-            // The non-transient value of this field didn't change
-            return;
-          }
-
-          const handleChange = handleChangeRef.current;
-          if (typeof handleChange === 'function') {
-            handleChange(field.value);
-          }
-        }),
-      [field, eagerlyUpdated]
-    );
-  }
-
-  const children = callOrGet(props.children, field);
-
-  return isValidElement(children) ? children : createElement(Fragment, null, children);
-}
-
-function reduceCount(count: number): number {
-  return count + 1;
+export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): ReactNode {
+  return props.children(useFieldSubscription(props.field, props));
 }

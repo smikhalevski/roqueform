@@ -10,22 +10,12 @@ module.exports = {
     './src/main/plugin/scroll-to-error.ts',
     './src/main/plugin/uncontrolled.ts',
     './src/main/plugin/validation.ts',
-
     './src/main/index.ts',
   ],
   output: [
     { format: 'cjs', entryFileNames: '[name].js', dir: './lib', preserveModules: true },
     { format: 'es', entryFileNames: '[name].mjs', dir: './lib', preserveModules: true },
   ],
-  plugins: [
-    typescript({
-      tsconfig: '../../tsconfig.json',
-      include: './src/main/**/*',
-      compilerOptions: {
-        paths: {},
-        outDir: './lib',
-      },
-    }),
-  ],
+  plugins: [typescript({ tsconfig: './tsconfig.build.json' })],
   external: ['fast-deep-equal', 'parallel-universe'],
 };

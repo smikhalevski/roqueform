@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "isolatedModules": true,
     "esModuleInterop": true,
     //    "noUnusedParameters": true,
@@ -11,12 +11,10 @@
     "module": "ES6",
     "lib": ["ES6"],
     "jsx": "react",
-    "outDir": "./lib",
     "baseUrl": ".",
     "paths": {
       "roqueform": ["./packages/roqueform/src/main"],
-      "roqueform/plugin/*": ["./packages/roqueform/src/main/plugin/*"],
-      "@roqueform/*": ["./packages/*/src/main"]
+      "roqueform/plugin/*": ["./packages/roqueform/src/main/plugin/*"]
     }
   },
   "include": ["./packages/*/src/**/*"]

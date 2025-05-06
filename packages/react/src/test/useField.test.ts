@@ -1,40 +1,38 @@
 import { renderHook } from '@testing-library/react';
 import { useField } from '../main';
 
-describe('useField', () => {
-  test('returns field with undefined initial value', () => {
-    const hook = renderHook(() => useField());
+test('returns field with undefined initial value', () => {
+  const hook = renderHook(() => useField());
 
-    expect(hook.result.current.value).toBeUndefined();
-  });
+  expect(hook.result.current.value).toBeUndefined();
+});
 
-  test('returns a field with a literal initial value', () => {
-    const hook = renderHook(() => useField(111));
+test('returns a field with a literal initial value', () => {
+  const hook = renderHook(() => useField(111));
 
-    expect(hook.result.current.value).toBe(111);
-  });
+  expect(hook.result.current.value).toBe(111);
+});
 
-  test('returns the same field on every render', () => {
-    const hook = renderHook(() => useField(111));
+test('returns the same field on every render', () => {
+  const hook = renderHook(() => useField(111));
 
-    const field = hook.result.current;
+  const field = hook.result.current;
 
-    hook.rerender();
+  hook.rerender();
 
-    expect(hook.result.current).toBe(field);
-  });
+  expect(hook.result.current).toBe(field);
+});
 
-  test('returns a field with an initial value provider', () => {
-    const hook = renderHook(() => useField(() => 111));
+test('returns a field with an initial value provider', () => {
+  const hook = renderHook(() => useField(() => 111));
 
-    expect(hook.result.current.value).toBe(111);
-  });
+  expect(hook.result.current.value).toBe(111);
+});
 
-  test('enhances a field', () => {
-    const pluginMock = jest.fn();
+test('enhances a field', () => {
+  const pluginMock = jest.fn();
 
-    renderHook(() => useField(111, pluginMock));
+  renderHook(() => useField(111, [pluginMock]));
 
-    expect(pluginMock).toHaveBeenCalledTimes(1);
-  });
+  expect(pluginMock).toHaveBeenCalledTimes(1);
 });
