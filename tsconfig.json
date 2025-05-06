@@ -4,8 +4,8 @@
     "moduleResolution": "Node",
     "isolatedModules": true,
     "esModuleInterop": true,
-//    "noUnusedParameters": true,
-//    "noUnusedLocals": true,
+    //    "noUnusedParameters": true,
+    //    "noUnusedLocals": true,
     "strict": true,
     "target": "ES5",
     "module": "ES6",
@@ -15,6 +15,7 @@
     "baseUrl": ".",
     "paths": {
       "roqueform": ["./packages/roqueform/src/main"],
+      "roqueform/plugin/*": ["./packages/roqueform/src/main/plugin/*"],
       "@roqueform/*": ["./packages/*/src/main"]
     }
   },

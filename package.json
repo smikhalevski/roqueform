@@ -9,18 +9,12 @@
   },
   "workspaces": [
     "./packages/roqueform",
-    "./packages/annotations-plugin",
-    "./packages/constraint-validation-plugin",
-    "./packages/doubter-plugin",
     "./packages/react",
-    "./packages/ref-plugin",
-    "./packages/reset-plugin",
-    "./packages/scroll-to-error-plugin",
-    "./packages/uncontrolled-plugin",
+    "./packages/doubter-plugin",
     "./packages/zod-plugin"
   ],
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.1",
     "@swc/core": "^1.7.39",
     "@swc/jest": "^0.2.36",

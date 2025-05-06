@@ -1,4 +1,4 @@
-import { createField, errorsPlugin, validationPlugin } from '../main';
+import { createField, errorsPlugin, validationPlugin } from 'roqueform';
 
 describe('validationPlugin', () => {
   test('synchronously validates the root field', () => {

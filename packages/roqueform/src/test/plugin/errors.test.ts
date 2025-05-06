@@ -1,4 +1,4 @@
-import { createField, errorsPlugin } from '../main';
+import { createField, errorsPlugin } from 'roqueform';
 
 describe('errorsPlugin', () => {
   test('enhances the field', () => {
