@@ -1,6 +1,6 @@
 import { expectType, expectAssignable, expectNotAssignable } from 'tsd';
-import { Field, FieldPlugin } from '../../main/__/Field';
-import { createField } from '../../main/__/createField';
+import { Field, FieldPlugin } from '../../main/Field';
+import { createField } from '../../main/createField';
 
 expectType<Field<string, { xxx: 111 } & { yyy: 222 } & { zzz: 333 }>>(
   createField('aaa', [

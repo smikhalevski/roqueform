@@ -592,3 +592,429 @@ Roqueform was built to satisfy the following requirements:
   seamlessly propagated to the error consumers/renderers.
 
 - The library API must be simple and easily extensible.
+
+# Annotations plugin
+
+Annotations allow to associate arbitrary data with fields.
+
+```ts
+import { createField } from 'roqueform';
+import { annotationsPlugin } from '@roqueform/annotations-plugin';
+
+const planetField = createField(
+  { name: 'Pluto' },
+  annotationsPlugin({ isDisabled: false })
+);
+
+planetField.at('name').annotations.isDisabled // ⮕ false
+```
+
+Update annotations for a single field:
+
+```ts
+planetField.annotate({ isDisabled: true });
+
+planetField.annotations.isDisabled // ⮕ true
+
+planetField.at('name').annotations.isDisabled // ⮕ false
+```
+
+Annotate field and all of its children recursively:
+
+```ts
+planetField.annotate({ isDisabled: true }, { recursive: true });
+
+planetField.annotations.isDisabled // ⮕ true
+
+// 🌕 The child field was annotated along with its parent
+planetField.at('name').annotations.isDisabled // ⮕ true
+```
+
+Annotations can be updated using a callback. This is especially useful in conjunction with recursive flag:
+
+```ts
+planetField.annotate(
+  field => {
+    // Toggle disabled flag for the field and its children
+    return { isDisabled: !field.annotations.isDisabled };
+  },
+  { recursive: true }
+);
+```
+
+Subscribe to annotation changes:
+
+```ts
+planetField.subscribe('change:annotations', event => {
+  event.target.annotations;
+  // ⮕ { isDisabled: boolean }
+});
+```
+
+# Constraint validation API plugin
+
+Integrates fields with the
+[Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
+
+This plugin doesn't require any rendering framework. It subscribes to events that are dispatched by a DOM element passed
+to the [`ref`](https://smikhalevski.github.io/roqueform/interfaces/constraint_validation_plugin.ConstraintValidationPlugin.html#ref)
+method. To simplify the usage example, we're going to use [the React integration](../react#readme).
+
+```tsx
+import { FieldRenderer, useField } from '@roqueform/react';
+import { constraintValidationPlugin } from '@roqueform/constraint-validation-plugin';
+
+export const App = () => {
+  const planetField = useField(
+    { name: 'Mars' },
+    constraintValidationPlugin()
+  );
+
+  return (
+    <FieldRenderer field={planetField.at('name')}>
+      {nameField => (
+        <>
+          <input
+            type="text"
+            pattern="Venus"
+            // 🟡 Note that the input element ref is populated.
+            ref={nameField.ref}
+            value={nameField.value}
+            onChange={event => {
+              nameField.setValue(event.target.value);
+            }}
+            aria-invalid={nameField.isInvalid}
+          />
+          {nameField.validatedElement?.validationMessage}
+        </>
+      )}
+    </FieldRenderer>
+  );
+};
+```
+
+Get the array of all invalid fields:
+
+```ts
+planetField.getInvalidFields();
+// ⮕ [planetField.at('name')]
+```
+
+Show an error message balloon for the first invalid element that is associated with this field or any of its child
+fields:
+
+```ts
+planetField.reportValidity();
+```
+
+Subscribe to the field validity changes:
+
+```ts
+planetField.on('change:validity', event => {
+  event.target.validity;
+  // ⮕ ValidityState
+});
+```
+
+# DOM reference plugin
+
+Associates fields with DOM elements.
+
+This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
+[the React integration](../react#readme).
+
+```tsx
+import { FieldRenderer, useField } from '@roqueform/react';
+import { refPlugin } from '@roqueform/ref-plugin';
+
+export const App = () => {
+  const planetField = useField({ name: 'Venus' }, refPlugin());
+
+  return (
+    <FieldRenderer field={planetField.at('name')}>
+      {nameField => (
+        <input
+          ref={nameField.ref}
+          value={nameField.value}
+          onChange={event => {
+            nameField.setValue(event.target.value);
+          }}
+        />
+      )}
+    </FieldRenderer>
+  );
+};
+```
+
+Access an element referenced by a field:
+
+```ts
+planetField.at('name').element // ⮕ HTMLInputElement
+```
+
+Focus and blur an element referenced by a field. If a field doesn't have an associated element this is a no-op.
+
+```ts
+planetField.at('name').focus();
+
+planetField.at('name').isFocused // ⮕ true
+```
+
+Scroll to an element:
+
+```ts
+planetField.at('name').scrollIntoView({ behavior: 'smooth' });
+```
+
+# Reset plugin
+
+Manages field initial value and dirty status.
+
+Update the initial value of a field:
+
+```ts
+import { createField } from 'roqueform';
+import { resetPlugin } from '@roqueform/reset-plugin';
+
+const planetField = createField({ name: 'Pluto' }, resetPlugin());
+
+planetField.setInitialValue({ name: 'Mars' });
+
+planetField.at('name').initialValue;
+// ⮕ 'Mars'
+```
+
+The field is considered dirty when its value differs from the initial value. Values are compared using an equality
+checker function passed to the `resetPlugin`. By default, values are compared using
+[fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal).
+
+```ts
+planetField.at('name').isDirty // ⮕ true
+```
+
+Get the array of all dirty fields:
+
+```ts
+planetField.getDirtyFields();
+// ⮕ [planetField.at('name')]
+```
+
+# Scroll to an error plugin
+
+Plugin that enables scrolling to a field that has an
+associated validation error.
+
+This plugin works best in conjunction with the [`errorsPlugin`](../../#validation-scaffolding) or any of the
+[validation plugins](../../#plugins-and-integrations). If an element associated with the field via
+[`ref`](https://smikhalevski.github.io/roqueform/interfaces/scroll_to_error_plugin.ScrollToErrorPlugin.html#ref) is
+displayed and an the field is invalid than `scrollToError()` would scroll the viewport, so the element is reveled on the
+screen.
+
+This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
+[the React integration](../react#readme).
+
+```tsx
+import { SyntheticEvent, useEffect } from 'react';
+import { composePlugins, errorsPlugin } from 'roqueform';
+import { FieldRenderer, useField } from '@roqueform/react';
+import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
+
+export const App = () => {
+  const planetField = useField(
+    { name: 'Mars' },
+    composePlugins(
+      errorsPlugin(),
+      scrollToErrorPlugin()
+    )
+  );
+
+  const handleSubmit = (event: SyntheticEvent) => {
+    event.preventDefault();
+
+    if (planetField.getInvalidFields().length === 0) {
+      // Submit the valid form value.
+      doSubmit(planetField.value);
+    } else {
+      // Scroll to the invalid field that is closest to the top left conrner of the document.
+      planetField.scrollToError(0, { behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    // Mark field as invalid.
+    planetField.at('name').addError('Too far away');
+  }, []);
+  
+  return (
+    <form onSubmit={handleSubmit}>
+
+      <FieldRenderer field={planetField.at('name')}>
+        {nameField => (
+          <>
+            <input
+              // 🟡 Note that the input element ref is populated.
+              ref={nameField.ref}
+              value={nameField.value}
+              onChange={event => {
+                nameField.setValue(event.target.value);
+              }}
+            />
+            {nameField.errors}
+          </>
+        )}
+      </FieldRenderer>
+
+      <button type="submit">
+        {'Submit'}
+      </button>
+
+    </form>
+  );
+};
+```
+
+# Uncontrolled plugin
+
+Updates fields by listening to change events of associated DOM elements.
+
+🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/fsdshx)
+
+This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
+[the React integration](../react#readme).
+
+```tsx
+import type { SyntheticEvent } from 'react';
+import { useField } from '@roqueform/react';
+import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
+
+export const App = () => {
+  const planetField = useField(
+    { name: 'Mars', properties: { color: 'red' } },
+    uncontrolledPlugin()
+  );
+
+  const handleSubmit = (event: SyntheticEvent) => {
+    event.preventDefault();
+
+    // The field value is always in sync with the input element value.
+    doSubmit(planetField.value);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {'Planet name:'}
+      <input
+        type="text"
+        ref={field.at('name').ref}
+      />
+      <br/>
+
+      {'Color:'}
+      {['red', 'green', 'blue'].map(color =>
+        <label>
+          <input
+            type="radio"
+            // 🌕 An arbitrary name of a radio group
+            name="property-color"
+            value={color}
+            ref={field.at('properties').at('color').refFor(color)}
+          />
+          {color}
+        </label>
+      )}
+    </form>
+  );
+};
+```
+
+## Referencing elements
+
+To associate field with an element, pass
+[`ref`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.UncontrolledPlugin.html#ref)
+as a `ref` attribute of an `input`, `textarea`, or any other form element:
+
+```tsx
+<input ref={field.ref}/>
+```
+
+The plugin would synchronize the field value with the value of an input element. When the input value is changed and
+`change` or `input` event is dispatched, the `field` is updated with the corresponding value.
+
+If you have a set of radio buttons, or checkboxes that update a single field, use
+[`refFor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.UncontrolledPlugin.html#refFor) with
+a distinct key. `refFor` always returns the same ref callback for the same key. `uncontrolledPlugin` would use elements
+passed to ref callbacks to derive a value.
+
+```ts
+const namesField = useField(['Mars', 'Pluto'], uncontrolledPlugin());
+```
+
+The plugin derives the field value from the element's `value` attribute:
+
+```tsx
+<form>
+  <input
+    type="checkbox"
+    value="Mars"
+    // 🌕 The unique key associated with this is 1.
+    ref={namesField.refFor(1)}
+  />
+  <input
+    type="checkbox"
+    value="Pluto"
+    ref={namesField.refFor(2)}
+  />
+</form>
+```
+
+## Value coercion
+
+By default, `uncontrolledPlugin` uses the opinionated element value accessor that applies following coercion rules to
+values of form elements:
+
+- Single checkbox → boolean;
+
+- Multiple checkboxes → an array of `value` attributes of checked checkboxes;
+
+- Radio buttons → the `value` attribute of a radio button that is checked or `null` if no radio buttons are checked;
+
+- Number input → number, or `null` if empty;
+
+- Range input → number;
+
+- Date input → the `value` attribute, or `null` if empty;
+
+- Time input → a time string, or `null` if empty;
+
+- Image input → string value of the `src` attribute;
+
+- File input → `File` or `null` if no file selected, file inputs are read-only;
+
+- Multi-file input → array of `File`;
+
+- Others → `value` attribute, or `null` if element doesn't support it;
+
+- `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
+
+This behaviour can be changed by passing a custom
+[`ElementsValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessor.html)
+implementation to a plugin. Or you can use a
+[`createElementsValueAccessor`](https://smikhalevski.github.io/roqueform/functions/uncontrolled_plugin.createElementsValueAccessor.html)
+factory to customise the default behaviour:
+
+```ts
+import { useField } from '@roqueform/react';
+import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
+
+const personField = useField(
+  { dateOfBirth: 316310400000 },
+  uncontrolledPlugin(
+    createElementsValueAccessor({
+      dateFormat: 'timestamp'
+    })
+  )
+);
+```
+
+Read more about available options in
+[`ElementsValueAccessorOptions`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessorOptions.html).

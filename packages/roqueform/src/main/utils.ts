@@ -1,4 +1,6 @@
-import type { Event, Field } from './types';
+import { FieldEvent } from './Field';
+
+export const emptyObject = {};
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -35,31 +37,12 @@ export function callOrGet(value: unknown, arg?: unknown) {
   return typeof value !== 'function' ? value : arguments.length === 1 ? value() : value(arg);
 }
 
-/**
- * Dispatches events to appropriate subscribers.
- *
- * @param events The array of events to dispatch.
- */
-export function dispatchEvents(events: readonly Event[]): void {
+export function AbortError(message: string): Error {
+  return typeof DOMException !== 'undefined' ? new DOMException(message, 'AbortError') : Error(message);
+}
+
+export function publishEvents(events: FieldEvent[]): void {
   for (const event of events) {
-    if (event.type === '*') {
-      continue;
-    }
-
-    for (let ancestor: Field | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
-      const subscribers1 = ancestor.subscribers[event.type];
-      const subscribers2 = ancestor.subscribers['*'];
-
-      if (subscribers1 !== undefined) {
-        for (const subscriber of subscribers1) {
-          subscriber(event);
-        }
-      }
-      if (subscribers2 !== undefined) {
-        for (const subscriber of subscribers2) {
-          subscriber(event);
-        }
-      }
-    }
+    event.target.publish(event);
   }
 }

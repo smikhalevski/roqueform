@@ -1,6 +1,5 @@
 import { naturalValueAccessor } from './naturalValueAccessor';
-import type { __plugin, Event, Field, NoInfer, PluginInjector, ValueAccessor } from './types';
-import { callOrGet, dispatchEvents, isEqual } from './utils';
+import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './Field';
 
 /**
  * Creates the new field instance.
@@ -13,155 +12,43 @@ export function createField<Value = any>(): Field<Value | undefined>;
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param accessor Resolves values for child fields.
  * @template Value The root field value.
  */
-export function createField<Value>(initialValue: Value, accessor?: ValueAccessor): Field<Value>;
+export function createField<Value>(initialValue: Value): Field<Value>;
 
 /**
  * Creates the new field instance.
  *
  * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injector that enhances the field.
+ * @param plugins The array of plugins applied to the field and its children.
  * @param accessor Resolves values for child fields.
  * @template Value The root field initial value.
- * @template Plugin The plugin injected into the field.
+ * @template Plugins The array of plugins applied to the field and its children.
  */
-export function createField<Value, Plugin>(
+export function createField<Value extends PluginsValue<Plugins>, Plugins extends FieldPlugin[]>(
   initialValue: Value,
-  plugin: PluginInjector<Plugin>,
+  plugins: Plugins,
   accessor?: ValueAccessor
-): Field<Value, Plugin>;
+): Field<Value, PluginsMixin<Plugins>>;
 
-/**
- * Creates the new field instance.
- *
- * @param initialValue The initial value assigned to the field.
- * @param plugin The plugin injector that enhances the field.
- * @param accessor Resolves values for child fields.
- * @template Value The root field initial value.
- * @template Plugin The plugin injected into the field.
- */
-export function createField<Value, Plugin>(
-  initialValue: Value,
-  plugin: PluginInjector<Plugin, NoInfer<Value>>,
-  accessor?: ValueAccessor
-): Field<Value, Plugin>;
+export function createField(initialValue?: any, plugins: FieldPlugin[] = [], accessor = naturalValueAccessor): Field {
+  const field = new FieldImpl(null, null, initialValue, accessor, plugins);
 
-export function createField(initialValue?: unknown, plugin?: PluginInjector | ValueAccessor, accessor?: ValueAccessor) {
-  if (typeof plugin !== 'function') {
-    accessor = plugin;
-    plugin = undefined;
-  }
-  return getOrCreateField(accessor || naturalValueAccessor, null, null, initialValue, plugin || null);
-}
-
-function getOrCreateField(
-  accessor: ValueAccessor,
-  parentField: Field | null,
-  key: unknown,
-  initialValue: unknown,
-  plugin: PluginInjector | null
-): Field {
-  if (parentField !== null && parentField.children !== null) {
-    for (const child of parentField.children) {
-      if (isEqual(child.key, key)) {
-        return child;
-      }
-    }
-  }
-
-  const field = {
-    key,
-    value: initialValue,
-    initialValue,
-    isTransient: false,
-    rootField: null!,
-    parentField,
-    children: null,
-    subscribers: Object.create(null),
-    valueAccessor: accessor,
-
-    setValue: value => {
-      setValue(field, callOrGet(value, field.value), false);
-    },
-
-    setTransientValue: value => {
-      setValue(field, callOrGet(value, field.value), true);
-    },
-
-    propagate: () => {
-      setValue(field, field.value, false);
-    },
-
-    at: (key, defaultValue) => getOrCreateField(field.valueAccessor, field, key, defaultValue, plugin),
-
-    on: (type, subscriber) => {
-      const subscribers = (field.subscribers[type] ||= []);
-
-      if (!subscribers.includes(subscriber)) {
-        subscribers.push(subscriber);
-      }
-      return () => {
-        subscribers.splice(subscribers.indexOf(subscriber), 1);
-      };
-    },
-  } satisfies Omit<Field, __plugin> as unknown as Field;
-
-  field.rootField = field;
-
-  if (parentField !== null) {
-    const derivedValue = parentField.valueAccessor.get(parentField.value, key);
-
-    if (derivedValue !== undefined) {
-      field.value = derivedValue;
-    }
-
-    field.initialValue = parentField.valueAccessor.get(parentField.initialValue, key);
-    field.rootField = parentField.rootField;
-    (parentField.children ||= []).push(field);
-  }
-
-  if (plugin !== null) {
+  for (const plugin of plugins) {
     plugin(field);
   }
+
   return field;
 }
 
-function setValue(field: Field, value: unknown, transient: boolean): void {
-  if (isEqual(field.value, value) && field.isTransient === transient) {
-    return;
-  }
+type PluginsValue<T extends any[]> = T extends never[] ? any : Unbox<UnionToIntersection<BoxedPluginValue<T[number]>>>;
 
-  field.isTransient = transient;
+type PluginsMixin<T extends any[]> = T extends never[] ? any : Unbox<UnionToIntersection<BoxedPluginMixin<T[number]>>>;
 
-  let root = field;
+type BoxedPluginValue<T> = T extends FieldPlugin<infer Value, any> ? [Value] : never;
 
-  while (root.parentField !== null && !root.isTransient) {
-    value = root.parentField.valueAccessor.set(root.parentField.value, root.key, value);
-    root = root.parentField;
-  }
+type BoxedPluginMixin<T> = T extends FieldPlugin<any, infer Mixin> ? [Mixin] : never;
 
-  dispatchEvents(propagateValue(field, root, value, []));
-}
+type Unbox<T> = T extends [any] ? T[0] : never;
 
-function propagateValue(originField: Field, targetField: Field, value: unknown, events: Event[]): Event[] {
-  events.push({ type: 'change:value', targetField, originField, data: targetField.value });
-
-  targetField.value = value;
-
-  if (targetField.children !== null) {
-    for (const child of targetField.children) {
-      if (child.isTransient) {
-        continue;
-      }
-
-      const childValue = targetField.valueAccessor.get(value, child.key);
-      if (child !== originField && isEqual(child.value, childValue)) {
-        continue;
-      }
-      propagateValue(originField, child, childValue, events);
-    }
-  }
-  return events;
-}
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
