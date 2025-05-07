@@ -1,8 +1,11 @@
 <p align="center">
-  <a href="#readme">
-    <img src="./images/logo.png" alt="Roqueform" width="500"/>
-  </a>
+  <a href="#readme"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./images/logo-dark.png" />
+    <source media="(prefers-color-scheme: light)" srcset="./images/logo-light.png" />
+    <img alt="Doubter" src="./images/logo-light.png" width="500" />
+  </picture></a>
 </p>
+
 
 The form state management library that can handle hundreds of fields without breaking a sweat.
 
