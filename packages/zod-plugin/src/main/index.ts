@@ -13,7 +13,6 @@ export function zodPlugin<Value>(type: ZodType<any, any, Value>): FieldPlugin<Va
     //
     // validationPlugin<ParseOptions>({
     //   validate(field, options) {
-    //     field.publish(new FieldEvent('errorCaught', field));
     //   },
     //   validateAsync(field, options) {
     //     return Promise.resolve();

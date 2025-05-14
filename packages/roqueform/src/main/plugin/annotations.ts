@@ -103,7 +103,7 @@ function annotate(
   if (prevAnnotations !== nextAnnotations) {
     field.annotations = nextAnnotations;
 
-    events.push(new FieldEvent('annotationsChanged', field, null));
+    events.push({ type: 'annotationsChanged', target: field, relatedTarget: null, payload: undefined });
   }
 
   if (field.children !== null && options !== undefined && options.isRecursive) {

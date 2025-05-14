@@ -28,7 +28,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): FieldPlugin<Valu
 
     validationPlugin<ParseOptions>({
       validate(field, options) {
-        field.publish(new FieldEvent('errorCaught', field));
+        field.publish({ type: 'errorCaught', target: field, relatedTarget: null, payload: undefined });
       },
       validateAsync(field, options) {
         return Promise.resolve();

@@ -164,7 +164,7 @@ function startValidation(
 ): FieldEvent[] {
   field.validation = validation;
 
-  events.push(new FieldEvent('validationStarted', field, validation.rootField, validation));
+  events.push({ type: 'validationStarted', target: field, relatedTarget: validation.rootField, payload: validation });
 
   for (const child of field.children) {
     if (!child.isTransient) {
@@ -185,7 +185,7 @@ function finishValidation(
 
   field.validation = null;
 
-  events.push(new FieldEvent('validationFinished', field, validation.rootField, validation));
+  events.push({ type: 'validationFinished', target: field, relatedTarget: validation.rootField, payload: validation });
 
   for (const child of field.children) {
     finishValidation(child, validation, events);

@@ -28,32 +28,29 @@ export type InferMixin<T> = MIXIN extends keyof T ? T[MIXIN] : never;
  *
  * @template Mixin The mixin added to the field.
  */
-export class FieldEvent<Mixin = any> {
+export interface FieldEvent<Mixin = any> {
   /**
-   * The field to which an event listener is subscribed.
+   * The type of the event.
    */
-  currentTarget: Field<any, Mixin>;
+  type: string;
 
   /**
-   * Creates a new instance of a {@link FieldEvent}.
-   *
-   * @param type The type of the event.
-   * @param target The field onto which this event was published.
-   * @param relatedTarget The field that caused the event to be published.
+   * The field onto which this event was published.
+   */
+  target: Field<any, Mixin>;
+
+  /**
+   * The field that caused the event to be published.
    *
    * For example, if a parent field value is changed and the child field value is changed as the result. Then the change
    * event published on the child field would have {@link relatedTarget} set to the parent field.
-   *
-   * @param payload The payload carried by the event.
    */
-  constructor(
-    readonly type: string,
-    readonly target: Field<any, Mixin>,
-    readonly relatedTarget: Field<any, Mixin> | null = null,
-    readonly payload: any = undefined
-  ) {
-    this.currentTarget = target;
-  }
+  relatedTarget: Field<any, Mixin> | null;
+
+  /**
+   * The payload carried by the event.
+   */
+  payload: any;
 }
 
 /**
@@ -168,9 +165,9 @@ export class FieldImpl<Value, Mixin> {
    * @param value The value to set, or a callback that receives a previous value and returns a new one.
    * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
    */
-  setValue(value: Value | ((prevValue: Value) => Value)): void {
+  setValue = (value: Value | ((prevValue: Value) => Value)): void => {
     setValue(this, callOrGet(value, this.value), false);
-  }
+  };
 
   /**
    * Updates the value of the field, notifies child fields about the change, and marks value as
@@ -179,17 +176,17 @@ export class FieldImpl<Value, Mixin> {
    * @param value The value to set, or a callback that receives a previous value and returns a new one.
    * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
    */
-  setTransientValue(value: Value | ((prevValue: Value) => Value)): void {
+  setTransientValue = (value: Value | ((prevValue: Value) => Value)): void => {
     setValue(this, callOrGet(value, this.value), true);
-  }
+  };
 
   /**
    * If {@link value the current value} {@link isTransient is transient} then the value of the parent field is notified
    * about the change and this field is marked as non-transient. No-op if the current value is non-transient.
    */
-  flushTransient(): void {
+  flushTransient = (): void => {
     setValue(this, this.value, false);
-  }
+  };
 
   /**
    * Returns a child field that controls the value which is stored under the given key in
@@ -231,8 +228,6 @@ export class FieldImpl<Value, Mixin> {
    * @param event An event to publish.
    */
   publish(event: FieldEvent<Mixin>): void {
-    event.currentTarget = this as Field<any, Mixin>;
-
     this._pubSub.publish(event);
 
     this.parentField?._pubSub.publish(event);
@@ -266,7 +261,7 @@ function setValue(field: Field, value: unknown, isTransient: boolean): void {
 }
 
 function propagateValue(target: Field, relatedTarget: Field, value: unknown, events: FieldEvent[]): FieldEvent[] {
-  events.push(new FieldEvent('valueChanged', target, relatedTarget, target.value));
+  events.push({ type: 'valueChanged', target, relatedTarget, payload: target.value });
 
   target.value = value;
 

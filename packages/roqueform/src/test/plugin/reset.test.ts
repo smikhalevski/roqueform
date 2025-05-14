@@ -57,14 +57,12 @@ test('updates the initial value and notifies fields', () => {
     type: 'initialValueChanged',
     target: field,
     relatedTarget: field,
-    currentTarget: field,
     payload: { aaa: 111 },
   } satisfies FieldEvent);
   expect(listenerMock).toHaveBeenNthCalledWith(2, {
     type: 'initialValueChanged',
     target: field.at('aaa'),
     relatedTarget: field,
-    currentTarget: field.at('aaa'),
     payload: 111,
   } satisfies FieldEvent);
 

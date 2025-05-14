@@ -92,7 +92,7 @@ export default function errorsPlugin<Error = any>(
 
       field.errors = nextErrors;
 
-      field.publish(new FieldEvent('errorAdded', field, null, error));
+      field.publish({ type: 'errorAdded', target: field, relatedTarget: null, payload: error });
     };
 
     field.deleteError = error => {
@@ -107,7 +107,7 @@ export default function errorsPlugin<Error = any>(
       nextErrors.splice(errorIndex, 1);
       field.errors = nextErrors;
 
-      field.publish(new FieldEvent('errorDeleted', field, null, error));
+      field.publish({ type: 'errorDeleted', target: field, relatedTarget: null, payload: error });
     };
 
     field.clearErrors = options => {
@@ -140,7 +140,8 @@ function clearErrors(
 
   if (prevErrors.length !== 0) {
     field.errors = [];
-    events.push(new FieldEvent('errorsCleared', field, null, prevErrors));
+
+    events.push({ type: 'errorsCleared', target: field, relatedTarget: null, payload: prevErrors });
   }
 
   if (options.isRecursive) {

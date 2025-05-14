@@ -104,14 +104,12 @@ test('calls a listener when value is updated', () => {
     type: 'valueChanged',
     target: field,
     relatedTarget: field.at('aaa'),
-    currentTarget: field,
     payload: { aaa: 111 },
   } satisfies FieldEvent);
   expect(listenerMock).toHaveBeenNthCalledWith(2, {
     type: 'valueChanged',
     target: field.at('aaa'),
     relatedTarget: field.at('aaa'),
-    currentTarget: field.at('aaa'),
     payload: 111,
   } satisfies FieldEvent);
 
@@ -120,7 +118,6 @@ test('calls a listener when value is updated', () => {
     type: 'valueChanged',
     target: field.at('aaa'),
     relatedTarget: field.at('aaa'),
-    currentTarget: field.at('aaa'),
     payload: 111,
   } satisfies FieldEvent);
 });
@@ -143,7 +140,6 @@ test('does not invoke the listener of the unchanged sibling field', () => {
     type: 'valueChanged',
     target: field.at('aaa'),
     relatedTarget: field.at('aaa'),
-    currentTarget: field.at('aaa'),
     payload: 111,
   } satisfies FieldEvent);
 });
@@ -296,7 +292,6 @@ test('does not notify listeners if a value of the child field did not change', (
     type: 'valueChanged',
     target: field,
     relatedTarget: field,
-    currentTarget: field,
     payload: initialValue,
   } satisfies FieldEvent);
 

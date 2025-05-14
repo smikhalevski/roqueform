@@ -2,7 +2,7 @@ export { naturalValueAccessor } from './naturalValueAccessor.js';
 export { createField } from './createField.js';
 export {
   FieldImpl,
-  FieldEvent,
+  type FieldEvent,
   type FieldPlugin,
   type Field,
   type InferMixin,

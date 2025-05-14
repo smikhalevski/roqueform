@@ -81,7 +81,7 @@ function propagateInitialValue(
   initialValue: unknown,
   events: FieldEvent[]
 ): FieldEvent[] {
-  events.push(new FieldEvent('initialValueChanged', target, relatedTarget, target.initialValue));
+  events.push({ type: 'initialValueChanged', target, relatedTarget, payload: target.initialValue });
 
   target.initialValue = initialValue;
 

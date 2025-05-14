@@ -122,7 +122,7 @@ function applyValidity(field: Field<unknown, ConstraintValidationMixin>): void {
 
   field.validity = nextValidity;
 
-  field.publish(new FieldEvent('validityChanged', field, null, prevValidity));
+  field.publish({ type: 'validityChanged', target: field, relatedTarget: null, payload: prevValidity });
 }
 
 function reportValidity(field: Field<unknown, ConstraintValidationMixin>): boolean {
