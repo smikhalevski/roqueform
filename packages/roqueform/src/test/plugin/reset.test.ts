@@ -1,5 +1,6 @@
-import { createField, FieldEvent } from '../../main';
-import resetPlugin from '../../main/plugin/reset';
+import { expect, test, vi } from 'vitest';
+import { createField, FieldEvent } from '../../main/index.js';
+import resetPlugin from '../../main/plugin/reset.js';
 
 test('field is dirty if the field value is not equal to an initial value', () => {
   const initialValue = { aaa: 111 };
@@ -37,8 +38,8 @@ test('field is not dirty if it has the value that is deeply equal to the initial
 });
 
 test('updates the initial value and notifies fields', () => {
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   const initialValue = { aaa: 111 };
 

@@ -1,5 +1,6 @@
+import { describe, afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { z, ZodErrorMap, ZodIssue, ZodIssueCode } from 'zod';
-import { zodPlugin } from '../main';
+import { zodPlugin } from '../main/index.js';
 import { createField } from 'roqueform';
 
 describe('zodPlugin', () => {
@@ -13,7 +14,7 @@ describe('zodPlugin', () => {
   });
 
   test('enhances the field', () => {
-    const field = createField({ aaa: 111 }, zodPlugin(aaaType));
+    const field = createField({ aaa: 111 }, [zodPlugin(aaaType)]);
 
     expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
@@ -23,7 +24,7 @@ describe('zodPlugin', () => {
   });
 
   test('converts string errors to issue messages', () => {
-    const field = createField({ aaa: 111 }, zodPlugin(aaaType));
+    const field = createField({ aaa: 111 }, [zodPlugin(aaaType)]);
 
     field.addError('xxx');
 
@@ -31,7 +32,7 @@ describe('zodPlugin', () => {
   });
 
   test('adds an issue', () => {
-    const field = createField({ aaa: 111 }, zodPlugin(aaaType));
+    const field = createField({ aaa: 111 }, [zodPlugin(aaaType)]);
 
     const issue: ZodIssue = { code: ZodIssueCode.custom, path: ['bbb'], message: 'aaa' };
 
@@ -42,7 +43,7 @@ describe('zodPlugin', () => {
   });
 
   test('does not add an issue with the same code twice', () => {
-    const field = createField({ aaa: 111 }, zodPlugin(aaaType));
+    const field = createField({ aaa: 111 }, [zodPlugin(aaaType)]);
 
     const issue1: ZodIssue = { code: ZodIssueCode.custom, path: ['xxx'], message: 'aaa' };
     const issue2: ZodIssue = { code: ZodIssueCode.custom, path: ['yyy'], message: 'bbb' };
@@ -55,7 +56,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates the root field', () => {
-    const field = createField({ aaa: 0 }, zodPlugin(aaaType));
+    const field = createField({ aaa: 0 }, [zodPlugin(aaaType)]);
 
     field.validate();
 
@@ -77,7 +78,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates the child field', () => {
-    const field = createField({ aaa: 0 }, zodPlugin(aaaType));
+    const field = createField({ aaa: 0 }, [zodPlugin(aaaType)]);
 
     field.at('aaa').validate();
 
@@ -99,7 +100,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates multiple fields', () => {
-    const field = createField({ aaa: 0, bbb: 'ccc' }, zodPlugin(aaaBbbType));
+    const field = createField({ aaa: 0, bbb: 'ccc' }, [zodPlugin(aaaBbbType)]);
 
     field.validate();
 
@@ -134,7 +135,7 @@ describe('zodPlugin', () => {
   });
 
   test('does not validate sibling fields', () => {
-    const field = createField({ aaa: 111, bbb: 'ccc' }, zodPlugin(aaaBbbType));
+    const field = createField({ aaa: 111, bbb: 'ccc' }, [zodPlugin(aaaBbbType)]);
 
     field.at('bbb').validate();
 
@@ -159,7 +160,7 @@ describe('zodPlugin', () => {
   });
 
   test('validates a transient value', () => {
-    const field = createField({ aaa: 111, bbb: '' }, zodPlugin(aaaBbbType));
+    const field = createField({ aaa: 111, bbb: '' }, [zodPlugin(aaaBbbType)]);
 
     field.at('bbb').setTransientValue('ccc');
     field.at('bbb').validate();
@@ -185,11 +186,11 @@ describe('zodPlugin', () => {
   });
 
   test('uses errorMap passed to validate method', () => {
-    const errorMapMock: ZodErrorMap = jest.fn(() => {
+    const errorMapMock: ZodErrorMap = vi.fn(() => {
       return { message: 'aaa' };
     });
 
-    const field = createField({ aaa: 0, bbb: '' }, zodPlugin(aaaBbbType));
+    const field = createField({ aaa: 0, bbb: '' }, [zodPlugin(aaaBbbType)]);
 
     field.validate({ errorMap: errorMapMock });
 

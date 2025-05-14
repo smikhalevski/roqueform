@@ -1,4 +1,4 @@
-import { Field, FieldPlugin, InferMixin } from '../Field';
+import { Field, FieldPlugin, InferMixin } from '../Field.js';
 
 /**
  * The mixin added to fields by the {@link scrollToErrorPlugin}.

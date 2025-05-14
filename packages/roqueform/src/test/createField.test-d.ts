@@ -1,5 +1,5 @@
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
-import { createField, Field, FieldPlugin } from '../main';
+import { createField, Field, FieldPlugin } from '../main/index.js';
 
 expectType<Field<string, { xxx: 111 } & { yyy: 222 } & { zzz: 333 }>>(
   createField('aaa', [

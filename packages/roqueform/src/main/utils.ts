@@ -1,4 +1,4 @@
-import { FieldEvent } from './Field';
+import { FieldEvent } from './Field.js';
 
 export const emptyObject = {};
 

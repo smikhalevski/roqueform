@@ -1,5 +1,5 @@
-import isDeepEqual from 'fast-deep-equal';
-import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field';
+import isDeepEqual from 'fast-deep-equal/es6/index.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field.js';
 
 /**
  * The mixin added to fields by the {@link constraintValidationPlugin}.

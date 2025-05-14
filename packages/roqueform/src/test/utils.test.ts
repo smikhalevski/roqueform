@@ -1,4 +1,5 @@
-import { callOrGet } from '../main/utils';
+import { expect, test } from 'vitest';
+import { callOrGet } from '../main/utils.js';
 
 test('returns non function value as is', () => {
   const obj = {};

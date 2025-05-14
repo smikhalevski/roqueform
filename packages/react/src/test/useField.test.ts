@@ -1,5 +1,6 @@
+import { expect, test, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useField } from '../main';
+import { useField } from '../main/index.js';
 
 test('returns field with undefined initial value', () => {
   const hook = renderHook(() => useField());
@@ -30,7 +31,7 @@ test('returns a field with an initial value provider', () => {
 });
 
 test('enhances a field', () => {
-  const pluginMock = jest.fn();
+  const pluginMock = vi.fn();
 
   renderHook(() => useField(111, [pluginMock]));
 

@@ -1,6 +1,11 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent } from '@testing-library/dom';
-import { createField, ElementsValueAccessor, FieldPlugin } from '../../main';
-import uncontrolledPlugin, { UncontrolledMixin } from '../../main/plugin/uncontrolled';
+import { createField, ElementsValueAccessor, FieldPlugin } from '../../main/index.js';
+import uncontrolledPlugin, { UncontrolledMixin } from '../../main/plugin/uncontrolled.js';
 
 let element: HTMLInputElement;
 
@@ -13,8 +18,8 @@ afterEach(() => {
 });
 
 test('invokes ref from the preceding plugin', () => {
-  const refMock = jest.fn();
-  const pluginMock: FieldPlugin<any, { ref: UncontrolledMixin['ref'] }> = jest.fn(field => {
+  const refMock = vi.fn();
+  const pluginMock: FieldPlugin<any, { ref: UncontrolledMixin['ref'] }> = vi.fn(field => {
     field.ref = refMock;
   });
 
@@ -122,7 +127,7 @@ test('refFor removes an element when called with null', () => {
 
 test('removed element does not update the field', () => {
   const field = createField(111, [uncontrolledPlugin()]);
-  const setValueSpy = jest.spyOn(field, 'setValue');
+  const setValueSpy = vi.spyOn(field, 'setValue');
 
   field.ref(element);
   field.ref(null);
@@ -134,7 +139,7 @@ test('removed element does not update the field', () => {
 });
 
 test('updates field value when input value changes', () => {
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
   const field = createField({ aaa: 111 }, [uncontrolledPlugin()]);
 
   element.type = 'number';
@@ -169,7 +174,7 @@ test('sets the initial value to the element', () => {
 
 test('input element uses input event', () => {
   const field = createField('aaa', [uncontrolledPlugin()]);
-  const setValueSpy = jest.spyOn(field, 'setValue');
+  const setValueSpy = vi.spyOn(field, 'setValue');
 
   field.ref(element);
 
@@ -184,7 +189,7 @@ test('input element uses input event', () => {
 
 test('textarea element uses input event', () => {
   const field = createField('aaa', [uncontrolledPlugin()]);
-  const setValueSpy = jest.spyOn(field, 'setValue');
+  const setValueSpy = vi.spyOn(field, 'setValue');
   const element = document.body.appendChild(document.createElement('textarea'));
 
   field.ref(element);
@@ -200,7 +205,7 @@ test('textarea element uses input event', () => {
 
 test('select element uses input event', () => {
   const field = createField('aaa', [uncontrolledPlugin()]);
-  const setValueSpy = jest.spyOn(field, 'setValue');
+  const setValueSpy = vi.spyOn(field, 'setValue');
   const element = document.body.appendChild(document.createElement('select'));
 
   field.ref(element);
@@ -217,7 +222,7 @@ test('select element uses input event', () => {
 test('uses accessor to set values to the element', () => {
   const accessorMock: ElementsValueAccessor = {
     get: () => undefined,
-    set: jest.fn(),
+    set: vi.fn(),
   };
 
   const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
@@ -236,7 +241,7 @@ test('uses accessor to set values to the element', () => {
 test('does not call set accessor if there are no referenced elements', () => {
   const accessorMock: ElementsValueAccessor = {
     get: () => undefined,
-    set: jest.fn(),
+    set: vi.fn(),
   };
 
   const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
@@ -249,7 +254,7 @@ test('does not call set accessor if there are no referenced elements', () => {
 test('multiple elements are passed to set accessor', () => {
   const accessorMock: ElementsValueAccessor = {
     get: () => 'xxx',
-    set: jest.fn(),
+    set: vi.fn(),
   };
 
   const element1 = document.createElement('input');

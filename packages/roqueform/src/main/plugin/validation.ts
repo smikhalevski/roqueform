@@ -1,5 +1,5 @@
-import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field';
-import { AbortError, publishEvents } from '../utils';
+import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field.js';
+import { AbortError, publishEvents } from '../utils.js';
 
 const ERROR_ABORT = 'Validation was aborted';
 

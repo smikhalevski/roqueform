@@ -1,20 +1,21 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "moduleResolution": "Bundler",
     "isolatedModules": true,
     "esModuleInterop": true,
-    //    "noUnusedParameters": true,
-    //    "noUnusedLocals": true,
     "strict": true,
-    "target": "ES5",
-    "module": "ES6",
-    "lib": ["ES6"],
+//    "noUnusedLocals": true,
+//    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "target": "ES2020",
+    "module": "NodeNext",
     "jsx": "react",
+    "lib": ["DOM", "ES2020"],
+    "outDir": "./lib",
     "baseUrl": ".",
     "paths": {
-      "roqueform": ["./packages/roqueform/src/main"],
-      "roqueform/plugin/*": ["./packages/roqueform/src/main/plugin/*"]
+      "roqueform": ["./packages/roqueform/src/main/index.ts"],
+      "roqueform/plugin/*": ["./packages/roqueform/src/main/plugin/*.ts"]
     }
   },
   "include": ["./packages/*/src/**/*"]

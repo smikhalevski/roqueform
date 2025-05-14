@@ -12,7 +12,6 @@
     "inherited": true
   },
   "tsconfig": "./tsconfig.json",
-  "customCss": "./node_modules/typedoc-custom-css/custom.css",
   "entryPoints": ["./packages/*/src/main/index.ts"],
   "plugin": ["typedoc-plugin-mdn-links"],
   "externalSymbolLinkMappings": {
@@ -21,8 +20,5 @@
       "ParseOptions": "https://smikhalevski.github.io/doubter/latest/interfaces/core.ParseOptions.html",
       "Shape": "https://smikhalevski.github.io/doubter/latest/classes/core.Shape.html"
     }
-  },
-  "compilerOptions": {
-    "skipLibCheck": true
   }
 }

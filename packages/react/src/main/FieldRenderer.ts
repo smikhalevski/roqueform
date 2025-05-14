@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Field } from 'roqueform';
-import { FieldSubscriptionOptions, useFieldSubscription } from './useFieldSubscription';
+import { FieldSubscriptionOptions, useFieldSubscription } from './useFieldSubscription.js';
 
 /**
  * Properties of the {@link FieldRenderer} component.

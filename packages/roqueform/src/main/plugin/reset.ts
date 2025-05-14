@@ -1,6 +1,6 @@
-import isDeepEqual from 'fast-deep-equal';
-import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../Field';
-import { isEqual, publishEvents } from '../utils';
+import isDeepEqual from 'fast-deep-equal/es6/index.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../Field.js';
+import { isEqual, publishEvents } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link resetPlugin}.

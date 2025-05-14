@@ -1,5 +1,5 @@
-import { createElementsValueAccessor, ElementsValueAccessor } from '../createElementsValueAccessor';
-import { Field, FieldPlugin } from '../Field';
+import { createElementsValueAccessor, ElementsValueAccessor } from '../createElementsValueAccessor.js';
+import { Field, FieldPlugin } from '../Field.js';
 
 /**
  * The default value accessor.

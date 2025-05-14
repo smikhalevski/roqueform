@@ -1,7 +1,12 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { expect, test, vi } from 'vitest';
 import { act } from '@testing-library/react';
-import { createField } from '../../main';
-import scrollToErrorPlugin from '../../main/plugin/scroll-to-error';
-import errorsPlugin from '../../main/plugin/errors';
+import { createField } from '../../main/index.js';
+import scrollToErrorPlugin from '../../main/plugin/scroll-to-error.js';
+import errorsPlugin from '../../main/plugin/errors.js';
 
 test('returns null if there are no errors', () => {
   const field = createField({ aaa: 111 }, [scrollToErrorPlugin()]);
@@ -18,8 +23,8 @@ test('scrolls to error at index with LTR text direction', () => {
   rootField.at('aaa').ref(aaaElement);
   rootField.at('bbb').ref(bbbElement);
 
-  const aaaScrollIntoViewMock = (aaaElement.scrollIntoView = jest.fn());
-  const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = jest.fn());
+  const aaaScrollIntoViewMock = (aaaElement.scrollIntoView = vi.fn());
+  const bbbScrollIntoViewMock = (bbbElement.scrollIntoView = vi.fn());
 
   act(() => {
     rootField.at('aaa').addError('error1');

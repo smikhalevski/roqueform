@@ -1,5 +1,6 @@
-import { createField } from '../../main';
-import { annotationsPlugin } from '../../main/plugin/annotations';
+import { expect, test, vi } from 'vitest';
+import { createField } from '../../main/index.js';
+import { annotationsPlugin } from '../../main/plugin/annotations.js';
 
 test('annotations are an empty object by default', () => {
   const field = createField({ aaa: 111 }, [annotationsPlugin({})]);
@@ -18,8 +19,8 @@ test('populates annotations with defaults', () => {
 });
 
 // test('patches root field annotations', () => {
-//   const listenerMock = jest.fn();
-//   const aaaListenerMock = jest.fn();
+//   const listenerMock = vi.fn();
+//   const aaaListenerMock = vi.fn();
 //
 //   const field = createField({ aaa: 111 }, [annotationsPlugin({ xxx: 222 })]);
 //
@@ -42,8 +43,8 @@ test('populates annotations with defaults', () => {
 // });
 
 test('patches root field annotations with callback', () => {
-  const patchMock = jest.fn(() => ({ xxx: 333 }));
-  const listenerMock = jest.fn();
+  const patchMock = vi.fn(() => ({ xxx: 333 }));
+  const listenerMock = vi.fn();
 
   const field = createField(111, [annotationsPlugin({ xxx: 222 })]);
 
@@ -58,8 +59,8 @@ test('patches root field annotations with callback', () => {
 });
 
 // test('patches child field annotations', () => {
-//   const listenerMock = jest.fn();
-//   const aaaListenerMock = jest.fn();
+//   const listenerMock = vi.fn();
+//   const aaaListenerMock = vi.fn();
 //
 //   const field = createField({ aaa: 111 }, [annotationsPlugin({ xxx: 222 })]);
 //
@@ -88,7 +89,7 @@ test('patches root field annotations with callback', () => {
 // });
 
 test('uses patcher to apply patches', () => {
-  const applyPatchMock = jest.fn((a, b) => Object.assign({}, a, b));
+  const applyPatchMock = vi.fn((a, b) => Object.assign({}, a, b));
 
   const field = createField(111, [annotationsPlugin({}, applyPatchMock)]);
 

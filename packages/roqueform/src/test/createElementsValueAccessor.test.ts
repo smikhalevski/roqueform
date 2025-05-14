@@ -1,4 +1,9 @@
-import { createElementsValueAccessor } from '../main';
+/**
+ * @vitest-environment jsdom
+ */
+
+import { describe, expect, test } from 'vitest';
+import { createElementsValueAccessor } from '../main/index.js';
 
 const accessor = createElementsValueAccessor();
 
@@ -250,7 +255,7 @@ describe('get', () => {
   });
 
   test('returns src for image inputs', () => {
-    expect(accessor.get([createElement('input', { type: 'image', src: 'aaa' })])).toBe('http://localhost/aaa');
+    expect(accessor.get([createElement('input', { type: 'image', src: 'aaa' })])).toBe('http://localhost:3000/aaa');
   });
 
   test('returns null for empty file inputs', () => {

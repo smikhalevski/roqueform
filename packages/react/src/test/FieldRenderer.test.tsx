@@ -1,6 +1,7 @@
+import { expect, test, vi } from 'vitest';
 import React from 'react';
 import { act, render } from '@testing-library/react';
-import { FieldRenderer, useField } from '../main';
+import { FieldRenderer, useField } from '../main/index.js';
 import { createField } from 'roqueform';
 
 test('passes the field as an argument', () => {
@@ -21,7 +22,7 @@ test('passes the field as an argument', () => {
 });
 
 test('re-renders if field value is changed', () => {
-  const renderMock = jest.fn();
+  const renderMock = vi.fn();
   const rootField = createField();
 
   render(<FieldRenderer field={rootField}>{renderMock}</FieldRenderer>);
@@ -32,7 +33,7 @@ test('re-renders if field value is changed', () => {
 });
 
 // test('does not re-render if child field value is changed', () => {
-//   const renderMock = jest.fn();
+//   const renderMock = vi.fn();
 //   const rootField = createField();
 //
 //   render(<FieldRenderer field={rootField}>{renderMock}</FieldRenderer>);
@@ -43,7 +44,7 @@ test('re-renders if field value is changed', () => {
 // });
 
 test('re-renders if isEagerlyUpdated and child field value is changed', () => {
-  const renderMock = jest.fn();
+  const renderMock = vi.fn();
   const rootField = createField();
 
   render(
@@ -61,7 +62,7 @@ test('re-renders if isEagerlyUpdated and child field value is changed', () => {
 });
 
 test('triggers onChange when value is changed non-transiently', async () => {
-  const handleChangeMock = jest.fn();
+  const handleChangeMock = vi.fn();
   const rootField = createField();
 
   render(
@@ -80,7 +81,7 @@ test('triggers onChange when value is changed non-transiently', async () => {
 });
 
 test('does not trigger onChange when value is changed transiently', async () => {
-  const handleChangeMock = jest.fn();
+  const handleChangeMock = vi.fn();
   const rootField = createField();
 
   render(

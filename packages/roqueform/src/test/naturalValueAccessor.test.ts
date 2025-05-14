@@ -1,4 +1,5 @@
-import { naturalValueAccessor } from '../main';
+import { expect, test } from 'vitest';
+import { naturalValueAccessor } from '../main/index.js';
 
 test('does not read value from primitive values', () => {
   expect(naturalValueAccessor.get(null, 'aaa')).toBeUndefined();

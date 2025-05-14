@@ -1,9 +1,10 @@
-import { createField, FieldEvent, naturalValueAccessor } from '../main';
+import { beforeEach, expect, test, vi } from 'vitest';
+import { createField, FieldEvent, naturalValueAccessor } from '../main/index.js';
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 beforeEach(() => {
-  jest.clearAllTimers();
+  vi.clearAllTimers();
 });
 
 test('creates a field without an initial value', () => {
@@ -87,8 +88,8 @@ test('sets a value to a child field', () => {
 });
 
 test('calls a listener when value is updated', () => {
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   const field = createField({ aaa: 111 });
 
@@ -125,8 +126,8 @@ test('calls a listener when value is updated', () => {
 });
 
 test('does not invoke the listener of the unchanged sibling field', () => {
-  const aaaListenerMock = jest.fn();
-  const bbbListenerMock = jest.fn();
+  const aaaListenerMock = vi.fn();
+  const bbbListenerMock = vi.fn();
 
   const field = createField({ aaa: 111, bbb: 'aaa' });
 
@@ -148,8 +149,8 @@ test('does not invoke the listener of the unchanged sibling field', () => {
 });
 
 test('does not invoke the listener of the unchanged child field', () => {
-  const aaaListenerMock = jest.fn();
-  const bbbListenerMock = jest.fn();
+  const aaaListenerMock = vi.fn();
+  const bbbListenerMock = vi.fn();
 
   const field = createField({ aaa: 111, bbb: 'aaa' });
 
@@ -199,8 +200,8 @@ test('flushes transient value after it was set to a child field', () => {
 });
 
 test('invokes a listener when a value is updated transiently', () => {
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   const field = createField({ aaa: 111 });
   field.subscribe(listenerMock);
@@ -213,10 +214,10 @@ test('invokes a listener when a value is updated transiently', () => {
 });
 
 test('does not leave fields in an inconsistent state if a listener throws an error', () => {
-  const aaaListenerMock = jest.fn(() => {
+  const aaaListenerMock = vi.fn(() => {
     throw new Error('aaaExpected');
   });
-  const bbbListenerMock = jest.fn(() => {
+  const bbbListenerMock = vi.fn(() => {
     throw new Error('bbbExpected');
   });
 
@@ -236,8 +237,8 @@ test('does not leave fields in an inconsistent state if a listener throws an err
 });
 
 test('propagates a new value to the child field', () => {
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   const field = createField({ aaa: 111 });
   field.subscribe(listenerMock);
@@ -258,8 +259,8 @@ test('propagates a new value to the child field', () => {
 });
 
 test('does not propagate a new value to the transient child field', () => {
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   const field = createField({ aaa: 111 });
   field.subscribe(listenerMock);
@@ -277,8 +278,8 @@ test('does not propagate a new value to the transient child field', () => {
 });
 
 test('does not notify listeners if a value of the child field did not change', () => {
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   const aaaValue = { bbb: 111 };
   const initialValue = { aaa: aaaValue };
@@ -303,7 +304,7 @@ test('does not notify listeners if a value of the child field did not change', (
 });
 
 test('applies a plugin to the root field', () => {
-  const pluginMock = jest.fn();
+  const pluginMock = vi.fn();
 
   const field = createField(111, [pluginMock]);
 
@@ -312,7 +313,7 @@ test('applies a plugin to the root field', () => {
 });
 
 test('applies a plugin to the child field', () => {
-  const pluginMock = jest.fn();
+  const pluginMock = vi.fn();
 
   const field = createField({ aaa: 111 }, [pluginMock]);
 
@@ -323,21 +324,22 @@ test('applies a plugin to the child field', () => {
   expect(pluginMock).toHaveBeenNthCalledWith(2, aaaField);
 });
 
-test('an actual parent value is visible in the child field listener', done => {
-  const field = createField({ aaa: 111 });
+test('an actual parent value is visible in the child field listener', () =>
+  new Promise<void>(done => {
+    const field = createField({ aaa: 111 });
 
-  field.at('aaa').subscribe(event => {
-    expect(event.target.value).toBe(222);
-    done();
-  });
+    field.at('aaa').subscribe(event => {
+      expect(event.target.value).toBe(222);
+      done();
+    });
 
-  field.setValue({ aaa: 222 });
-});
+    field.setValue({ aaa: 222 });
+  }));
 
 test('setting field value in a listener does not trigger an infinite loop', () => {
   const field = createField(111);
 
-  const listenerMock = jest.fn(() => {
+  const listenerMock = vi.fn(() => {
     field.setValue(333);
   });
 
@@ -352,7 +354,7 @@ test('setting field value in a listener does not trigger an infinite loop', () =
 test('setting field value in a child field listener does not trigger an infinite loop', () => {
   const field = createField({ aaa: 111 });
 
-  const listenerMock = jest.fn(() => {
+  const listenerMock = vi.fn(() => {
     field.at('aaa').setValue(333);
   });
 

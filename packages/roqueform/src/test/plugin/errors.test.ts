@@ -1,5 +1,6 @@
-import { createField } from '../../main';
-import errorsPlugin from '../../main/plugin/errors';
+import { expect, test, vi } from 'vitest';
+import { createField } from '../../main/index.js';
+import errorsPlugin from '../../main/plugin/errors.js';
 
 test('enhances the field', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
@@ -14,8 +15,8 @@ test('enhances the field', () => {
 test('adds an error to the root field', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   const errors = field.errors;
 
@@ -38,8 +39,8 @@ test('adds an error to the root field', () => {
 test('adds an error to the child field', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -59,8 +60,8 @@ test('adds an error to the child field', () => {
 test('does not add duplicated error by default', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -80,7 +81,7 @@ test('does not add duplicated error by default', () => {
 
 test('uses concatErrors to add a new error', () => {
   const errors = [333];
-  const concatErrorsMock = jest.fn(() => errors);
+  const concatErrorsMock = vi.fn(() => errors);
 
   const field = createField({ aaa: 111 }, [errorsPlugin(concatErrorsMock)]);
 
@@ -94,8 +95,8 @@ test('uses concatErrors to add a new error', () => {
 test('deletes an error from the root field', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -116,8 +117,8 @@ test('deletes an error from the root field', () => {
 test('deletes an error from the child field', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -138,9 +139,9 @@ test('deletes an error from the child field', () => {
 test('deletes an error from the child field but parent remains invalid', () => {
   const field = createField({ aaa: 111, bbb: 222 }, [errorsPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
-  const bbbListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
+  const bbbListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -168,9 +169,9 @@ test('deletes an error from the child field but parent remains invalid', () => {
 test('clears errors recursively', () => {
   const field = createField({ aaa: 111, bbb: 222 }, [errorsPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
-  const bbbListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
+  const bbbListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);

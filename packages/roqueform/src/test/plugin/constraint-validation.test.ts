@@ -1,8 +1,13 @@
-import { fireEvent } from '@testing-library/dom';
-import { createField } from '../../main';
-import { constraintValidationPlugin } from '../../main/plugin/constraint-validation';
+/**
+ * @vitest-environment jsdom
+ */
 
-jest.useFakeTimers();
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { fireEvent } from '@testing-library/dom';
+import { createField } from '../../main/index.js';
+import { constraintValidationPlugin } from '../../main/plugin/constraint-validation.js';
+
+vi.useFakeTimers();
 
 let element: HTMLInputElement;
 
@@ -13,7 +18,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.clearAllTimers();
+  vi.clearAllTimers();
   element.remove();
 });
 
@@ -62,7 +67,7 @@ test('reports validity of the child field', () => {
 test('deletes an error when a ref is changed', () => {
   const field = createField(111, [constraintValidationPlugin()]);
 
-  const listenerMock = jest.fn();
+  const listenerMock = vi.fn();
 
   field.subscribe(listenerMock);
 
@@ -70,14 +75,14 @@ test('deletes an error when a ref is changed', () => {
 
   field.ref(element);
 
-  jest.runAllTimers();
+  vi.runAllTimers();
 
   expect(field.isInvalid).toBe(true);
   expect(listenerMock).toHaveBeenCalledTimes(1);
 
   field.ref(null);
 
-  jest.runAllTimers();
+  vi.runAllTimers();
 
   expect(field.isInvalid).toBe(false);
   expect(listenerMock).toHaveBeenCalledTimes(2);
@@ -86,8 +91,8 @@ test('deletes an error when a ref is changed', () => {
 test('notifies the field when the value is changed', () => {
   const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -97,7 +102,7 @@ test('notifies the field when the value is changed', () => {
 
   field.at('aaa').ref(element);
 
-  jest.runAllTimers();
+  vi.runAllTimers();
 
   expect(listenerMock).toHaveBeenCalledTimes(1);
   expect(field.at('aaa').isInvalid).toBe(false);

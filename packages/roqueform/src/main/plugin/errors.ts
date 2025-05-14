@@ -1,5 +1,5 @@
-import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field';
-import { emptyObject, publishEvents } from '../utils';
+import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field.js';
+import { emptyObject, publishEvents } from '../utils.js';
 
 /**
  * Options of the {@link ErrorsMixin.clearErrors} method.

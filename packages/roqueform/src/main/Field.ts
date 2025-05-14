@@ -1,5 +1,5 @@
 import { PubSub } from 'parallel-universe';
-import { callOrGet, isEqual, publishEvents } from './utils';
+import { callOrGet, isEqual, publishEvents } from './utils.js';
 
 declare const MIXIN: unique symbol;
 

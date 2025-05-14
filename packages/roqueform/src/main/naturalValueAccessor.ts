@@ -1,4 +1,4 @@
-import { ValueAccessor } from './Field';
+import { ValueAccessor } from './Field.js';
 
 /**
  * The value accessor that reads and writes key-value pairs to well-known object instances.

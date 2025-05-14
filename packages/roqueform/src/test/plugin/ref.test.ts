@@ -1,5 +1,10 @@
-import { createField } from '../../main';
-import refPlugin from '../../main/plugin/ref';
+/**
+ * @vitest-environment jsdom
+ */
+
+import { expect, test } from 'vitest';
+import { createField } from '../../main/index.js';
+import refPlugin from '../../main/plugin/ref.js';
 
 test('adds an element property to the field', () => {
   const field = createField({ aaa: 111 }, [refPlugin()]);
@@ -18,7 +23,7 @@ test('ref updates an element property', () => {
 });
 
 // test('preserves the ref from preceding plugin', () => {
-//   const refMock = jest.fn();
+//   const refMock = vi.fn();
 //
 //   const field = createField({ aaa: 111 }, [field => Object.assign(field, { ref: refMock }), refPlugin()]);
 //

@@ -1,4 +1,4 @@
-import { FieldPlugin } from '../Field';
+import { FieldPlugin } from '../Field.js';
 
 /**
  * The plugin added to fields by the {@link refPlugin}.

@@ -1,5 +1,5 @@
-import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../Field';
-import { callOrGet, publishEvents } from '../utils';
+import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../Field.js';
+import { callOrGet, publishEvents } from '../utils.js';
 
 interface ReadonlyDict {
   readonly [key: string]: any;

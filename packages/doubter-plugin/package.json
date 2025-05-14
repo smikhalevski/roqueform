@@ -2,25 +2,23 @@
   "name": "@roqueform/doubter-plugin",
   "version": "3.2.0",
   "description": "Validates Roqueform fields with Doubter shapes.",
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
-  "types": "./lib/index.d.ts",
+  "main": "./index.js",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
     },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
-  "files": [
-    "lib"
-  ],
   "scripts": {
-    "build": "rollup --config ../roqueform/rollup.config.js",
+    "build": "tsc --project tsconfig.build.json && node ../../rewrite.mjs lib && tsc --project tsconfig.build.json --module CommonJS && cp package.json README.md ../../LICENSE.txt lib/ && cd lib && npm pkg delete type scripts devDependencies",
     "clean": "rimraf lib",
-    "test": "jest --config ../../jest.config.js",
+    "test": "vitest run",
     "test:definitions": "tsd --files './src/test/**/*.test-d.ts'"
   },
   "repository": {

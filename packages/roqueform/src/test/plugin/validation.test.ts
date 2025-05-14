@@ -1,6 +1,7 @@
-import { createField, FieldEvent } from '../../main';
-import validationPlugin from '../../main/plugin/validation';
-import errorsPlugin from '../../main/plugin/errors';
+import { expect, test, vi } from 'vitest';
+import { createField, FieldEvent } from '../../main/index.js';
+import validationPlugin from '../../main/plugin/validation.js';
+import { AbortError } from '../../main/utils.js';
 
 test('synchronously validates the root field', () => {
   const field = createField({ aaa: 111 }, [
@@ -11,8 +12,8 @@ test('synchronously validates the root field', () => {
     }),
   ]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -81,8 +82,8 @@ test('synchronously validates the child field', () => {
     }),
   ]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -137,8 +138,8 @@ test('asynchronously validates the root field', async () => {
     }),
   ]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -214,8 +215,8 @@ test('asynchronously validates the child field', async () => {
     }),
   ]);
 
-  const listenerMock = jest.fn();
-  const aaaListenerMock = jest.fn();
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
   field.subscribe(listenerMock);
   field.at('aaa').subscribe(aaaListenerMock);
@@ -301,7 +302,7 @@ test('aborts validation', async () => {
   expect(field.isValidating).toBe(false);
   expect(field.at('aaa').isValidating).toBe(false);
 
-  await expect(promise).rejects.toEqual(new Error('Validation was aborted'));
+  await expect(promise).rejects.toEqual(AbortError('Validation was aborted'));
 });
 
 test('aborts pending validation when invoked on the same field', async () => {
@@ -322,7 +323,7 @@ test('aborts pending validation when invoked on the same field', async () => {
   expect(signals[0].aborted).toBe(true);
   expect(signals[1].aborted).toBe(false);
 
-  await expect(promise).rejects.toEqual(new Error('Validation was aborted'));
+  await expect(promise).rejects.toEqual(AbortError('Validation was aborted'));
 });
 
 test('child field validation aborts the parent validation', async () => {
@@ -339,7 +340,7 @@ test('child field validation aborts the parent validation', async () => {
   const promise = field.validateAsync();
   const aaaPromise = field.at('aaa').validateAsync();
 
-  await expect(promise).rejects.toEqual(new Error('Validation was aborted'));
+  await expect(promise).rejects.toEqual(AbortError('Validation was aborted'));
   await expect(aaaPromise).resolves.toBe(true);
 
   expect(signals[0].aborted).toBe(true);
@@ -353,7 +354,7 @@ test('child field validation aborts the parent validation', async () => {
 //     }),
 //   ]);
 //
-//   const listenerMock = jest.fn((event: FieldEvent) => {
+//   const listenerMock = vi.fn((event: FieldEvent) => {
 //     if (event.type === 'valueChanged') {
 //       field.validate();
 //     }
@@ -376,8 +377,8 @@ test('child field validation aborts the parent validation', async () => {
 //     }),
 //   ]);
 //
-//   const listenerMock = jest.fn();
-//   const aaaListenerMock = jest.fn();
+//   const listenerMock = vi.fn();
+//   const aaaListenerMock = vi.fn();
 //
 //   field.subscribe(listenerMock);
 //   field.at('aaa').subscribe(aaaListenerMock);
@@ -463,8 +464,8 @@ test('child field validation aborts the parent validation', async () => {
 //     }),
 //   ]);
 //
-//   const listenerMock = jest.fn();
-//   const aaaListenerMock = jest.fn();
+//   const listenerMock = vi.fn();
+//   const aaaListenerMock = vi.fn();
 //
 //   field.subscribe(listenerMock);
 //   field.at('aaa').subscribe(aaaListenerMock);

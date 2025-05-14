@@ -1,6 +1,6 @@
-import { naturalValueAccessor } from './naturalValueAccessor';
-import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './Field';
-import { callOrGet } from './utils';
+import { naturalValueAccessor } from './naturalValueAccessor.js';
+import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './Field.js';
+import { callOrGet } from './utils.js';
 
 /**
  * Creates the new field instance.
