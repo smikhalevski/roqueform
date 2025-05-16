@@ -110,8 +110,8 @@ export default function errorsPlugin<Error = any>(
       field.publish({ type: 'errorDeleted', target: field, relatedTarget: null, payload: error });
     };
 
-    field.clearErrors = options => {
-      publishEvents(clearErrors(field, options || emptyObject, []));
+    field.clearErrors = (options = emptyObject) => {
+      publishEvents(clearErrors(field, options, []));
     };
 
     field.getInvalidFields = () => getInvalidFields(field, []);

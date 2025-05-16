@@ -1,3 +1,4 @@
+import { PubSub } from 'parallel-universe';
 import { FieldEvent } from './Field.js';
 
 export const emptyObject = {};
@@ -46,3 +47,93 @@ export function publishEvents(events: FieldEvent[]): void {
     event.target.publish(event);
   }
 }
+
+export interface ObservableRefChangeEvent<V> {
+  target: ObservableRef<V>;
+  prevValue: V;
+  nextValue: V;
+}
+
+export class ObservableRef<V> {
+  protected _value: V;
+  protected _pubSub = new PubSub<ObservableRefChangeEvent<V>>();
+
+  constructor(initialValue: V) {
+    this._value = initialValue;
+  }
+
+  get current(): V {
+    return this._value;
+  }
+
+  set current(value: V) {
+    const prevValue = this._value;
+
+    if (prevValue === value) {
+      return;
+    }
+
+    this._value = value;
+    this._pubSub.publish({ target: this, prevValue, nextValue: value });
+  }
+
+  subscribe(listener: (event: ObservableRefChangeEvent<V>) => void): () => void {
+    return this._pubSub.subscribe(listener);
+  }
+}
+
+export class ObservableRefArray<V> extends ObservableRef<V> implements ArrayLike<ObservableRef<V>> {
+  readonly [index: number]: ObservableRef<V>;
+
+  protected _refs: ObservableRef<V>[] = [];
+
+  constructor(initialValue: V) {
+    super(initialValue);
+
+    new Proxy(this, observableRefArrayProxyHandler);
+  }
+
+  get length(): number {
+    return this._refs.length;
+  }
+
+  get current(): V {
+    return this[0].current;
+  }
+
+  set current(value: V) {
+    this[0].current = value;
+  }
+
+  toArray(): ObservableRef<V>[] {
+    return this._refs.slice(0);
+  }
+}
+
+function toArrayIndex(k: any): number {
+  return typeof k === 'string' && k === '' + (k = +k) && k >>> 0 === k ? k : -1;
+}
+
+const observableRefArrayProxyHandler: ProxyHandler<ObservableRefArray<any>> = {
+  get(target, k: any) {
+    if (k in target) {
+      return target[k];
+    }
+
+    const index = toArrayIndex(k);
+
+    if (index === -1) {
+      return undefined;
+    }
+
+    let ref = target['_refs'][index];
+
+    if (ref === undefined) {
+      ref = target['_refs'][index] = new ObservableRef(target['_value']);
+
+      ref.subscribe(event => target['_pubSub'].publish(event));
+    }
+
+    return ref;
+  },
+};

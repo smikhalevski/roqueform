@@ -1,5 +1,6 @@
-import { createElementsValueAccessor, ElementsValueAccessor } from '../createElementsValueAccessor.js';
+import { createElementsValueAccessor } from '../createElementsValueAccessor.js';
 import { Field, FieldPlugin } from '../Field.js';
+import { ObservableRefArray } from '../utils.js';
 
 /**
  * The default value accessor.
@@ -11,144 +12,69 @@ const elementsValueAccessor = createElementsValueAccessor();
  */
 export interface UncontrolledMixin {
   /**
-   * The DOM element associated with the field, or `null` if there's no associated element.
-   */
-  element: Element | null;
-
-  /**
-   * The array of elements that are used to derive the field value, includes {@link element}.
-   */
-  targetElements: readonly Element[];
-
-  /**
-   * The accessor that reads and writes the field value from and to {@link targetElements}.
-   */
-  elementsValueAccessor: ElementsValueAccessor;
-
-  /**
    * Associates the field with the DOM element.
    */
-  ref(element: Element | null): void;
-
-  /**
-   * Returns a callback that associates the field with the DOM element under the given key. The same callback is
-   * returned when this method is called with the same key.
-   *
-   * @param key The key for which the reference callback must be returned. To associate multiple elements with the same
-   * field, use different keys.
-   */
-  refFor(key: unknown): (element: Element | null) => void;
+  ref: ObservableRefArray<Element | null>;
 }
 
 /**
  * Updates field value when the DOM element value is changed and vice versa.
  */
 export default function uncontrolledPlugin(accessor = elementsValueAccessor): FieldPlugin<any, UncontrolledMixin> {
-  return field => {
-    const { ref } = field;
-
-    field.element = null;
-    field.targetElements = [];
-    field.elementsValueAccessor = accessor;
-
-    const elementsMap = new Map<unknown, Element>();
-    const refsMap = new Map<unknown, (element: Element | null) => void>();
+  return (field: Field<unknown, UncontrolledMixin>) => {
+    field.ref = new ObservableRefArray(null);
 
     let prevValue = field.value;
 
-    const changeListener: EventListener = event => {
-      if (field.targetElements.includes(event.target as Element)) {
-        prevValue = field.elementsValueAccessor.get(field.targetElements);
-        field.setValue(prevValue);
+    const handleChange: EventListener = event => {
+      const elements = getElements(field.ref);
+
+      if (!elements.includes(event.target as Element)) {
+        return;
       }
+
+      prevValue = accessor.get(elements);
+      field.setValue(prevValue);
     };
 
     field.subscribe(event => {
-      if (
-        event.type === 'valueChanged' &&
-        event.target === field &&
-        field.value !== prevValue &&
-        field.targetElements.length !== 0
-      ) {
-        field.elementsValueAccessor.set(field.targetElements, field.value);
+      if (event.type !== 'valueChanged' || event.target !== field || field.value === prevValue) {
+        return;
+      }
+
+      const elements = getElements(field.ref);
+
+      if (elements.length !== 0) {
+        accessor.set(elements, field.value);
       }
     });
 
-    field.ref = nextElement => {
-      const prevElement = field.element;
+    field.ref.subscribe(event => {
+      const { prevValue, nextValue } = event;
 
-      ref?.(nextElement);
-
-      field.element = swapElements(field, changeListener, prevElement, nextElement);
-    };
-
-    field.refFor = key => {
-      let ref = refsMap.get(key);
-
-      if (ref === undefined) {
-        ref = nextElement => {
-          const prevElement = elementsMap.get(key) || null;
-
-          nextElement = swapElements(field, changeListener, prevElement, nextElement);
-
-          if (prevElement === nextElement) {
-            return;
-          }
-          if (nextElement === null) {
-            elementsMap.delete(key);
-          } else {
-            elementsMap.set(key, nextElement);
-          }
-        };
-        refsMap.set(key, ref);
+      if (prevValue !== null) {
+        prevValue.removeEventListener('input', handleChange);
+      }
+      if (nextValue !== null) {
+        nextValue.addEventListener('input', handleChange);
       }
 
-      return ref;
-    };
+      const elements = getElements(field.ref);
+
+      if (elements.length !== 0) {
+        accessor.set(elements, field.value);
+      }
+    });
   };
 }
 
-function swapElements(
-  field: Field<unknown, UncontrolledMixin>,
-  changeListener: EventListener,
-  prevElement: Element | null,
-  nextElement: Element | null
-): Element | null {
-  const elements = field.targetElements as Element[];
+function getElements(refArray: ObservableRefArray<Element | null>): Element[] {
+  const elements = [];
 
-  nextElement = nextElement instanceof Element ? nextElement : null;
-
-  if (prevElement === nextElement) {
-    return nextElement;
-  }
-
-  let prevIndex = -1;
-
-  if (prevElement !== null) {
-    prevElement.removeEventListener('input', changeListener);
-    prevElement.removeEventListener('change', changeListener);
-    prevIndex = elements.indexOf(prevElement);
-  }
-
-  if (nextElement !== null && elements.indexOf(nextElement) === -1) {
-    nextElement.addEventListener(
-      nextElement.tagName === 'INPUT' || nextElement.tagName === 'TEXTAREA' ? 'input' : 'change',
-      changeListener
-    );
-
-    if (prevIndex === -1) {
-      elements.push(nextElement);
-    } else {
-      elements[prevIndex] = nextElement;
-      prevIndex = -1;
+  for (const ref of refArray.toArray()) {
+    if (ref.current !== null) {
+      elements.push(ref.current);
     }
   }
-
-  if (prevIndex !== -1) {
-    elements.splice(prevIndex, 1);
-  }
-  if (elements.length !== 0) {
-    field.elementsValueAccessor.set(elements, field.value);
-  }
-  return nextElement;
+  return elements;
 }

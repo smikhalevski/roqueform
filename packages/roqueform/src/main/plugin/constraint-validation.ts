@@ -1,38 +1,33 @@
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field.js';
+import { ObservableRef } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link constraintValidationPlugin}.
  */
 export interface ConstraintValidationMixin {
   /**
-   * The DOM element that supports the Constraint validation API associated with the field, or `null` if there's no
-   * such element.
-   */
-  validatedElement: ValidatableElement | null;
-
-  /**
    * `true` if this field has {@link validity a validity issue}, or `false` otherwise.
    */
   readonly isInvalid: boolean;
 
   /**
-   * The copy of the last reported [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState)
-   * read from the {@link validatedElement}, or `null` if there's no associated validatable element.
-   */
-  validity: ValidityState | null;
-
-  /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref(element: Element | null): void;
+  ref: ObservableRef<Element | null>;
+
+  /**
+   * The copy of the last reported [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState)
+   * read from the {@link ref validated element}.
+   */
+  validity: Readonly<ValidityState>;
 
   /**
    * Shows error message balloon for the first element that is associated with this field or any of its child fields,
    * that has an associated error via calling
    * {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/reportValidity reportValidity}.
    *
-   * @returns `true` if a field doesn't have an error, or `false` otherwise.
+   * @returns `true` if a field and all of its children are valid, or `false` otherwise.
    */
   reportValidity(): boolean;
 
@@ -43,62 +38,20 @@ export interface ConstraintValidationMixin {
 }
 
 /**
- * A DOM element which supports Constraint validation API.
- */
-export type ValidatableElement =
-  | HTMLButtonElement
-  | HTMLFieldSetElement
-  | HTMLFormElement
-  | HTMLInputElement
-  | HTMLObjectElement
-  | HTMLOutputElement
-  | HTMLSelectElement
-  | HTMLTextAreaElement;
-
-/**
  * Enhances fields with
  * the [Constraint validation API.](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) methods.
  */
 export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidationMixin> {
   return field => {
-    const { ref } = field;
-
-    const valueChangeListener = () => {
-      applyValidity(field);
-    };
-
-    field.validatedElement = null;
-    field.validity = null;
-
     Object.defineProperty(field, 'isInvalid', {
       configurable: true,
 
-      get: () => field.validity !== null && !field.validity.valid,
+      get: () => field.validity.valid,
     });
 
-    field.ref = nextElement => {
-      const prevElement = field.validatedElement;
+    field.ref ||= new ObservableRef(null);
 
-      ref?.(nextElement);
-
-      if (prevElement === nextElement) {
-        return;
-      }
-
-      field.validatedElement = nextElement = isValidatable(nextElement) ? nextElement : null;
-
-      if (prevElement !== null) {
-        prevElement.removeEventListener('input', valueChangeListener);
-        prevElement.removeEventListener('change', valueChangeListener);
-      }
-
-      if (isValidatable(nextElement)) {
-        nextElement.addEventListener('input', valueChangeListener);
-        nextElement.addEventListener('change', valueChangeListener);
-      }
-
-      setTimeout(valueChangeListener, 0);
-    };
+    field.validity = createValidity();
 
     field.getInvalidFields = () => getInvalidFields(field, []);
 
@@ -106,15 +59,32 @@ export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidat
 
     field.subscribe(event => {
       if (event.type === 'valueChanged' && event.target === field) {
-        valueChangeListener();
+        checkValidity(field);
+      }
+    });
+
+    const handleChange = () => checkValidity(field);
+
+    field.ref.subscribe(event => {
+      const { prevValue, nextValue } = event;
+
+      if (prevValue !== null) {
+        prevValue.removeEventListener('input', handleChange);
+      }
+      if (nextValue !== null) {
+        nextValue.addEventListener('input', handleChange);
       }
     });
   };
 }
 
-function applyValidity(field: Field<unknown, ConstraintValidationMixin>): void {
+function checkValidity(field: Field<unknown, ConstraintValidationMixin>): void {
+  if (!isValidatable(field.ref.current)) {
+    return;
+  }
+
   const prevValidity = field.validity;
-  const nextValidity = field.validatedElement !== null ? cloneValidity(field.validatedElement.validity) : null;
+  const nextValidity = cloneValidity(field.ref.current.validity);
 
   if (isDeepEqual(prevValidity, nextValidity)) {
     return;
@@ -132,7 +102,7 @@ function reportValidity(field: Field<unknown, ConstraintValidationMixin>): boole
     }
   }
 
-  return field.validatedElement === null || field.validatedElement.reportValidity();
+  return !isValidatable(field.ref.current) || field.ref.current.reportValidity();
 }
 
 function getInvalidFields(
@@ -150,7 +120,7 @@ function getInvalidFields(
   return batch;
 }
 
-function isValidatable(element: Element | null): element is ValidatableElement {
+function isValidatable(element: Element | null): element is HTMLInputElement {
   return element instanceof Element && 'validity' in element && element.validity instanceof ValidityState;
 }
 
@@ -167,5 +137,21 @@ function cloneValidity(validity: ValidityState): ValidityState {
     typeMismatch: validity.typeMismatch,
     valid: validity.valid,
     valueMissing: validity.valueMissing,
+  };
+}
+
+function createValidity(): ValidityState {
+  return {
+    badInput: false,
+    customError: false,
+    patternMismatch: false,
+    rangeOverflow: false,
+    rangeUnderflow: false,
+    stepMismatch: false,
+    tooLong: false,
+    tooShort: false,
+    typeMismatch: false,
+    valid: false,
+    valueMissing: false,
   };
 }

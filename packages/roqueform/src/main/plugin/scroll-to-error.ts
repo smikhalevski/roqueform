@@ -10,14 +10,9 @@ export interface ScrollToErrorMixin {
   isInvalid?: boolean;
 
   /**
-   * The DOM element associated with the field, or `null` if there's no associated element.
-   */
-  element: Element | null;
-
-  /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref(element: Element | null): void;
+  ref: { current: Element | null };
 
   /**
    * Scroll to the element that is referenced by an invalid field. Scrolls the field element's ancestor containers such
@@ -58,15 +53,7 @@ export interface ScrollToErrorMixin {
  */
 export default function scrollToErrorPlugin(): FieldPlugin<any, ScrollToErrorMixin> {
   return field => {
-    const { ref } = field;
-
-    field.element = null;
-
-    field.ref = element => {
-      ref?.(element);
-
-      field.element = element instanceof Element ? element : null;
-    };
+    field.ref = { current: null };
 
     field.scrollToError = (index = 0, options) => {
       const targets = getTargetFields(field, []);
@@ -77,11 +64,11 @@ export default function scrollToErrorPlugin(): FieldPlugin<any, ScrollToErrorMix
 
       const target = targets.sort(sortByDocumentOrder)[index < 0 ? targets.length + index : index];
 
-      if (target === undefined) {
+      if (target === undefined || target.ref.current === null) {
         return null;
       }
 
-      target.element!.scrollIntoView(options);
+      target.ref.current.scrollIntoView(options);
       return target;
     };
   };
@@ -91,7 +78,7 @@ function getTargetFields(
   field: Field<unknown, ScrollToErrorMixin>,
   batch: Field<unknown, ScrollToErrorMixin>[]
 ): Field<unknown, ScrollToErrorMixin>[] {
-  if (field.isInvalid && field.element !== null && field.element.isConnected) {
+  if (field.isInvalid && field.ref.current !== null && field.ref.current.isConnected) {
     batch.push(field);
   }
 
@@ -103,10 +90,10 @@ function getTargetFields(
 }
 
 function sortByDocumentOrder(a: Field<unknown, ScrollToErrorMixin>, b: Field<unknown, ScrollToErrorMixin>): number {
-  const aElement = a.element!;
-  const bElement = b.element!;
+  const aElement = a.ref.current;
+  const bElement = b.ref.current;
 
-  if (aElement === bElement) {
+  if (aElement === null || bElement === null || aElement === bElement) {
     return 0;
   }
 

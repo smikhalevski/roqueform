@@ -24,8 +24,8 @@ export interface ResetMixin {
   reset(): void;
 
   /**
-   * Returns all fields that have {@link roqueform!BareField.value a value} that is different from
-   * {@link roqueform!BareField.initialValue an initial value}.
+   * Returns all fields that have {@link roqueform!FieldImpl.value a value} that is different from
+   * {@link roqueform!FieldImpl.initialValue an initial value}.
    *
    * @see {@link isDirty}
    */

@@ -5,11 +5,6 @@ import { FieldPlugin } from '../Field.js';
  */
 export interface RefMixin {
   /**
-   * The DOM element associated with the field, or `null` if there's no associated element.
-   */
-  element: Element | null;
-
-  /**
    * `true` if {@link element the DOM element} is focused, or `false` otherwise.
    */
   readonly isFocused: boolean;
@@ -17,7 +12,7 @@ export interface RefMixin {
   /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref(element: Element | null): void;
+  ref: { current: Element | null };
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -56,33 +51,27 @@ export default function refPlugin(): FieldPlugin<any, RefMixin> {
 }
 
 const refFieldPlugin: FieldPlugin<any, RefMixin> = field => {
-  const { ref } = field;
-
-  field.element = null;
+  field.ref = { current: null };
 
   Object.defineProperty(field, 'isFocused', {
     configurable: true,
-    get: () => field.element !== null && field.element === field.element.ownerDocument.activeElement,
+
+    get: () => field.ref.current !== null && field.ref.current === field.ref.current.ownerDocument.activeElement,
   });
 
-  field.ref = element => {
-    ref?.(element);
-    field.element = element instanceof Element ? element : null;
-  };
-
   field.scrollIntoView = options => {
-    field.element?.scrollIntoView(options);
+    field.ref.current?.scrollIntoView(options);
   };
 
   field.focus = options => {
-    if (isFocusable(field.element)) {
-      field.element.focus(options);
+    if (isFocusable(field.ref.current)) {
+      field.ref.current.focus(options);
     }
   };
 
   field.blur = () => {
-    if (isFocusable(field.element)) {
-      field.element.blur();
+    if (isFocusable(field.ref.current)) {
+      field.ref.current.blur();
     }
   };
 };
