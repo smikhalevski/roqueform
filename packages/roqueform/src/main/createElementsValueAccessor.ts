@@ -117,6 +117,18 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
     const element = elements[0];
     const { type, valueAsNumber } = element;
 
+    if (element.tagName === 'SELECT' && element.multiple) {
+      const values = [];
+
+      for (const option of element.options) {
+        if (option.selected) {
+          values.push(option.value);
+        }
+      }
+
+      return values;
+    }
+
     if (element.tagName !== 'INPUT') {
       return 'value' in element ? element.value : null;
     }
@@ -194,6 +206,15 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
   const set: ElementsValueAccessor['set'] = (elements, value) => {
     const element = elements[0];
     const { type } = element;
+
+    if (element.tagName === 'SELECT' && element.multiple && Array.isArray(value)) {
+      for (const option of element.options) {
+        if (value.includes(option.value)) {
+          option.selected = true;
+        }
+      }
+      return;
+    }
 
     if (element.tagName !== 'INPUT') {
       if ('value' in element) {
