@@ -920,7 +920,7 @@ export const App = () => {
             // 🌕 An arbitrary name of a radio group
             name="property-color"
             value={color}
-            ref={field.at('properties').at('color').refFor(color)}
+            ref={field.at('properties').at('color').ref.at(color)}
           />
           {color}
         </label>
@@ -960,12 +960,12 @@ The plugin derives the field value from the element's `value` attribute:
     type="checkbox"
     value="Mars"
     // 🌕 The unique key associated with this is 1.
-    ref={namesField.refFor(1)}
+    ref={namesField.ref.at(1)}
   />
   <input
     type="checkbox"
     value="Pluto"
-    ref={namesField.refFor(2)}
+    ref={namesField.ref.at(2)}
   />
 </form>
 ```

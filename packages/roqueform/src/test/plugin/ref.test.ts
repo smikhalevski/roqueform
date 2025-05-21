@@ -9,8 +9,8 @@ import refPlugin from '../../main/plugin/ref.js';
 test('adds an element property to the field', () => {
   const field = createField({ aaa: 111 }, [refPlugin()]);
 
-  expect(field.element).toBeNull();
-  expect(field.at('aaa').element).toBeNull();
+  expect(field.ref.current).toBeNull();
+  expect(field.at('aaa').ref.current).toBeNull();
 });
 
 test('ref updates an element property', () => {
@@ -19,7 +19,7 @@ test('ref updates an element property', () => {
 
   field.ref(element);
 
-  expect(field.element).toEqual(element);
+  expect(field.ref.current).toEqual(element);
 });
 
 // test('preserves the ref from preceding plugin', () => {
@@ -31,5 +31,5 @@ test('ref updates an element property', () => {
 //
 //   expect(refMock).toHaveBeenCalledTimes(1);
 //   expect(refMock).toHaveBeenNthCalledWith(1, document.body);
-//   expect(field.element).toBe(document.body);
+//   expect(field.ref.current).toBe(document.body);
 // });

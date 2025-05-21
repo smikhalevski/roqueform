@@ -25,11 +25,9 @@ afterEach(() => {
 test('enhances the field', () => {
   const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
-  expect(field.validatedElement).toBeNull();
   expect(field.isInvalid).toBe(false);
   expect(field.validity).toBeNull();
 
-  expect(field.at('aaa').validatedElement).toBeNull();
   expect(field.at('aaa').isInvalid).toBe(false);
   expect(field.at('aaa').validity).toBeNull();
 });

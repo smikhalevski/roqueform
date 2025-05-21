@@ -9,8 +9,3 @@ export {
   type InferValue,
   type ValueAccessor,
 } from './Field.js';
-export {
-  createElementsValueAccessor,
-  type ElementsValueAccessor,
-  type ElementsValueAccessorOptions,
-} from './createElementsValueAccessor.js';

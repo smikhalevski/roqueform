@@ -4,8 +4,8 @@
 
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent } from '@testing-library/dom';
-import { createField, ElementsValueAccessor, FieldPlugin } from '../../main/index.js';
-import uncontrolledPlugin, { UncontrolledMixin } from '../../main/plugin/uncontrolled.js';
+import { createField, FieldPlugin } from '../../main/index.js';
+import uncontrolledPlugin, { ElementsValueAccessor, UncontrolledMixin } from '../../main/plugin/uncontrolled.js';
 
 let element: HTMLInputElement;
 
@@ -41,8 +41,8 @@ test('ref populates elements', () => {
 
   field.ref(element);
 
-  expect(field.element).toBe(element);
-  expect(field.targetElements).toEqual([element]);
+  expect(field.ref.current).toBe(element);
+  expect(field.ref.toArray()).toEqual([element]);
 });
 
 test('refFor populates elements', () => {
@@ -51,11 +51,11 @@ test('refFor populates elements', () => {
   const element1 = document.createElement('input');
   const element2 = document.createElement('textarea');
 
-  field.refFor(1)(element1);
-  field.refFor(2)(element2);
+  field.ref.at(1)(element1);
+  field.ref.at(2)(element2);
 
-  expect(field.element).toBeNull();
-  expect(field.targetElements).toEqual([element1, element2]);
+  expect(field.ref.current).toBeNull();
+  expect(field.ref.toArray()).toEqual([element1, element2]);
 });
 
 test('ref and refFor can be mixed', () => {
@@ -65,31 +65,31 @@ test('ref and refFor can be mixed', () => {
   const element2 = document.createElement('textarea');
 
   field.ref(element);
-  field.refFor(1)(element1);
-  field.refFor(2)(element2);
+  field.ref.at(1)(element1);
+  field.ref.at(2)(element2);
 
-  expect(field.element).toBe(element);
-  expect(field.targetElements).toEqual([element, element1, element2]);
+  expect(field.ref.current).toBe(element);
+  expect(field.ref.toArray()).toEqual([element, element1, element2]);
 });
 
 test('ref and refFor can be called with the same element', () => {
   const field = createField(111, [uncontrolledPlugin()]);
 
   field.ref(element);
-  field.refFor(1)(element);
+  field.ref.at(1)(element);
 
-  expect(field.element).toBe(element);
-  expect(field.targetElements).toEqual([element]);
+  expect(field.ref.current).toBe(element);
+  expect(field.ref.toArray()).toEqual([element]);
 });
 
 test('refFor can be called with the same element for different keys', () => {
   const field = createField(111, [uncontrolledPlugin()]);
 
-  field.refFor(1)(element);
-  field.refFor(2)(element);
+  field.ref.at(1)(element);
+  field.ref.at(2)(element);
 
-  expect(field.element).toBeNull();
-  expect(field.targetElements).toEqual([element]);
+  expect(field.ref.current).toBeNull();
+  expect(field.ref.toArray()).toEqual([element]);
 });
 
 test('ref removes an element when called with null', () => {
@@ -99,12 +99,12 @@ test('ref removes an element when called with null', () => {
   const element2 = document.createElement('textarea');
 
   field.ref(element);
-  field.refFor(1)(element1);
-  field.refFor(2)(element2);
+  field.ref.at(1)(element1);
+  field.ref.at(2)(element2);
 
   field.ref(null);
 
-  expect(field.targetElements).toEqual([element1, element2]);
+  expect(field.ref.toArray()).toEqual([element1, element2]);
 });
 
 test('refFor removes an element when called with null', () => {
@@ -113,16 +113,16 @@ test('refFor removes an element when called with null', () => {
   const element1 = document.createElement('input');
   const element2 = document.createElement('textarea');
 
-  field.refFor(1)(element1);
-  field.refFor(2)(element2);
+  field.ref.at(1)(element1);
+  field.ref.at(2)(element2);
 
-  field.refFor(1)(null);
+  field.ref.at(1)(null);
 
-  expect(field.targetElements).toEqual([element2]);
+  expect(field.ref.toArray()).toEqual([element2]);
 
-  field.refFor(2)(null);
+  field.ref.at(2)(null);
 
-  expect(field.targetElements).toEqual([]);
+  expect(field.ref.toArray()).toEqual([]);
 });
 
 test('removed element does not update the field', () => {
@@ -262,12 +262,12 @@ test('multiple elements are passed to set accessor', () => {
 
   const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
 
-  field.at('aaa').refFor(1)(element1);
+  field.at('aaa').ref.at(1)(element1);
 
   expect(accessorMock.set).toHaveBeenCalledTimes(1);
   expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element1], 111);
 
-  field.at('aaa').refFor(2)(element2);
+  field.at('aaa').ref.at(2)(element2);
 
   expect(accessorMock.set).toHaveBeenCalledTimes(2);
   expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element1, element2], 111);

@@ -48,92 +48,87 @@ export function publishEvents(events: FieldEvent[]): void {
   }
 }
 
-export interface ObservableRefChangeEvent<V> {
-  target: ObservableRef<V>;
+/**
+ * Converts `k` to a number if it represents a valid array index, or returns -1 if `k` isn't an index.
+ *
+ * @see https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#array-index
+ */
+export function toArrayIndex(k: any): number {
+  return (typeof k === 'number' || (typeof k === 'string' && k === '' + (k = +k))) && k >>> 0 === k ? k : -1;
+}
+
+export interface Ref<V> {
+  (value: V): void;
+
+  current: V;
+}
+
+export interface RefArray<V> extends Ref<V> {
+  at(index: number): Ref<V>;
+
+  toArray(): Ref<V>[];
+}
+
+export interface RefChangeEvent<V> {
+  ref: ObservableRef<V>;
   prevValue: V;
   nextValue: V;
 }
 
-export class ObservableRef<V> {
-  protected _value: V;
-  protected _pubSub = new PubSub<ObservableRefChangeEvent<V>>();
+export interface ObservableRef<V> extends Ref<V> {
+  _pubSub: PubSub<RefChangeEvent<V>>;
 
-  constructor(initialValue: V) {
-    this._value = initialValue;
-  }
+  _subscribe(listener: (event: RefChangeEvent<V>) => void): () => void;
+}
 
-  get current(): V {
-    return this._value;
-  }
-
-  set current(value: V) {
-    const prevValue = this._value;
+export function createObservableRef<V>(initialValue: V): ObservableRef<V> {
+  const ref: ObservableRef<V> = (value: V): void => {
+    const prevValue = ref.current;
 
     if (prevValue === value) {
       return;
     }
 
-    this._value = value;
-    this._pubSub.publish({ target: this, prevValue, nextValue: value });
-  }
+    ref.current = value;
 
-  subscribe(listener: (event: ObservableRefChangeEvent<V>) => void): () => void {
-    return this._pubSub.subscribe(listener);
-  }
+    ref._pubSub.publish({ ref, prevValue, nextValue: value });
+  };
+
+  ref.current = initialValue;
+
+  ref._pubSub = new PubSub<RefChangeEvent<V>>();
+
+  ref._subscribe = listener => ref._pubSub.subscribe(listener);
+
+  return ref;
 }
 
-export class ObservableRefArray<V> extends ObservableRef<V> implements ArrayLike<ObservableRef<V>> {
-  readonly [index: number]: ObservableRef<V>;
+export interface ObservableRefArray<V> extends ObservableRef<V>, RefArray<V> {
+  _refs: ObservableRef<V>[];
 
-  protected _refs: ObservableRef<V>[] = [];
-
-  constructor(initialValue: V) {
-    super(initialValue);
-
-    new Proxy(this, observableRefArrayProxyHandler);
-  }
-
-  get length(): number {
-    return this._refs.length;
-  }
-
-  get current(): V {
-    return this[0].current;
-  }
-
-  set current(value: V) {
-    this[0].current = value;
-  }
-
-  toArray(): ObservableRef<V>[] {
-    return this._refs.slice(0);
-  }
+  at(index: number): ObservableRef<V>;
 }
 
-function toArrayIndex(k: any): number {
-  return typeof k === 'string' && k === '' + (k = +k) && k >>> 0 === k ? k : -1;
-}
+export function createObservableRefArray<V>(initialValue: V): ObservableRefArray<V> {
+  const refArray = createObservableRef(initialValue) as ObservableRefArray<V>;
 
-const observableRefArrayProxyHandler: ProxyHandler<ObservableRefArray<any>> = {
-  get(target, k: any) {
-    if (k in target) {
-      return target[k];
-    }
+  refArray._refs = [refArray];
 
-    const index = toArrayIndex(k);
-
-    if (index === -1) {
-      return undefined;
-    }
-
-    let ref = target['_refs'][index];
+  refArray.at = index => {
+    let ref = refArray._refs[index];
 
     if (ref === undefined) {
-      ref = target['_refs'][index] = new ObservableRef(target['_value']);
+      ref = createObservableRef(initialValue);
 
-      ref.subscribe(event => target['_pubSub'].publish(event));
+      ref._subscribe(event => refArray._pubSub.publish(event));
+
+      refArray._refs[index] = ref;
     }
 
     return ref;
-  },
-};
+  };
+
+  refArray.toArray = () => refArray._refs.slice(0);
+
+  return refArray;
+}

@@ -1,6 +1,6 @@
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
-import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field.js';
-import { ObservableRef } from '../utils.js';
+import { Field, FieldPlugin, InferMixin } from '../Field.js';
+import { createObservableRef, Ref } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link constraintValidationPlugin}.
@@ -14,7 +14,7 @@ export interface ConstraintValidationMixin {
   /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref: ObservableRef<Element | null>;
+  ref: Ref<Element | null>;
 
   /**
    * The copy of the last reported [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState)
@@ -49,7 +49,9 @@ export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidat
       get: () => field.validity.valid,
     });
 
-    field.ref ||= new ObservableRef(null);
+    const ref = createObservableRef<Element | null>(null);
+
+    field.ref = ref;
 
     field.validity = createValidity();
 
@@ -65,7 +67,7 @@ export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidat
 
     const handleChange = () => checkValidity(field);
 
-    field.ref.subscribe(event => {
+    ref._subscribe(event => {
       const { prevValue, nextValue } = event;
 
       if (prevValue !== null) {

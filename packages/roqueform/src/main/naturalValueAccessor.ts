@@ -1,4 +1,5 @@
 import { ValueAccessor } from './Field.js';
+import { toArrayIndex } from './utils.js';
 
 /**
  * The value accessor that reads and writes key-value pairs to well-known object instances.
@@ -68,13 +69,6 @@ export const naturalValueAccessor: ValueAccessor = {
     return obj;
   },
 };
-
-/**
- * Returns a non-negative integer if argument represents a valid array index, or returns -1 if argument isn't an index.
- */
-function toArrayIndex(k: any): number {
-  return (typeof k === 'number' || (typeof k === 'string' && k === '' + (k = +k))) && k >>> 0 === k ? k : -1;
-}
 
 function isPrimitive(obj: any): boolean {
   return (

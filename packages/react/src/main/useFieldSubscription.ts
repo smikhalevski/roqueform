@@ -14,7 +14,7 @@ export interface FieldSubscriptionOptions<F extends Field> {
   /**
    * Triggered when the field value received a non-transient update.
    *
-   * @param value The new field value.
+   * @param _value The new field value.
    */
   onChange?: (value: InferValue<F>) => void;
 }

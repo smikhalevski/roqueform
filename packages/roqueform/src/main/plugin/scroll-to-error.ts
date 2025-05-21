@@ -1,4 +1,5 @@
 import { Field, FieldPlugin, InferMixin } from '../Field.js';
+import { createObservableRef, Ref } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link scrollToErrorPlugin}.
@@ -12,7 +13,7 @@ export interface ScrollToErrorMixin {
   /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref: { current: Element | null };
+  ref: Ref<Element | null>;
 
   /**
    * Scroll to the element that is referenced by an invalid field. Scrolls the field element's ancestor containers such
@@ -53,7 +54,7 @@ export interface ScrollToErrorMixin {
  */
 export default function scrollToErrorPlugin(): FieldPlugin<any, ScrollToErrorMixin> {
   return field => {
-    field.ref = { current: null };
+    field.ref = createObservableRef<Element | null>(null);
 
     field.scrollToError = (index = 0, options) => {
       const targets = getTargetFields(field, []);

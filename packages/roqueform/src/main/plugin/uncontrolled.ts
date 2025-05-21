@@ -1,6 +1,12 @@
 import { createElementsValueAccessor } from '../createElementsValueAccessor.js';
 import { Field, FieldPlugin } from '../Field.js';
-import { ObservableRefArray } from '../utils.js';
+import { createObservableRefArray, ObservableRefArray, RefArray } from '../utils.js';
+
+export {
+  createElementsValueAccessor,
+  type ElementsValueAccessor,
+  type ElementsValueAccessorOptions,
+} from '../createElementsValueAccessor.js';
 
 /**
  * The default value accessor.
@@ -14,7 +20,7 @@ export interface UncontrolledMixin {
   /**
    * Associates the field with the DOM element.
    */
-  ref: ObservableRefArray<Element | null>;
+  ref: RefArray<Element | null>;
 }
 
 /**
@@ -22,12 +28,14 @@ export interface UncontrolledMixin {
  */
 export default function uncontrolledPlugin(accessor = elementsValueAccessor): FieldPlugin<any, UncontrolledMixin> {
   return (field: Field<unknown, UncontrolledMixin>) => {
-    field.ref = new ObservableRefArray(null);
+    const ref = createObservableRefArray<Element | null>(null);
+
+    field.ref = ref;
 
     let prevValue = field.value;
 
     const handleChange: EventListener = event => {
-      const elements = getElements(field.ref);
+      const elements = getElements(ref);
 
       if (!elements.includes(event.target as Element)) {
         return;
@@ -42,14 +50,14 @@ export default function uncontrolledPlugin(accessor = elementsValueAccessor): Fi
         return;
       }
 
-      const elements = getElements(field.ref);
+      const elements = getElements(ref);
 
       if (elements.length !== 0) {
         accessor.set(elements, field.value);
       }
     });
 
-    field.ref.subscribe(event => {
+    ref._subscribe(event => {
       const { prevValue, nextValue } = event;
 
       if (prevValue !== null) {
@@ -59,7 +67,7 @@ export default function uncontrolledPlugin(accessor = elementsValueAccessor): Fi
         nextValue.addEventListener('input', handleChange);
       }
 
-      const elements = getElements(field.ref);
+      const elements = getElements(ref);
 
       if (elements.length !== 0) {
         accessor.set(elements, field.value);
@@ -71,10 +79,11 @@ export default function uncontrolledPlugin(accessor = elementsValueAccessor): Fi
 function getElements(refArray: ObservableRefArray<Element | null>): Element[] {
   const elements = [];
 
-  for (const ref of refArray.toArray()) {
-    if (ref.current !== null) {
+  for (const ref of refArray._refs) {
+    if (ref.current instanceof Element) {
       elements.push(ref.current);
     }
   }
+
   return elements;
 }
