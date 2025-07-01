@@ -1,5 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { createField, FieldEvent, naturalValueAccessor } from '../main/index.js';
+import { FieldImpl } from '../main/__FieldImpl.js';
 
 vi.useFakeTimers();
 
@@ -8,7 +9,7 @@ beforeEach(() => {
 });
 
 test('creates a field without an initial value', () => {
-  const field = createField();
+  const field = createField() as FieldImpl;
 
   expect(field.key).toBeNull();
   expect(field.value).toBeUndefined();
@@ -17,7 +18,7 @@ test('creates a field without an initial value', () => {
   expect(field.parentField).toBeNull();
   expect(field.children.length).toBe(0);
   expect(field['_plugins'].length).toBe(0);
-  expect(field['_valueAccessor']).toBe(naturalValueAccessor);
+  expect(field.valueAccessor).toBe(naturalValueAccessor);
 });
 
 test('creates a field with the initial value', () => {

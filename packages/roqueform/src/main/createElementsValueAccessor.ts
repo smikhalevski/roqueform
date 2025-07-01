@@ -113,72 +113,73 @@ export interface ElementsValueAccessorOptions {
 export function createElementsValueAccessor(options: ElementsValueAccessorOptions = {}): ElementsValueAccessor {
   const { checkboxFormat, dateFormat, timeFormat } = options;
 
-  const get: ElementsValueAccessor['get'] = elements => {
-    const element = elements[0];
-    const { type, valueAsNumber } = element;
+  return {
+    get(elements) {
+      const element = elements[0];
+      const { type, valueAsNumber } = element;
 
-    if (element.tagName === 'SELECT' && element.multiple) {
-      const values = [];
+      if (element.tagName === 'SELECT' && element.multiple) {
+        const values = [];
 
-      for (const option of element.options) {
-        if (option.selected) {
-          values.push(option.value);
+        for (const option of element.options) {
+          if (option.selected) {
+            values.push(option.value);
+          }
         }
+
+        return values;
       }
 
-      return values;
-    }
-
-    if (element.tagName !== 'INPUT') {
-      return 'value' in element ? element.value : null;
-    }
-
-    if (type === 'checkbox') {
-      if (elements.length === 1 && checkboxFormat !== 'booleanArray' && checkboxFormat !== 'valueArray') {
-        return checkboxFormat !== 'value' ? element.checked : element.checked ? element.value : null;
+      if (element.tagName !== 'INPUT') {
+        return 'value' in element ? element.value : null;
       }
 
-      const values = [];
-
-      for (const element of elements) {
-        if (element.tagName !== 'INPUT' || element.type !== 'checkbox') {
-          continue;
+      if (type === 'checkbox') {
+        if (elements.length === 1 && checkboxFormat !== 'booleanArray' && checkboxFormat !== 'valueArray') {
+          return checkboxFormat !== 'value' ? element.checked : element.checked ? element.value : null;
         }
 
-        if (checkboxFormat === 'boolean' || checkboxFormat === 'booleanArray') {
-          values.push(element.checked);
-          continue;
-        }
+        const values = [];
 
-        if (element.checked) {
-          values.push(element.value);
+        for (const element of elements) {
+          if (element.tagName !== 'INPUT' || element.type !== 'checkbox') {
+            continue;
+          }
+
+          if (checkboxFormat === 'boolean' || checkboxFormat === 'booleanArray') {
+            values.push(element.checked);
+            continue;
+          }
+
+          if (element.checked) {
+            values.push(element.value);
+          }
         }
+        return values;
       }
-      return values;
-    }
 
-    if (type === 'radio') {
-      for (const element of elements) {
-        if (element.tagName === 'INPUT' && element.type === 'radio' && element.checked) {
-          return element.value;
+      if (type === 'radio') {
+        for (const element of elements) {
+          if (element.tagName === 'INPUT' && element.type === 'radio' && element.checked) {
+            return element.value;
+          }
         }
-      }
-      return null;
-    }
-
-    if (type === 'number' || type === 'range') {
-      return valueAsNumber !== valueAsNumber ? null : valueAsNumber;
-    }
-
-    if (type === 'date' || type === 'datetime-local') {
-      if (valueAsNumber !== valueAsNumber) {
         return null;
       }
 
-      const date = element.valueAsDate || new Date(valueAsNumber);
+      if (type === 'number' || type === 'range') {
+        return valueAsNumber !== valueAsNumber ? null : valueAsNumber;
+      }
 
-      // prettier-ignore
-      return (
+      if (type === 'date' || type === 'datetime-local') {
+        if (valueAsNumber !== valueAsNumber) {
+          return null;
+        }
+
+        const date = element.valueAsDate || new Date(valueAsNumber);
+
+        // prettier-ignore
+        return (
         dateFormat === 'object' ? date :
         dateFormat === 'timestamp' ? valueAsNumber :
         dateFormat === 'iso' ? date.toISOString() :
@@ -186,118 +187,117 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
         dateFormat === 'gmt' ? date.toGMTString() :
         element.value
       );
-    }
+      }
 
-    if (type === 'time') {
-      return valueAsNumber !== valueAsNumber ? null : timeFormat === 'number' ? valueAsNumber : element.value;
-    }
+      if (type === 'time') {
+        return valueAsNumber !== valueAsNumber ? null : timeFormat === 'number' ? valueAsNumber : element.value;
+      }
 
-    if (type === 'image') {
-      return element.src;
-    }
+      if (type === 'image') {
+        return element.src;
+      }
 
-    if (type === 'file') {
-      return element.multiple ? toArray(element.files) : element.files.length !== 0 ? element.files.item(0) : null;
-    }
+      if (type === 'file') {
+        return element.multiple ? toArray(element.files) : element.files.length !== 0 ? element.files.item(0) : null;
+      }
 
-    return element.value;
-  };
+      return element.value;
+    },
 
-  const set: ElementsValueAccessor['set'] = (elements, value) => {
-    const element = elements[0];
-    const { type } = element;
+    set(elements, value) {
+      const element = elements[0];
+      const { type } = element;
 
-    if (element.tagName === 'SELECT' && element.multiple && Array.isArray(value)) {
-      for (const option of element.options) {
-        if (value.includes(option.value)) {
-          option.selected = true;
+      if (element.tagName === 'SELECT' && element.multiple && Array.isArray(value)) {
+        for (const option of element.options) {
+          if (value.includes(option.value)) {
+            option.selected = true;
+          }
         }
-      }
-      return;
-    }
-
-    if (element.tagName !== 'INPUT') {
-      if ('value' in element) {
-        element.value = toString(value);
-      }
-      return;
-    }
-
-    if (type === 'checkbox') {
-      for (let i = 0; i < elements.length; ++i) {
-        const element = elements[i];
-
-        if (element.tagName !== 'INPUT' || element.type !== 'checkbox') {
-          continue;
-        }
-
-        if (Array.isArray(value)) {
-          element.checked = typeof value[i] === 'boolean' ? value[i] : value.indexOf(element.value) !== -1;
-          continue;
-        }
-
-        element.checked =
-          typeof value === 'boolean' ? value : typeof value === 'string' ? element.value === value : false;
-      }
-      return;
-    }
-
-    if (type === 'radio') {
-      for (const element of elements) {
-        if (element.tagName === 'INPUT' && element.type === 'radio') {
-          element.checked = element.value === value;
-        }
-      }
-      return;
-    }
-
-    if (type === 'number' || type === 'range') {
-      if (isFinite(value)) {
-        element.valueAsNumber = value;
-      } else {
-        element.value = '';
-      }
-      return;
-    }
-
-    if (type === 'date' || type === 'datetime-local') {
-      let valueAsNumber;
-
-      if (typeof value === 'string') {
-        value = (valueAsNumber = +value) === valueAsNumber ? valueAsNumber : new Date(value).getTime();
-      }
-
-      if (isFinite(value)) {
-        element.valueAsNumber = +value;
         return;
       }
 
-      element.value = '';
-      return;
-    }
-
-    if (type === 'time') {
-      if (isFinite(value)) {
-        element.valueAsNumber = +value;
-      } else {
-        element.value = toString(value);
+      if (element.tagName !== 'INPUT') {
+        if ('value' in element) {
+          element.value = toString(value);
+        }
+        return;
       }
-      return;
-    }
 
-    if (type === 'image') {
-      element.src = toString(value);
-      return;
-    }
+      if (type === 'checkbox') {
+        for (let i = 0; i < elements.length; ++i) {
+          const element = elements[i];
 
-    if (type === 'file') {
-      return;
-    }
+          if (element.tagName !== 'INPUT' || element.type !== 'checkbox') {
+            continue;
+          }
 
-    element.value = toString(value);
+          if (Array.isArray(value)) {
+            element.checked = typeof value[i] === 'boolean' ? value[i] : value.indexOf(element.value) !== -1;
+            continue;
+          }
+
+          element.checked =
+            typeof value === 'boolean' ? value : typeof value === 'string' ? element.value === value : false;
+        }
+        return;
+      }
+
+      if (type === 'radio') {
+        for (const element of elements) {
+          if (element.tagName === 'INPUT' && element.type === 'radio') {
+            element.checked = element.value === value;
+          }
+        }
+        return;
+      }
+
+      if (type === 'number' || type === 'range') {
+        if (isFinite(value)) {
+          element.valueAsNumber = value;
+        } else {
+          element.value = '';
+        }
+        return;
+      }
+
+      if (type === 'date' || type === 'datetime-local') {
+        let valueAsNumber;
+
+        if (typeof value === 'string') {
+          value = (valueAsNumber = +value) === valueAsNumber ? valueAsNumber : new Date(value).getTime();
+        }
+
+        if (isFinite(value)) {
+          element.valueAsNumber = +value;
+          return;
+        }
+
+        element.value = '';
+        return;
+      }
+
+      if (type === 'time') {
+        if (isFinite(value)) {
+          element.valueAsNumber = +value;
+        } else {
+          element.value = toString(value);
+        }
+        return;
+      }
+
+      if (type === 'image') {
+        element.src = toString(value);
+        return;
+      }
+
+      if (type === 'file') {
+        return;
+      }
+
+      element.value = toString(value);
+    },
   };
-
-  return { get, set };
 }
 
 function toString(value: any): string {

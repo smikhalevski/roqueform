@@ -1,5 +1,12 @@
-import { Field, FieldEvent, FieldPlugin } from '../Field.js';
+import { Field, FieldEvent, FieldPlugin } from '../__FieldImpl.js';
 import { AbortError, publishEvents } from '../utils.js';
+
+declare module '../__FieldImpl.js' {
+  export interface FieldEventTypes {
+    validationStarted: never;
+    validationFinished: never;
+  }
+}
 
 const ERROR_ABORT = 'Validation was aborted';
 
@@ -58,7 +65,7 @@ export interface ValidationMixin<Options = any> {
  * @template Options Options passed to the validator.
  * @template Mixin The mixin added to the field.
  */
-export interface Validator<Options = void, Mixin = ValidationMixin<Options>> {
+export interface Validator<Options = void, Mixin extends object = ValidationMixin<Options>> {
   /**
    * Applies validation rules to a field.
    *
@@ -123,7 +130,7 @@ interface Validation {
  * @template Options Options passed to the validator.
  * @template Mixin The mixin that is added to the field by other plugins.
  */
-export default function validationPlugin<Options = void, Mixin = ValidationMixin<Options>>(
+export default function validationPlugin<Options = void, Mixin extends object = ValidationMixin<Options>>(
   validator: Validator<Options, Mixin>
 ): FieldPlugin<any, ValidationMixin<Options>> {
   return (field: Field<unknown, PrivateValidationMixin>) => {

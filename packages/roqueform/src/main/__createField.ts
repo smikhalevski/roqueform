@@ -1,5 +1,5 @@
-import { naturalValueAccessor } from './naturalValueAccessor.js';
-import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './Field.js';
+import { naturalValueAccessor } from './__naturalValueAccessor.js';
+import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './__FieldImpl.js';
 import { callOrGet } from './utils.js';
 
 /**
@@ -26,11 +26,11 @@ export function createField<Value>(initialValue: Value | (() => Value)): Field<V
  * @template Value The root field initial value.
  * @template Plugins The array of plugins applied to the field and its children.
  */
-export function createField<Value extends PluginsValue<Plugins>, Plugins extends FieldPlugin[]>(
+export function createField<Value extends RequiredValue<Plugins>, Plugins extends FieldPlugin[]>(
   initialValue: Value | (() => Value),
   plugins: Plugins,
   accessor?: ValueAccessor
-): Field<Value, PluginsMixin<Plugins>>;
+): Field<Value, InjectedMixin<Plugins>>;
 
 export function createField(initialValue?: any, plugins: FieldPlugin[] = [], accessor = naturalValueAccessor): Field {
   const field = new FieldImpl(null, null, callOrGet(initialValue), accessor, plugins);
@@ -42,14 +42,16 @@ export function createField(initialValue?: any, plugins: FieldPlugin[] = [], acc
   return field;
 }
 
-type PluginsValue<T extends any[]> = T extends never[] ? any : Unbox<UnionToIntersection<BoxedPluginValue<T[number]>>>;
+type InjectedMixin<T extends any[]> = T extends never[] ? {} : UnionToIntersection<InferMixin<T[number]>>;
 
-type PluginsMixin<T extends any[]> = T extends never[] ? any : Unbox<UnionToIntersection<BoxedPluginMixin<T[number]>>>;
+type RequiredValue<T extends any[]> = T extends never[] ? any : UnboxValue<UnionToIntersection<InferValue<T[number]>>>;
 
-type BoxedPluginValue<T> = T extends FieldPlugin<infer Value, any> ? [Value] : never;
+type InferMixin<T> = T extends FieldPlugin<any, infer M> ? M : never;
 
-type BoxedPluginMixin<T> = T extends FieldPlugin<any, infer Mixin> ? [Mixin] : never;
+type InferValue<T> = T extends FieldPlugin<infer V, infer _> ? [AnyToUnknown<V>] : never;
 
-type Unbox<T> = T extends [any] ? T[0] : never;
+type UnboxValue<T> = T extends [any] ? T[0] : never;
 
 type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+
+type AnyToUnknown<T> = 0 extends 1 & T ? unknown : T;

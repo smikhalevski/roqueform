@@ -1,5 +1,5 @@
-import { Field, FieldPlugin, InferMixin } from '../Field.js';
-import { createObservableRef, Ref } from '../utils.js';
+import { Field, FieldPlugin, InferMixin } from '../__FieldImpl.js';
+import { createObservableRef, Ref } from '../createObservableRef.js';
 
 /**
  * The mixin added to fields by the {@link scrollToErrorPlugin}.

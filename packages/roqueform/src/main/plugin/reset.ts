@@ -1,6 +1,12 @@
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
-import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../Field.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../__FieldImpl.js';
 import { isEqual, publishEvents } from '../utils.js';
+
+declare module '../__FieldImpl.js' {
+  export interface FieldEventTypes {
+    initialValueChanged: never;
+  }
+}
 
 /**
  * The mixin added to fields by the {@link resetPlugin}.
@@ -68,7 +74,7 @@ function setInitialValue(field: Field<unknown, ResetMixin>, initialValue: unknow
   let root = field;
 
   while (root.parentField !== null) {
-    initialValue = field['_valueAccessor'].set(root.parentField.value, root.key, initialValue);
+    initialValue = field.valueAccessor.set(root.parentField.value, root.key, initialValue);
     root = root.parentField;
   }
 
@@ -86,7 +92,7 @@ function propagateInitialValue(
   target.initialValue = initialValue;
 
   for (const child of target.children) {
-    const childInitialValue = target['_valueAccessor'].get(initialValue, child.key);
+    const childInitialValue = target.valueAccessor.get(initialValue, child.key);
 
     if (child !== relatedTarget && isEqual(child.initialValue, childInitialValue)) {
       continue;

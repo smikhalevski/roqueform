@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { createElementsValueAccessor } from '../main/index.js';
+import { createElementsValueAccessor } from '../main/createElementsValueAccessor.js';
 
 const accessor = createElementsValueAccessor();
 

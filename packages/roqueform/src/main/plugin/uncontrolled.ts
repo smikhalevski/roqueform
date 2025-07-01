@@ -1,5 +1,5 @@
 import { createElementsValueAccessor } from '../createElementsValueAccessor.js';
-import { Field, FieldPlugin } from '../Field.js';
+import { Field, FieldPlugin } from '../__FieldImpl.js';
 import { createObservableRefArray, ObservableRefArray, RefArray } from '../utils.js';
 
 export {
@@ -57,7 +57,7 @@ export default function uncontrolledPlugin(accessor = elementsValueAccessor): Fi
       }
     });
 
-    ref._subscribe(event => {
+    ref.subscribe(event => {
       const { prevValue, nextValue } = event;
 
       if (prevValue !== null) {

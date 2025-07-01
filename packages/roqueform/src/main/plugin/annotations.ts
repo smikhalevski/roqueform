@@ -1,5 +1,11 @@
-import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../Field.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../__FieldImpl.js';
 import { callOrGet, publishEvents } from '../utils.js';
+
+declare module '../__FieldImpl.js' {
+  export interface FieldEventTypes {
+    annotationsChanged: never;
+  }
+}
 
 interface ReadonlyDict {
   readonly [key: string]: any;

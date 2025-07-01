@@ -1,6 +1,6 @@
 import { expectAssignable, expectNotAssignable, expectNotType, expectType } from 'tsd';
 import { Field, FieldEvent } from '../main/index.js';
-import { AnyToUnknown, KeyOf, ValueAt } from '../main/Field.js';
+import { AnyToUnknown, KeyOf, ValueAt } from '../main/__FieldImpl.js';
 
 interface Aaa {
   aaa: string;

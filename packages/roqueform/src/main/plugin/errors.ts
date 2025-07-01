@@ -1,5 +1,13 @@
-import { Field, FieldEvent, FieldPlugin, InferMixin } from '../Field.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin } from '../__FieldImpl.js';
 import { emptyObject, publishEvents } from '../utils.js';
+
+declare module '../__FieldImpl.js' {
+  export interface FieldEventTypes {
+    errorAdded: never;
+    errorDeleted: never;
+    errorsCleared: never;
+  }
+}
 
 /**
  * Options of the {@link ErrorsMixin.clearErrors} method.

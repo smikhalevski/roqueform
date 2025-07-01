@@ -1,5 +1,5 @@
-import { FieldPlugin } from '../Field.js';
-import { createObservableRef, Ref } from '../utils.js';
+import { FieldPlugin } from '../__FieldImpl.js';
+import { createObservableRef, Ref } from '../createObservableRef.js';
 
 /**
  * The plugin added to fields by the {@link refPlugin}.
