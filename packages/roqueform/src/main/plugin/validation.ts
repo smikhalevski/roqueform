@@ -17,6 +17,11 @@ const ERROR_ABORT = 'Validation was aborted';
  */
 export interface ValidationMixin<Options = any> {
   /**
+   * The pending validation, or `null` if there's no pending validation.
+   */
+  validation: Validation | null;
+
+  /**
    * `true` if this field has an invalid value, or `false` otherwise.
    */
   isInvalid?: boolean;
@@ -90,6 +95,21 @@ export interface Validator<Options = void, Mixin extends object = ValidationMixi
 }
 
 /**
+ * The validation descriptor.
+ */
+export interface Validation {
+  /**
+   * The field where the validation was triggered.
+   */
+  rootField: Field<any, ValidationMixin>;
+
+  /**
+   * The abort controller associated with the pending async validation, or `null` if the validation is synchronous.
+   */
+  abortController: AbortController | null;
+}
+
+/**
  * Private properties of the validation plugin.
  */
 interface PrivateValidationMixin extends ValidationMixin {
@@ -97,26 +117,6 @@ interface PrivateValidationMixin extends ValidationMixin {
    * The validator to which the field value validation is delegated.
    */
   _validator?: Validator<any, any>;
-
-  /**
-   * The pending validation, or `null` if there's no pending validation.
-   */
-  _validation?: Validation;
-}
-
-/**
- * The validation descriptor.
- */
-interface Validation {
-  /**
-   * The field where the validation was triggered.
-   */
-  rootField: Field<any, PrivateValidationMixin>;
-
-  /**
-   * The abort controller associated with the pending async validation, or `null` if the validation is synchronous.
-   */
-  abortController: AbortController | null;
 }
 
 /**
@@ -136,9 +136,9 @@ export default function validationPlugin<Options = void, Mixin extends object = 
   return (field: Field<unknown, PrivateValidationMixin>) => {
     field._validator = validator;
 
-    field._validation = field.parentField?._validation;
+    field.validation = field.parentField !== null ? field.parentField.validation : null;
 
-    overrideReadonlyProperty(field, 'isValidating', isValidating => isValidating || field._validation !== undefined);
+    overrideReadonlyProperty(field, 'isValidating', isValidating => isValidating || field.validation !== null);
 
     field.validate = options => validate(field, options);
 
@@ -167,7 +167,7 @@ function startValidation(
   validation: Validation,
   events: FieldEvent[]
 ): FieldEvent[] {
-  field._validation = validation;
+  field.validation = validation;
 
   events.push({ type: 'validationStarted', target: field, relatedTarget: validation.rootField, payload: validation });
 
@@ -184,11 +184,11 @@ function finishValidation(
   validation: Validation,
   events: FieldEvent[]
 ): FieldEvent[] {
-  if (field._validation !== validation) {
+  if (field.validation !== validation) {
     return events;
   }
 
-  field._validation = undefined;
+  field.validation = null;
 
   events.push({ type: 'validationFinished', target: field, relatedTarget: validation.rootField, payload: validation });
 
@@ -199,9 +199,9 @@ function finishValidation(
 }
 
 function abortValidation(field: Field<unknown, PrivateValidationMixin>, events: FieldEvent[]): FieldEvent[] {
-  const validation = field._validation;
+  const validation = field.validation;
 
-  if (validation === undefined) {
+  if (validation === null) {
     return events;
   }
 
@@ -218,7 +218,7 @@ function validate(field: Field<unknown, PrivateValidationMixin>, options: unknow
 
   publishEvents(abortValidation(field, []));
 
-  if (field._validation !== undefined) {
+  if (field.validation !== null) {
     throw AbortError(ERROR_ABORT);
   }
 
@@ -231,7 +231,7 @@ function validate(field: Field<unknown, PrivateValidationMixin>, options: unknow
     throw error;
   }
 
-  if (field._validation !== validation) {
+  if (field.validation !== validation) {
     throw AbortError(ERROR_ABORT);
   }
 
@@ -242,7 +242,7 @@ function validate(field: Field<unknown, PrivateValidationMixin>, options: unknow
     throw error;
   }
 
-  if (field._validation !== validation) {
+  if (field.validation !== validation) {
     throw AbortError(ERROR_ABORT);
   }
 
@@ -263,7 +263,7 @@ function validateAsync(field: Field<unknown, PrivateValidationMixin>, options: u
 
     publishEvents(abortValidation(field, []));
 
-    if (field._validation !== undefined) {
+    if (field.validation !== null) {
       reject(AbortError(ERROR_ABORT));
       return;
     }
@@ -278,7 +278,7 @@ function validateAsync(field: Field<unknown, PrivateValidationMixin>, options: u
       return;
     }
 
-    if ((field._validation as Validation | undefined) !== validation || validation.abortController === null) {
+    if ((field.validation as Validation | null) !== validation || validation.abortController === null) {
       reject(AbortError(ERROR_ABORT));
       return;
     }
@@ -289,7 +289,7 @@ function validateAsync(field: Field<unknown, PrivateValidationMixin>, options: u
 
     Promise.resolve(validateAsync.call(validator, field, options)).then(
       () => {
-        if (field._validation !== validation) {
+        if (field.validation !== validation) {
           reject(AbortError(ERROR_ABORT));
         } else {
           publishEvents(finishValidation(field, validation, []));

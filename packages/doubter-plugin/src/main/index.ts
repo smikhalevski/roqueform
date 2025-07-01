@@ -8,11 +8,11 @@
  * @module doubter-plugin
  */
 
-import { ParseOptions, Shape } from 'doubter';
-import { Field, FieldEvent, FieldPlugin } from 'roqueform';
-import validationPlugin, { ValidationMixin } from 'roqueform/plugin/validation';
+import { Err, Ok, ParseOptions, Shape } from 'doubter';
+import { Field, FieldPlugin } from 'roqueform';
+import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
 
-interface DoubterMixin extends ValidationMixin<ParseOptions> {
+interface PrivateDoubterMixin extends ValidationMixin<ParseOptions> {
   _valueShape?: Shape;
 }
 
@@ -23,91 +23,66 @@ interface DoubterMixin extends ValidationMixin<ParseOptions> {
  * @template Value The root field value.
  */
 export function doubterPlugin<Value>(shape: Shape<Value, any>): FieldPlugin<Value, ValidationMixin<ParseOptions>> {
-  return (field: Field<any, DoubterMixin>) => {
+  return (field: Field<Value, PrivateDoubterMixin>) => {
     field._valueShape = field.parentField === null ? shape : field.parentField._valueShape?.at(field.key) || undefined;
 
-    validationPlugin<ParseOptions>({
-      validate(field, options) {
-        field.publish({ type: 'errorCaught', target: field, relatedTarget: null, payload: undefined });
-      },
-      validateAsync(field, options) {
-        return Promise.resolve();
-      },
-    })(field);
+    validationPlugin(validator)(field);
   };
 }
 
-// function doubterShapePlugin<Value>(rootShape: Shape<Value, any>): FieldPlugin<DoubterShapePlugin, Value> {
-//   return field => {
-//     field.valueShape = field.parentField === null ? rootShape : field.parentField.valueShape?.at(field.key) || null;
-//
-//     const { addError } = field;
-//
-//     field.addError = error => {
-//       addError(
-//         typeof error === 'string' ? prependPath(field, { code: 'custom', message: error, input: field.value }) : error
-//       );
-//     };
-//   };
-// }
-//
-// const validator: Validator<ParseOptions, Index> = {
-//   validate(field, options) {
-//     const { validation, valueShape } = field;
-//
-//     if (validation !== null && valueShape !== null) {
-//       applyResult(validation, valueShape.try(field.value, Object.assign({ verbose: true }, options)));
-//     }
-//   },
-//
-//   validateAsync(field, options) {
-//     const { validation, valueShape } = field;
-//
-//     if (validation !== null && valueShape !== null) {
-//       return valueShape.tryAsync(field.value, Object.assign({ verbose: true }, options)).then(result => {
-//         applyResult(validation, result);
-//       });
-//     }
-//
-//     return Promise.resolve();
-//   },
-// };
-//
-// function concatErrors(errors: readonly Issue[], error: Issue): readonly Issue[] {
-//   for (const otherError of errors) {
-//     if (
-//       otherError.code !== undefined && error.code !== undefined
-//         ? otherError.code === error.code
-//         : otherError.message === error.message
-//     ) {
-//       return errors;
-//     }
-//   }
-//   return errors.concat(error);
-// }
-//
-// function prependPath(field: Field, issue: Issue): Issue {
-//   for (; field.parentField !== null; field = field.parentField) {
-//     (issue.path ||= []).unshift(field.key);
-//   }
-//   return issue;
-// }
-//
-// function applyResult(validation: Validation<Index>, result: Err | Ok): void {
-//   if (result.ok) {
-//     return;
-//   }
-//
-//   for (const issue of result.issues) {
-//     let child = validation.rootField;
-//
-//     if (issue.path !== undefined) {
-//       for (const key of issue.path) {
-//         child = child.at(key);
-//       }
-//     }
-//     if (child.validation === validation) {
-//       child.addError(prependPath(validation.rootField, issue));
-//     }
-//   }
-// }
+const validator: Validator<ParseOptions, PrivateDoubterMixin> = {
+  validate(field, options) {
+    const { validation, _valueShape } = field;
+
+    if (validation === null || _valueShape === undefined) {
+      // No validation
+      return;
+    }
+
+    applyResult(validation, _valueShape.try(field.value, options));
+  },
+
+  validateAsync(field, options) {
+    const { validation, _valueShape } = field;
+
+    if (validation === null || _valueShape === undefined) {
+      // No validation
+      return Promise.resolve();
+    }
+
+    return _valueShape.tryAsync(field.value, options).then(result => {
+      applyResult(validation, result);
+    });
+  },
+};
+
+function applyResult(validation: Validation, result: Err | Ok): void {
+  if (result.ok) {
+    return;
+  }
+
+  for (const issue of result.issues) {
+    let child = validation.rootField;
+
+    if (issue.path !== undefined) {
+      for (const key of issue.path) {
+        child = child.at(key);
+      }
+    }
+
+    if (child.validation !== validation) {
+      continue;
+    }
+
+    for (let field = validation.rootField; field.parentField !== null; field = field.parentField) {
+      (issue.path ||= []).unshift(field.key);
+    }
+
+    child.publish({
+      type: 'errorCaught',
+      target: child,
+      relatedTarget: validation.rootField,
+      payload: issue,
+    });
+  }
+}

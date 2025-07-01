@@ -7,6 +7,6 @@ import { naturalValueAccessor, ValueAccessor } from 'roqueform';
 export const ValueAccessorContext: Context<ValueAccessor> = createContext(naturalValueAccessor);
 
 /**
- * @hidden
+ * @internal
  */
 ValueAccessorContext.displayName = 'ValueAccessorContext';

@@ -271,7 +271,7 @@ test('aborts validation', async () => {
   const field = createField({ aaa: 111, bbb: 222 }, [
     validationPlugin({
       async validateAsync(field) {
-        lastSignal = (field as any)._validation.abortController.signal;
+        lastSignal = field.validation!.abortController!.signal;
       },
     }),
   ]);
@@ -296,7 +296,7 @@ test('aborts pending validation when invoked on the same field', async () => {
   const field = createField({ aaa: 111, bbb: 222 }, [
     validationPlugin({
       async validateAsync(field) {
-        signals.push((field as any)._validation.abortController.signal);
+        signals.push(field.validation!.abortController!.signal);
       },
     }),
   ]);
@@ -317,7 +317,7 @@ test('child field validation aborts the parent validation', async () => {
   const field = createField({ aaa: 111, bbb: 222 }, [
     validationPlugin({
       async validateAsync(field) {
-        signals.push((field as any)._validation.abortController.signal);
+        signals.push(field.validation!.abortController!.signal);
       },
     }),
   ]);

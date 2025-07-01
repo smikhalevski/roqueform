@@ -26,7 +26,6 @@ export interface FieldSubscriptionOptions<F extends Field> {
  * @param options Subscription options.
  */
 export function useFieldSubscription<F extends Field>(field: F, options: FieldSubscriptionOptions<F> = {}): F {
-  const { isEagerlyUpdated } = options;
   const [, rerender] = useReducer(reduceCount, 0);
   const optionsRef = useRef(options);
 
@@ -35,7 +34,7 @@ export function useFieldSubscription<F extends Field>(field: F, options: FieldSu
   useEffect(
     () =>
       field.subscribe(event => {
-        const { onChange } = optionsRef.current;
+        const { isEagerlyUpdated, onChange } = optionsRef.current;
 
         if (isEagerlyUpdated || event.target === field) {
           rerender();
@@ -45,7 +44,7 @@ export function useFieldSubscription<F extends Field>(field: F, options: FieldSu
           onChange(field.value);
         }
       }),
-    [field, isEagerlyUpdated]
+    [field]
   );
 
   return field;
