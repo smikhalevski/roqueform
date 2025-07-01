@@ -1,5 +1,4 @@
-import { FieldPlugin } from '../__FieldImpl.js';
-import { createObservableRef, Ref } from '../createObservableRef.js';
+import { FieldPlugin } from '../FieldImpl.js';
 
 /**
  * The plugin added to fields by the {@link refPlugin}.
@@ -13,7 +12,7 @@ export interface RefMixin {
   /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref: Ref<Element | null>;
+  ref: (element: Element | null) => void;
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -48,33 +47,39 @@ export interface RefMixin {
  * Enables field-element association and simplifies focus control.
  */
 export default function refPlugin(): FieldPlugin<any, RefMixin> {
-  return refFieldPlugin;
+  return _refPlugin;
 }
 
-const refFieldPlugin: FieldPlugin<any, RefMixin> = field => {
-  const ref = createObservableRef<Element | null>(null);
+const _refPlugin: FieldPlugin<any, RefMixin> = field => {
+  const { ref } = field;
 
-  field.ref = ref;
+  let element: Element | null = null;
 
   Object.defineProperty(field, 'isFocused', {
     configurable: true,
 
-    get: () => ref.current !== null && ref.current === ref.current.ownerDocument.activeElement,
+    get: () => element !== null && element !== undefined && element === element.ownerDocument.activeElement,
   });
 
+  field.ref = nextElement => {
+    element = nextElement;
+
+    ref?.(element);
+  };
+
   field.scrollIntoView = options => {
-    ref.current?.scrollIntoView(options);
+    element?.scrollIntoView(options);
   };
 
   field.focus = options => {
-    if (isFocusable(ref.current)) {
-      ref.current.focus(options);
+    if (isFocusable(element)) {
+      element.focus(options);
     }
   };
 
   field.blur = () => {
-    if (isFocusable(ref.current)) {
-      ref.current.blur();
+    if (isFocusable(element)) {
+      element.blur();
     }
   };
 };

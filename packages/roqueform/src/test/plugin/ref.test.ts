@@ -2,34 +2,17 @@
  * @vitest-environment jsdom
  */
 
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import { createField } from '../../main/index.js';
 import refPlugin from '../../main/plugin/ref.js';
 
-test('adds an element property to the field', () => {
-  const field = createField({ aaa: 111 }, [refPlugin()]);
+test('preserves the ref from preceding plugin', () => {
+  const refMock = vi.fn();
 
-  expect(field.ref.current).toBeNull();
-  expect(field.at('aaa').ref.current).toBeNull();
+  const field = createField({ aaa: 111 }, [field => Object.assign(field, { ref: refMock }), refPlugin()]);
+
+  field.ref(document.body);
+
+  expect(refMock).toHaveBeenCalledTimes(1);
+  expect(refMock).toHaveBeenNthCalledWith(1, document.body);
 });
-
-test('ref updates an element property', () => {
-  const field = createField({ aaa: 111 }, [refPlugin()]);
-  const element = document.createElement('input');
-
-  field.ref(element);
-
-  expect(field.ref.current).toEqual(element);
-});
-
-// test('preserves the ref from preceding plugin', () => {
-//   const refMock = vi.fn();
-//
-//   const field = createField({ aaa: 111 }, [field => Object.assign(field, { ref: refMock }), refPlugin()]);
-//
-//   field.ref(document.body);
-//
-//   expect(refMock).toHaveBeenCalledTimes(1);
-//   expect(refMock).toHaveBeenNthCalledWith(1, document.body);
-//   expect(field.ref.current).toBe(document.body);
-// });

@@ -1,7 +1,7 @@
-import { Field, FieldEvent, FieldPlugin } from '../__FieldImpl.js';
-import { AbortError, publishEvents } from '../utils.js';
+import { Field, FieldEvent, FieldPlugin } from '../FieldImpl.js';
+import { AbortError, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
-declare module '../__FieldImpl.js' {
+declare module '../FieldImpl.js' {
   export interface FieldEventTypes {
     validationStarted: never;
     validationFinished: never;
@@ -138,11 +138,7 @@ export default function validationPlugin<Options = void, Mixin extends object = 
 
     field._validation = field.parentField?._validation;
 
-    Object.defineProperty(field, 'isValidating', {
-      configurable: true,
-
-      get: () => field._validation !== undefined,
-    });
+    overrideReadonlyProperty(field, 'isValidating', isValidating => isValidating || field._validation !== undefined);
 
     field.validate = options => validate(field, options);
 
@@ -222,7 +218,7 @@ function validate(field: Field<unknown, PrivateValidationMixin>, options: unknow
 
   publishEvents(abortValidation(field, []));
 
-  if (field._validation !== null) {
+  if (field._validation !== undefined) {
     throw AbortError(ERROR_ABORT);
   }
 
@@ -267,7 +263,7 @@ function validateAsync(field: Field<unknown, PrivateValidationMixin>, options: u
 
     publishEvents(abortValidation(field, []));
 
-    if (field._validation !== null) {
+    if (field._validation !== undefined) {
       reject(AbortError(ERROR_ABORT));
       return;
     }
@@ -282,7 +278,7 @@ function validateAsync(field: Field<unknown, PrivateValidationMixin>, options: u
       return;
     }
 
-    if ((field._validation as Validation | null) !== validation || validation.abortController === null) {
+    if ((field._validation as Validation | undefined) !== validation || validation.abortController === null) {
       reject(AbortError(ERROR_ABORT));
       return;
     }

@@ -1,8 +1,8 @@
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
-import { Field, FieldPlugin, InferMixin } from '../__FieldImpl.js';
-import { createObservableRef, Ref } from '../createObservableRef.js';
+import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
+import { overrideReadonlyProperty } from '../utils.js';
 
-declare module '../__FieldImpl.js' {
+declare module '../FieldImpl.js' {
   export interface FieldEventTypes {
     validityChanged: never;
   }
@@ -20,7 +20,7 @@ export interface ConstraintValidationMixin {
   /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref: Ref<Element | null>;
+  ref: (element: Element | null) => void;
 
   /**
    * The copy of the last reported [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState)
@@ -43,21 +43,34 @@ export interface ConstraintValidationMixin {
   getInvalidFields(): Field<any, InferMixin<this>>[];
 }
 
+interface PrivateConstraintValidationMixin extends ConstraintValidationMixin {
+  _element?: Element | null;
+}
+
 /**
  * Enhances fields with
  * the [Constraint validation API.](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) methods.
  */
 export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidationMixin> {
-  return field => {
-    Object.defineProperty(field, 'isInvalid', {
-      configurable: true,
+  return (field: Field<unknown, PrivateConstraintValidationMixin>) => {
+    const { ref } = field;
 
-      get: () => field.validity.valid,
-    });
+    const handleChange = () => checkValidity(field);
 
-    const ref = createObservableRef<Element | null>(null);
+    field._element = null;
 
-    field.ref = ref;
+    overrideReadonlyProperty(field, 'isInvalid', isInvalid => isInvalid || field.validity.valid);
+
+    field.ref = nextElement => {
+      field._element?.removeEventListener('input', handleChange);
+      field._element = nextElement;
+
+      nextElement?.addEventListener('input', handleChange);
+
+      ref?.(nextElement);
+
+      checkValidity(field);
+    };
 
     field.validity = createValidity();
 
@@ -70,29 +83,16 @@ export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidat
         checkValidity(field);
       }
     });
-
-    const handleChange = () => checkValidity(field);
-
-    ref.subscribe(event => {
-      const { prevValue, nextValue } = event;
-
-      if (prevValue !== null) {
-        prevValue.removeEventListener('input', handleChange);
-      }
-      if (nextValue !== null) {
-        nextValue.addEventListener('input', handleChange);
-      }
-    });
   };
 }
 
-function checkValidity(field: Field<unknown, ConstraintValidationMixin>): void {
-  if (!isValidatable(field.ref.current)) {
+function checkValidity(field: Field<unknown, PrivateConstraintValidationMixin>): void {
+  if (!isValidatable(field._element)) {
     return;
   }
 
   const prevValidity = field.validity;
-  const nextValidity = cloneValidity(field.ref.current.validity);
+  const nextValidity = cloneValidity(field._element.validity);
 
   if (isDeepEqual(prevValidity, nextValidity)) {
     return;
@@ -103,14 +103,14 @@ function checkValidity(field: Field<unknown, ConstraintValidationMixin>): void {
   field.publish({ type: 'validityChanged', target: field, relatedTarget: null, payload: prevValidity });
 }
 
-function reportValidity(field: Field<unknown, ConstraintValidationMixin>): boolean {
+function reportValidity(field: Field<unknown, PrivateConstraintValidationMixin>): boolean {
   for (const child of field.children) {
     if (!reportValidity(child)) {
       return false;
     }
   }
 
-  return !isValidatable(field.ref.current) || field.ref.current.reportValidity();
+  return !isValidatable(field._element) || field._element.reportValidity();
 }
 
 function getInvalidFields(
@@ -128,8 +128,10 @@ function getInvalidFields(
   return batch;
 }
 
-function isValidatable(element: Element | null): element is HTMLInputElement {
-  return element instanceof Element && 'validity' in element && element.validity instanceof ValidityState;
+function isValidatable(element: Element | null | undefined): element is HTMLInputElement {
+  return (
+    element !== null && element !== undefined && 'validity' in element && element.validity instanceof ValidityState
+  );
 }
 
 function cloneValidity(validity: ValidityState): ValidityState {

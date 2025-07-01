@@ -1,5 +1,5 @@
-export { naturalValueAccessor } from './__naturalValueAccessor.js';
-export { createField } from './__createField.js';
+export { naturalValueAccessor } from './naturalValueAccessor.js';
+export { createField } from './createField.js';
 export {
   type FieldEvent,
   type FieldPlugin,
@@ -7,4 +7,4 @@ export {
   type InferMixin,
   type InferValue,
   type ValueAccessor,
-} from './__FieldImpl.js';
+} from './FieldImpl.js';

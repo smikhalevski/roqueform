@@ -1,6 +1,5 @@
 import { createElementsValueAccessor } from '../createElementsValueAccessor.js';
-import { Field, FieldPlugin } from '../__FieldImpl.js';
-import { createObservableRefArray, ObservableRefArray, RefArray } from '../utils.js';
+import { Field, FieldPlugin } from '../FieldImpl.js';
 
 export {
   createElementsValueAccessor,
@@ -20,7 +19,7 @@ export interface UncontrolledMixin {
   /**
    * Associates the field with the DOM element.
    */
-  ref: RefArray<Element | null>;
+  ref: (element: Element | null) => void;
 }
 
 /**
@@ -28,20 +27,42 @@ export interface UncontrolledMixin {
  */
 export default function uncontrolledPlugin(accessor = elementsValueAccessor): FieldPlugin<any, UncontrolledMixin> {
   return (field: Field<unknown, UncontrolledMixin>) => {
-    const ref = createObservableRefArray<Element | null>(null);
+    const { ref } = field;
 
-    field.ref = ref;
+    const elements = new Set<Element>();
+
+    field.ref = nextElement => {
+      if (nextElement !== null && nextElement !== undefined) {
+        // Connected
+
+        nextElement.addEventListener('input', handleChange);
+        elements.add(nextElement);
+      } else {
+        // Disconnected
+
+        for (const element of elements) {
+          if (!element.isConnected) {
+            element.removeEventListener('input', handleChange);
+            elements.delete(element);
+          }
+        }
+      }
+
+      if (elements.size !== 0) {
+        accessor.set(Array.from(elements), field.value);
+      }
+
+      ref?.(nextElement);
+    };
 
     let prevValue = field.value;
 
     const handleChange: EventListener = event => {
-      const elements = getElements(ref);
-
-      if (!elements.includes(event.target as Element)) {
+      if (!elements.has(event.target as Element)) {
         return;
       }
 
-      prevValue = accessor.get(elements);
+      prevValue = accessor.get(Array.from(elements));
       field.setValue(prevValue);
     };
 
@@ -50,40 +71,9 @@ export default function uncontrolledPlugin(accessor = elementsValueAccessor): Fi
         return;
       }
 
-      const elements = getElements(ref);
-
-      if (elements.length !== 0) {
-        accessor.set(elements, field.value);
-      }
-    });
-
-    ref.subscribe(event => {
-      const { prevValue, nextValue } = event;
-
-      if (prevValue !== null) {
-        prevValue.removeEventListener('input', handleChange);
-      }
-      if (nextValue !== null) {
-        nextValue.addEventListener('input', handleChange);
-      }
-
-      const elements = getElements(ref);
-
-      if (elements.length !== 0) {
-        accessor.set(elements, field.value);
+      if (elements.size !== 0) {
+        accessor.set(Array.from(elements), field.value);
       }
     });
   };
-}
-
-function getElements(refArray: ObservableRefArray<Element | null>): Element[] {
-  const elements = [];
-
-  for (const ref of refArray._refs) {
-    if (ref.current instanceof Element) {
-      elements.push(ref.current);
-    }
-  }
-
-  return elements;
 }

@@ -1,5 +1,4 @@
-import { Field, FieldPlugin, InferMixin } from '../__FieldImpl.js';
-import { createObservableRef, Ref } from '../createObservableRef.js';
+import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
 
 /**
  * The mixin added to fields by the {@link scrollToErrorPlugin}.
@@ -13,7 +12,7 @@ export interface ScrollToErrorMixin {
   /**
    * Associates the field with the {@link element DOM element}.
    */
-  ref: Ref<Element | null>;
+  ref: (element: Element | null) => void;
 
   /**
    * Scroll to the element that is referenced by an invalid field. Scrolls the field element's ancestor containers such
@@ -46,6 +45,10 @@ export interface ScrollToErrorMixin {
   scrollToError(index?: number, options?: ScrollIntoViewOptions): Field<any, InferMixin<this>> | null;
 }
 
+interface PrivateScrollToErrorMixin extends ScrollToErrorMixin {
+  _element?: Element | null;
+}
+
 /**
  * Enhances the field with methods to scroll to a field that has an associated validation error.
  *
@@ -53,8 +56,16 @@ export interface ScrollToErrorMixin {
  * field.
  */
 export default function scrollToErrorPlugin(): FieldPlugin<any, ScrollToErrorMixin> {
-  return field => {
-    field.ref = createObservableRef<Element | null>(null);
+  return (field: Field<unknown, PrivateScrollToErrorMixin>) => {
+    const { ref } = field;
+
+    field._element = null;
+
+    field.ref = nextElement => {
+      field._element = nextElement;
+
+      ref?.(nextElement);
+    };
 
     field.scrollToError = (index = 0, options) => {
       const targets = getTargetFields(field, []);
@@ -65,21 +76,21 @@ export default function scrollToErrorPlugin(): FieldPlugin<any, ScrollToErrorMix
 
       const target = targets.sort(sortByDocumentOrder)[index < 0 ? targets.length + index : index];
 
-      if (target === undefined || target.ref.current === null) {
+      if (target === undefined || target._element === null || target._element === undefined) {
         return null;
       }
 
-      target.ref.current.scrollIntoView(options);
+      target._element.scrollIntoView(options);
       return target;
     };
   };
 }
 
 function getTargetFields(
-  field: Field<unknown, ScrollToErrorMixin>,
-  batch: Field<unknown, ScrollToErrorMixin>[]
-): Field<unknown, ScrollToErrorMixin>[] {
-  if (field.isInvalid && field.ref.current !== null && field.ref.current.isConnected) {
+  field: Field<unknown, PrivateScrollToErrorMixin>,
+  batch: Field<unknown, PrivateScrollToErrorMixin>[]
+): Field<unknown, PrivateScrollToErrorMixin>[] {
+  if (field.isInvalid && field._element !== null && field._element !== undefined && field._element.isConnected) {
     batch.push(field);
   }
 
@@ -90,11 +101,20 @@ function getTargetFields(
   return batch;
 }
 
-function sortByDocumentOrder(a: Field<unknown, ScrollToErrorMixin>, b: Field<unknown, ScrollToErrorMixin>): number {
-  const aElement = a.ref.current;
-  const bElement = b.ref.current;
+function sortByDocumentOrder(
+  a: Field<unknown, PrivateScrollToErrorMixin>,
+  b: Field<unknown, PrivateScrollToErrorMixin>
+): number {
+  const aElement = a._element;
+  const bElement = b._element;
 
-  if (aElement === null || bElement === null || aElement === bElement) {
+  if (
+    aElement === null ||
+    bElement === null ||
+    aElement === undefined ||
+    bElement === undefined ||
+    aElement === bElement
+  ) {
     return 0;
   }
 

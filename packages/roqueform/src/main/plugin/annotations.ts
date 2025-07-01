@@ -1,7 +1,7 @@
-import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../__FieldImpl.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../FieldImpl.js';
 import { callOrGet, publishEvents } from '../utils.js';
 
-declare module '../__FieldImpl.js' {
+declare module '../FieldImpl.js' {
   export interface FieldEventTypes {
     annotationsChanged: never;
   }

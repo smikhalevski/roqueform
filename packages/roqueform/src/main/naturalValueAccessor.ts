@@ -1,4 +1,4 @@
-import { ValueAccessor } from './__FieldImpl.js';
+import { ValueAccessor } from './FieldImpl.js';
 import { toArrayIndex } from './utils.js';
 
 /**

@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { createField, FieldEvent, naturalValueAccessor } from '../main/index.js';
-import { FieldImpl } from '../main/__FieldImpl.js';
+import { FieldImpl } from '../main/FieldImpl.js';
 
 vi.useFakeTimers();
 

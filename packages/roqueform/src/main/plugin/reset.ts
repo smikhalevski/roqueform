@@ -1,8 +1,8 @@
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
-import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../__FieldImpl.js';
-import { isEqual, publishEvents } from '../utils.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../FieldImpl.js';
+import { isEqual, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
-declare module '../__FieldImpl.js' {
+declare module '../FieldImpl.js' {
   export interface FieldEventTypes {
     initialValueChanged: never;
   }
@@ -48,11 +48,7 @@ export default function resetPlugin(
   equalityChecker: (initialValue: any, value: any) => boolean = isDeepEqual
 ): FieldPlugin<any, ResetMixin> {
   return field => {
-    Object.defineProperty(field, 'isDirty', {
-      configurable: true,
-
-      get: () => !equalityChecker(field.initialValue, field.value),
-    });
+    overrideReadonlyProperty(field, 'isDirty', isDirty => isDirty || !equalityChecker(field.initialValue, field.value));
 
     field.setInitialValue = value => {
       setInitialValue(field, value);

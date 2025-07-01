@@ -1,7 +1,7 @@
-import { Field, FieldEvent, FieldPlugin, InferMixin } from '../__FieldImpl.js';
-import { emptyObject, publishEvents } from '../utils.js';
+import { Field, FieldEvent, FieldPlugin, InferMixin } from '../FieldImpl.js';
+import { emptyObject, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
-declare module '../__FieldImpl.js' {
+declare module '../FieldImpl.js' {
   export interface FieldEventTypes {
     errorAdded: never;
     errorDeleted: never;
@@ -84,11 +84,7 @@ export default function errorsPlugin<Error = any>(
   return field => {
     field.errors = [];
 
-    Object.defineProperty(field, 'isInvalid', {
-      configurable: true,
-
-      get: () => field.errors.length !== 0,
-    });
+    overrideReadonlyProperty(field, 'isInvalid', isInvalid => isInvalid || field.errors.length !== 0);
 
     field.addError = error => {
       const prevErrors = field.errors;

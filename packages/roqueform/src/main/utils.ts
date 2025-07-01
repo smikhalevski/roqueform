@@ -1,4 +1,4 @@
-import { FieldEvent } from './__FieldImpl.js';
+import { FieldEvent } from './FieldImpl.js';
 
 export const emptyObject = {};
 
@@ -41,12 +41,6 @@ export function AbortError(message: string): Error {
   return typeof DOMException !== 'undefined' ? new DOMException(message, 'AbortError') : Error(message);
 }
 
-export function publishEvents(events: FieldEvent[]): void {
-  for (const event of events) {
-    event.target.publish(event);
-  }
-}
-
 /**
  * Converts `k` to a number if it represents a valid array index, or returns -1 if `k` isn't an index.
  *
@@ -54,4 +48,27 @@ export function publishEvents(events: FieldEvent[]): void {
  */
 export function toArrayIndex(k: any): number {
   return (typeof k === 'number' || (typeof k === 'string' && k === '' + (k = +k))) && k >>> 0 === k ? k : -1;
+}
+
+export function publishEvents(events: FieldEvent[]): void {
+  for (const event of events) {
+    event.target.publish(event);
+  }
+}
+
+export function overrideReadonlyProperty<T, K extends keyof T>(
+  obj: T,
+  key: K,
+  getter: (superValue: T[K] | undefined) => T[K]
+): void {
+  const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+
+  Object.defineProperty(obj, key, {
+    configurable: true,
+
+    get:
+      descriptor === undefined
+        ? () => getter(undefined)
+        : () => getter(descriptor.get === undefined ? descriptor.value : descriptor.get()),
+  });
 }

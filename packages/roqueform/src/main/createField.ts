@@ -1,5 +1,5 @@
-import { naturalValueAccessor } from './__naturalValueAccessor.js';
-import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './__FieldImpl.js';
+import { naturalValueAccessor } from './naturalValueAccessor.js';
+import { Field, FieldImpl, FieldPlugin, ValueAccessor } from './FieldImpl.js';
 import { callOrGet } from './utils.js';
 
 /**

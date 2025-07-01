@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent } from '@testing-library/dom';
-import { createField } from '../../main/index.js';
+import { createField, FieldEvent } from '../../main/index.js';
 import { constraintValidationPlugin } from '../../main/plugin/constraint-validation.js';
 
 vi.useFakeTimers();
@@ -26,10 +26,34 @@ test('enhances the field', () => {
   const field = createField({ aaa: 111 }, [constraintValidationPlugin()]);
 
   expect(field.isInvalid).toBe(false);
-  expect(field.validity).toBeNull();
+  expect(field.validity).toEqual({
+    badInput: false,
+    customError: false,
+    patternMismatch: false,
+    rangeOverflow: false,
+    rangeUnderflow: false,
+    stepMismatch: false,
+    tooLong: false,
+    tooShort: false,
+    typeMismatch: false,
+    valid: false,
+    valueMissing: false,
+  });
 
   expect(field.at('aaa').isInvalid).toBe(false);
-  expect(field.at('aaa').validity).toBeNull();
+  expect(field.at('aaa').validity).toEqual({
+    badInput: false,
+    customError: false,
+    patternMismatch: false,
+    rangeOverflow: false,
+    rangeUnderflow: false,
+    stepMismatch: false,
+    tooLong: false,
+    tooShort: false,
+    typeMismatch: false,
+    valid: false,
+    valueMissing: false,
+  });
 });
 
 test('reports validity of the root field', () => {
@@ -73,17 +97,26 @@ test('deletes an error when a ref is changed', () => {
 
   field.ref(element);
 
-  vi.runAllTimers();
-
-  expect(field.isInvalid).toBe(true);
-  expect(listenerMock).toHaveBeenCalledTimes(1);
-
-  field.ref(null);
-
-  vi.runAllTimers();
-
   expect(field.isInvalid).toBe(false);
-  expect(listenerMock).toHaveBeenCalledTimes(2);
+  expect(listenerMock).toHaveBeenCalledTimes(1);
+  expect(listenerMock).toHaveBeenNthCalledWith(1, {
+    type: 'validityChanged',
+    target: field,
+    relatedTarget: null,
+    payload: {
+      badInput: false,
+      customError: false,
+      patternMismatch: false,
+      rangeOverflow: false,
+      rangeUnderflow: false,
+      stepMismatch: false,
+      tooLong: false,
+      tooShort: false,
+      typeMismatch: false,
+      valid: false,
+      valueMissing: false,
+    },
+  } satisfies FieldEvent);
 });
 
 test('notifies the field when the value is changed', () => {
@@ -100,13 +133,11 @@ test('notifies the field when the value is changed', () => {
 
   field.at('aaa').ref(element);
 
-  vi.runAllTimers();
-
   expect(listenerMock).toHaveBeenCalledTimes(1);
-  expect(field.at('aaa').isInvalid).toBe(false);
+  expect(field.at('aaa').isInvalid).toBe(true);
 
   fireEvent.change(element, { target: { value: '' } });
 
-  expect(listenerMock).toHaveBeenCalledTimes(2);
-  expect(aaaListenerMock).toHaveBeenCalledTimes(2);
+  expect(listenerMock).toHaveBeenCalledTimes(1);
+  expect(aaaListenerMock).toHaveBeenCalledTimes(1);
 });
