@@ -1,132 +1,114 @@
-import { Field, FieldEvent, FieldPlugin } from 'roqueform';
-import { ParseParams, SafeParseReturnType, ZodIssue, ZodIssueCode, ZodType, ZodTypeAny } from 'zod';
-import { ParseOptions, Shape } from 'doubter';
-import validationPlugin, { ValidationMixin } from 'roqueform/plugin/validation';
+import { Field, FieldPlugin } from 'roqueform';
+import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
+import { ParseParams, SafeParseReturnType, ZodType, ZodTypeAny } from 'zod';
 
-interface ZodMixin extends ValidationMixin<ParseOptions> {
+interface PrivateZodMixin extends ValidationMixin<Partial<ParseParams> | undefined> {
+  /**
+   * The Zod validation type of the root value.
+   */
   _valueType?: ZodTypeAny;
 }
 
-export function zodPlugin<Value>(type: ZodType<any, any, Value>): FieldPlugin<Value, ValidationMixin<ParseOptions>> {
-  return (field: Field<any, ZodMixin>) => {
-    // field._valueShape = field.parentField === null ? shape : field.parentField._valueShape?.at(field.key) || undefined;
-    //
-    // validationPlugin<ParseOptions>({
-    //   validate(field, options) {
-    //   },
-    //   validateAsync(field, options) {
-    //     return Promise.resolve();
-    //   },
-    // })(field);
+/**
+ * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
+ *
+ * @param type The type that validates the field value.
+ * @template Value The root field value.
+ * @returns The validation plugin.
+ */
+export function zodPlugin<Value>(
+  type: ZodType<any, any, Value>
+): FieldPlugin<Value, ValidationMixin<Partial<ParseParams> | void>> {
+  return (field: Field<Value, PrivateZodMixin>) => {
+    field._valueType = field.parentField?._valueType || type;
+
+    validationPlugin(validator)(field);
   };
 }
 
-// /**
-//  * The plugin added to fields by the {@link zodPlugin}.
-//  */
-// export type ZodPlugin = ValidationMixin<Partial<ParseParams>> & ErrorsMixin<ZodIssue> & ZodTypePlugin;
-//
-// /**
-//  * Enhances fields with validation methods powered by [Zod](https://zod.dev/).
-//  *
-//  * @param type The type that validates the field value.
-//  * @template Value The root field value.
-//  * @returns The validation plugin.
-//  */
-// export function zodPlugin<Value>(type: ZodType<any, any, Value>): FieldPlugin<ZodPlugin, Value> {
-//   return validationPlugin(composePlugins(errorsPlugin(concatErrors), zodTypePlugin(type)), validator);
-// }
-//
-// function zodTypePlugin<Value>(rootType: ZodType<any, any, Value>): FieldPlugin<ZodTypePlugin, Value> {
-//   return field => {
-//     field.valueType = field.parentField?.valueType || rootType;
-//
-//     const { addError } = field;
-//
-//     field.addError = error => {
-//       addError(typeof error === 'string' ? { code: ZodIssueCode.custom, path: getPath(field), message: error } : error);
-//     };
-//   };
-// }
-//
-// const validator: Validator<Partial<ParseParams>, ZodPlugin> = {
-//   validate(field, options) {
-//     const { validation, valueType } = field;
-//
-//     if (validation !== null) {
-//       applyResult(validation, valueType.safeParse(getValue(field), options));
-//     }
-//   },
-//
-//   validateAsync(field, options) {
-//     const { validation, valueType } = field;
-//
-//     if (validation !== null) {
-//       return valueType.safeParseAsync(getValue(field), options).then(result => {
-//         applyResult(validation, result);
-//       });
-//     }
-//
-//     return Promise.resolve();
-//   },
-// };
-//
-// function concatErrors(errors: readonly ZodIssue[], error: ZodIssue): readonly ZodIssue[] {
-//   for (const otherError of errors) {
-//     if (otherError.code === error.code) {
-//       return errors;
-//     }
-//   }
-//   return errors.concat(error);
-// }
-//
-// function getValue(field: Field<ZodPlugin>): unknown {
-//   let value = field.value;
-//   let transient = false;
-//
-//   while (field.parentField !== null) {
-//     transient ||= field.isTransient;
-//     value = transient ? field.valueAccessor.set(field.parentField.value, field.key, value) : field.parentField.value;
-//     field = field.parentField;
-//   }
-//   return value;
-// }
-//
-// function getPath(field: Field): any[] {
-//   const path = [];
-//
-//   while (field.parentField !== null) {
-//     path.unshift(field.key);
-//     field = field.parentField;
-//   }
-//   return path;
-// }
-//
-// function applyResult(validation: Validation<ZodPlugin>, result: SafeParseReturnType<unknown, unknown>): void {
-//   if (result.success) {
-//     return;
-//   }
-//
-//   const basePath = getPath(validation.rootField);
-//
-//   issues: for (const issue of result.error.issues) {
-//     const { path } = issue;
-//
-//     if (path.length < basePath.length) {
-//       continue;
-//     }
-//     for (let i = 0; i < basePath.length; ++i) {
-//       if (path[i] !== basePath[i]) {
-//         continue issues;
-//       }
-//     }
-//
-//     let child = validation.rootField;
-//     for (let i = basePath.length; i < path.length; ++i) {
-//       child = child.at(path[i]);
-//     }
-//     if (child.validation === validation) {
-//       child.addError(issue);
-//     }
-//   }
-// }
+const validator: Validator<Partial<ParseParams> | undefined, PrivateZodMixin> = {
+  validate(field, options) {
+    const { validation, _valueType } = field;
+
+    if (validation === null || _valueType === undefined) {
+      // No validation
+      return;
+    }
+
+    applyResult(validation, _valueType.safeParse(getValue(field), options));
+  },
+
+  validateAsync(field, options) {
+    const { validation, _valueType } = field;
+
+    if (validation === null || _valueType === undefined) {
+      // No validation
+      return Promise.resolve();
+    }
+
+    return _valueType.safeParseAsync(getValue(field), options).then(result => {
+      applyResult(validation, result);
+    });
+  },
+};
+
+function getValue(field: Field<any, PrivateZodMixin>): unknown {
+  let value = field.value;
+  let isTransient = false;
+
+  while (field.parentField !== null) {
+    isTransient ||= field.isTransient;
+    value = isTransient ? field.valueAccessor.set(field.parentField.value, field.key, value) : field.parentField.value;
+    field = field.parentField;
+  }
+  return value;
+}
+
+function getPath(field: Field): any[] {
+  const path = [];
+
+  while (field.parentField !== null) {
+    path.unshift(field.key);
+    field = field.parentField;
+  }
+  return path;
+}
+
+function applyResult(validation: Validation, result: SafeParseReturnType<unknown, unknown>): void {
+  if (result.success) {
+    return;
+  }
+
+  const basePath = getPath(validation.rootField);
+
+  issues: for (const issue of result.error.issues) {
+    const { path } = issue;
+
+    if (path.length < basePath.length) {
+      continue;
+    }
+
+    for (let i = 0; i < basePath.length; ++i) {
+      if (path[i] !== basePath[i]) {
+        continue issues;
+      }
+    }
+
+    let child = validation.rootField;
+
+    for (let i = basePath.length; i < path.length; ++i) {
+      child = child.at(path[i]);
+    }
+
+    if (child.validation !== validation) {
+      return;
+    }
+
+    child.publish({
+      type: 'errorCaught',
+      target: child,
+      relatedTarget: validation.rootField,
+      payload: issue,
+    });
+  }
+}

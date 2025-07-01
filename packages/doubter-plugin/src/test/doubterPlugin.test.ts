@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import * as d from 'doubter';
 import { doubterPlugin } from '../main/index.js';
 import { createField } from 'roqueform';
+import errorsPlugin from 'roqueform/plugin/errors';
 
 describe('doubterPlugin', () => {
   const aaaShape = d.object({
@@ -14,7 +15,7 @@ describe('doubterPlugin', () => {
   });
 
   test('enhances the field', () => {
-    const field = createField({ aaa: 0 }, [doubterPlugin(aaaShape)]);
+    const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
 
     expect(field.isInvalid).toBe(false);
     expect(field.errors.length).toBe(0);
@@ -24,7 +25,7 @@ describe('doubterPlugin', () => {
   });
 
   test('sets an issue to the root field', () => {
-    const field = createField({ aaa: 0 }, [doubterPlugin(aaaShape)]);
+    const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
 
     const issue = { code: 'xxx' };
 
@@ -38,7 +39,7 @@ describe('doubterPlugin', () => {
   });
 
   test('sets an issue to the child field', () => {
-    const field = createField({ aaa: 0 }, [doubterPlugin(aaaShape)]);
+    const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
 
     const issue = { code: 'aaa' };
 
@@ -51,20 +52,8 @@ describe('doubterPlugin', () => {
     expect(field.at('aaa').errors).toEqual([issue]);
   });
 
-  test('converts string errors to issue messages', () => {
-    const field = createField({ aaa: 0 }, [doubterPlugin(aaaShape)]);
-
-    field.at('aaa').addError('xxx');
-
-    expect(field.isInvalid).toBe(false);
-    expect(field.errors.length).toBe(0);
-
-    expect(field.at('aaa').isInvalid).toBe(true);
-    expect(field.at('aaa').errors).toEqual([{ code: 'custom', message: 'xxx', input: 0, path: ['aaa'] }]);
-  });
-
   test('validates the root field', () => {
-    const field = createField({ aaa: 0 }, [doubterPlugin(aaaShape)]);
+    const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
 
     field.validate();
 
@@ -85,7 +74,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validates the child field', () => {
-    const field = createField({ aaa: 0 }, [doubterPlugin(aaaShape)]);
+    const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
 
     field.at('aaa').validate();
 
@@ -106,7 +95,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validates multiple fields', () => {
-    const field = createField({ aaa: 0, bbb: 'ccc' }, [doubterPlugin(aaaBbbShape)]);
+    const field = createField({ aaa: 0, bbb: 'ccc' }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaBbbShape)]);
 
     field.validate();
 
@@ -139,7 +128,7 @@ describe('doubterPlugin', () => {
   });
 
   test('validate does not raise issues for transient fields', () => {
-    const field = createField({ aaa: 0, bbb: 'ccc' }, [doubterPlugin(aaaBbbShape)]);
+    const field = createField({ aaa: 0, bbb: 'ccc' }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaBbbShape)]);
 
     field.at('bbb').setTransientValue('aaabbb');
 

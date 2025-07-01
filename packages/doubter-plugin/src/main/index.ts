@@ -12,7 +12,7 @@ import { Err, Ok, ParseOptions, Shape } from 'doubter';
 import { Field, FieldPlugin } from 'roqueform';
 import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
 
-interface PrivateDoubterMixin extends ValidationMixin<ParseOptions> {
+interface PrivateDoubterMixin extends ValidationMixin<ParseOptions | undefined> {
   _valueShape?: Shape;
 }
 
@@ -22,7 +22,9 @@ interface PrivateDoubterMixin extends ValidationMixin<ParseOptions> {
  * @param shape The shape that parses the field value.
  * @template Value The root field value.
  */
-export function doubterPlugin<Value>(shape: Shape<Value, any>): FieldPlugin<Value, ValidationMixin<ParseOptions>> {
+export function doubterPlugin<Value>(
+  shape: Shape<Value, any>
+): FieldPlugin<Value, ValidationMixin<ParseOptions | void>> {
   return (field: Field<Value, PrivateDoubterMixin>) => {
     field._valueShape = field.parentField === null ? shape : field.parentField._valueShape?.at(field.key) || undefined;
 
@@ -30,7 +32,7 @@ export function doubterPlugin<Value>(shape: Shape<Value, any>): FieldPlugin<Valu
   };
 }
 
-const validator: Validator<ParseOptions, PrivateDoubterMixin> = {
+const validator: Validator<ParseOptions | undefined, PrivateDoubterMixin> = {
   validate(field, options) {
     const { validation, _valueShape } = field;
 
