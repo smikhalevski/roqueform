@@ -50,25 +50,31 @@ export function toArrayIndex(k: any): number {
   return (typeof k === 'number' || (typeof k === 'string' && k === '' + (k = +k))) && k >>> 0 === k ? k : -1;
 }
 
+/**
+ * Publishes events to corresponding targets.
+ */
 export function publishEvents(events: FieldEvent[]): void {
   for (const event of events) {
     event.target.publish(event);
   }
 }
 
+/**
+ * Defines getter for object property that receives the value returned from the previously defined getter.
+ */
 export function overrideReadonlyProperty<T, K extends keyof T>(
   obj: T,
   key: K,
-  getter: (superValue: T[K] | undefined) => T[K]
+  get: (value: T[K] | undefined) => T[K]
 ): void {
-  const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+  const prevDescriptor = Object.getOwnPropertyDescriptor(obj, key);
 
   Object.defineProperty(obj, key, {
     configurable: true,
 
     get:
-      descriptor === undefined
-        ? () => getter(undefined)
-        : () => getter(descriptor.get === undefined ? descriptor.value : descriptor.get()),
+      prevDescriptor === undefined
+        ? () => get(undefined)
+        : () => get(prevDescriptor.get === undefined ? prevDescriptor.value : prevDescriptor.get.call(obj)),
   });
 }

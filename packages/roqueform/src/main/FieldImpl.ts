@@ -5,8 +5,24 @@ declare const MIXIN: unique symbol;
 
 type MIXIN = typeof MIXIN;
 
-export interface FieldEventTypes {
-  valueChanged: never;
+/**
+ * Mapping from a {@link Field} event type to corresponding a payload.
+ *
+ * Use declaration merging to register additional event types:
+ *
+ * ```ts
+ * declare module 'roqueform' {
+ *   export interface FieldEventRegistry {
+ *     hello: 'payload';
+ *   }
+ * }
+ * ```
+ */
+export interface FieldEventRegistry {
+  /**
+   * The new value was set to the target field. The payload contains the old value.
+   */
+  valueChanged: any;
 }
 
 /**
@@ -18,7 +34,7 @@ export interface FieldEvent<Mixin extends object = {}> {
   /**
    * The type of the event.
    */
-  type: keyof FieldEventTypes | (string & {});
+  type: keyof FieldEventRegistry;
 
   /**
    * The field onto which this event was published.
@@ -36,7 +52,7 @@ export interface FieldEvent<Mixin extends object = {}> {
   /**
    * The payload carried by the event.
    */
-  payload: any;
+  payload: FieldEventRegistry[this['type']];
 }
 
 /**
@@ -52,7 +68,7 @@ export type FieldPlugin<Value = any, Mixin extends object = {}> = {
 }['bivarianceHack'];
 
 /**
- * Reads and write object properties.
+ * Reads and writes object properties.
  */
 export interface ValueAccessor {
   /**
@@ -87,7 +103,7 @@ export type InferValue<T> = T extends Field ? T['value'] : never;
 /**
  * Infers the mixin that was added to a field.
  *
- * Use `InferMixin<this>` in mixin interfaces to infer the mixin of the current field.
+ * Use `InferMixin<this>` in mixin interfaces to infer the intersection of all mixins of the current field.
  *
  * @template T The field to infer mixin of.
  */
@@ -100,11 +116,19 @@ export type InferMixin<T> = T extends Field ? T[MIXIN] : never;
  * @template Value The field value.
  * @template Mixin The mixin added to the field.
  */
-export type Field<Value = any, Mixin extends object = {}> = Mixin & {
+export type Field<Value = any, Mixin extends object = {}> = FieldCore<Value, Mixin> & Mixin;
+
+/**
+ * Core properties of the {@link Field}.
+ *
+ * **Note:** It is recommended to use {@link Field} type whenever possible instead of {@link FieldCore}.
+ *
+ * @template Value The field value.
+ * @template Mixin The mixin added to the field.
+ */
+export interface FieldCore<Value = any, Mixin extends object = {}> {
   /**
    * Holds the mixin type for inference.
-   *
-   * Use {@link InferMixin InferMixin<this>} in mixin interfaces to infer the mixin of the current field.
    *
    * @internal
    * @private
@@ -122,8 +146,8 @@ export type Field<Value = any, Mixin extends object = {}> = Mixin & {
   readonly children: readonly Field<any, Mixin>[];
 
   /**
-   * The key in the {@link parentField parent value} that corresponds to the value of this field,
-   * or `null` if there's no parent.
+   * The key in the {@link parentField parent value} that corresponds to the value of this field, or `null` if there's
+   * no parent.
    */
   readonly key: any;
 
@@ -199,7 +223,7 @@ export type Field<Value = any, Mixin extends object = {}> = Mixin & {
    * @param listener The listener to subscribe.
    */
   subscribe(listener: (event: FieldEvent<Mixin>) => void): () => void;
-};
+}
 
 type Primitive =
   | String

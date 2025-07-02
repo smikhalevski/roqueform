@@ -1,3 +1,13 @@
+/**
+ * Associates Roqueform fields with DOM elements.
+ *
+ * ```ts
+ * import refPlugin from 'roqueform/plugin/ref';
+ * ```
+ *
+ * @module plugin/ref
+ */
+
 import { FieldPlugin } from '../FieldImpl.js';
 
 /**
@@ -5,12 +15,12 @@ import { FieldPlugin } from '../FieldImpl.js';
  */
 export interface RefMixin {
   /**
-   * `true` if {@link element the DOM element} is focused, or `false` otherwise.
+   * `true` if the DOM element is focused, or `false` otherwise.
    */
   readonly isFocused: boolean;
 
   /**
-   * Associates the field with the {@link element DOM element}.
+   * Associates the field with the DOM element.
    */
   ref: (element: Element | null) => void;
 

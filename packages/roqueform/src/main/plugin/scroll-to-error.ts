@@ -1,3 +1,12 @@
+/**
+ * Roqueform plugin that enables scrolling to a field that has an associated validation error.
+ *
+ * ```ts
+ * import scrollToErrorPlugin from 'roqueform/plugin/scroll-to-error';
+ * ```
+ *
+ * @module plugin/scroll-to-error
+ */
 import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
 
 /**
@@ -10,7 +19,7 @@ export interface ScrollToErrorMixin {
   isInvalid?: boolean;
 
   /**
-   * Associates the field with the {@link element DOM element}.
+   * Associates the field with the DOM element.
    */
   ref: (element: Element | null) => void;
 

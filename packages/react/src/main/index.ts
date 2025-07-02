@@ -5,7 +5,7 @@
  * npm install --save-prod @roqueform/react
  * ```
  *
- * @module react
+ * @module @roqueform/react
  */
 
 export { FieldRenderer, type FieldRendererProps } from './FieldRenderer.js';

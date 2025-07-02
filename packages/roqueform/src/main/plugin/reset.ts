@@ -1,10 +1,23 @@
+/**
+ * Manages Roqueform field initial value and dirty status.
+ *
+ * ```ts
+ * import resetPlugin from 'roqueform/plugin/reset';
+ * ```
+ *
+ * @module plugin/reset
+ */
+
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../FieldImpl.js';
 import { isEqual, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
 declare module '../FieldImpl.js' {
-  export interface FieldEventTypes {
-    initialValueChanged: never;
+  export interface FieldEventRegistry {
+    /**
+     * The new initial value was set to the target field. The payload contains the old initial value.
+     */
+    initialValueChanged: any;
   }
 }
 
@@ -30,8 +43,8 @@ export interface ResetMixin {
   reset(): void;
 
   /**
-   * Returns all fields that have {@link roqueform!FieldImpl.value a value} that is different from
-   * {@link roqueform!FieldImpl.initialValue an initial value}.
+   * Returns all fields that have {@link roqueform!FieldCore.value a value} that is different from
+   * {@link roqueform!FieldCore.initialValue an initial value}.
    *
    * @see {@link isDirty}
    */

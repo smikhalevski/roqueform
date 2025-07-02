@@ -12,7 +12,7 @@
     "inherited": true
   },
   "tsconfig": "./tsconfig.json",
-  "entryPoints": ["./packages/*/src/main/index.ts"],
+  "entryPoints": ["./packages/*/src/main/index.ts", "./packages/roqueform/src/main/plugin/*.ts"],
   "plugin": ["typedoc-plugin-mdn-links"],
   "externalSymbolLinkMappings": {
     "doubter": {

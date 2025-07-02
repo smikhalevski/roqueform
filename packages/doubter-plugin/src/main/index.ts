@@ -5,7 +5,7 @@
  * npm install --save-prod @roqueform/doubter-plugin
  * ```
  *
- * @module doubter-plugin
+ * @module @roqueform/doubter-plugin
  */
 
 import { Err, Ok, ParseOptions, Shape } from 'doubter';

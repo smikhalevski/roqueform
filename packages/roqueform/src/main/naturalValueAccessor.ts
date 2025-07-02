@@ -2,7 +2,7 @@ import { ValueAccessor } from './FieldImpl.js';
 import { toArrayIndex } from './utils.js';
 
 /**
- * The value accessor that reads and writes key-value pairs to well-known object instances.
+ * The value accessor that reads and writes key-value pairs to well-known object types.
  */
 export const naturalValueAccessor: ValueAccessor = {
   get(obj, key) {
@@ -26,8 +26,6 @@ export const naturalValueAccessor: ValueAccessor = {
   },
 
   set(obj, key, value) {
-    let prototype;
-
     if (isPrimitive(obj)) {
       obj = typeof key === 'number' && toArrayIndex(key) !== -1 ? [] : {};
       obj[key] = value;
@@ -42,7 +40,7 @@ export const naturalValueAccessor: ValueAccessor = {
       return obj;
     }
 
-    prototype = Object.getPrototypeOf(obj);
+    const prototype = Object.getPrototypeOf(obj);
 
     if (isMapLike(obj)) {
       return new prototype.constructor(obj).set(key, value);

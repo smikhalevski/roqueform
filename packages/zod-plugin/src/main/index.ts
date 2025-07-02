@@ -1,3 +1,13 @@
+/**
+ * Validates Roqueform fields with [Zod](https://zod.dev/) schemas.
+ *
+ * ```sh
+ * npm install --save-prod @roqueform/zod-plugin
+ * ```
+ *
+ * @module @roqueform/zod-plugin
+ */
+
 import { Field, FieldPlugin } from 'roqueform';
 import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
 import { ParseParams, SafeParseReturnType, ZodType, ZodTypeAny } from 'zod';

@@ -1,10 +1,27 @@
+/**
+ * Enhances Roqueform fields with validation methods.
+ *
+ * ```ts
+ * import validationPlugin from 'roqueform/plugin/validation';
+ * ```
+ *
+ * @module plugin/validation
+ */
+
 import { Field, FieldEvent, FieldPlugin } from '../FieldImpl.js';
 import { AbortError, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
 declare module '../FieldImpl.js' {
-  export interface FieldEventTypes {
-    validationStarted: never;
-    validationFinished: never;
+  export interface FieldEventRegistry {
+    /**
+     * The validation of the field has started. The payload contains the validation that has started.
+     */
+    validationStarted: Validation;
+
+    /**
+     * The validation of the field has finished. The payload contains the validation that has finished.
+     */
+    validationFinished: Validation;
   }
 }
 
@@ -37,7 +54,7 @@ export interface ValidationMixin<Options = any> {
    * If this field is currently being validated then the validation {@link abortValidation is aborted} at the current
    * validation root.
    *
-   * {@link FieldImpl.isTransient Transient} descendants of this field are excluded from validation.
+   * {@link roqueform!FieldCore.isTransient Transient} descendants of this field are excluded from validation.
    *
    * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
@@ -50,7 +67,7 @@ export interface ValidationMixin<Options = any> {
    * If this field is currently being validated then the validation {@link abortValidation is aborted} at the current
    * validation root.
    *
-   * {@link FieldImpl.isTransient Transient} descendants of this field are excluded from validation.
+   * {@link roqueform!FieldCore.isTransient Transient} descendants of this field are excluded from validation.
    *
    * @param options Options passed to {@link Validator the validator}.
    * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.

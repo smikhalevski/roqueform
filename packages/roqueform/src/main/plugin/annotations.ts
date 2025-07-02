@@ -1,9 +1,22 @@
+/**
+ * Manages Roqueform field annotations.
+ *
+ * ```ts
+ * import annotationsPlugin from 'roqueform/plugin/annotations';
+ * ```
+ *
+ * @module plugin/annotations
+ */
+
 import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../FieldImpl.js';
 import { callOrGet, publishEvents } from '../utils.js';
 
 declare module '../FieldImpl.js' {
-  export interface FieldEventTypes {
-    annotationsChanged: never;
+  export interface FieldEventRegistry {
+    /**
+     * Field annotations were patched. The payload contains the annotations before the patch was applied.
+     */
+    annotationsChanged: ReadonlyDict;
   }
 }
 
@@ -109,7 +122,7 @@ function annotate(
   if (prevAnnotations !== nextAnnotations) {
     field.annotations = nextAnnotations;
 
-    events.push({ type: 'annotationsChanged', target: field, relatedTarget: null, payload: undefined });
+    events.push({ type: 'annotationsChanged', target: field, relatedTarget: null, payload: prevAnnotations });
   }
 
   if (field.children !== null && options !== undefined && options.isRecursive) {

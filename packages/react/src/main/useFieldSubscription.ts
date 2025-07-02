@@ -3,9 +3,9 @@ import { useEffect, useReducer, useRef } from 'react';
 
 export interface FieldSubscriptionOptions<F extends Field> {
   /**
-   * If set to `true` then the component is re-rendered whenever the {@link field} itself, its parent fields or
-   * descendant fields are updated. If set to `false` then the component re-rendered only if the field was directly
-   * changed (updates from parent and descendants are ignored, even if they affect the value of the field).
+   * If set to `true` then the component is re-rendered whenever the field itself, its parent fields or descendant
+   * fields are updated. If set to `false` then the component re-rendered only if the field was directly changed
+   * (updates from parent and descendants are ignored, even if they affect the value of the field).
    *
    * @default false
    */
@@ -14,7 +14,7 @@ export interface FieldSubscriptionOptions<F extends Field> {
   /**
    * Triggered when the field value received a non-transient update.
    *
-   * @param _value The new field value.
+   * @param value The new field value.
    */
   onChange?: (value: InferValue<F>) => void;
 }

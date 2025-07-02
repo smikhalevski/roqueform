@@ -11,7 +11,7 @@
     "target": "ES2023",
     "module": "NodeNext",
     "jsx": "react",
-    "lib": ["DOM", "ES2020"]
+    "lib": ["DOM", "ES2023"]
   },
   "include": ["./packages/*/src/**/*"]
 }

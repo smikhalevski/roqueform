@@ -1,3 +1,13 @@
+/**
+ * Updates Roqueform fields by listening to change events of associated DOM elements.
+ *
+ * ```ts
+ * import uncontrolledPlugin from 'roqueform/plugin/uncontrolled';
+ * ```
+ *
+ * @module plugin/uncontrolled
+ */
+
 import { createElementsValueAccessor } from '../createElementsValueAccessor.js';
 import { Field, FieldPlugin } from '../FieldImpl.js';
 
@@ -10,7 +20,7 @@ export {
 /**
  * The default value accessor.
  */
-const elementsValueAccessor = createElementsValueAccessor();
+const defaultElementsValueAccessor = createElementsValueAccessor();
 
 /**
  * The mixin added to fields by the {@link uncontrolledPlugin}.
@@ -25,7 +35,9 @@ export interface UncontrolledMixin {
 /**
  * Updates field value when the DOM element value is changed and vice versa.
  */
-export default function uncontrolledPlugin(accessor = elementsValueAccessor): FieldPlugin<any, UncontrolledMixin> {
+export default function uncontrolledPlugin(
+  accessor = defaultElementsValueAccessor
+): FieldPlugin<any, UncontrolledMixin> {
   return (field: Field<unknown, UncontrolledMixin>) => {
     const { ref } = field;
 
@@ -58,7 +70,7 @@ export default function uncontrolledPlugin(accessor = elementsValueAccessor): Fi
     let prevValue = field.value;
 
     const handleChange: EventListener = event => {
-      if (!elements.has(event.target as Element)) {
+      if (!elements.has(event.currentTarget as Element)) {
         return;
       }
 

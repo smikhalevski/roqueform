@@ -96,6 +96,11 @@ test('calls a listener when value is updated', () => {
 
   field.subscribe(listenerMock);
 
+  field.subscribe(e => {
+    if (e.type === 'valueChanged') {
+    }
+  });
+
   field.at('aaa').subscribe(aaaListenerMock);
 
   field.at('aaa').setValue(222);

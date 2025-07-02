@@ -1,10 +1,24 @@
+/**
+ * Integrates Roqueform fields with the
+ * [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
+ *
+ * ```ts
+ * import constraintValidationPlugin from 'roqueform/plugin/constraint-validation';
+ * ```
+ *
+ * @module plugin/constraint-validation
+ */
+
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
 import { overrideReadonlyProperty } from '../utils.js';
 
 declare module '../FieldImpl.js' {
-  export interface FieldEventTypes {
-    validityChanged: never;
+  export interface FieldEventRegistry {
+    /**
+     * The field's validity state has changed. The payload contains the previous validity state.
+     */
+    validityChanged: Readonly<ValidityState>;
   }
 }
 
@@ -18,7 +32,7 @@ export interface ConstraintValidationMixin {
   readonly isInvalid: boolean;
 
   /**
-   * Associates the field with the {@link element DOM element}.
+   * Associates the field with the DOM element.
    */
   ref: (element: Element | null) => void;
 
@@ -49,7 +63,7 @@ interface PrivateConstraintValidationMixin extends ConstraintValidationMixin {
 
 /**
  * Enhances fields with
- * the [Constraint validation API.](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) methods.
+ * the [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) methods.
  */
 export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidationMixin> {
   return (field: Field<unknown, PrivateConstraintValidationMixin>) => {
