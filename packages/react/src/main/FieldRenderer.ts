@@ -5,7 +5,7 @@ import { FieldSubscriptionOptions, useFieldSubscription } from './useFieldSubscr
 /**
  * Properties of the {@link FieldRenderer} component.
  *
- * @template Field The rendered field.
+ * @template F The rendered field.
  */
 export interface FieldRendererProps<F extends Field> extends FieldSubscriptionOptions<F> {
   /**
@@ -23,7 +23,7 @@ export interface FieldRendererProps<F extends Field> extends FieldSubscriptionOp
  * The component that subscribes to the field instance and re-renders its children when an event is dispatched onto the
  * field.
  *
- * @template Field The rendered field.
+ * @template F The rendered field.
  */
 export function FieldRenderer<F extends Field>(props: FieldRendererProps<F>): ReactNode {
   return props.children(useFieldSubscription(props.field, props));

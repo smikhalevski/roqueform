@@ -35,8 +35,8 @@ test('invokes ref from the preceding plugin', () => {
   expect(refMock).toHaveBeenCalledTimes(1);
   expect(refMock).toHaveBeenNthCalledWith(1, element);
 });
-//
-// test('ref and refFor can be mixed', () => {
+
+// test('ref can be called with multiple elements', () => {
 //   const field = createField(111, [uncontrolledPlugin()]);
 //
 //   const element1 = document.createElement('input');
@@ -49,7 +49,7 @@ test('invokes ref from the preceding plugin', () => {
 //   expect(field.ref.current).toBe(element);
 //   expect(field.ref.toArray()).toEqual([element, element1, element2]);
 // });
-//
+
 // test('ref and refFor can be called with the same element', () => {
 //   const field = createField(111, [uncontrolledPlugin()]);
 //
@@ -232,24 +232,24 @@ test('does not call set accessor if there are no referenced elements', () => {
   expect(accessorMock.set).not.toHaveBeenCalled();
 });
 
-// test('multiple elements are passed to set accessor', () => {
-//   const accessorMock: ElementsValueAccessor = {
-//     get: () => 'xxx',
-//     set: vi.fn(),
-//   };
-//
-//   const element1 = document.createElement('input');
-//   const element2 = document.createElement('textarea');
-//
-//   const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
-//
-//   field.at('aaa').ref.at(1)(element1);
-//
-//   expect(accessorMock.set).toHaveBeenCalledTimes(1);
-//   expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element1], 111);
-//
-//   field.at('aaa').ref.at(2)(element2);
-//
-//   expect(accessorMock.set).toHaveBeenCalledTimes(2);
-//   expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element1, element2], 111);
-// });
+test('multiple elements are passed to set accessor', () => {
+  const accessorMock: ElementsValueAccessor = {
+    get: () => 'xxx',
+    set: vi.fn(),
+  };
+
+  const element1 = document.createElement('input');
+  const element2 = document.createElement('textarea');
+
+  const field = createField({ aaa: 111 }, [uncontrolledPlugin(accessorMock)]);
+
+  field.at('aaa').ref(element1);
+
+  expect(accessorMock.set).toHaveBeenCalledTimes(1);
+  expect(accessorMock.set).toHaveBeenNthCalledWith(1, [element1], 111);
+
+  field.at('aaa').ref(element2);
+
+  expect(accessorMock.set).toHaveBeenCalledTimes(2);
+  expect(accessorMock.set).toHaveBeenNthCalledWith(2, [element1, element2], 111);
+});

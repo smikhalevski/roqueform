@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent } from '@testing-library/dom';
 import { createField, FieldEvent } from '../../main/index.js';
-import { constraintValidationPlugin } from '../../main/plugin/constraint-validation.js';
+import constraintValidationPlugin from '../../main/plugin/constraint-validation.js';
 
 vi.useFakeTimers();
 

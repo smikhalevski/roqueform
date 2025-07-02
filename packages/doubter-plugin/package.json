@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/doubter-plugin#readme",
   "peerDependencies": {
-    "doubter": "^2.1.0 || ^3.0.0 || ^4.0.0 || ^5.0.0",
+    "doubter": "^5.1.1",
     "roqueform": "^5.1.0"
   }
 }

@@ -1,6 +1,11 @@
 import { Field, InferValue } from 'roqueform';
 import { useEffect, useReducer, useRef } from 'react';
 
+/**
+ * Options of the {@link useFieldSubscription} hook.
+ *
+ * @template F The field that triggers re-renders.
+ */
 export interface FieldSubscriptionOptions<F extends Field> {
   /**
    * If set to `true` then the component is re-rendered whenever the field itself, its parent fields or descendant
@@ -24,6 +29,7 @@ export interface FieldSubscriptionOptions<F extends Field> {
  *
  * @param field The field that triggers re-renders.
  * @param options Subscription options.
+ * @template F The field that triggers re-renders.
  */
 export function useFieldSubscription<F extends Field>(field: F, options: FieldSubscriptionOptions<F> = {}): F {
   const [, rerender] = useReducer(reduceCount, 0);
@@ -36,7 +42,11 @@ export function useFieldSubscription<F extends Field>(field: F, options: FieldSu
       field.subscribe(event => {
         const { isEagerlyUpdated, onChange } = optionsRef.current;
 
-        if (isEagerlyUpdated || event.target === field) {
+        if (
+          isEagerlyUpdated ||
+          event.relatedTarget === field ||
+          (event.target === field && event.relatedTarget === null)
+        ) {
           rerender();
         }
 

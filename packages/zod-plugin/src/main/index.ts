@@ -12,6 +12,10 @@ import { Field, FieldPlugin } from 'roqueform';
 import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
 import { ParseParams, SafeParseReturnType, ZodType, ZodTypeAny } from 'zod';
 
+// Enable errorCaught event
+// noinspection ES6UnusedImports
+import { ErrorsMixin as _ } from 'roqueform/plugin/errors';
+
 /**
  * The mixin added to fields by the {@link zodPlugin}.
  */
@@ -29,7 +33,6 @@ interface PrivateZodMixin extends ZodMixin {
  *
  * @param type The type that validates the field value.
  * @template Value The root field value.
- * @returns The validation plugin.
  */
 export default function zodPlugin<Value>(type: ZodType<any, any, Value>): FieldPlugin<Value, ZodMixin> {
   return (field: Field<Value, PrivateZodMixin>) => {

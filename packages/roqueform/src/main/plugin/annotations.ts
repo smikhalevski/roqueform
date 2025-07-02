@@ -73,7 +73,7 @@ export default function annotationsPlugin(): FieldPlugin<any, AnnotationsMixin<R
  * [Object.assign](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
  * @template Annotations Annotations associated with fields.
  */
-export function annotationsPlugin<Annotations extends object>(
+export default function annotationsPlugin<Annotations extends object>(
   annotations: Annotations,
   /**
    * The callback that applies patches to field annotations.
@@ -87,7 +87,7 @@ export function annotationsPlugin<Annotations extends object>(
   applyPatch?: (annotations: Readonly<Annotations>, patch: Readonly<Partial<Annotations>>) => Annotations
 ): FieldPlugin<any, AnnotationsMixin<Annotations>>;
 
-export function annotationsPlugin(
+export default function annotationsPlugin(
   annotations = {},
   applyPatch = applyChanges
 ): FieldPlugin<any, AnnotationsMixin<ReadonlyDict>> {

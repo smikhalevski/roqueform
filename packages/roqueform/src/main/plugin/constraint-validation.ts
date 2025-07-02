@@ -65,7 +65,7 @@ interface PrivateConstraintValidationMixin extends ConstraintValidationMixin {
  * Enhances fields with
  * the [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation) methods.
  */
-export function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidationMixin> {
+export default function constraintValidationPlugin(): FieldPlugin<any, ConstraintValidationMixin> {
   return (field: Field<unknown, PrivateConstraintValidationMixin>) => {
     const { ref } = field;
 

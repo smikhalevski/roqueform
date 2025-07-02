@@ -36,16 +36,16 @@ test('re-renders if field value is changed', () => {
   expect(renderMock).toHaveBeenCalledTimes(2);
 });
 
-// test('does not re-render if child field value is changed', () => {
-//   const renderMock = vi.fn();
-//   const rootField = createField();
-//
-//   render(<FieldRenderer field={rootField}>{renderMock}</FieldRenderer>);
-//
-//   act(() => rootField.at('aaa').setValue(222));
-//
-//   expect(renderMock).toHaveBeenCalledTimes(1);
-// });
+test('does not re-render if child field value is changed', () => {
+  const renderMock = vi.fn();
+  const rootField = createField();
+
+  render(<FieldRenderer field={rootField}>{renderMock}</FieldRenderer>);
+
+  act(() => rootField.at('aaa').setValue(222));
+
+  expect(renderMock).toHaveBeenCalledTimes(1);
+});
 
 test('re-renders if isEagerlyUpdated and child field value is changed', () => {
   const renderMock = vi.fn();

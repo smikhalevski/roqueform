@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vitest';
 import { createField } from '../../main/index.js';
-import { annotationsPlugin } from '../../main/plugin/annotations.js';
+import annotationsPlugin from '../../main/plugin/annotations.js';
 
 test('annotations are an empty object by default', () => {
   const field = createField({ aaa: 111 }, [annotationsPlugin({})]);
@@ -18,29 +18,29 @@ test('populates annotations with defaults', () => {
   expect(field.at('aaa').annotations.xxx).toBe(222);
 });
 
-// test('patches root field annotations', () => {
-//   const listenerMock = vi.fn();
-//   const aaaListenerMock = vi.fn();
-//
-//   const field = createField({ aaa: 111 }, [annotationsPlugin({ createObservableRefCollection: 222 })]);
-//
-//   field.subscribe(listenerMock);
-//   field.at('aaa').subscribe(aaaListenerMock);
-//
-//   field.annotate({ createObservableRefCollection: 333 });
-//
-//   expect(field.annotations.createObservableRefCollection).toBe(333);
-//   expect(field.at('aaa').annotations.createObservableRefCollection).toBe(222);
-//
-//   expect(listenerMock).toHaveBeenCalledTimes(1);
-//   expect(listenerMock).toHaveBeenNthCalledWith(1, {
-//     type: 'annotationsChanged',
-//     target: field,
-//     relatedTarget: field,
-//     payload: { createObservableRefCollection: 222 },
-//   });
-//   expect(aaaListenerMock).not.toHaveBeenCalled();
-// });
+test('patches root field annotations', () => {
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
+
+  const field = createField({ aaa: 111 }, [annotationsPlugin({ xxx: 222 })]);
+
+  field.subscribe(listenerMock);
+  field.at('aaa').subscribe(aaaListenerMock);
+
+  field.annotate({ xxx: 333 });
+
+  expect(field.annotations.xxx).toBe(333);
+  expect(field.at('aaa').annotations.xxx).toBe(222);
+
+  expect(listenerMock).toHaveBeenCalledTimes(1);
+  expect(listenerMock).toHaveBeenNthCalledWith(1, {
+    type: 'annotationsChanged',
+    target: field,
+    relatedTarget: null,
+    payload: { xxx: 222 },
+  });
+  expect(aaaListenerMock).not.toHaveBeenCalled();
+});
 
 test('patches root field annotations with callback', () => {
   const patchMock = vi.fn(() => ({ xxx: 333 }));
@@ -58,37 +58,37 @@ test('patches root field annotations with callback', () => {
   expect(patchMock).toHaveBeenNthCalledWith(1, field);
 });
 
-// test('patches child field annotations', () => {
-//   const listenerMock = vi.fn();
-//   const aaaListenerMock = vi.fn();
-//
-//   const field = createField({ aaa: 111 }, [annotationsPlugin({ createObservableRefCollection: 222 })]);
-//
-//   field.subscribe(listenerMock);
-//   field.at('aaa').subscribe(aaaListenerMock);
-//
-//   field.at('aaa').annotate({ createObservableRefCollection: 333 });
-//
-//   expect(field.annotations.createObservableRefCollection).toBe(222);
-//   expect(field.at('aaa').annotations.createObservableRefCollection).toBe(333);
-//
-//   expect(listenerMock).toHaveBeenCalledTimes(1);
-//   expect(listenerMock).toHaveBeenNthCalledWith(1, {
-//     type: 'annotationsChanged',
-//     target: field.at('aaa'),
-//     relatedTarget: field.at('aaa'),
-//     payload: { createObservableRefCollection: 222 },
-//   });
-//   expect(aaaListenerMock).toHaveBeenCalledTimes(1);
-//   expect(aaaListenerMock).toHaveBeenNthCalledWith(1, {
-//     type: 'annotationsChanged',
-//     target: field.at('aaa'),
-//     relatedTarget: field.at('aaa'),
-//     payload: { createObservableRefCollection: 222 },
-//   });
-// });
+test('patches child field annotations', () => {
+  const listenerMock = vi.fn();
+  const aaaListenerMock = vi.fn();
 
-test('uses patcher to apply patches', () => {
+  const field = createField({ aaa: 111 }, [annotationsPlugin({ xxx: 222 })]);
+
+  field.subscribe(listenerMock);
+  field.at('aaa').subscribe(aaaListenerMock);
+
+  field.at('aaa').annotate({ xxx: 333 });
+
+  expect(field.annotations.xxx).toBe(222);
+  expect(field.at('aaa').annotations.xxx).toBe(333);
+
+  expect(listenerMock).toHaveBeenCalledTimes(1);
+  expect(listenerMock).toHaveBeenNthCalledWith(1, {
+    type: 'annotationsChanged',
+    target: field.at('aaa'),
+    relatedTarget: null,
+    payload: { xxx: 222 },
+  });
+  expect(aaaListenerMock).toHaveBeenCalledTimes(1);
+  expect(aaaListenerMock).toHaveBeenNthCalledWith(1, {
+    type: 'annotationsChanged',
+    target: field.at('aaa'),
+    relatedTarget: null,
+    payload: { xxx: 222 },
+  });
+});
+
+test('uses a callback to apply patches', () => {
   const applyPatchMock = vi.fn((a, b) => Object.assign({}, a, b));
 
   const field = createField(111, [annotationsPlugin({}, applyPatchMock)]);

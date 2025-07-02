@@ -12,6 +12,10 @@ import { Err, Ok, ParseOptions, Shape } from 'doubter';
 import { Field, FieldPlugin } from 'roqueform';
 import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
 
+// Enable errorCaught event
+// noinspection ES6UnusedImports
+import { ErrorsMixin as _ } from 'roqueform/plugin/errors';
+
 /**
  * The mixin added to fields by the {@link doubterPlugin}.
  */
