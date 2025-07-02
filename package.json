@@ -6,7 +6,7 @@
     "test": "vitest run",
     "test:definitions": "tsc --version && npm run test:definitions --if-present --workspaces",
     "docs": "typedoc",
-    "postinstall": "ln -nsf '../packages/roqueform/lib' node_modules/roqueform"
+    "postinstall": "mkdir -p node_modules/@roqueform && ln -nsf '../packages/roqueform/lib' node_modules/roqueform && ln -nsf '../../packages/react/lib' node_modules/@roqueform/react && ln -nsf '../../packages/doubter-plugin/lib' node_modules/@roqueform/doubter-plugin && ln -nsf '../../packages/zod-plugin/lib' node_modules/@roqueform/zod-plugin"
   },
   "workspaces": [
     "./packages/roqueform",

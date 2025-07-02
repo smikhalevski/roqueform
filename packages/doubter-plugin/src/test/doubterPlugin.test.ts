@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import * as d from 'doubter';
-import { doubterPlugin } from '../main/index.js';
+import doubterPlugin from '../main/index.js';
 import { createField } from 'roqueform';
 import errorsPlugin from 'roqueform/plugin/errors';
 

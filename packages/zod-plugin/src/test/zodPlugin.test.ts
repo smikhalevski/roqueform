@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 import { z, ZodErrorMap, ZodIssue, ZodIssueCode } from 'zod';
-import { zodPlugin } from '../main/index.js';
+import zodPlugin from '../main/index.js';
 import { createField } from 'roqueform';
 import errorsPlugin from 'roqueform/plugin/errors';
 

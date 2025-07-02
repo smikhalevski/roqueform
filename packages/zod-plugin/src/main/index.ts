@@ -2,7 +2,12 @@ import { Field, FieldPlugin } from 'roqueform';
 import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
 import { ParseParams, SafeParseReturnType, ZodType, ZodTypeAny } from 'zod';
 
-interface PrivateZodMixin extends ValidationMixin<Partial<ParseParams> | undefined> {
+/**
+ * The mixin added to fields by the {@link zodPlugin}.
+ */
+export interface ZodMixin extends ValidationMixin<Partial<ParseParams> | void> {}
+
+interface PrivateZodMixin extends ZodMixin {
   /**
    * The Zod validation type of the root value.
    */
@@ -16,9 +21,7 @@ interface PrivateZodMixin extends ValidationMixin<Partial<ParseParams> | undefin
  * @template Value The root field value.
  * @returns The validation plugin.
  */
-export function zodPlugin<Value>(
-  type: ZodType<any, any, Value>
-): FieldPlugin<Value, ValidationMixin<Partial<ParseParams> | void>> {
+export default function zodPlugin<Value>(type: ZodType<any, any, Value>): FieldPlugin<Value, ZodMixin> {
   return (field: Field<Value, PrivateZodMixin>) => {
     field._valueType = field.parentField?._valueType || type;
 

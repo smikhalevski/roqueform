@@ -2,61 +2,22 @@
   "name": "roqueform",
   "version": "5.2.0",
   "description": "The form state management library that can handle hundreds of fields without breaking a sweat.",
-  "main": "./index.js",
-  "module": "./index.mjs",
-  "types": "./index.d.ts",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "import": "./index.mjs",
-      "require": "./index.js"
-    },
-    "./plugin/annotations": {
-      "types": "./plugin/annotations.d.ts",
-      "import": "./plugin/annotations.mjs",
-      "require": "./plugin/annotations.js"
-    },
-    "./plugin/constraint-validation": {
-      "types": "./plugin/constraint-validation.d.ts",
-      "import": "./plugin/constraint-validation.mjs",
-      "require": "./plugin/constraint-validation.js"
-    },
-    "./plugin/errors": {
-      "types": "./plugin/errors.d.ts",
-      "import": "./plugin/errors.mjs",
-      "require": "./plugin/errors.js"
-    },
-    "./plugin/ref": {
-      "types": "./plugin/ref.d.ts",
-      "import": "./plugin/ref.mjs",
-      "require": "./plugin/ref.js"
-    },
-    "./plugin/reset": {
-      "types": "./plugin/reset.d.ts",
-      "import": "./plugin/reset.mjs",
-      "require": "./plugin/reset.js"
-    },
-    "./plugin/scroll-to-error": {
-      "types": "./plugin/scroll-to-error.d.ts",
-      "import": "./plugin/scroll-to-error.mjs",
-      "require": "./plugin/scroll-to-error.js"
-    },
-    "./plugin/uncontrolled": {
-      "types": "./plugin/uncontrolled.d.ts",
-      "import": "./plugin/uncontrolled.mjs",
-      "require": "./plugin/uncontrolled.js"
-    },
-    "./plugin/validation": {
-      "types": "./plugin/validation.d.ts",
-      "import": "./plugin/validation.mjs",
-      "require": "./plugin/validation.js"
-    },
+    ".": "./index.js",
+    "./plugin/annotations": "./plugin/annotations.js",
+    "./plugin/constraint-validation": "./plugin/constraint-validation.js",
+    "./plugin/errors": "./plugin/errors.js",
+    "./plugin/ref": "./plugin/ref.js",
+    "./plugin/reset": "./plugin/reset.js",
+    "./plugin/scroll-to-error": "./plugin/scroll-to-error.js",
+    "./plugin/uncontrolled": "./plugin/uncontrolled.js",
+    "./plugin/validation": "./plugin/validation.js",
     "./package.json": "./package.json"
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && node ../../rewrite.mjs lib && tsc --project tsconfig.build.json --module CommonJS && cp package.json ../../README.md ../../LICENSE.txt lib/ && cd lib && npm pkg delete type scripts devDependencies",
+    "build": "tsc --project tsconfig.build.json && cp package.json ../../README.md ../../LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
     "clean": "rimraf lib",
     "test": "vitest run",
     "test:definitions": "tsd --typings lib/index.d.ts --files 'src/test/**/*.test-d.ts'"

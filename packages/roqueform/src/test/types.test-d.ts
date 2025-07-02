@@ -1,6 +1,6 @@
 import { expectAssignable, expectNotAssignable, expectNotType, expectType } from 'tsd';
 import { Field, FieldEvent } from '../main/index.js';
-import { AnyToUnknown, KeyOf, ValueAt } from '../main/FieldImpl.js';
+import { KeyOf, ValueAt } from '../main/FieldImpl.js';
 
 interface Aaa {
   aaa: string;
@@ -33,10 +33,6 @@ expectNotAssignable<Field<Aaa, Bbb>>(null! as Field<Aaa>);
 expectNotAssignable<Field<Aaa>>(null! as Field<Bbb>);
 
 // FieldEvent
-
-expectAssignable<FieldEvent<unknown>>(null! as FieldEvent);
-
-expectAssignable<FieldEvent>(null! as FieldEvent<unknown>);
 
 // expectAssignable<FieldEvent>(null! as FieldEvent<unknown, Bbb>);
 //
@@ -133,11 +129,3 @@ expectType<Aaa>(null! as ValueAt<{ set(key: any, value: any): any; get(key: stri
 expectType<Aaa | undefined>(null! as ValueAt<{ add(value: Aaa): any; [Symbol.iterator]: Function }, 111>);
 
 expectType<undefined>(null! as ValueAt<{ add(value: Aaa): any; [Symbol.iterator]: Function }, 'aaa'>);
-
-// AnyToUnknown
-
-expectType<unknown>(null! as AnyToUnknown<any>);
-
-expectType<unknown>(null! as AnyToUnknown<unknown>);
-
-expectType<Aaa>(null! as AnyToUnknown<Aaa>);

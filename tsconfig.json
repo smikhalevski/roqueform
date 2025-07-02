@@ -4,19 +4,14 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "strict": true,
-//    "noUnusedLocals": true,
-//    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "skipLibCheck": true,
-    "target": "ES2020",
+    "preserveSymlinks": true,
+    "target": "ES2023",
     "module": "NodeNext",
     "jsx": "react",
-    "lib": ["DOM", "ES2020"],
-    "outDir": "./lib",
-    "baseUrl": ".",
-    "paths": {
-      "roqueform": ["./packages/roqueform/src/main/index.ts"],
-      "roqueform/plugin/*": ["./packages/roqueform/src/main/plugin/*.ts"]
-    }
+    "lib": ["DOM", "ES2020"]
   },
   "include": ["./packages/*/src/**/*"]
 }
