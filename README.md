@@ -505,8 +505,7 @@ field.at('hello').errors;
 Check that the field has associated errors:
 
 ```ts
-field.at('hello').isInvalid;
-// ⮕ true
+field.at('hello').isInvalid // ⮕ true
 ```
 
 Check that a field or any of its descendants have associated errors:
@@ -537,8 +536,7 @@ interface MyError {
 
 const field = createField({ hello: 'world' }, [errorsPlugin<MyError>()]);
 
-field.errors;
-// ⮕ MyError[]
+field.errors // ⮕ MyError[]
 ```
 
 To have more control over how errors are added to a field, provide an error concatenator callback:
@@ -573,8 +571,7 @@ field.publish({
   payload: 'Ooops'
 });
 
-field.errors;
-// ⮕ ['Oops']
+field.errors // ⮕ ['Oops']
 ```
 
 This is especially useful if you're developing a plugin that adds errors to fields but you don't want to couple with the
@@ -795,54 +792,37 @@ planetField.on('change:validity', event => {
 });
 ```
 
-# DOM reference plugin
+# DOM element reference plugin
 
 Associates fields with DOM elements.
 
-This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
-[the React integration](../react#readme).
+```ts
+import { createField } from 'roqueform';
+import refPlugin from 'roqueform/plugin/ref';
 
-```tsx
-import { FieldRenderer, useField } from '@roqueform/react';
-import { refPlugin } from '@roqueform/ref-plugin';
+const field = createField({ hello: 'world' }, [refPlugin()]);
 
-export const App = () => {
-  const planetField = useField({ name: 'Venus' }, refPlugin());
-
-  return (
-    <FieldRenderer field={planetField.at('name')}>
-      {nameField => (
-        <input
-          ref={nameField.ref}
-          value={nameField.value}
-          onChange={event => {
-            nameField.setValue(event.target.value);
-          }}
-        />
-      )}
-    </FieldRenderer>
-  );
-};
+field.at('hello').ref(document.querySelector('inout'));
 ```
 
-Access an element referenced by a field:
+Access an element associated with the field:
 
 ```ts
-planetField.at('name').element // ⮕ HTMLInputElement
+field.at('hello').element // ⮕ Element | null
 ```
 
 Focus and blur an element referenced by a field. If a field doesn't have an associated element this is a no-op.
 
 ```ts
-planetField.at('name').focus();
+field.at('hello').focus();
 
-planetField.at('name').isFocused // ⮕ true
+field.at('hello').isFocused // ⮕ true
 ```
 
 Scroll to an element:
 
 ```ts
-planetField.at('name').scrollIntoView({ behavior: 'smooth' });
+field.at('hello').scrollIntoView({ behavior: 'smooth' });
 ```
 
 # Reset plugin

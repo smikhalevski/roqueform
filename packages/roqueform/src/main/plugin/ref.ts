@@ -2,7 +2,14 @@
  * Associates Roqueform fields with DOM elements.
  *
  * ```ts
+ * import { createField } from 'roqueform';
  * import refPlugin from 'roqueform/plugin/ref';
+ *
+ * const field = createField({ hello: 'world' }, [refPlugin()]);
+ *
+ * field.ref(document.getElementById('#hello-input'));
+ *
+ * field.element // ⮕ Element | null
  * ```
  *
  * @module plugin/ref
@@ -15,14 +22,19 @@ import { FieldPlugin } from '../FieldImpl.js';
  */
 export interface RefMixin {
   /**
-   * `true` if the DOM element is focused, or `false` otherwise.
+   * The DOM element associated with the field, or `null` if there's no associated element.
+   */
+  element: Element | null;
+
+  /**
+   * `true` if the {@link element DOM element} is focused, or `false` otherwise.
    */
   readonly isFocused: boolean;
 
   /**
-   * Associates the field with the DOM element.
+   * Associates the field with the {@link element DOM element}.
    */
-  ref: (element: Element | null) => void;
+  ref(element: Element | null): void;
 
   /**
    * Scrolls the field element's ancestor containers such that the field element is visible to the user.
@@ -54,7 +66,7 @@ export interface RefMixin {
 }
 
 /**
- * Enables field-element association and simplifies focus control.
+ * Associates fields with DOM elements.
  */
 export default function refPlugin(): FieldPlugin<any, RefMixin> {
   return _refPlugin;
@@ -63,33 +75,33 @@ export default function refPlugin(): FieldPlugin<any, RefMixin> {
 const _refPlugin: FieldPlugin<any, RefMixin> = field => {
   const { ref } = field;
 
-  let element: Element | null = null;
+  field.element = null;
 
   Object.defineProperty(field, 'isFocused', {
     configurable: true,
 
-    get: () => element !== null && element !== undefined && element === element.ownerDocument.activeElement,
+    get: () => field.element !== null && field.element === field.element.ownerDocument.activeElement,
   });
 
-  field.ref = nextElement => {
-    element = nextElement;
+  field.ref = element => {
+    field.element = element;
 
     ref?.(element);
   };
 
   field.scrollIntoView = options => {
-    element?.scrollIntoView(options);
+    field.element?.scrollIntoView(options);
   };
 
   field.focus = options => {
-    if (isFocusable(element)) {
-      element.focus(options);
+    if (isFocusable(field.element)) {
+      field.element.focus(options);
     }
   };
 
   field.blur = () => {
-    if (isFocusable(element)) {
-      element.blur();
+    if (isFocusable(field.element)) {
+      field.element.blur();
     }
   };
 };

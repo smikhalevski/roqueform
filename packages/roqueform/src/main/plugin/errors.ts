@@ -9,8 +9,7 @@
  *
  * field.addError('The world is not enough!');
  *
- * field.isInvalid
- * // ⮕ true
+ * field.isInvalid // ⮕ true
  * ```
  *
  * @module plugin/errors
