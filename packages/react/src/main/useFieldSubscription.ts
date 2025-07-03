@@ -1,5 +1,5 @@
 import { Field, InferValue } from 'roqueform';
-import { useEffect, useReducer, useRef } from 'react';
+import { useInsertionEffect, useReducer, useRef } from 'react';
 
 /**
  * Options of the {@link useFieldSubscription} hook.
@@ -37,7 +37,7 @@ export function useFieldSubscription<F extends Field>(field: F, options: FieldSu
 
   optionsRef.current = options;
 
-  useEffect(
+  useInsertionEffect(
     () =>
       field.subscribe(event => {
         const { isEagerlyUpdated, onChange } = optionsRef.current;

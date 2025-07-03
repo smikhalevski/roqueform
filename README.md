@@ -481,6 +481,143 @@ createField(['Mars'], composePlugins(plugin1, plugin2));
 // ⮕ Field<string[], …>
 ```
 
+# Motivation
+
+Roqueform was built to satisfy the following requirements:
+
+- Since the form lifecycle consists of separate phases (input, validate, display errors, and submit), the form state
+  management library should allow to tap in (or at least not constrain the ability to do so) at any particular phase to 
+  tweak the data flow.
+
+- Form data should be statically and strictly typed up to the very field value setter. So there must be a compilation
+  error if the string value from the silly input is assigned to the number-typed value in the form state object.
+
+- **Use the platform!** The form state management library must not constrain the use of the `form` submit behavior,
+  browser-based validation, and other related native features.
+
+- There should be no restrictions on how and when the form input is submitted because data submission is generally
+  an application-specific process.
+
+- There are many approaches to validation, and a great number of awesome validation libraries. The form library must
+  be agnostic to where (client-side, server-side, or both), how (on a field or on a form level), and when (sync, or
+  async) the validation is handled.
+
+- Validation errors aren't standardized, so an arbitrary error object shape must be allowed and related typings must be
+  seamlessly propagated to the error consumers/renderers.
+
+- The library API must be simple and easily extensible.
+
+# Annotations plugin
+
+Annotations allow to associate arbitrary data with fields.
+
+```ts
+import { createField } from 'roqueform';
+import { annotationsPlugin } from '@roqueform/annotations-plugin';
+
+const planetField = createField(
+  { name: 'Pluto' },
+  annotationsPlugin({ isDisabled: false })
+);
+
+planetField.at('name').annotations.isDisabled // ⮕ false
+```
+
+Update annotations for a single field:
+
+```ts
+planetField.annotate({ isDisabled: true });
+
+planetField.annotations.isDisabled // ⮕ true
+
+planetField.at('name').annotations.isDisabled // ⮕ false
+```
+
+Annotate field and all of its children recursively:
+
+```ts
+planetField.annotate({ isDisabled: true }, { isRecursive: true });
+
+planetField.annotations.isDisabled // ⮕ true
+
+// 🌕 The child field was annotated along with its parent
+planetField.at('name').annotations.isDisabled // ⮕ true
+```
+
+Annotations can be updated using a callback. This is especially useful in conjunction with recursive flag:
+
+```ts
+planetField.annotate(
+  field => {
+    // Toggle disabled flag for the field and its children
+    return { isDisabled: !field.annotations.isDisabled };
+  },
+  { isRecursive: true }
+);
+```
+
+Subscribe to annotation changes:
+
+```ts
+planetField.subscribe('annotationsChanged', event => {
+  event.target.annotations;
+  // ⮕ { isDisabled: boolean }
+});
+```
+
+# Constraint validation API plugin
+
+Integrates fields with the
+[Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
+
+For example, let's use `constraintValidationPlugin` to validate text input:
+
+```html
+<input type="text" required value="">
+```
+
+Create a new field:
+
+```ts
+import { createField } from 'roqueform';
+import constraintValidationPlugin from 'roqueform/plugin/constraint-validation';
+
+const field = createField({ hello: '' }, [constraintValidationPlugin()]);
+
+// Associate element with the field 
+field.at('hello').ref(document.querySelector('input'));
+```
+
+Check if field is invalid:
+
+```ts
+field.at('hello').isInvalid // ⮕ true
+```
+
+Show an error message balloon for the first invalid element that is associated with this field or any of its child
+fields:
+
+```ts
+field.reportValidity();
+```
+
+Get the array of all invalid fields:
+
+```ts
+field.getInvalidFields();
+// ⮕ [field.at('hello')]
+```
+
+Subscribe to the field validity changes:
+
+```ts
+field.subscribe(event => {
+  if (event.type === 'validityChanged') {
+    event.target.validity // ⮕ ValidityState
+  }
+});
+```
+
 # Errors plugin
 
 To associate errors with fields,
@@ -576,155 +713,6 @@ field.errors // ⮕ ['Oops']
 
 This is especially useful if you're developing a plugin that adds errors to fields but you don't want to couple with the
 errors plugin implementation.
-
-# Motivation
-
-Roqueform was built to satisfy the following requirements:
-
-- Since the form lifecycle consists of separate phases (input, validate, display errors, and submit), the form state
-  management library should allow to tap in (or at least not constrain the ability to do so) at any particular phase to 
-  tweak the data flow.
-
-- Form data should be statically and strictly typed up to the very field value setter. So there must be a compilation
-  error if the string value from the silly input is assigned to the number-typed value in the form state object.
-
-- **Use the platform!** The form state management library must not constrain the use of the `form` submit behavior,
-  browser-based validation, and other related native features.
-
-- There should be no restrictions on how and when the form input is submitted because data submission is generally
-  an application-specific process.
-
-- There are many approaches to validation, and a great number of awesome validation libraries. The form library must
-  be agnostic to where (client-side, server-side, or both), how (on a field or on a form level), and when (sync, or
-  async) the validation is handled.
-
-- Validation errors aren't standardized, so an arbitrary error object shape must be allowed and related typings must be
-  seamlessly propagated to the error consumers/renderers.
-
-- The library API must be simple and easily extensible.
-
-# Annotations plugin
-
-Annotations allow to associate arbitrary data with fields.
-
-```ts
-import { createField } from 'roqueform';
-import { annotationsPlugin } from '@roqueform/annotations-plugin';
-
-const planetField = createField(
-  { name: 'Pluto' },
-  annotationsPlugin({ isDisabled: false })
-);
-
-planetField.at('name').annotations.isDisabled // ⮕ false
-```
-
-Update annotations for a single field:
-
-```ts
-planetField.annotate({ isDisabled: true });
-
-planetField.annotations.isDisabled // ⮕ true
-
-planetField.at('name').annotations.isDisabled // ⮕ false
-```
-
-Annotate field and all of its children recursively:
-
-```ts
-planetField.annotate({ isDisabled: true }, { isRecursive: true });
-
-planetField.annotations.isDisabled // ⮕ true
-
-// 🌕 The child field was annotated along with its parent
-planetField.at('name').annotations.isDisabled // ⮕ true
-```
-
-Annotations can be updated using a callback. This is especially useful in conjunction with recursive flag:
-
-```ts
-planetField.annotate(
-  field => {
-    // Toggle disabled flag for the field and its children
-    return { isDisabled: !field.annotations.isDisabled };
-  },
-  { isRecursive: true }
-);
-```
-
-Subscribe to annotation changes:
-
-```ts
-planetField.subscribe('annotationsChanged', event => {
-  event.target.annotations;
-  // ⮕ { isDisabled: boolean }
-});
-```
-
-# Constraint validation API plugin
-
-Integrates fields with the
-[Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
-
-This plugin doesn't require any rendering framework. It subscribes to events that are dispatched by a DOM element passed
-to the [`ref`](https://smikhalevski.github.io/roqueform/interfaces/constraint_validation_plugin.ConstraintValidationPlugin.html#ref)
-method. To simplify the usage example, we're going to use [the React integration](../react#readme).
-
-```tsx
-import { FieldRenderer, useField } from '@roqueform/react';
-import { constraintValidationPlugin } from '@roqueform/constraint-validation-plugin';
-
-export const App = () => {
-  const planetField = useField(
-    { name: 'Mars' },
-    constraintValidationPlugin()
-  );
-
-  return (
-    <FieldRenderer field={planetField.at('name')}>
-      {nameField => (
-        <>
-          <input
-            type="text"
-            pattern="Venus"
-            // 🟡 Note that the input element ref is populated.
-            ref={nameField.ref}
-            value={nameField.value}
-            onChange={event => {
-              nameField.setValue(event.target.value);
-            }}
-            aria-invalid={nameField.isInvalid}
-          />
-          {nameField.validatedElement?.validationMessage}
-        </>
-      )}
-    </FieldRenderer>
-  );
-};
-```
-
-Get the array of all invalid fields:
-
-```ts
-planetField.getInvalidFields();
-// ⮕ [planetField.at('name')]
-```
-
-Show an error message balloon for the first invalid element that is associated with this field or any of its child
-fields:
-
-```ts
-planetField.reportValidity();
-```
-
-Subscribe to the field validity changes:
-
-```ts
-planetField.on('change:validity', event => {
-  event.target.validity;
-  // ⮕ ValidityState
-});
-```
 
 # DOM element reference plugin
 

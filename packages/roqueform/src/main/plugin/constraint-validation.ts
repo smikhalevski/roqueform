@@ -3,7 +3,12 @@
  * [Constraint validation API](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
  *
  * ```ts
+ * import { createField } from 'roqueform';
  * import constraintValidationPlugin from 'roqueform/plugin/constraint-validation';
+ *
+ * const field = createField({ hello: 'world' }, [constraintValidationPlugin()]);
+ *
+ * field.at('hello').ref(document.querySelector('input'));
  * ```
  *
  * @module plugin/constraint-validation
@@ -32,15 +37,15 @@ export interface ConstraintValidationMixin {
   readonly isInvalid: boolean;
 
   /**
-   * Associates the field with the DOM element.
-   */
-  ref: (element: Element | null) => void;
-
-  /**
    * The copy of the last reported [validity state](https://developer.mozilla.org/en-US/docs/Web/API/ValidityState)
    * read from the {@link ref validated element}.
    */
   validity: Readonly<ValidityState>;
+
+  /**
+   * Associates the field with the DOM element.
+   */
+  ref(element: Element | null): void;
 
   /**
    * Shows error message balloon for the first element that is associated with this field or any of its child fields,
@@ -73,15 +78,15 @@ export default function constraintValidationPlugin(): FieldPlugin<any, Constrain
 
     field._element = null;
 
-    overrideReadonlyProperty(field, 'isInvalid', isInvalid => isInvalid || field.validity.valid);
+    overrideReadonlyProperty(field, 'isInvalid', isInvalid => isInvalid || !field.validity.valid);
 
-    field.ref = nextElement => {
+    field.ref = element => {
       field._element?.removeEventListener('input', handleChange);
-      field._element = nextElement;
+      field._element = element;
 
-      nextElement?.addEventListener('input', handleChange);
+      element?.addEventListener('input', handleChange);
 
-      ref?.(nextElement);
+      ref?.(element);
 
       checkValidity(field);
     };
@@ -175,7 +180,7 @@ function createValidity(): ValidityState {
     tooLong: false,
     tooShort: false,
     typeMismatch: false,
-    valid: false,
+    valid: true,
     valueMissing: false,
   };
 }

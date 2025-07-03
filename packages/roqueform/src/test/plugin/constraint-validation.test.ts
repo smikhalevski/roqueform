@@ -36,7 +36,7 @@ test('enhances the field', () => {
     tooLong: false,
     tooShort: false,
     typeMismatch: false,
-    valid: false,
+    valid: true,
     valueMissing: false,
   });
 
@@ -51,7 +51,7 @@ test('enhances the field', () => {
     tooLong: false,
     tooShort: false,
     typeMismatch: false,
-    valid: false,
+    valid: true,
     valueMissing: false,
   });
 });
@@ -97,7 +97,7 @@ test('deletes an error when a ref is changed', () => {
 
   field.ref(element);
 
-  expect(field.isInvalid).toBe(false);
+  expect(field.isInvalid).toBe(true);
   expect(listenerMock).toHaveBeenCalledTimes(1);
   expect(listenerMock).toHaveBeenNthCalledWith(1, {
     type: 'validityChanged',
@@ -113,7 +113,7 @@ test('deletes an error when a ref is changed', () => {
       tooLong: false,
       tooShort: false,
       typeMismatch: false,
-      valid: false,
+      valid: true,
       valueMissing: false,
     },
   } satisfies FieldEvent);
@@ -133,11 +133,12 @@ test('notifies the field when the value is changed', () => {
 
   field.at('aaa').ref(element);
 
-  expect(listenerMock).toHaveBeenCalledTimes(1);
-  expect(field.at('aaa').isInvalid).toBe(true);
+  expect(listenerMock).not.toHaveBeenCalled();
+  expect(field.at('aaa').isInvalid).toBe(false);
 
-  fireEvent.change(element, { target: { value: '' } });
+  fireEvent.input(element, { target: { value: '' } });
 
   expect(listenerMock).toHaveBeenCalledTimes(1);
   expect(aaaListenerMock).toHaveBeenCalledTimes(1);
+  expect(field.at('aaa').isInvalid).toBe(true);
 });

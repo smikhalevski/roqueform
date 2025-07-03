@@ -14,7 +14,7 @@
  */
 
 import { createElementsValueAccessor } from '../createElementsValueAccessor.js';
-import { Field, FieldPlugin } from '../FieldImpl.js';
+import { FieldPlugin } from '../FieldImpl.js';
 
 export {
   createElementsValueAccessor,
@@ -38,7 +38,7 @@ export interface UncontrolledMixin {
  * Updates field value when the DOM element value is changed and vice versa.
  */
 export default function uncontrolledPlugin(accessor = elementsValueAccessor): FieldPlugin<any, UncontrolledMixin> {
-  return (field: Field<unknown, UncontrolledMixin>) => {
+  return field => {
     const { ref } = field;
 
     const elements: Element[] = [];
