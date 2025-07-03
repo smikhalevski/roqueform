@@ -32,7 +32,7 @@ export interface RefMixin {
   readonly isFocused: boolean;
 
   /**
-   * Associates the field with the {@link element DOM element}.
+   * Associates the field with the DOM element.
    */
   ref(element: Element | null): void;
 

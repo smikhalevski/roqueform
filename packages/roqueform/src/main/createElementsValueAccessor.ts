@@ -8,7 +8,7 @@ export interface ElementsValueAccessor {
    * @param elements The array of referenced elements, never empty.
    * @return The value that elements represent.
    */
-  get(elements: readonly any[]): any;
+  get(elements: readonly Element[]): any;
 
   /**
    * Sets value to elements controlled by the field.
@@ -16,7 +16,7 @@ export interface ElementsValueAccessor {
    * @param elements The array of referenced elements, never empty.
    * @param value The value to assign to elements.
    */
-  set(elements: readonly any[], value: any): void;
+  set(elements: readonly Element[], value: any): void;
 }
 
 /**
@@ -114,7 +114,7 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
   const { checkboxFormat, dateFormat, timeFormat } = options;
 
   return {
-    get(elements) {
+    get(elements: any[]) {
       const element = elements[0];
       const { type, valueAsNumber } = element;
 
@@ -204,7 +204,7 @@ export function createElementsValueAccessor(options: ElementsValueAccessorOption
       return element.value;
     },
 
-    set(elements, value) {
+    set(elements: any[], value) {
       const element = elements[0];
       const { type } = element;
 

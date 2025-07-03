@@ -881,94 +881,48 @@ field.scrollToError(1);
 
 Updates fields by listening to change events of associated DOM elements.
 
-🔥&ensp;[**Try it on CodeSandbox**](https://codesandbox.io/s/fsdshx)
+```ts
+import { createField } from 'roqueform';
+import uncontrolledPlugin from 'roqueform/plugin/uncontrolled';
 
-This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
-[the React integration](../react#readme).
+const field = createField({ hello: 'world' }, [uncontrolledPlugin()]);
 
-```tsx
-import type { SyntheticEvent } from 'react';
-import { useField } from '@roqueform/react';
-import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
-
-export const App = () => {
-  const planetField = useField(
-    { name: 'Mars', properties: { color: 'red' } },
-    uncontrolledPlugin()
-  );
-
-  const handleSubmit = (event: SyntheticEvent) => {
-    event.preventDefault();
-
-    // The field value is always in sync with the input element value.
-    doSubmit(planetField.value);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {'Planet name:'}
-      <input
-        type="text"
-        ref={field.at('name').ref}
-      />
-      <br/>
-
-      {'Color:'}
-      {['red', 'green', 'blue'].map(color =>
-        <label>
-          <input
-            type="radio"
-            // 🌕 An arbitrary name of a radio group
-            name="property-color"
-            value={color}
-            ref={field.at('properties').at('color').ref.at(color)}
-          />
-          {color}
-        </label>
-      )}
-    </form>
-  );
-};
-```
-
-## Referencing elements
-
-To associate field with an element, pass
-[`ref`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.UncontrolledPlugin.html#ref)
-as a `ref` attribute of an `input`, `textarea`, or any other form element:
-
-```tsx
-<input ref={field.ref}/>
+field.at('hello').ref(document.querySelector('input'));
 ```
 
 The plugin would synchronize the field value with the value of an input element. When the input value is changed and
-`change` or `input` event is dispatched, the `field` is updated with the corresponding value.
+DOM `input` event is dispatched, the `field` is updated with the corresponding value.
 
-If you have a set of radio buttons, or checkboxes that update a single field, use
-[`refFor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.UncontrolledPlugin.html#refFor) with
-a distinct key. `refFor` always returns the same ref callback for the same key. `uncontrolledPlugin` would use elements
-passed to ref callbacks to derive a value.
+If you have a set of radio buttons, or checkboxes that update a single field, call `ref` multiple times providing each
+element.
 
-```ts
-const namesField = useField(['Mars', 'Pluto'], uncontrolledPlugin());
+For example, let's use `uncontrolledPlugin` to manage an array of animal species:
+
+```html
+<input type="checkbox" value="Elephant">
+<input type="checkbox" value="Monkey">
+<input type="checkbox" value="Zebra">
 ```
 
-The plugin derives the field value from the element's `value` attribute:
+Create a field:
 
-```tsx
-<form>
-  <input
-    type="checkbox"
-    value="Mars"
-    // 🌕 The unique key associated with this is 1.
-    ref={namesField.ref.at(1)}
-  />
-  <input
-    type="checkbox"
-    value="Pluto"
-    ref={namesField.ref.at(2)}
-  />
-</form>
+```ts
+const field = createField({ animals: ['Zebra'] }, [uncontrolledPlugin()]);
+```
+
+Associate checkboxes with a field:
+
+```ts
+document.querySelectorAll('input[type="checkbox"]').forEach(field.at('animals').ref);
+```
+
+Right after checkboxes are associated, input with value "Zebra" becomes checked. This happens because
+the `uncontrolledPlugin` updated the DOM to reflect the current state of the field.
+
+If the user would check the "Elephant" value, then the field gets updated:
+
+```ts
+field.at('animals').value // ⮕ ['Zebra', 'Elephant']
 ```
 
 ## Value coercion
@@ -976,44 +930,43 @@ The plugin derives the field value from the element's `value` attribute:
 By default, `uncontrolledPlugin` uses the opinionated element value accessor that applies following coercion rules to
 values of form elements:
 
-| Elements            | Value                                                                                                                                                                                                           |
-|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Single checkbox     | `boolean`, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}.                                                                                                                              |
-| Multiple checkboxes | An array of [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value) attributes of checked checkboxes, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}. |
-| Radio buttons       | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value) attribute of a radio button that is checked or `null` if no radio buttons are checked.                               |
-| Number input        | `number`, or `null` if empty.                                                                                                                                                                                   |
-| Range input         | `number`                                                                                                                                                                                                        |
-| Date input          | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value) attribute, or `null` if empty, see {@link ElementsValueAccessorOptions.dateFormat dateFormat}.                        |
-| Time input          | A time string, or `null` if empty, see {@link ElementsValueAccessorOptions.timeFormat timeFormat}.                                                                                                              |
-| Image input         | A string value of the [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src) attribute.                                                                                           |
-| File input          | {@link File} or `null` if no file selected, file inputs are read-only.                                                                                                                                          |
-| Multi-file input    | An array of {@link File}.                                                                                                                                                                                       |
-| Other               | The `value` attribute, or `null` if element doesn't support it.                                                                                                                                                 |
+| Elements                 | Value                                                                                                                                                                                                           |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Single checkbox          | `boolean`, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}.                                                                                                                              |
+| Multiple&nbsp;checkboxes | An array of [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value) attributes of checked checkboxes, see {@link ElementsValueAccessorOptions.checkboxFormat checkboxFormat}. |
+| Radio buttons            | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value) attribute of a radio button that is checked or `null` if no radio buttons are checked.                               |
+| Number input             | `number`, or `null` if empty.                                                                                                                                                                                   |
+| Range input              | `number`                                                                                                                                                                                                        |
+| Date input               | The [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value) attribute, or `null` if empty, see {@link ElementsValueAccessorOptions.dateFormat dateFormat}.                        |
+| Time input               | A time string, or `null` if empty, see {@link ElementsValueAccessorOptions.timeFormat timeFormat}.                                                                                                              |
+| Image input              | A string value of the [`value`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src) attribute.                                                                                           |
+| File input               | {@link File} or `null` if no file selected, file inputs are read-only.                                                                                                                                          |
+| Multi-file input         | An array of {@link File}.                                                                                                                                                                                       |
+| Other                    | The `value` attribute, or `null` if element doesn't support it.                                                                                                                                                 |
 
 `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
 
 This behaviour can be changed by passing a custom
-[`ElementsValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessor.html)
+[`ElementsValueAccessor`](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessor.html)
 implementation to a plugin. Or you can use a
-[`createElementsValueAccessor`](https://smikhalevski.github.io/roqueform/functions/uncontrolled_plugin.createElementsValueAccessor.html)
+[`createElementsValueAccessor`](https://smikhalevski.github.io/roqueform/functions/plugin_uncontrolled.createElementsValueAccessor.html)
 factory to customise the default behaviour:
 
 ```ts
-import { useField } from '@roqueform/react';
-import { uncontrolledPlugin } from '@roqueform/uncontrolled-plugin';
+import { createField } from 'roqueform';
+import uncontrolledPlugin, { createElementsValueAccessor } from 'roqueform/plugin/uncontrolled';
 
-const personField = useField(
-  { dateOfBirth: 316310400000 },
-  uncontrolledPlugin(
-    createElementsValueAccessor({
-      dateFormat: 'timestamp'
-    })
-  )
-);
+const myValueAccessor = createElementsValueAccessor({
+  dateFormat: 'timestamp'
+});
+
+const field = createField({ date: Date.now() }, [
+  uncontrolledPlugin(myValueAccessor)
+]);
 ```
 
 Read more about available options in
-[`ElementsValueAccessorOptions`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessorOptions.html).
+[`ElementsValueAccessorOptions`](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessorOptions.html).
 
 # Validation plugin
 
