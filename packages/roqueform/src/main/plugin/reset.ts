@@ -21,15 +21,6 @@ import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../FieldImpl.js';
 import { isEqual, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
-declare module '../FieldImpl.js' {
-  export interface FieldEventRegistry {
-    /**
-     * The new initial value was set to the target field. The payload contains the old initial value.
-     */
-    initialValueChanged: any;
-  }
-}
-
 /**
  * The mixin added to fields by the {@link resetPlugin}.
  */

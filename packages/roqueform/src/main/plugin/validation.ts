@@ -28,20 +28,6 @@
 import { Field, FieldEvent, FieldPlugin } from '../FieldImpl.js';
 import { AbortError, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
-declare module '../FieldImpl.js' {
-  export interface FieldEventRegistry {
-    /**
-     * The validation of the field has started. The payload contains the validation that has started.
-     */
-    validationStarted: Validation;
-
-    /**
-     * The validation of the field has finished. The payload contains the validation that has finished.
-     */
-    validationFinished: Validation;
-  }
-}
-
 const ERROR_ABORT = 'Validation was aborted';
 
 /**

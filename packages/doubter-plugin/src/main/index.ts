@@ -5,23 +5,24 @@
  * npm install --save-prod @roqueform/doubter-plugin
  * ```
  *
+ * Create a field validated by a Doubter shape:
+ *
  * ```ts
  * import * as d from 'doubter';
  * import { createField } from 'roqueform';
  * import errorsPlugin from 'roqueform/plugin/errors';
- * import doubterPlugin, { concatIssues } from '@roqueform/doubter';
+ * import doubterPlugin, { concatDoubterIssues } from '@roqueform/doubter';
  *
  * const fieldShape = d.object({
  *   hello: d.string()
  * });
  *
  * const field = createField({ hello: 'world' }, [
- *   errorsPlugin(concatIssues),
+ *   errorsPlugin(concatDoubterIssues),
  *   doubterPlugin(fieldShape)
  * ]);
  *
- * field.at('hello');
- * // ⮕ Field<string>
+ * field.at('hello').validate() // ⮕ true
  * ```
  *
  * @module @roqueform/doubter-plugin
@@ -55,7 +56,10 @@ export default function doubterPlugin<Value>(shape: Shape<Value, any>): FieldPlu
   };
 }
 
-export const concatIssues: ErrorsConcatenator<Issue> = (prevErrors, error) => {
+/**
+ * Concatenates unique Doubter issues.
+ */
+export const concatDoubterIssues: ErrorsConcatenator<Issue> = (prevErrors, error) => {
   for (const e of prevErrors) {
     if (e.code !== undefined && error.code !== undefined ? e.code === error.code : e.message === error.message) {
       return prevErrors;

@@ -9,7 +9,7 @@
 export { naturalValueAccessor } from './naturalValueAccessor.js';
 export { createField } from './createField.js';
 export {
-  type FieldEventRegistry,
+  type FieldEventType,
   type FieldEvent,
   type FieldPlugin,
   type Field,

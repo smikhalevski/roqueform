@@ -18,15 +18,6 @@ import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
 import { overrideReadonlyProperty } from '../utils.js';
 
-declare module '../FieldImpl.js' {
-  export interface FieldEventRegistry {
-    /**
-     * The field's validity state has changed. The payload contains the previous validity state.
-     */
-    validityChanged: Readonly<ValidityState>;
-  }
-}
-
 /**
  * The mixin added to fields by the {@link constraintValidationPlugin}.
  */

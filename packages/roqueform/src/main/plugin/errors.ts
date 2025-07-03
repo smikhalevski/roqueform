@@ -18,31 +18,6 @@
 import { Field, FieldEvent, FieldPlugin, InferMixin } from '../FieldImpl.js';
 import { emptyObject, overrideReadonlyProperty, publishEvents } from '../utils.js';
 
-declare module '../FieldImpl.js' {
-  export interface FieldEventRegistry {
-    /**
-     * An error was added to a field. The payload contains an error that was added.
-     */
-    errorAdded: any;
-
-    /**
-     * An event type that notifies the errors plugin that an error must be added to a field. The payload must contain
-     * an error to add.
-     */
-    errorCaught: any;
-
-    /**
-     * An error was deleted from a field. The payload contains an error that was deleted.
-     */
-    errorDeleted: any;
-
-    /**
-     * All errors were removed from the field. The payload contains the previous array of errors.
-     */
-    errorsCleared: any[];
-  }
-}
-
 /**
  * Options of the {@link ErrorsMixin.clearErrors} method.
  */

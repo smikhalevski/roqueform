@@ -8,64 +8,50 @@ npm install --save-prod @roqueform/zod-plugin
 
 # Overview
 
-🔎 [API documentation is available here.](https://smikhalevski.github.io/roqueform/modules/zod_plugin.html)
+Create a schema that would parse the field value:
 
-This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
-[the React integration](../react#readme).
-
-```tsx
-import { SyntheticEvent } from 'react';
-import { FieldRenderer, useField } from '@roqueform/react';
-import { zodPlugin } from '@roqueform/zod-plugin';
+```ts
 import { z } from 'zod';
 
-const planetSchema = z.object({
-  name: z.string().min(1),
+const fieldSchema = z.object({
+  hello: z.string().max(5)
 });
+```
 
-export const App = () => {
-  const planetField = useField(
-    { name: '' },
-    zodPlugin(planetSchema)
-  );
+[`zodPlugin`](https://smikhalevski.github.io/roqueform/modules/_roqueform_zod-plugin.html) works best in
+conjunction with [`errorsPlugin`](https://github.com/smikhalevski/roqueform?#errors-plugin):
 
-  const handleSubmit = (event: SyntheticEvent) => {
-    event.preventDefault();
+```ts
+import { createField } from 'roqueform';
+import errorsPlugin from 'roqueform/plugin/errors';
+import zodPlugin, { concatZodIssues } from '@roqueform/zod';
 
-    if (planetField.validate()) {
-      // If your shapes have transformations or refinements, you can safely parse
-      // the field value after it was successfully validated.
-      const value = planetSchema.parse(planetField.value);
-      
-      doSubmit(value);
-    } else {
-      // Errors are associated with fields automatically.
-    }
-  };
+const field = createField({ hello: 'world' }, [
+  errorsPlugin(concatZodIssues),
+  zodPlugin(fieldSchema)
+]);
+```
 
-  return (
-    <form onSubmit={handleSubmit}>
+The type of the field value is inferred from the provided schema, so the field value is statically checked.
 
-      <FieldRenderer field={planetField.at('name')}>
-        {nameField => (
-          <>
-            <input
-              value={nameField.value}
-              onChange={event => {
-                nameField.setValue(event.target.value);
-              }}
-            />
+When you call the `validate` method, it triggers validation of the field and all of its child fields. So if you call
+`validate` on the child field, it won't validate the parent field:
 
-            {nameField.errors[0]?.message}
-          </>
-        )}
-      </FieldRenderer>
+```ts
+// 🟡 Set an invalid value to the field
+field.at('hello').setValue('universe');
 
-      <button type="submit">
-        {'Submit'}
-      </button>
+field.at('hello').validate();
+// ⮕ false
 
-    </form>
-  );
-};
+field.at('hello').errors // ⮕ [{ code: 'too_small', … }]
+```
+
+In this example, `field.value` _is not_ validated, and `field.at('hello').value` _is_ validated.
+
+To detect whether the field, or any of its child fields contain a validation error:
+
+```ts
+field.at('hello').isInvalid;
+// ⮕ true
 ```

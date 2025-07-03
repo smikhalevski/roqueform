@@ -5,16 +5,33 @@
  * npm install --save-prod @roqueform/zod-plugin
  * ```
  *
+ * Create a field validated by a Zod schema:
+ *
+ * ```ts
+ * import { z } from 'zod';
+ * import { createField } from 'roqueform';
+ * import errorsPlugin from 'roqueform/plugin/errors';
+ * import zodPlugin, { concatZodIssues } from '@roqueform/zod';
+ *
+ * const fieldSchema = z.object({
+ *   hello: z.string()
+ * });
+ *
+ * const field = createField({ hello: 'world' }, [
+ *   errorsPlugin(concatZodIssues),
+ *   zodPlugin(fieldSchema)
+ * ]);
+ *
+ * field.at('hello').validate() // ⮕ true
+ * ```
+ *
  * @module @roqueform/zod-plugin
  */
 
 import { Field, FieldPlugin } from 'roqueform';
 import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
-import { ParseParams, SafeParseReturnType, ZodType, ZodTypeAny } from 'zod';
-
-// Enable errorCaught event
-// noinspection ES6UnusedImports
-import { type ErrorsMixin as _ } from 'roqueform/plugin/errors';
+import { ParseParams, SafeParseReturnType, ZodIssue, ZodType, ZodTypeAny } from 'zod';
+import { ErrorsConcatenator } from 'roqueform/plugin/errors';
 
 /**
  * The mixin added to fields by the {@link zodPlugin}.
@@ -41,6 +58,18 @@ export default function zodPlugin<Value>(type: ZodType<any, any, Value>): FieldP
     validationPlugin(validator)(field);
   };
 }
+
+/**
+ * Concatenates unique Zod issues.
+ */
+export const concatZodIssues: ErrorsConcatenator<ZodIssue> = (prevErrors, error) => {
+  for (const e of prevErrors) {
+    if (e.code === error.code) {
+      return prevErrors;
+    }
+  }
+  return prevErrors.concat(error);
+};
 
 const validator: Validator<Partial<ParseParams> | undefined, PrivateZodMixin> = {
   validate(field, options) {

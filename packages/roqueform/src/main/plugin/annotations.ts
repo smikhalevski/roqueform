@@ -18,15 +18,6 @@
 import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../FieldImpl.js';
 import { callOrGet, publishEvents } from '../utils.js';
 
-declare module '../FieldImpl.js' {
-  export interface FieldEventRegistry {
-    /**
-     * Field annotations were patched. The payload contains the annotations before the patch was applied.
-     */
-    annotationsChanged: ReadonlyDict;
-  }
-}
-
 interface ReadonlyDict {
   readonly [key: string]: any;
 }

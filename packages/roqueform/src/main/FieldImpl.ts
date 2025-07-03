@@ -6,24 +6,54 @@ declare const MIXIN: unique symbol;
 type MIXIN = typeof MIXIN;
 
 /**
- * Mapping from a {@link Field} event type to corresponding a payload.
+ * The well-known events published by a {@link Field}.
  *
- * Use declaration merging to register additional event types:
+ * <dl>
+ * <dt><i>"valueChanged"</i></dt>
+ * <dd>The new value was set to the target field. The event payload contains the old value.</dd>
  *
- * ```ts
- * declare module 'roqueform' {
- *   export interface FieldEventRegistry {
- *     hello: 'payload';
- *   }
- * }
- * ```
+ * <dt><i>"initialValueChanged"</i></dt>
+ * <dd>The new initial value was set to the target field. The event payload contains the old initial value.</dd>
+ *
+ * <dt><i>"validityChanged"</i></dt>
+ * <dd>The field's validity state has changed. The event payload contains the previous validity state.</dd>
+ *
+ * <dt><i>"errorAdded"</i></dt>
+ * <dd>An error was added to a field. The event payload contains an error that was added.</dd>
+ *
+ * <dt><i>"errorCaught"</i></dt>
+ * <dd>
+ * An event type that notifies the errors plugin that an error must be added to a field. The event payload must contain
+ * an error to add.
+ * </dd>
+ *
+ * <dt><i>"errorDeleted"</i></dt>
+ * <dd>An error was deleted from a field. The event payload contains an error that was deleted.</dd>
+ *
+ * <dt><i>"errorsCleared"</i></dt>
+ * <dd>All errors were removed from the field. The event payload contains the previous array of errors.</dd>
+ *
+ * <dt><i>"annotationsChanged"</i></dt>
+ * <dd>Field annotations were patched. The event payload contains the annotations before the patch was applied.</dd>
+ *
+ * <dt><i>"validationStarted"</i></dt>
+ * <dd>The validation of the field has started. The event payload contains the validation that has started.</dd>
+ *
+ * <dt><i>"validationFinished"</i></dt>
+ * <dd>The validation of the field has finished. The event payload contains the validation that has finished.</dd>
+ * </dl>
  */
-export interface FieldEventRegistry {
-  /**
-   * The new value was set to the target field. The payload contains the old value.
-   */
-  valueChanged: any;
-}
+export type FieldEventType =
+  | 'valueChanged'
+  | 'initialValueChanged'
+  | 'validityChanged'
+  | 'errorAdded'
+  | 'errorCaught'
+  | 'errorDeleted'
+  | 'errorsCleared'
+  | 'annotationsChanged'
+  | 'validationStarted'
+  | 'validationFinished';
 
 /**
  * The event published for subscribers of {@link Field a field}.
@@ -34,7 +64,7 @@ export interface FieldEvent<Mixin extends object = {}> {
   /**
    * The type of the event.
    */
-  type: keyof FieldEventRegistry;
+  type: FieldEventType | (string & {});
 
   /**
    * The field onto which this event was published.
@@ -52,7 +82,7 @@ export interface FieldEvent<Mixin extends object = {}> {
   /**
    * The payload carried by the event.
    */
-  payload: FieldEventRegistry[this['type']];
+  payload: any;
 }
 
 /**
