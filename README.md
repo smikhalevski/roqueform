@@ -827,35 +827,53 @@ field.at('hello').scrollIntoView({ behavior: 'smooth' });
 
 # Reset plugin
 
-Manages field initial value and dirty status.
-
-Update the initial value of a field:
+Enhances fields with methods that manage the initial value.
 
 ```ts
 import { createField } from 'roqueform';
-import { resetPlugin } from '@roqueform/reset-plugin';
+import resetPlugin from 'roqueform/plugin/reset';
 
-const planetField = createField({ name: 'Pluto' }, resetPlugin());
+const field = createField({ hello: 'world' }, [resetPlugin()]);
 
-planetField.setInitialValue({ name: 'Mars' });
+field.at('hello').setValue('universe');
 
-planetField.at('name').initialValue;
-// ⮕ 'Mars'
+field.value // ⮕ { hello: 'universe' }
+
+field.reset();
+
+// 🟡 The initial value was restored
+field.value // ⮕ { hello: 'world' }
+```
+
+Change the initial value of a field:
+
+```ts
+field.setInitialValue({ hello: 'universe' });
+
+field.at('hello').initialValue;
+// ⮕ 'universe'
 ```
 
 The field is considered dirty when its value differs from the initial value. Values are compared using an equality
-checker function passed to the `resetPlugin`. By default, values are compared using
-[fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal).
+checker function passed to
+the [`resetPlugin`](https://smikhalevski.github.io/roqueform/functions/plugin_reset.default.html). By default,
+values are compared using [fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal).
 
 ```ts
-planetField.at('name').isDirty // ⮕ true
+const field = createField({ hello: 'world' }, [resetPlugin()]);
+
+field.at('hello').setValue('universe');
+
+field.at('hello').isDirty // ⮕ true
+
+field.isDirty // ⮕ true
 ```
 
 Get the array of all dirty fields:
 
 ```ts
-planetField.getDirtyFields();
-// ⮕ [planetField.at('name')]
+field.getDirtyFields();
+// ⮕ [field, field.at('hello')]
 ```
 
 # Scroll to an error plugin

@@ -2,7 +2,16 @@
  * Manages Roqueform field initial value and dirty status.
  *
  * ```ts
+ * import { createField } from 'roqueform';
  * import resetPlugin from 'roqueform/plugin/reset';
+ *
+ * const field = createField({ hello: 'world' }, [resetPlugin()]);
+ *
+ * field.at('hello').setValue('universe');
+ *
+ * field.reset();
+ *
+ * field.value // ⮕ { hello: 'world' }
  * ```
  *
  * @module plugin/reset
