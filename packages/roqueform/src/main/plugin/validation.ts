@@ -2,7 +2,24 @@
  * Enhances Roqueform fields with validation methods.
  *
  * ```ts
+ * import { createField } from 'roqueform';
  * import validationPlugin from 'roqueform/plugin/validation';
+ *
+ * const field = createField({ hello: 'world' }, [
+ *   validationPlugin({
+ *     validate(field) {
+ *       if (field.key === 'hello') {
+ *         field.isInvalid = field.value !== 'world';
+ *       }
+ *     }
+ *   })
+ * ]);
+ *
+ * field.setValue({ hello: 'universe' });
+ *
+ * field.at('hello').validate();
+ *
+ * field.at('hello').isInvalid // ⮕ true
  * ```
  *
  * @module plugin/validation

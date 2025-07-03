@@ -577,72 +577,6 @@ field.errors // ⮕ ['Oops']
 This is especially useful if you're developing a plugin that adds errors to fields but you don't want to couple with the
 errors plugin implementation.
 
-# Validation scaffolding plugin
-
-Roqueform is shipped with the validation scaffolding plugin
-[`validationPlugin`](https://smikhalevski.github.io/roqueform/functions/roqueform.validationPlugin.html), so you can
-build your validation on top of it.
-
-> [!NOTE]\
-> This plugin provides a low-level functionality. Prefer
-> [constraint-validation-plugin](./packages/constraint-validation-plugin), [doubter-plugin](./packages/doubter-plugin),
-> or [zod-plugin](./packages/zod-plugin) or other high-level validation plugin.
-
-```ts
-import { validationPlugin } from 'roqueform';
-
-const plugin = validationPlugin({
-  validate(field) {
-    if (!field.at('name').value) {
-      field.at('name').isInvalid = true;
-    }
-  }
-});
-
-const userField = createField({ name: '' }, plugin);
-
-userField.validate();
-// ⮕ false
-
-userField.at('name').isInvalid;
-// ⮕ true
-```
-
-The plugin takes a [`Validator`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.Validator.html) that has
-`validate` and `validateAsync` methods. Both methods receive a field that must be validated and should update the
-`isInvalid` property of the field or any of its children when needed.
-
-Validation plugin works best in conjunction with [the errors plugin](#errors-plugin). The latter would update
-`isInvalid` when an error is added or deleted:
-
-```ts
-import { validationPlugin } from 'roqueform';
-
-const plugin = validationPlugin(
-  // Make errors plugin available inside the validator
-  errorsPlugin(),
-  {
-    validate(field) {
-      if (!field.at('name').value) {
-        // Add an error to the invalid field
-        field.at('name').addError('Must not be blank')
-      }
-    }
-  }
-);
-
-const userField = createField({ name: '' }, plugin);
-
-userField.validate();
-// ⮕ false
-
-userField.at('name').isInvalid;
-// ⮕ true
-
-userField.at('name').errors;
-// ⮕ ['Must not be blank']
-```
-
 # Motivation
 
 Roqueform was built to satisfy the following requirements:
@@ -1081,6 +1015,63 @@ const personField = useField(
 Read more about available options in
 [`ElementsValueAccessorOptions`](https://smikhalevski.github.io/roqueform/interfaces/uncontrolled_plugin.ElementsValueAccessorOptions.html).
 
+# Validation plugin
+
+Enhances the field with validation methods.
+
+> [!TIP]\
+> This plugin provides a low-level functionality. Prefer
+> [constraint-validation-plugin](#constraint-validation-api-plugin), [doubter-plugin](./packages/doubter-plugin),
+> or [zod-plugin](./packages/zod-plugin) or other high-level validation plugin.
+
+```ts
+import { createField } from 'roqueform';
+import validationPlugin from 'roqueform/plugin/validation';
+
+const field = createField({ hello: 'world' }, [
+  validationPlugin({
+    validate(field) {
+      if (field.key === 'hello') {
+        field.isInvalid = field.value === 'world';
+      }
+    }
+  })
+]);
+
+field.at('hello').validate();
+
+field.at('hello').isInvalid // ⮕ true
+```
+
+The plugin takes a [`Validator`](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.Validator.html)
+that has `validate` and `validateAsync` methods. Both methods receive a field that must be validated and should update
+the `isInvalid` property of the field or any of its children when needed.
+
+Validation plugin works best in conjunction with [the errors plugin](#errors-plugin). The latter would update
+`isInvalid` when an error is added or deleted:
+
+```ts
+import { createField } from 'roqueform';
+import errorsPlugin, { ErrorsMixin } from 'roqueform/plugin/errors';
+import validationPlugin, { Validator } from 'roqueform/plugin/validation';
+
+const myValidator: Validator<void, ErrorsMixin> = {
+  validate(field) {
+    if (field.key === 'hello' && field.value === 'world') {
+      field.addError('The world is not enough');
+    }
+  }
+};
+
+const field = createField({ hello: 'world' }, [
+  errorsPlugin(),
+  validationPlugin(myValidator)
+]);
+
+field.at('hello').validate();
+
+field.at('hello').isInvalid // ⮕ true
+```
 
 # React integration
 
