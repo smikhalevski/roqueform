@@ -1026,66 +1026,50 @@ field.at('hello').isInvalid // ⮕ true
 
 # React integration
 
-Hooks and components to integrate Roqueform with React.
+Roqueform has first-class React integration. To enable it, install the integration package:
 
 ```sh
 npm install --save-prod @roqueform/react
 ```
 
-[`useField`](https://smikhalevski.github.io/roqueform/functions/react.useField.html) hook has the same signature as the
-[`createField`](https://smikhalevski.github.io/roqueform/functions/roqueform.createField.html) function:
+[`useField`](https://smikhalevski.github.io/roqueform/variables/_roqueform_react.useField.html) hook has the same
+signature as the [`createField`](https://smikhalevski.github.io/roqueform/functions/roqueform.createField.html)
+function:
 
 ```tsx
-import type { SyntheticEvent } from 'react';
 import { FieldRenderer, useField } from '@roqueform/react';
 
-export const App = () => {
-  const planetField = useField({ name: 'Mars' });
-
-  const handleSubmit = (event: SyntheticEvent) => {
-    event.preventDefault();
-
-    // Submit the field value
-    doSubmit(planetField.value);
-  };
-
+export function App() {
+  const rootField = useField({ hello: 'world' });
+  
   return (
-    <form onSubmit={handleSubmit}>
-
-      <FieldRenderer field={planetField.at('name')}>
-        {nameField => (
-          <input
-            type="text"
-            value={nameField.value}
-            onChange={event => {
-              nameField.setValue(event.target.value);
-            }}
-          />
-        )}
-      </FieldRenderer>
-
-      <button type="submit">
-        {'Submit'}
-      </button>
-
-    </form>
+    <FieldRenderer field={rootField.at('hello')}>
+      {helloField => (
+        <input
+          type="text"
+          value={helloField.value}
+          onChange={event => helloField.setValue(event.target.value)}
+        />
+      )}
+    </FieldRenderer>
   );
-};
+}
 ```
 
 `useField` hook returns a [`Field`](https://smikhalevski.github.io/roqueform/types/roqueform.Field.html) instance that
 is preserved between re-renders.
 
-```ts
-useField();
-// ⮕ Field
-```
+The [`FieldRenderer`](https://smikhalevski.github.io/roqueform/functions/_roqueform_react.FieldRenderer.html) component
+subscribes to the given field instance and re-renders children when an event is dispatched onto the field:
+
+When a user updates the input value, the `rootField.at('hello')` value is set and `FieldRenderer` component
+is re-rendered.
 
 You can provide the initial value for a field.
 
 ```ts
-useField({ planet: 'Mars' });
-// ⮕ Field<unknown, { planet: string }>
+useField({ hello: 'world' });
+// ⮕ Field<{ hello: string }>
 ```
 
 If you pass a callback as an initial value, it would be invoked when the field is initialized.
@@ -1094,44 +1078,16 @@ If you pass a callback as an initial value, it would be invoked when the field i
 useField(() => getInitialValue());
 ```
 
-Pass [a plugin](../../#plugins-and-integrations) as the second argument of the `useField` hook.
+Pass a plugin as the second argument of the `useField` hook.
 
 ```ts
 import { useField } from '@roqueform/react';
-import { errorsPlugin } from 'roqueform';
+import errorsPlugin from 'roqueform/plugin/errors';
 
-const planetField = useField({ planet: 'Pluto' }, errorsPlugin());
+const field = useField({ hello: 'world' }, errorsPlugin());
 
-planetField.addError('Too far away');
+field.addError('The world is not enough');
 ```
-
-The `FieldRenderer` component subscribes to the given field instance and re-renders children when an event is dispatched
-onto the field:
-
-```tsx
-import { FieldRenderer, useField } from '@roqueform/react';
-
-const App = () => {
-  const planetField = useField({ name: 'Mars' });
-
-  return (
-    <FieldRenderer field={planetField.at('name')}>
-      {nameField => (
-        <input
-          type="text"
-          value={nameField.value}
-          onChange={event => {
-            nameField.setValue(event.target.value);
-          }}
-        />
-      )}
-    </FieldRenderer>
-  );
-};
-```
-
-When a user updates the input value, the `nameField` is updated and `FieldRenderer` component is re-rendered. The single
-argument of the `children` render function is the field passed as a `field` prop to the `FieldRenderer` component.
 
 ## Eager and lazy re-renders
 
@@ -1139,40 +1095,43 @@ Let's consider the form with two `FieldRenderer` elements. One of them renders t
 one renders an input that updates the child field:
 
 ```tsx
-const App = () => {
-  const planetField = useField({ name: 'Mars' });
+import { FieldRenderer, useField } from '@roqueform/react';
 
-  return <>
-    <FieldRenderer field={planetField}>
-      {() => JSON.stringify(planetField.value)}
-    </FieldRenderer>
-
-    <FieldRenderer field={planetField.at('name')}>
-      {nameField => (
-        <input
-          type="text"
-          value={nameField.value}
-          onChange={event => {
-            nameField.setValue(event.target.value);
-          }}
-        />
-      )}
-    </FieldRenderer>
-  </>;
-};
+export function App() {
+  const rootField = useField({ hello: 'world' });
+  
+  return (
+    <>
+      <FieldRenderer field={rootField}>
+        {field => JSON.stringify(field.value)}
+      </FieldRenderer>
+      
+      <FieldRenderer field={rootField.at('hello')}>
+        {helloField => (
+          <input
+            type="text"
+            value={helloField.value}
+            onChange={event => helloField.setValue(event.target.value)}
+          />
+        )}
+      </FieldRenderer>
+    </>
+  );
+}
 ```
 
 By default, `FieldRenderer` component re-renders only when the provided field was updated directly, so updates from
-ancestors or child fields would be ignored. Add the `isEagerlyUpdated` property to force `FieldRenderer` to re-render
-whenever its value was affected.
+ancestors or child fields would be ignored. So when user edits the input value, `JSON.stringify` won't be re-rendered.
+
+Add the `isEagerlyUpdated` property to force `FieldRenderer` to re-render whenever its value was affected.
 
 ```diff
-- <FieldRenderer field={planetField}>
+- <FieldRenderer field={rootField}>
 + <FieldRenderer
-+   field={planetField}
++   field={rootField}
 +   isEagerlyUpdated={true}
 + >
-    {() => JSON.stringify(planetField.value)}
+    {field => JSON.stringify(field.value)}
   </FieldRenderer>
 ```
 
@@ -1181,24 +1140,22 @@ Now both fields are re-rendered when user edits the input text.
 ## Reacting to changes
 
 You can use an `onChange` handler that is triggered only when the field value was updated
-[non-transiently](../../#transient-updates).
+[non-transiently](#transient-updates).
 
 ```tsx
 <FieldRenderer
-  field={planetField.at('name')}
+  field={rootField.at('hello')}
   onChange={value => {
     // Handle the non-transient name changes
   }}
 >
-  {nameField => (
+  {helloField => (
     <input
       type="text"
-      value={nameField.value}
-      onChange={event => {
-        nameField.setValue(event.target.value);
-      }}
+      value={helloField.value}
+      onChange={event => helloField.setTransientValue(event.target.value)}
+      onBlur={field.flushTransient}
     />
   )}
 </FieldRenderer>
 ```
-
