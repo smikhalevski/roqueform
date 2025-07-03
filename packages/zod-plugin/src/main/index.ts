@@ -14,7 +14,7 @@ import { ParseParams, SafeParseReturnType, ZodType, ZodTypeAny } from 'zod';
 
 // Enable errorCaught event
 // noinspection ES6UnusedImports
-import { ErrorsMixin as _ } from 'roqueform/plugin/errors';
+import { type ErrorsMixin as _ } from 'roqueform/plugin/errors';
 
 /**
  * The mixin added to fields by the {@link zodPlugin}.

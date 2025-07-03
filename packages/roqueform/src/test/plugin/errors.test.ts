@@ -92,6 +92,22 @@ test('uses concatErrors to add a new error', () => {
   expect(concatErrorsMock).toHaveBeenNthCalledWith(1, [], 222);
 });
 
+test('adds an error when errorCaught event is published', () => {
+  const field = createField({ aaa: 111 }, [errorsPlugin()]);
+
+  field.at('aaa').publish({
+    type: 'errorCaught',
+    target: field.at('aaa'),
+    relatedTarget: null,
+    payload: 222,
+  });
+
+  expect(field.isInvalid).toBe(false);
+  expect(field.errors).toEqual([]);
+  expect(field.at('aaa').isInvalid).toBe(true);
+  expect(field.at('aaa').errors).toEqual([222]);
+});
+
 test('deletes an error from the root field', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
 

@@ -5,16 +5,32 @@
  * npm install --save-prod @roqueform/doubter-plugin
  * ```
  *
+ * ```ts
+ * import * as d from 'doubter';
+ * import { createField } from 'roqueform';
+ * import errorsPlugin from 'roqueform/plugin/errors';
+ * import doubterPlugin, { concatIssues } from '@roqueform/doubter';
+ *
+ * const fieldShape = d.object({
+ *   hello: d.string()
+ * });
+ *
+ * const field = createField({ hello: 'world' }, [
+ *   errorsPlugin(concatIssues),
+ *   doubterPlugin(fieldShape)
+ * ]);
+ *
+ * field.at('hello');
+ * // ⮕ Field<string>
+ * ```
+ *
  * @module @roqueform/doubter-plugin
  */
 
-import { Err, Ok, ParseOptions, Shape } from 'doubter';
+import { Err, Issue, Ok, ParseOptions, Shape } from 'doubter';
 import { Field, FieldPlugin } from 'roqueform';
 import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
-
-// Enable errorCaught event
-// noinspection ES6UnusedImports
-import { ErrorsMixin as _ } from 'roqueform/plugin/errors';
+import { ErrorsConcatenator } from 'roqueform/plugin/errors';
 
 /**
  * The mixin added to fields by the {@link doubterPlugin}.
@@ -26,7 +42,7 @@ interface PrivateDoubterMixin extends DoubterMixin {
 }
 
 /**
- * Enhances fields with validation methods powered by [Doubter](https://github.com/smikhalevski/doubter#readme).
+ * Validates field with a [Doubter](https://github.com/smikhalevski/doubter#readme) shape.
  *
  * @param shape The shape that parses the field value.
  * @template Value The root field value.
@@ -38,6 +54,15 @@ export default function doubterPlugin<Value>(shape: Shape<Value, any>): FieldPlu
     validationPlugin(validator)(field);
   };
 }
+
+export const concatIssues: ErrorsConcatenator<Issue> = (prevErrors, error) => {
+  for (const e of prevErrors) {
+    if (e.code !== undefined && error.code !== undefined ? e.code === error.code : e.message === error.message) {
+      return prevErrors;
+    }
+  }
+  return prevErrors.concat(error);
+};
 
 const validator: Validator<ParseOptions | undefined, PrivateDoubterMixin> = {
   validate(field, options) {

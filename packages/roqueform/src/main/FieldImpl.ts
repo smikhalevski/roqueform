@@ -272,7 +272,7 @@ export type ValueAt<T, K> =
  *
  * @internal
  */
-export class FieldImpl implements Field {
+export class FieldImpl implements FieldCore {
   declare [MIXIN]: {};
 
   value: any;

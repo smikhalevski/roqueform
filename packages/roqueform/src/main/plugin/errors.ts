@@ -1,8 +1,16 @@
 /**
- * Enhances Roqueform fields with errors management methods.
+ * Enhances Roqueform fields with error management methods.
  *
  * ```ts
+ * import { createField } from 'roqueform';
  * import errorsPlugin from 'roqueform/plugin/errors';
+ *
+ * const field = createField({ hello: 'world' }, [errorsPlugin()]);
+ *
+ * field.addError('The world is not enough!');
+ *
+ * field.isInvalid
+ * // ⮕ true
  * ```
  *
  * @module plugin/errors
@@ -61,6 +69,8 @@ export interface ErrorsMixin<Error = any> {
 
   /**
    * `true` if this field has associated {@link errors}, or `false` otherwise.
+   *
+   * **Note:** Use {@link getInvalidFields} to check that this field or any of its descendants are invalid.
    */
   readonly isInvalid: boolean;
 
@@ -90,23 +100,25 @@ export interface ErrorsMixin<Error = any> {
 }
 
 /**
- * Enhances the field with errors.
+ * The callback that returns a new array of errors that includes the given error, or returns the `prevErrors` as if
+ * there are no changes. By default, only identity-based-unique errors are added.
+ *
+ * @param prevErrors The array of existing errors.
+ * @param error The new error to add.
+ * @returns The new array of errors that includes the given error.
+ * @template Error The error associated with the field.
+ */
+export type ErrorsConcatenator<Error = any> = (prevErrors: readonly Error[], error: Error) => readonly Error[];
+
+/**
+ * Enhances fields with error management methods.
  *
  * @param concatErrors The callback that returns the new array of errors that includes the given error, or returns the
  * original errors array if there are no changes. By default, only identity-based-unique errors are added.
  * @template Error The error associated with the field.
  */
 export default function errorsPlugin<Error = any>(
-  /**
-   * The callback that returns the new array of errors that includes the given error, or returns the original errors
-   * array if there are no changes. By default, only identity-based-unique errors are added.
-   *
-   * @param errors The array of current errors.
-   * @param error The new error to add.
-   * @returns The new array of errors that includes the given error.
-   * @template Error The error associated with the field.
-   */
-  concatErrors: (prevErrors: readonly Error[], error: Error) => readonly Error[] = concatUniqueErrors
+  concatErrors: ErrorsConcatenator<Error> = concatUniqueErrors
 ): FieldPlugin<any, ErrorsMixin<Error>> {
   return field => {
     field.errors = [];

@@ -483,26 +483,102 @@ createField(['Mars'], composePlugins(plugin1, plugin2));
 
 # Errors plugin
 
-Roqueform is shipped with the plugin that allows to associate errors with fields
-[`errorsPlugin`](https://smikhalevski.github.io/roqueform/functions/roqueform.errorsPlugin.html).
+To associate errors with fields,
+use [errors plugin](https://smikhalevski.github.io/roqueform/interfaces/plugin_errors.ErrorsMixin.html):
 
 ```ts
-import { errorsPlugin } from 'roqueform';
+import { createField } from 'roqueform';
+import errorsPlugin from 'roqueform/plugin/errors';
 
-const userField = createField({ name: '' }, errorsPlugin());
+const field = createField({ hello: 'world' }, [errorsPlugin()]);
 
-userField.at('name').addError('Too short');
-
-userField.at('name').errors;
-// ⮕ ['Too short']
+field.at('hello').addError('The world is not enough');
 ```
 
-Get all invalid fields:
+Read errors associated with the field:
 
 ```ts
-userField.getInvalidFields();
-// ⮕ [userField.at('name')]
+field.at('hello').errors;
+// ⮕ ['The world is not enough']
 ```
+
+Check that the field has associated errors:
+
+```ts
+field.at('hello').isInvalid;
+// ⮕ true
+```
+
+Check that a field or any of its descendants have associated errors:
+
+```ts
+field.getInvalidFields();
+// ⮕ [field.at('hello')]
+```
+
+Delete an error from the field:
+
+```ts
+field.at('hello').deleteError('The world is not enough');
+```
+
+Clear all errors from the field and its descendants:
+
+```ts
+field.clearErrors({ isRecursive: true });
+```
+
+By default, error type is `any`. To restrict type of errors that can be added to a field, provide it explicitly:
+
+```ts
+interface MyError {
+  message: string;
+}
+
+const field = createField({ hello: 'world' }, [errorsPlugin<MyError>()]);
+
+field.errors;
+// ⮕ MyError[]
+```
+
+To have more control over how errors are added to a field, provide an error concatenator callback:
+
+```ts
+import { createField } from 'roqueform';
+import errorsPlugin, { ErrorsConcatenator } from 'roqueform/plugin/errors';
+
+interface MyError {
+  message: string;
+}
+
+const concatMyErrors: ErrorsConcatenator<MyError> = (prevErrors, error) => {
+  return prevErrors.includes(error) ? prevErrors : [...prevErrors, error];
+};
+
+const field = createField({ hello: 'world' }, [
+  errorsPlugin(concatMyErrors)
+]);
+```
+
+To add an error to field, you can publish
+an [`errorCaught`](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldEventRegistry.html#errorcaught)
+event instead of calling
+the[`addError`](https://smikhalevski.github.io/roqueform/interfaces/plugin_errors.ErrorsMixin.html#adderror) method:
+
+```ts
+field.publish({
+  type: 'errorCaught',
+  target: field,
+  relatedTarget: null,
+  payload: 'Ooops'
+});
+
+field.errors;
+// ⮕ ['Oops']
+```
+
+This is especially useful if you're developing a plugin that adds errors to fields but you don't want to couple with the
+errors plugin implementation.
 
 # Validation scaffolding plugin
 
