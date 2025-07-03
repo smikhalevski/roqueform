@@ -2,7 +2,14 @@
  * Manages Roqueform field annotations.
  *
  * ```ts
+ * import { createField } from 'roqueform';
  * import annotationsPlugin from 'roqueform/plugin/annotations';
+ *
+ * const field = createField({ hello: 'world' }, [
+ *   annotationsPlugin({ isDisabled: false })
+ * ]);
+ *
+ * field.at('hello').annotations.isDisabled // ⮕ false
  * ```
  *
  * @module plugin/annotations

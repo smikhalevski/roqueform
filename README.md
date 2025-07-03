@@ -513,41 +513,40 @@ Annotations allow to associate arbitrary data with fields.
 
 ```ts
 import { createField } from 'roqueform';
-import { annotationsPlugin } from '@roqueform/annotations-plugin';
+import annotationsPlugin from 'roqueform/plugin/annotations';
 
-const planetField = createField(
-  { name: 'Pluto' },
+const field = createField({ hello: 'world' }, [
   annotationsPlugin({ isDisabled: false })
-);
+]);
 
-planetField.at('name').annotations.isDisabled // ⮕ false
+field.at('hello').annotations.isDisabled // ⮕ false
 ```
 
 Update annotations for a single field:
 
 ```ts
-planetField.annotate({ isDisabled: true });
+field.annotate({ isDisabled: true });
 
-planetField.annotations.isDisabled // ⮕ true
+field.annotations.isDisabled // ⮕ true
 
-planetField.at('name').annotations.isDisabled // ⮕ false
+field.at('hello').annotations.isDisabled // ⮕ false
 ```
 
 Annotate field and all of its children recursively:
 
 ```ts
-planetField.annotate({ isDisabled: true }, { isRecursive: true });
+field.annotate({ isDisabled: true }, { isRecursive: true });
 
-planetField.annotations.isDisabled // ⮕ true
+field.annotations.isDisabled // ⮕ true
 
 // 🌕 The child field was annotated along with its parent
-planetField.at('name').annotations.isDisabled // ⮕ true
+field.at('hello').annotations.isDisabled // ⮕ true
 ```
 
 Annotations can be updated using a callback. This is especially useful in conjunction with recursive flag:
 
 ```ts
-planetField.annotate(
+field.annotate(
   field => {
     // Toggle disabled flag for the field and its children
     return { isDisabled: !field.annotations.isDisabled };
@@ -559,9 +558,10 @@ planetField.annotate(
 Subscribe to annotation changes:
 
 ```ts
-planetField.subscribe('annotationsChanged', event => {
-  event.target.annotations;
-  // ⮕ { isDisabled: boolean }
+field.subscribe(event => {
+  if (event.type === 'annotationsChanged') {
+    event.target.annotations // ⮕ { isDisabled: boolean }
+  }
 });
 ```
 
@@ -713,6 +713,16 @@ field.errors // ⮕ ['Oops']
 
 This is especially useful if you're developing a plugin that adds errors to fields but you don't want to couple with the
 errors plugin implementation.
+
+Subscribe to error changes:
+
+```ts
+field.subscribe(event => {
+  if (event.type === 'errorAdded') {
+    event.target.errors // ⮕ MyError[]
+  }
+});
+```
 
 # DOM element reference plugin
 
