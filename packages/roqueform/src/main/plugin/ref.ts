@@ -7,9 +7,9 @@
  *
  * const field = createField({ hello: 'world' }, [refPlugin()]);
  *
- * field.ref(document.getElementById('#hello-input'));
+ * field.at('hello').ref(document.querySelector('input'));
  *
- * field.element // ⮕ Element | null
+ * field.at('hello').element // ⮕ Element
  * ```
  *
  * @module plugin/ref
@@ -72,7 +72,7 @@ export default function refPlugin(): FieldPlugin<any, RefMixin> {
   return _refPlugin;
 }
 
-const _refPlugin: FieldPlugin<any, RefMixin> = field => {
+const _refPlugin: FieldPlugin<unknown, RefMixin> = field => {
   const { ref } = field;
 
   field.element = null;

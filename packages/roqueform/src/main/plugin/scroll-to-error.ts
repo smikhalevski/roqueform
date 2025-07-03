@@ -1,8 +1,18 @@
 /**
- * Roqueform plugin that enables scrolling to a field that has an associated validation error.
+ * Enhances Roqueform fields with methods to scroll to the closest invalid field.
  *
  * ```ts
+ * import { createField } from 'roqueform';
  * import scrollToErrorPlugin from 'roqueform/plugin/scroll-to-error';
+ *
+ * const field = createField({ hello: 'world' }, [scrollToErrorPlugin()]);
+ *
+ * field.at('hello').ref(document.querySelector('input'));
+ *
+ * field.at('hello').isInvalid = true;
+ *
+ * field.scrollToError();
+ * // ⮕ field.at('hello')
  * ```
  *
  * @module plugin/scroll-to-error
@@ -14,14 +24,19 @@ import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
  */
 export interface ScrollToErrorMixin {
   /**
-   * `true` if this field has associated errors, or `false` otherwise.
+   * The DOM element associated with the field, or `null` if there's no associated element.
+   */
+  element: Element | null;
+
+  /**
+   * `true` if this field has associated errors.
    */
   isInvalid?: boolean;
 
   /**
    * Associates the field with the DOM element.
    */
-  ref: (element: Element | null) => void;
+  ref(element: Element | null): void;
 
   /**
    * Scroll to the element that is referenced by an invalid field. Scrolls the field element's ancestor containers such
@@ -54,52 +69,50 @@ export interface ScrollToErrorMixin {
   scrollToError(index?: number, options?: ScrollIntoViewOptions): Field<any, InferMixin<this>> | null;
 }
 
-interface PrivateScrollToErrorMixin extends ScrollToErrorMixin {
-  _element?: Element | null;
-}
-
 /**
- * Enhances the field with methods to scroll to a field that has an associated validation error.
+ * Enhances the field with methods to scroll to the closest invalid field.
  *
  * Use this plugin in conjunction with another plugin that adds validation methods and manages `error` property of each
  * field.
  */
 export default function scrollToErrorPlugin(): FieldPlugin<any, ScrollToErrorMixin> {
-  return (field: Field<unknown, PrivateScrollToErrorMixin>) => {
-    const { ref } = field;
-
-    field._element = null;
-
-    field.ref = nextElement => {
-      field._element = nextElement;
-
-      ref?.(nextElement);
-    };
-
-    field.scrollToError = (index = 0, options) => {
-      const targets = getTargetFields(field, []);
-
-      if (targets.length === 0) {
-        return null;
-      }
-
-      const target = targets.sort(sortByDocumentOrder)[index < 0 ? targets.length + index : index];
-
-      if (target === undefined || target._element === null || target._element === undefined) {
-        return null;
-      }
-
-      target._element.scrollIntoView(options);
-      return target;
-    };
-  };
+  return _scrollToErrorPlugin;
 }
 
+const _scrollToErrorPlugin: FieldPlugin<unknown, ScrollToErrorMixin> = field => {
+  const { ref } = field;
+
+  field.element = null;
+
+  field.ref = element => {
+    field.element = element;
+
+    ref?.(element);
+  };
+
+  field.scrollToError = (index = 0, options) => {
+    const targets = getTargetFields(field, []);
+
+    if (targets.length === 0) {
+      return null;
+    }
+
+    const target = targets.sort(sortByDocumentOrder)[index < 0 ? targets.length + index : index];
+
+    if (target === undefined || target.element === null || target.element === undefined) {
+      return null;
+    }
+
+    target.element.scrollIntoView(options);
+    return target;
+  };
+};
+
 function getTargetFields(
-  field: Field<unknown, PrivateScrollToErrorMixin>,
-  batch: Field<unknown, PrivateScrollToErrorMixin>[]
-): Field<unknown, PrivateScrollToErrorMixin>[] {
-  if (field.isInvalid && field._element !== null && field._element !== undefined && field._element.isConnected) {
+  field: Field<unknown, ScrollToErrorMixin>,
+  batch: Field<unknown, ScrollToErrorMixin>[]
+): Field<unknown, ScrollToErrorMixin>[] {
+  if (field.isInvalid && field.element !== null && field.element.isConnected) {
     batch.push(field);
   }
 
@@ -110,20 +123,11 @@ function getTargetFields(
   return batch;
 }
 
-function sortByDocumentOrder(
-  a: Field<unknown, PrivateScrollToErrorMixin>,
-  b: Field<unknown, PrivateScrollToErrorMixin>
-): number {
-  const aElement = a._element;
-  const bElement = b._element;
+function sortByDocumentOrder(a: Field<unknown, ScrollToErrorMixin>, b: Field<unknown, ScrollToErrorMixin>): number {
+  const aElement = a.element;
+  const bElement = b.element;
 
-  if (
-    aElement === null ||
-    bElement === null ||
-    aElement === undefined ||
-    bElement === undefined ||
-    aElement === bElement
-  ) {
+  if (aElement === null || bElement === null || aElement === bElement) {
     return 0;
   }
 

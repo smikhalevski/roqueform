@@ -802,7 +802,7 @@ import refPlugin from 'roqueform/plugin/ref';
 
 const field = createField({ hello: 'world' }, [refPlugin()]);
 
-field.at('hello').ref(document.querySelector('inout'));
+field.at('hello').ref(document.querySelector('input'));
 ```
 
 Access an element associated with the field:
@@ -878,76 +878,69 @@ field.getDirtyFields();
 
 # Scroll to an error plugin
 
-Plugin that enables scrolling to a field that has an
-associated validation error.
+Enhances the field with methods to scroll to the closest invalid field.
 
-This plugin works best in conjunction with the [`errorsPlugin`](../../#validation-scaffolding) or any of the
-[validation plugins](../../#plugins-and-integrations). If an element associated with the field via
-[`ref`](https://smikhalevski.github.io/roqueform/interfaces/scroll_to_error_plugin.ScrollToErrorPlugin.html#ref) is
-displayed and an the field is invalid than `scrollToError()` would scroll the viewport, so the element is reveled on the
-screen.
+```ts
+import { createField } from 'roqueform';
+import scrollToErrorPlugin from 'roqueform/plugin/scroll-to-error';
 
-This plugin doesn't require any rendering framework. To simplify the usage example, we're going to use
-[the React integration](../react#readme).
+const field = createField({ hello: 'world' }, [scrollToErrorPlugin()]);
 
-```tsx
-import { SyntheticEvent, useEffect } from 'react';
-import { composePlugins, errorsPlugin } from 'roqueform';
-import { FieldRenderer, useField } from '@roqueform/react';
-import { scrollToErrorPlugin } from '@roqueform/scroll-to-error-plugin';
+// Associate a field with a DOM element
+field.at('hello').ref(document.querySelector('input'));
 
-export const App = () => {
-  const planetField = useField(
-    { name: 'Mars' },
-    composePlugins(
-      errorsPlugin(),
-      scrollToErrorPlugin()
-    )
-  );
+// Mark a field as invalid
+field.at('hello').isInvalid = true;
 
-  const handleSubmit = (event: SyntheticEvent) => {
-    event.preventDefault();
+// Scroll to an invalid field
+field.scrollToError();
+// ⮕ field.at('hello')
+```
 
-    if (planetField.getInvalidFields().length === 0) {
-      // Submit the valid form value.
-      doSubmit(planetField.value);
-    } else {
-      // Scroll to the invalid field that is closest to the top left conrner of the document.
-      planetField.scrollToError(0, { behavior: 'smooth' });
-    }
-  };
+This plugin works best in conjunction with the [`errorsPlugin`](#errors-plugin). If an element associated with the field
+via [`ref`](https://smikhalevski.github.io/roqueform/interfaces/plugin_scroll-to-error.ScrollToErrorMixin.html#ref) is
+connected to DOM and an the field is invalid than `scrollToError()` would scroll the viewport, so the element is reveled
+on the screen.
 
-  useEffect(() => {
-    // Mark field as invalid.
-    planetField.at('name').addError('Too far away');
-  }, []);
-  
-  return (
-    <form onSubmit={handleSubmit}>
+```ts
+import { createField } from 'roqueform';
+import errorsPlugin from 'roqueform/plugin/errors';
+import scrollToErrorPlugin from 'roqueform/plugin/scroll-to-error';
 
-      <FieldRenderer field={planetField.at('name')}>
-        {nameField => (
-          <>
-            <input
-              // 🟡 Note that the input element ref is populated.
-              ref={nameField.ref}
-              value={nameField.value}
-              onChange={event => {
-                nameField.setValue(event.target.value);
-              }}
-            />
-            {nameField.errors}
-          </>
-        )}
-      </FieldRenderer>
+const field = createField({ hello: 'world' }, [
+  errorsPlugin(),
+  scrollToErrorPlugin()
+]);
 
-      <button type="submit">
-        {'Submit'}
-      </button>
+field.at('hello').ref(document.querySelector('input'));
 
-    </form>
-  );
-};
+field.at('hello').addError('Unknown world')
+
+field.scrollToError();
+// ⮕ field.at('hello')
+```
+
+If there are multiple invalid fields, provide an index to scroll to a particular field:
+
+```ts
+const field = createField({ name: 'X Æ A-12', age: 5 }, [
+  errorsPlugin(),
+  scrollToErrorPlugin()
+]);
+
+// Associate fields with DOM elements
+field.at('name').ref(document.getElementById('#name'));
+
+field.at('age').ref(document.getElementById('#age'));
+
+// Add errors to fields
+field.at('name').addError('Too weird');
+
+field.at('age').addError('Too young');
+
+// Scroll to the second field that contains an error
+field.scrollToError(1);
+// ⮕ field.at('age')
 ```
 
 # Uncontrolled plugin
