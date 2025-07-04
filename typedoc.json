@@ -12,8 +12,7 @@
     "inherited": true
   },
   "tsconfig": "./tsconfig.json",
-  "customCss": "./node_modules/typedoc-custom-css/custom.css",
-  "entryPoints": ["./packages/*/src/main/index.ts"],
+  "entryPoints": ["./packages/*/src/main/index.ts", "./packages/roqueform/src/main/plugin/*.ts"],
   "plugin": ["typedoc-plugin-mdn-links"],
   "externalSymbolLinkMappings": {
     "doubter": {
@@ -21,8 +20,5 @@
       "ParseOptions": "https://smikhalevski.github.io/doubter/latest/interfaces/core.ParseOptions.html",
       "Shape": "https://smikhalevski.github.io/doubter/latest/classes/core.Shape.html"
     }
-  },
-  "compilerOptions": {
-    "skipLibCheck": true
   }
 }

@@ -1,4 +1,6 @@
-import type { Event, Field } from './types';
+import { FieldEvent } from './FieldImpl.js';
+
+export const emptyObject = {};
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -35,31 +37,44 @@ export function callOrGet(value: unknown, arg?: unknown) {
   return typeof value !== 'function' ? value : arguments.length === 1 ? value() : value(arg);
 }
 
+export function AbortError(message: string): Error {
+  return typeof DOMException !== 'undefined' ? new DOMException(message, 'AbortError') : Error(message);
+}
+
 /**
- * Dispatches events to appropriate subscribers.
+ * Converts `k` to a number if it represents a valid array index, or returns -1 if `k` isn't an index.
  *
- * @param events The array of events to dispatch.
+ * @see https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#array-index
  */
-export function dispatchEvents(events: readonly Event[]): void {
+export function toArrayIndex(k: any): number {
+  return (typeof k === 'number' || (typeof k === 'string' && k === '' + (k = +k))) && k >>> 0 === k ? k : -1;
+}
+
+/**
+ * Publishes events to corresponding targets.
+ */
+export function publishEvents(events: FieldEvent[]): void {
   for (const event of events) {
-    if (event.type === '*') {
-      continue;
-    }
-
-    for (let ancestor: Field | null = event.targetField; ancestor !== null; ancestor = ancestor.parentField) {
-      const subscribers1 = ancestor.subscribers[event.type];
-      const subscribers2 = ancestor.subscribers['*'];
-
-      if (subscribers1 !== undefined) {
-        for (const subscriber of subscribers1) {
-          subscriber(event);
-        }
-      }
-      if (subscribers2 !== undefined) {
-        for (const subscriber of subscribers2) {
-          subscriber(event);
-        }
-      }
-    }
+    event.target.publish(event);
   }
+}
+
+/**
+ * Defines getter for object property that receives the value returned from the previously defined getter.
+ */
+export function overrideReadonlyProperty<T, K extends keyof T>(
+  obj: T,
+  key: K,
+  get: (value: T[K] | undefined) => T[K]
+): void {
+  const prevDescriptor = Object.getOwnPropertyDescriptor(obj, key);
+
+  Object.defineProperty(obj, key, {
+    configurable: true,
+
+    get:
+      prevDescriptor === undefined
+        ? () => get(undefined)
+        : () => get(prevDescriptor.get === undefined ? prevDescriptor.value : prevDescriptor.get.call(obj)),
+  });
 }

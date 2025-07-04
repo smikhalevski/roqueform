@@ -1,6 +1,6 @@
-import type { Event, Field, Subscriber } from 'roqueform';
 import { expectAssignable, expectNotAssignable, expectNotType, expectType } from 'tsd';
-import type { KeyOf, PreferUnknown, ValueAt } from '../main/types';
+import { Field, FieldEvent } from '../main/index.js';
+import { KeyOf, ValueAt } from '../main/FieldImpl.js';
 
 interface Aaa {
   aaa: string;
@@ -12,144 +12,120 @@ interface Bbb {
 
 // Field
 
-expectNotType<any>({} as Field);
+expectNotType<any>(null! as Field);
 
-expectNotType<unknown>({} as Field);
+expectNotType<unknown>(null! as Field);
 
-expectAssignable<Field<unknown>>({} as Field);
+expectAssignable<Field<unknown>>(null! as Field);
 
-expectAssignable<Field>({} as Field<unknown>);
+expectAssignable<Field>(null! as Field<unknown>);
 
-expectAssignable<Field>({} as Field<unknown, Bbb>);
+expectAssignable<Field>(null! as Field<unknown, Bbb>);
 
-expectAssignable<Field<unknown>>({} as Field<any, Bbb>);
+expectAssignable<Field<unknown>>(null! as Field<any, Bbb>);
 
-expectAssignable<Field<Aaa>>({} as Field<Aaa, Bbb>);
+expectAssignable<Field<Aaa>>(null! as Field<Aaa, Bbb>);
 
-expectNotAssignable<Field<any, Bbb>>({} as Field);
+expectNotAssignable<Field<any, Bbb>>(null! as Field);
 
-expectNotAssignable<Field<Aaa, Bbb>>({} as Field<Aaa>);
+expectNotAssignable<Field<Aaa, Bbb>>(null! as Field<Aaa>);
 
-expectNotAssignable<Field<Aaa>>({} as Field<Bbb>);
+expectNotAssignable<Field<Aaa>>(null! as Field<Bbb>);
 
-// Event
+// FieldEvent
 
-expectAssignable<Event<unknown>>({} as Event);
+// expectAssignable<FieldEvent>(null! as FieldEvent<unknown, Bbb>);
+//
+// expectAssignable<FieldEvent<unknown>>(null! as FieldEvent<any, Bbb>);
+//
+// expectAssignable<FieldEvent<Aaa>>(null! as FieldEvent<Aaa, Bbb>);
+//
+// // why?
+// expectAssignable<FieldEvent<any, Bbb>>(null! as FieldEvent);
+//
+// // why?
+// expectAssignable<FieldEvent<Aaa, Bbb>>(null! as FieldEvent<Aaa>);
 
-expectAssignable<Event>({} as Event<unknown>);
+expectNotAssignable<FieldEvent<Aaa>>(null! as FieldEvent<Bbb>);
 
-expectAssignable<Event>({} as Event<unknown, Bbb>);
-
-expectAssignable<Event<unknown>>({} as Event<any, Bbb>);
-
-expectAssignable<Event<Aaa>>({} as Event<Aaa, Bbb>);
-
-// why?
-expectAssignable<Event<any, Bbb>>({} as Event);
-
-// why?
-expectAssignable<Event<Aaa, Bbb>>({} as Event<Aaa>);
-
-expectNotAssignable<Event<Aaa>>({} as Event<Bbb>);
-
-// Subscriber
-
-expectAssignable<Subscriber<unknown>>({} as Subscriber);
-
-expectAssignable<Subscriber>({} as Subscriber<unknown>);
-
-expectAssignable<Subscriber>({} as Subscriber<unknown, Bbb>);
-
-expectAssignable<Subscriber<unknown>>({} as Subscriber<any, Bbb>);
-
-expectAssignable<Subscriber<Aaa>>({} as Subscriber<Aaa, Bbb>);
-
-// why?
-expectAssignable<Subscriber<any, Bbb>>({} as Subscriber);
-
-// why?
-expectAssignable<Subscriber<Aaa, Bbb>>({} as Subscriber<Aaa>);
-
-expectNotAssignable<Subscriber<Aaa>>({} as Subscriber<Bbb>);
+// // why?
+// expectAssignable<Subscriber<any, Bbb>>(null! as Subscriber);
+//
+// // why?
+// expectAssignable<Subscriber<Aaa, Bbb>>(null! as Subscriber<Aaa>);
+//
+// expectNotAssignable<Subscriber<Aaa>>(null! as Subscriber<Bbb>);
 
 // KeyOf
 
-expectType<never>({} as KeyOf<'aaa'>);
+expectType<never>(null! as KeyOf<'aaa'>);
 
-expectType<never>({} as KeyOf<111>);
+expectType<never>(null! as KeyOf<111>);
 
-expectType<never>({} as KeyOf<Date>);
+expectType<never>(null! as KeyOf<Date>);
 
-expectType<never>({} as KeyOf<RegExp>);
+expectType<never>(null! as KeyOf<RegExp>);
 
-expectType<never>({} as KeyOf<WeakSet<Aaa>>);
+expectType<never>(null! as KeyOf<WeakSet<Aaa>>);
 
-expectType<Aaa>({} as KeyOf<WeakMap<Aaa, string>>);
+expectType<Aaa>(null! as KeyOf<WeakMap<Aaa, string>>);
 
-expectType<number>({} as KeyOf<boolean[]>);
+expectType<number>(null! as KeyOf<boolean[]>);
 
-expectType<'aaa' | 'bbb'>({} as KeyOf<{ aaa: string; bbb: number }>);
+expectType<'aaa' | 'bbb'>(null! as KeyOf<{ aaa: string; bbb: number }>);
 
-expectType<'aaa' | 'bbb'>({} as KeyOf<Aaa & Bbb>);
+expectType<'aaa' | 'bbb'>(null! as KeyOf<Aaa & Bbb>);
 
-expectType<number>({} as KeyOf<Set<string>>);
+expectType<number>(null! as KeyOf<Set<string>>);
 
-expectType<111 | 222>({} as KeyOf<Map<111 | 222, object>>);
+expectType<111 | 222>(null! as KeyOf<Map<111 | 222, object>>);
 
-expectType<string>({} as KeyOf<{ set(key: any, value: any): any; get(key: string): any }>);
+expectType<string>(null! as KeyOf<{ set(key: any, value: any): any; get(key: string): any }>);
 
-expectType<number>({} as KeyOf<{ add(value: any): any; [Symbol.iterator]: Function }>);
+expectType<number>(null! as KeyOf<{ add(value: any): any; [Symbol.iterator]: Function }>);
 
 // ValueAt
 
-expectType<undefined>(undefined as ValueAt<'aaa', 'toString'>);
+expectType<undefined>(null! as ValueAt<'aaa', 'toString'>);
 
-expectType<undefined>(undefined as ValueAt<111, 'toString'>);
+expectType<undefined>(null! as ValueAt<111, 'toString'>);
 
-expectType<undefined>(undefined as ValueAt<Date, 'now'>);
+expectType<undefined>(null! as ValueAt<Date, 'now'>);
 
-expectType<undefined>(undefined as ValueAt<RegExp, 'test'>);
+expectType<undefined>(null! as ValueAt<RegExp, 'test'>);
 
-expectType<undefined>(undefined as ValueAt<WeakSet<Aaa>, Aaa>);
+expectType<undefined>(null! as ValueAt<WeakSet<Aaa>, Aaa>);
 
-expectType<undefined>(undefined as ValueAt<WeakSet<Aaa>, 'add'>);
+expectType<undefined>(null! as ValueAt<WeakSet<Aaa>, 'add'>);
 
-expectType<string | undefined>({} as ValueAt<WeakMap<Aaa, string>, Aaa>);
+expectType<string | undefined>(null! as ValueAt<WeakMap<Aaa, string>, Aaa>);
 
-expectType<undefined>(undefined as ValueAt<WeakMap<Aaa, string>, Bbb>);
+expectType<undefined>(null! as ValueAt<WeakMap<Aaa, string>, Bbb>);
 
-expectType<boolean>({} as ValueAt<boolean[], 111>);
+expectType<boolean>(null! as ValueAt<boolean[], 111>);
 
-expectType<undefined>(undefined as ValueAt<boolean[], '111'>);
+expectType<undefined>(null! as ValueAt<boolean[], '111'>);
 
-expectType<string>({} as ValueAt<{ aaa: string; bbb: number }, 'aaa'>);
+expectType<string>(null! as ValueAt<{ aaa: string; bbb: number }, 'aaa'>);
 
-expectType<number>({} as ValueAt<{ aaa: string } & { bbb: number }, 'bbb'>);
+expectType<number>(null! as ValueAt<{ aaa: string } & { bbb: number }, 'bbb'>);
 
-expectType<number | boolean>({} as ValueAt<{ aaa: number } | { aaa: boolean; bbb: string }, 'aaa'>);
+expectType<number | boolean>(null! as ValueAt<{ aaa: number } | { aaa: boolean; bbb: string }, 'aaa'>);
 
-expectType<string | undefined>(undefined as ValueAt<{ aaa: number } | { aaa: boolean; bbb: string }, 'bbb'>);
+expectType<string | undefined>(null! as ValueAt<{ aaa: number } | { aaa: boolean; bbb: string }, 'bbb'>);
 
-expectType<undefined>(undefined as ValueAt<{ aaa: string; bbb: number }, 'xxx'>);
+expectType<undefined>(null! as ValueAt<{ aaa: string; bbb: number }, 'xxx'>);
 
-expectType<string | undefined>({} as ValueAt<Set<string>, 111>);
+expectType<string | undefined>(null! as ValueAt<Set<string>, 111>);
 
-expectType<undefined>(undefined as ValueAt<Set<string>, 'aaa'>);
+expectType<undefined>(null! as ValueAt<Set<string>, 'aaa'>);
 
-expectType<Aaa | undefined>({} as ValueAt<Map<111 | 222, Aaa>, 111>);
+expectType<Aaa | undefined>(null! as ValueAt<Map<111 | 222, Aaa>, 111>);
 
-expectType<undefined>(undefined as ValueAt<Map<111 | 222, Aaa>, 333>);
+expectType<undefined>(null! as ValueAt<Map<111 | 222, Aaa>, 333>);
 
-expectType<Aaa>({} as ValueAt<{ set(key: any, value: any): any; get(key: string): Aaa }, 'aaa'>);
+expectType<Aaa>(null! as ValueAt<{ set(key: any, value: any): any; get(key: string): Aaa }, 'aaa'>);
 
-expectType<Aaa | undefined>({} as ValueAt<{ add(value: Aaa): any; [Symbol.iterator]: Function }, 111>);
+expectType<Aaa | undefined>(null! as ValueAt<{ add(value: Aaa): any; [Symbol.iterator]: Function }, 111>);
 
-expectType<undefined>(undefined as ValueAt<{ add(value: Aaa): any; [Symbol.iterator]: Function }, 'aaa'>);
-
-// PreferUnknown
-
-expectType<unknown>({} as PreferUnknown<any>);
-
-expectType<unknown>({} as PreferUnknown<unknown>);
-
-expectType<Aaa>({} as PreferUnknown<Aaa>);
+expectType<undefined>(null! as ValueAt<{ add(value: Aaa): any; [Symbol.iterator]: Function }, 'aaa'>);

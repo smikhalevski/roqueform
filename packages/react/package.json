@@ -2,25 +2,16 @@
   "name": "@roqueform/react",
   "version": "2.1.1",
   "description": "Hooks and components to integrate Roqueform with React.",
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
-  "types": "./lib/index.d.ts",
+  "type": "module",
   "exports": {
-    ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
-    },
+    ".": "./index.js",
     "./package.json": "./package.json"
   },
   "sideEffects": false,
-  "files": [
-    "lib"
-  ],
   "scripts": {
-    "build": "rollup --config ../../rollup.config.js",
+    "build": "tsc --project tsconfig.build.json && cp package.json README.md ../../LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
     "clean": "rimraf lib",
-    "test": "jest --config ../../jest.config.js"
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -31,9 +22,7 @@
     "react",
     "form",
     "field",
-    "plugin",
-    "dom",
-    "ref"
+    "plugin"
   ],
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
@@ -42,7 +31,7 @@
   },
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/react#readme",
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react": "^17.0.0 || ^18.0.0 || ^19.0.0",
     "roqueform": "^5.1.0"
   }
 }

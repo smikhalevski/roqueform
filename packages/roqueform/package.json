@@ -2,28 +2,25 @@
   "name": "roqueform",
   "version": "5.2.0",
   "description": "The form state management library that can handle hundreds of fields without breaking a sweat.",
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
-  "types": "./lib/index.d.ts",
+  "type": "module",
   "exports": {
-    ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js"
-    },
+    ".": "./index.js",
+    "./plugin/annotations": "./plugin/annotations.js",
+    "./plugin/constraint-validation": "./plugin/constraint-validation.js",
+    "./plugin/errors": "./plugin/errors.js",
+    "./plugin/ref": "./plugin/ref.js",
+    "./plugin/reset": "./plugin/reset.js",
+    "./plugin/scroll-to-error": "./plugin/scroll-to-error.js",
+    "./plugin/uncontrolled": "./plugin/uncontrolled.js",
+    "./plugin/validation": "./plugin/validation.js",
     "./package.json": "./package.json"
   },
   "sideEffects": false,
-  "files": [
-    "lib"
-  ],
   "scripts": {
-    "build": "rollup --config ../../rollup.config.js",
+    "build": "tsc --project tsconfig.build.json && cp package.json ../../README.md ../../LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
     "clean": "rimraf lib",
-    "test": "jest --config ../../jest.config.js",
-    "test:definitions": "tsd --files './src/test/**/*.test-d.ts'",
-    "prepack": "cp ../../README.md .",
-    "postpack": "rimraf README.md"
+    "test": "vitest run",
+    "test:definitions": "tsd --typings lib/index.d.ts --files 'src/test/**/*.test-d.ts'"
   },
   "repository": {
     "type": "git",
@@ -40,5 +37,9 @@
   "bugs": {
     "url": "https://github.com/smikhalevski/roqueform/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform#readme"
+  "homepage": "https://github.com/smikhalevski/roqueform#readme",
+  "dependencies": {
+    "fast-deep-equal": "^3.1.3",
+    "parallel-universe": "^6.1.2"
+  }
 }

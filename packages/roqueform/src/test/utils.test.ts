@@ -1,4 +1,5 @@
-import { callOrGet } from '../main';
+import { describe, expect, test } from 'vitest';
+import { callOrGet } from '../main/utils.js';
 
 describe('callOrGet', () => {
   test('returns non function value as is', () => {

@@ -3,41 +3,29 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "clean": "rimraf docs && npm run clean --workspaces",
-    "test": "jest",
+    "test": "vitest run",
     "test:definitions": "tsc --version && npm run test:definitions --if-present --workspaces",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "postinstall": "mkdir -p node_modules/@roqueform && ln -nsf ../packages/roqueform/lib node_modules/roqueform && ln -nsf ../../packages/react/lib node_modules/@roqueform/react && ln -nsf ../../packages/doubter-plugin/lib node_modules/@roqueform/doubter-plugin && ln -nsf ../../packages/zod-plugin/lib node_modules/@roqueform/zod-plugin"
   },
   "workspaces": [
     "./packages/roqueform",
-    "./packages/annotations-plugin",
-    "./packages/constraint-validation-plugin",
-    "./packages/doubter-plugin",
     "./packages/react",
-    "./packages/ref-plugin",
-    "./packages/reset-plugin",
-    "./packages/scroll-to-error-plugin",
-    "./packages/uncontrolled-plugin",
+    "./packages/doubter-plugin",
     "./packages/zod-plugin"
   ],
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-typescript": "^12.1.1",
-    "@swc/core": "^1.7.39",
-    "@swc/jest": "^0.2.36",
     "@testing-library/dom": "^10.4.0",
-    "@testing-library/react": "^16.0.1",
-    "@types/jest": "^29.5.14",
+    "@testing-library/react": "^16.3.0",
     "@types/react": "^18.3.12",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "prettier": "^3.3.3",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
-    "rollup": "^4.24.0",
-    "tsd": "^0.31.2",
-    "tslib": "^2.8.0",
-    "typedoc": "^0.26.10",
-    "typedoc-custom-css": "github:smikhalevski/typedoc-custom-css#master",
-    "typedoc-plugin-mdn-links": "^3.3.4",
-    "typescript": "^5.6.3"
+    "tsd": "^0.32.0",
+    "tslib": "^2.8.1",
+    "typedoc": "^0.28.7",
+    "typedoc-plugin-mdn-links": "^5.0.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }
