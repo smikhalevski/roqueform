@@ -1,25 +1,20 @@
-name: publish
+name: release
 
 on:
   push:
-    tags: [ "*-v[0-9]+.[0-9]+.[0-9]+" ]
+    tags: ['*-v[0-9]+.[0-9]+.[0-9]+']
 
 jobs:
-
-  publish:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '23'
           cache: npm
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Configure git user
-        run: |
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Resolve workspace
         run: echo "WORKSPACE=packages/$(echo ${{ github.ref_name }} | rev | cut -d- -f2- | rev)" >> ${GITHUB_ENV}
@@ -33,31 +28,12 @@ jobs:
 
       - run: npm test --workspace=${WORKSPACE}
       - run: npm run test:definitions --if-present --workspace=${WORKSPACE}
-      - run: npm run docs
 
-      - run: npm publish --workspace=${WORKSPACE} --access public
+      - name: Publish package
+        working-directory: ${{ env.WORKSPACE }}/lib
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish docs
-        run: |
-          set -x
-
-          mv ./docs /tmp/docs
-
-          git fetch origin ghpages:ghpages
-          git checkout ghpages
-          git rm -rf .
-          git clean -fxd
-
-          cp -R /tmp/docs/. .
-
-          git add .
-
-          ! git diff --staged --quiet --exit-code || exit 0
-          
-          git commit -m "Updated docs (${GITHUB_SHA::7})"
-          git push origin ghpages
 
       - name: Create release draft
         run: gh release create ${{ github.ref_name }} --generate-notes --draft

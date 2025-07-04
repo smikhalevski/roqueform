@@ -2,19 +2,27 @@ name: test
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
+    paths-ignore:
+      - 'README.md'
+
   pull_request:
-    branches: [ master ]
+    branches: [master]
+    paths-ignore:
+      - 'README.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 jobs:
-
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '23'
           cache: npm
       - run: npm ci
       - run: npm run build
@@ -25,13 +33,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        typescript: [ "4.1", "4.9", "5.0" ]
+        typescript: ['4.1', '4.9', '5.0', '5.8']
     name: typescript@${{ matrix.typescript }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '23'
           cache: npm
       - run: npm ci
       - run: npm run build

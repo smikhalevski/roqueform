@@ -1,0 +1,63 @@
+name: prerelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        type: choice
+        description: Package
+        default: roqueform
+        required: true
+        options:
+          - doubter-plugin
+          - react
+          - roqueform
+          - zod-plugin
+
+      npm_tag:
+        type: string
+        description: npm tag
+        default: next
+        required: true
+
+env:
+  WORKSPACE: packages/${{ github.event.inputs.package }}
+
+jobs:
+  prerelease:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - name: Update version
+        working-directory: ${{ env.WORKSPACE }}
+        run: |
+          VERSION="$(npm pkg get version --workspaces=false | xargs)-${{ github.event.inputs.npm_tag }}.${GITHUB_SHA::7}"
+
+          npm version --no-git-tag-version --force ${VERSION}
+
+          echo "::notice title=Package::npm install $(npm pkg get name --workspaces=false | xargs)@${VERSION}"
+
+      - run: npm run postinstall
+
+      - name: Build packages
+        run: |
+          [ $WORKSPACE == packages/roqueform ] || npm run build --workspace=packages/roqueform
+          npm run build --workspace=${WORKSPACE}
+
+      - run: npm test --workspace=${WORKSPACE}
+      - run: npm run test:definitions --if-present --workspace=${WORKSPACE}
+
+      - name: Publish package
+        working-directory: ${{ env.WORKSPACE }}/lib
+        run: npm publish --tag ${{ github.event.inputs.npm_tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
