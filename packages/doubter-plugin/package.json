@@ -1,6 +1,6 @@
 {
   "name": "@roqueform/doubter-plugin",
-  "version": "3.2.0",
+  "version": "4.0.0",
   "description": "Validates Roqueform fields with Doubter shapes.",
   "type": "module",
   "exports": {
@@ -34,6 +34,6 @@
   "homepage": "https://github.com/smikhalevski/roqueform/tree/master/packages/doubter-plugin#readme",
   "peerDependencies": {
     "doubter": "^5.1.1",
-    "roqueform": "^5.1.0"
+    "roqueform": "^6.0.0"
   }
 }
