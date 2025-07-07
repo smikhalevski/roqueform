@@ -20,11 +20,7 @@ npm install --save-prod roqueform
 
 <br>
 
-🔥&ensp;**Live examples**
-
-- [Controlled form](https://codesandbox.io/s/2evfif)
-- [Uncontrolled form](https://codesandbox.io/s/fsdshx)
-- [Form validation](https://codesandbox.io/s/74hkgw)
+🔥&ensp;[**Live example**](https://stackblitz.com/edit/roqueform-example)
 
 🚀&ensp;**Features**
 
