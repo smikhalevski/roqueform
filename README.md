@@ -6,6 +6,7 @@
   </picture></a>
 </p>
 
+<!--OVERVIEW-->
 The form state management library that can handle hundreds of fields without breaking a sweat.
 
 - Expressive and concise API with strict typings;
@@ -17,9 +18,11 @@ The form state management library that can handle hundreds of fields without bre
 ```sh
 npm install --save-prod roqueform
 ```
+<!--/OVERVIEW-->
 
 <br>
 
+<!--TOC-->
 🔥&ensp;[**Live example**](https://stackblitz.com/edit/roqueform-example)
 
 🚀&ensp;**Features**
@@ -47,7 +50,9 @@ npm install --save-prod roqueform
 - [Reacting to changes](#reacting-to-changes)
 
 🎯&ensp;[**Motivation**](#motivation)
+<!--/TOC-->
 
+<!--ARTICLE-->
 # Introduction
 
 The central piece of Roqueform is the concept of a field. A field holds a value and provides a means to update it.
@@ -1129,3 +1134,4 @@ Roqueform was built to satisfy the following requirements:
   seamlessly propagated to the error consumers/renderers.
 
 - The library API must be simple and easily extensible.
+<!--/ARTICLE-->
