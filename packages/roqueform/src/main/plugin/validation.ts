@@ -6,45 +6,29 @@
  * import validationPlugin from 'roqueform/plugin/validation';
  *
  * const field = createField({ hello: 'world' }, [
- *   validationPlugin({
- *     validate(field) {
- *       if (field.key === 'hello') {
- *         field.isInvalid = field.value !== 'world';
- *       }
- *     }
- *   })
+ *   validationPlugin(validation => {
+ *     // Validate the field value here
+ *   }),
  * ]);
- *
- * field.setValue({ hello: 'universe' });
- *
- * field.at('hello').validate();
- *
- * field.at('hello').isInvalid // ⮕ true
  * ```
  *
  * @module plugin/validation
  */
 
 import { Field, FieldEvent, FieldPlugin } from '../FieldImpl.js';
-import { AbortError, overrideReadonlyProperty, publishEvents } from '../utils.js';
-
-const ERROR_ABORT = 'Validation was aborted';
+import { AbortError, isPromiseLike, overrideGetter, publishEvents } from '../utils.js';
 
 /**
- * The plugin that enables a field value validation.
+ * The mixin added to fields by the {@link validationPlugin}.
  *
+ * @template Result The result produced by a validator.
  * @template Options Options passed to the validator.
  */
-export interface ValidationMixin<Options = any> {
+export interface ValidationMixin<Result, Options> {
   /**
    * The pending validation, or `null` if there's no pending validation.
    */
-  validation: Validation | null;
-
-  /**
-   * `true` if this field has an invalid value, or `false` otherwise.
-   */
-  isInvalid?: boolean;
+  validation: Validation<Result> | null;
 
   /**
    * `true` if the validation is pending, or `false` otherwise.
@@ -52,92 +36,57 @@ export interface ValidationMixin<Options = any> {
   readonly isValidating: boolean;
 
   /**
-   * Triggers a synchronous field validation.
+   * Validates the value of the field and values of its {@link roqueform!FieldCore.isTransient non-transient}
+   * descendants.
    *
-   * If this field is currently being validated then the validation {@link abortValidation is aborted} at the current
-   * validation root.
-   *
-   * {@link roqueform!FieldCore.isTransient Transient} descendants of this field are excluded from validation.
-   *
-   * @param options Options passed to {@link Validator the validator}.
-   * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
-   */
-  validate(options: Options): boolean;
-
-  /**
-   * Triggers an asynchronous field validation.
-   *
-   * If this field is currently being validated then the validation {@link abortValidation is aborted} at the current
-   * validation root.
-   *
-   * {@link roqueform!FieldCore.isTransient Transient} descendants of this field are excluded from validation.
+   * If the field is already being {@link isValidating validated}, then the associated {@link validation}
+   * {@link abortValidation is aborted} at the corresponding {@link Validation.field validation root}.
    *
    * @param options Options passed to {@link Validator the validator}.
-   * @returns `true` if the field is valid, or `false` if this field or any of it descendants have an associated error.
+   * @returns The validation result.
    */
-  validateAsync(options: Options): Promise<boolean>;
+  validate(options: Options): Result;
 
   /**
-   * Aborts the async validation of the current validation root field associated with this field.
-   * No-op if there's no pending validation.
+   * Aborts the validation associated with the field. No-op if there's no pending {@link validation}.
    */
   abortValidation(): void;
 }
 
 /**
- * The validator to which the field value validation is delegated.
- *
- * @template Options Options passed to the validator.
- * @template Mixin The mixin added to the field.
- */
-export interface Validator<Options = void, Mixin extends object = ValidationMixin<Options>> {
-  /**
-   * Applies validation rules to a field.
-   *
-   * Before marking the field as invalid, check that {@link ValidationMixin.validation the validation} didn't change.
-   *
-   * @param field The field where {@link ValidationMixin.validate} was called.
-   * @param options The options passed to the {@link ValidationMixin.validate} method.
-   */
-  validate?(field: Field<any, Mixin>, options: Options): void;
-
-  /**
-   * Applies validation rules to a field. If this callback is omitted, then {@link Validator.validate} would be called
-   * instead.
-   *
-   * Before marking the field as invalid, check that {@link ValidationMixin.validation the validation} didn't change,
-   * and {@link Validation.abortController wasn't aborted}.
-   *
-   * @param field The field where {@link ValidationMixin.validateAsync} was called.
-   * @param options The options passed to the {@link ValidationMixin.validateAsync} method.
-   */
-  validateAsync?(field: Field<any, Mixin>, options: Options): Promise<void>;
-}
-
-/**
  * The validation descriptor.
+ *
+ * @template Result The result produced by a validator.
  */
-export interface Validation {
+export interface Validation<Result> {
   /**
-   * The field where the validation was triggered.
+   * The field where the validation {@link ValidationMixin.validate was started}.
    */
-  rootField: Field<any, ValidationMixin>;
+  field: Field<any, ValidationMixin<Result, any>>;
 
   /**
-   * The abort controller associated with the pending async validation, or `null` if the validation is synchronous.
+   * The {@link field} value to validate.
    */
-  abortController: AbortController | null;
+  value: any;
+
+  /**
+   * The controller that is aborted if validation must be finished prematurely.
+   */
+  abortController: AbortController;
 }
 
 /**
- * Private properties of the validation plugin.
+ * The validator callback to which the field value validation is delegated.
+ *
+ * Before marking the field as {@link ValidationMixin.isInvalid invalid}, check that the
+ * {@link ValidationMixin.validation validation} didn't change to ensure that it wasn't aborted.
+ *
+ * @param validation The validation descriptor.
+ * @param options Options passed to the {@link ValidationMixin.validate} method.
+ * @template Result The validation result.
+ * @template Options Options passed to the validator.
  */
-interface PrivateValidationMixin extends ValidationMixin {
-  /**
-   * The validator to which the field value validation is delegated.
-   */
-  _validator?: Validator<any, any>;
-}
+export type Validator<Result, Options = void> = (validation: Validation<Result>, options: Options) => Result;
 
 /**
  * Enhances the field with validation methods.
@@ -146,50 +95,80 @@ interface PrivateValidationMixin extends ValidationMixin {
  * [library-based validation plugins](https://github.com/smikhalevski/roqueform#plugins-and-integrations) before
  * picking this plugin.
  *
- * @param validator The validator object or a callback that performs synchronous validation.
+ * @param validator The validator callback to which the field value validation is delegated.
+ * @template Result The result produced by a validator.
  * @template Options Options passed to the validator.
- * @template Mixin The mixin that is added to the field by other plugins.
  */
-export default function validationPlugin<Options = void, Mixin extends object = ValidationMixin<Options>>(
-  validator: Validator<Options, Mixin>
-): FieldPlugin<any, ValidationMixin<Options>> {
-  return (field: Field<unknown, PrivateValidationMixin>) => {
-    field._validator = validator;
-
+export default function validationPlugin<Result, Options = void>(
+  validator: Validator<Result, Options>
+): FieldPlugin<any, ValidationMixin<Result, Options>> {
+  return field => {
     field.validation = field.parentField !== null ? field.parentField.validation : null;
 
-    overrideReadonlyProperty(field, 'isValidating', isValidating => isValidating || field.validation !== null);
+    overrideGetter(field, 'isValidating', isValidating => isValidating || field.validation !== null);
 
-    field.validate = options => validate(field, options);
+    field.validate = options => {
+      field.abortValidation();
 
-    field.validateAsync = options => validateAsync(field, options);
+      const abortController = new AbortController();
+
+      const validation: Validation<Result> = { field: field, value: field.value, abortController };
+
+      const finalize = () => {
+        if (field.validation !== validation) {
+          // Validation was superseded
+          return;
+        }
+        publishEvents(finishValidation(field, validation, []));
+      };
+
+      abortController.signal.addEventListener('abort', finalize);
+
+      publishEvents(startValidation(field, validation, []));
+
+      let result;
+
+      try {
+        result = validator(validation, options);
+      } catch (error) {
+        publishEvents(finishValidation(field, validation, []));
+        throw error;
+      }
+
+      if (field.validation !== validation) {
+        // Validation was superseded
+        return result;
+      }
+
+      if (!isPromiseLike(result)) {
+        publishEvents(finishValidation(field, validation, []));
+        return result;
+      }
+
+      // Prevent unhandled rejection
+      result.then(finalize, finalize);
+
+      return result;
+    };
 
     field.abortValidation = () => {
-      publishEvents(abortValidation(field, []));
+      field.validation?.abortController.abort(AbortError('The field validation was aborted'));
     };
   };
 }
 
-function containsInvalid(field: Field<unknown, PrivateValidationMixin>): boolean {
-  if (field.isInvalid) {
-    return true;
-  }
-  for (const child of field.children) {
-    if (containsInvalid(child)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 function startValidation(
-  field: Field<any, PrivateValidationMixin>,
-  validation: Validation,
+  field: Field<any, ValidationMixin<any, any>>,
+  validation: Validation<any>,
   events: FieldEvent[]
 ): FieldEvent[] {
+  if (field.validation !== null) {
+    return events;
+  }
+
   field.validation = validation;
 
-  events.push({ type: 'validationStarted', target: field, relatedTarget: validation.rootField, payload: validation });
+  events.push({ type: 'validationStarted', target: field, relatedTarget: validation.field, payload: validation });
 
   for (const child of field.children) {
     if (!child.isTransient) {
@@ -200,8 +179,8 @@ function startValidation(
 }
 
 function finishValidation(
-  field: Field<any, PrivateValidationMixin>,
-  validation: Validation,
+  field: Field<any, ValidationMixin<any, any>>,
+  validation: Validation<any>,
   events: FieldEvent[]
 ): FieldEvent[] {
   if (field.validation !== validation) {
@@ -210,116 +189,10 @@ function finishValidation(
 
   field.validation = null;
 
-  events.push({ type: 'validationFinished', target: field, relatedTarget: validation.rootField, payload: validation });
+  events.push({ type: 'validationFinished', target: field, relatedTarget: validation.field, payload: validation });
 
   for (const child of field.children) {
     finishValidation(child, validation, events);
   }
   return events;
-}
-
-function abortValidation(field: Field<unknown, PrivateValidationMixin>, events: FieldEvent[]): FieldEvent[] {
-  const validation = field.validation;
-
-  if (validation === null) {
-    return events;
-  }
-
-  finishValidation(validation.rootField, validation, events);
-  validation.abortController?.abort();
-
-  return events;
-}
-
-function validate(field: Field<unknown, PrivateValidationMixin>, options: unknown): boolean {
-  if (field._validator?.validate === undefined) {
-    throw new Error("Sync validation isn't supported");
-  }
-
-  publishEvents(abortValidation(field, []));
-
-  if (field.validation !== null) {
-    throw AbortError(ERROR_ABORT);
-  }
-
-  const validation: Validation = { rootField: field, abortController: null };
-
-  try {
-    publishEvents(startValidation(field, validation, []));
-  } catch (error) {
-    publishEvents(finishValidation(field, validation, []));
-    throw error;
-  }
-
-  if (field.validation !== validation) {
-    throw AbortError(ERROR_ABORT);
-  }
-
-  try {
-    field._validator.validate(field, options);
-  } catch (error) {
-    publishEvents(finishValidation(field, validation, []));
-    throw error;
-  }
-
-  if (field.validation !== validation) {
-    throw AbortError(ERROR_ABORT);
-  }
-
-  publishEvents(finishValidation(field, validation, []));
-  return !containsInvalid(field);
-}
-
-function validateAsync(field: Field<unknown, PrivateValidationMixin>, options: unknown): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    const validator = field._validator;
-
-    let validateAsync;
-
-    if (validator === undefined || (validateAsync = validator.validateAsync || validator.validate) === undefined) {
-      reject(new Error("Async validation isn't supported"));
-      return;
-    }
-
-    publishEvents(abortValidation(field, []));
-
-    if (field.validation !== null) {
-      reject(AbortError(ERROR_ABORT));
-      return;
-    }
-
-    const validation: Validation = { rootField: field, abortController: new AbortController() };
-
-    try {
-      publishEvents(startValidation(field, validation, []));
-    } catch (error) {
-      publishEvents(finishValidation(field, validation, []));
-      reject(error);
-      return;
-    }
-
-    if ((field.validation as Validation | null) !== validation || validation.abortController === null) {
-      reject(AbortError(ERROR_ABORT));
-      return;
-    }
-
-    validation.abortController.signal.addEventListener('abort', () => {
-      reject(AbortError(ERROR_ABORT));
-    });
-
-    Promise.resolve(validateAsync.call(validator, field, options)).then(
-      () => {
-        if (field.validation !== validation) {
-          reject(AbortError(ERROR_ABORT));
-        } else {
-          publishEvents(finishValidation(field, validation, []));
-          resolve(!containsInvalid(field));
-        }
-      },
-      error => {
-        publishEvents(finishValidation(field, validation, []));
-        reject(error);
-      }
-    );
-  });
 }

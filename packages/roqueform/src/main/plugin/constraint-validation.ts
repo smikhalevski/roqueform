@@ -16,7 +16,7 @@
 
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
-import { overrideReadonlyProperty } from '../utils.js';
+import { overrideGetter } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link constraintValidationPlugin}.
@@ -69,7 +69,7 @@ export default function constraintValidationPlugin(): FieldPlugin<any, Constrain
 
     field._element = null;
 
-    overrideReadonlyProperty(field, 'isInvalid', isInvalid => isInvalid || !field.validity.valid);
+    overrideGetter(field, 'isInvalid', isInvalid => isInvalid || !field.validity.valid);
 
     field.ref = element => {
       field._element?.removeEventListener('input', handleChange);

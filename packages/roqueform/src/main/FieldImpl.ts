@@ -43,7 +43,7 @@ type MIXIN = typeof MIXIN;
  * <dd>The validation of the field has finished. The event payload contains the validation that has finished.</dd>
  * </dl>
  */
-export type FieldEventType =
+export type BuiltInFieldEventType =
   | 'valueChanged'
   | 'initialValueChanged'
   | 'validityChanged'
@@ -64,7 +64,7 @@ export interface FieldEvent<Mixin extends object = {}> {
   /**
    * The type of the event.
    */
-  type: FieldEventType | (string & {});
+  type: BuiltInFieldEventType | (string & {});
 
   /**
    * The field onto which this event was published.
@@ -86,8 +86,8 @@ export interface FieldEvent<Mixin extends object = {}> {
 }
 
 /**
- * The callback that constrains the value of the field and enhances it with a mixin. Plugin _can mutate_ the provided
- * field instance.
+ * The callback that constrains the value of the field and enhances the field with a mixin. Plugin _should mutate_
+ * the provided field instance.
  *
  * @param field The mutable field that must be enhanced.
  * @template Value The field value required by the plugin.

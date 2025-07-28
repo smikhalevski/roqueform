@@ -16,7 +16,7 @@
  */
 
 import { Field, FieldEvent, FieldPlugin, InferMixin } from '../FieldImpl.js';
-import { emptyObject, overrideReadonlyProperty, publishEvents } from '../utils.js';
+import { emptyObject, overrideGetter, publishEvents } from '../utils.js';
 
 /**
  * Options of the {@link ErrorsMixin.clearErrors} method.
@@ -97,7 +97,7 @@ export default function errorsPlugin<Error = any>(
   return field => {
     field.errors = [];
 
-    overrideReadonlyProperty(field, 'isInvalid', isInvalid => isInvalid || field.errors.length !== 0);
+    overrideGetter(field, 'isInvalid', isInvalid => isInvalid || field.errors.length !== 0);
 
     field.addError = error => {
       const prevErrors = field.errors;

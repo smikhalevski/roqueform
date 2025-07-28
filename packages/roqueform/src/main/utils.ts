@@ -62,19 +62,21 @@ export function publishEvents(events: FieldEvent[]): void {
 /**
  * Defines getter for object property that receives the value returned from the previously defined getter.
  */
-export function overrideReadonlyProperty<T, K extends keyof T>(
-  obj: T,
-  key: K,
-  get: (value: T[K] | undefined) => T[K]
-): void {
+export function overrideGetter<T, K extends keyof T>(obj: T, key: K, get: (value: T[K] | undefined) => T[K]): void {
   const prevDescriptor = Object.getOwnPropertyDescriptor(obj, key);
 
   Object.defineProperty(obj, key, {
     configurable: true,
+
+    ...prevDescriptor,
 
     get:
       prevDescriptor === undefined
         ? () => get(undefined)
         : () => get(prevDescriptor.get === undefined ? prevDescriptor.value : prevDescriptor.get.call(obj)),
   });
+}
+
+export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return value !== null && typeof value === 'object' && 'then' in value;
 }
