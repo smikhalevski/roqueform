@@ -2,6 +2,8 @@ import { FieldEvent } from './FieldImpl.js';
 
 export const emptyObject = {};
 
+export function noop(): void {}
+
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
  *

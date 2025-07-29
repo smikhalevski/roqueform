@@ -21,17 +21,17 @@ type MIXIN = typeof MIXIN;
  * <dt><i>"errorAdded"</i></dt>
  * <dd>An error was added to a field. The event payload contains an error that was added.</dd>
  *
- * <dt><i>"errorCaught"</i></dt>
- * <dd>
- * An event type that notifies the errors plugin that an error must be added to a field. The event payload must contain
- * an error to add.
- * </dd>
- *
  * <dt><i>"errorDeleted"</i></dt>
  * <dd>An error was deleted from a field. The event payload contains an error that was deleted.</dd>
  *
  * <dt><i>"errorsCleared"</i></dt>
  * <dd>All errors were removed from the field. The event payload contains the previous array of errors.</dd>
+ *
+ * <dt><i>"errorDetected"</i></dt>
+ * <dd>
+ * An event type that notifies the errors plugin that an error must be added to a field. The event payload must contain
+ * an error to add.
+ * </dd>
  *
  * <dt><i>"annotationsChanged"</i></dt>
  * <dd>Field annotations were patched. The event payload contains the annotations before the patch was applied.</dd>
@@ -48,9 +48,9 @@ export type BuiltInFieldEventType =
   | 'initialValueChanged'
   | 'validityChanged'
   | 'errorAdded'
-  | 'errorCaught'
   | 'errorDeleted'
   | 'errorsCleared'
+  | 'errorDetected'
   | 'annotationsChanged'
   | 'validationStarted'
   | 'validationFinished';
@@ -166,6 +166,11 @@ export interface FieldCore<Value = any, Mixin extends object = {}> {
   readonly [MIXIN]: Mixin;
 
   /**
+   * The root of the field tree (the field that has no parent).
+   */
+  readonly rootField: Field<any, Mixin>;
+
+  /**
    * The parent field, or `null` if this is the root field.
    */
   readonly parentField: Field<any, Mixin> | null;
@@ -180,6 +185,11 @@ export interface FieldCore<Value = any, Mixin extends object = {}> {
    * no parent.
    */
   readonly key: any;
+
+  /**
+   * The array of keys staring from the root field down to this field.
+   */
+  readonly path: readonly any[];
 
   /**
    * The initial value of the field.
@@ -308,6 +318,7 @@ export class FieldImpl implements FieldCore {
   value: any;
   isTransient = false;
   children: Field[] = [];
+  rootField: Field;
   _pubSub = new PubSub<FieldEvent>();
 
   constructor(
@@ -317,7 +328,21 @@ export class FieldImpl implements FieldCore {
     public valueAccessor: ValueAccessor,
     public _plugins: FieldPlugin[]
   ) {
+    this.rootField = parentField !== null ? parentField.rootField : this;
     this.value = initialValue;
+  }
+
+  get path(): any[] {
+    const path = [];
+
+    for (let field: Field = this; field.parentField !== null; field = field.parentField) {
+      path.unshift(field.key);
+    }
+
+    Object.freeze(path);
+    Object.defineProperty(this, 'path', { configurable: true, value: path });
+
+    return path;
   }
 
   setValue = (value: unknown): void => {

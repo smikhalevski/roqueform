@@ -134,7 +134,7 @@ export default function errorsPlugin<Error = any>(
     field.getInvalidFields = () => getInvalidFields(field, []);
 
     field.subscribe(event => {
-      if (event.type === 'errorCaught' && event.target === field) {
+      if (event.type === 'errorDetected' && event.target === field) {
         field.addError(event.payload);
       }
     });

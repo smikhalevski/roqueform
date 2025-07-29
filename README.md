@@ -24,12 +24,13 @@ npm install --save-prod roqueform
 <!--/OVERVIEW-->
 
 <br>
- 
+
 <!--TOC-->
 
 <span class="toc-icon">&emsp;&ensp;</span>[API docs&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/)
 
-<span class="toc-icon">&emsp;&ensp;</span>[Live example&#8239;<sup>↗</sup>](https://stackblitz.com/edit/roqueform-example)
+<span class="toc-icon">
+&emsp;&ensp;</span>[Live example&#8239;<sup>↗</sup>](https://stackblitz.com/edit/roqueform-example)
 
 <span class="toc-icon">🔰&ensp;</span>**Features**
 
@@ -49,6 +50,7 @@ npm install --save-prod roqueform
 - [Scroll to an error plugin](#scroll-to-an-error-plugin)
 - [Uncontrolled plugin](#uncontrolled-plugin)
 - [Validation plugin](#validation-plugin)
+- [Schema plugin](#schema-plugin)
 
 <span class="toc-icon">⚛️&ensp;</span>[**React integration**](#react-integration)
 
@@ -123,7 +125,8 @@ planetsField.key; // ⮕ 'planets'
 planetsField.parent; // ⮕ universeField
 ```
 
-Fields returned by the [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#at)
+Fields returned by
+the [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#at)
 method have a stable identity. This means that you can invoke `at(key)` with the same key multiple times and the same
 field instance is returned:
 
@@ -182,7 +185,8 @@ const unsubscribe = planetsField.subscribe(event => {
 ```
 
 All events conform the
-[`FieldEvent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldEvent.html) interface.
+[`FieldEvent`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldEvent.html)
+interface.
 
 Without plugins, fields publish only
 [`valueChanged`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.FieldEventType.html)
@@ -192,13 +196,17 @@ event when the field value is changed via
 The root field and its descendants are updated before `valueChanged` event is published, so it's safe to read field
 values in a listener.
 
-Fields use [SameValueZero&#8239;<sup>↗</sup>](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison to detect that
+Fields use [SameValueZero&#8239;<sup>↗</sup>](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison to
+detect that
 the value has changed.
 
 ```ts
-planetsField.at(0).at('name').subscribe(event => {
-  // Handle the event here
-});
+planetsField
+  .at(0)
+  .at('name')
+  .subscribe(event => {
+    // Handle the event here
+  });
 
 // ✅ The value has changed, the listener is called
 planetsField.at(0).at('name').setValue('Mercury');
@@ -229,7 +237,8 @@ field.addError('Illegal user');
 
 # Transient updates
 
-When you call [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#setvalue)
+When you
+call [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#setvalue)
 on a field its value is updates along with values of its ancestors and descendants. To manually control the update
 propagation to fields ancestors, you can use transient updates.
 
@@ -294,23 +303,30 @@ planetsField.value[1]; // ⮕ 'Venus'
 
 # Accessors
 
-[`ValueAccessor`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html) creates, reads and
+[`ValueAccessor`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html)
+creates, reads and
 updates field values.
 
 - When the child field is accessed via
-  [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#at) method for the
+  [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#at)
+  method for the
   first time, its value is read from the value of the parent field using the
-  [`ValueAccessor.get`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#get) method.
+  [`ValueAccessor.get`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#get)
+  method.
 
 - When a field value is updated via
-  [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#setvalue), then
+  [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#setvalue),
+  then
   the parent field value is updated with the value returned from the
-  [`ValueAccessor.set`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#set) method.
+  [`ValueAccessor.set`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#set)
+  method.
   If the updated field has child fields, their values are updated with values returned from the
-  [`ValueAccessor.get`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#get) method.
+  [`ValueAccessor.get`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#get)
+  method.
 
 By default, Roqueform uses
-[`naturalValueAccessor`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/variables/roqueform.naturalValueAccessor.html) which
+[`naturalValueAccessor`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/variables/roqueform.naturalValueAccessor.html)
+which
 supports:
 
 - plain objects,
@@ -365,7 +381,8 @@ const field = createField(['Mars', 'Venus'], undefined, naturalValueAccessor);
 
 # Plugins
 
-[`FieldPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.FieldPlugin.html) callbacks that are invoked
+[`FieldPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.FieldPlugin.html) callbacks
+that are invoked
 once for each newly created field. Plugins can constrain the type of the root field value and add mixins to the root
 field and its descendants.
 
@@ -443,7 +460,8 @@ const myPlugin: FieldPlugin<MyValue, MyMixin> = field => {
 };
 ```
 
-[`Field.publish`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#publish) invokes
+[`Field.publish`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#publish)
+invokes
 listeners subscribed to the field and its ancestors, so events bubble up to the root field which effectively enables
 event delegation:
 
@@ -463,7 +481,8 @@ field.at('hello').setElement(document.body);
 
 # Annotations plugin
 
-[`annotationsPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_annotations.html) associates arbitrary
+[`annotationsPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_annotations.html)
+associates arbitrary
 data with fields.
 
 ```ts
@@ -527,7 +546,11 @@ integrates fields with the
 For example, let's use the plugin to validate text input:
 
 ```html
-<input type="text" value="" required />
+<input
+  type="text"
+  value=""
+  required
+/>
 ```
 
 Create a new field:
@@ -576,7 +599,8 @@ field.subscribe(event => {
 
 # Errors plugin
 
-[`errorsPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_errors.html) associates errors with fields:
+[`errorsPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_errors.html) associates
+errors with fields:
 
 ```ts
 import { createField } from 'roqueform';
@@ -626,9 +650,7 @@ interface MyError {
   message: string;
 }
 
-const field = createField({ hello: 'world' }, [
-  errorsPlugin<MyError>(),
-]);
+const field = createField({ hello: 'world' }, [errorsPlugin<MyError>()]);
 
 field.errors; // ⮕ MyError[]
 ```
@@ -647,19 +669,18 @@ const concatMyErrors: ErrorsConcatenator<MyError> = (prevErrors, error) => {
   return prevErrors.includes(error) ? prevErrors : [...prevErrors, error];
 };
 
-const field = createField({ hello: 'world' }, [
-  errorsPlugin(concatMyErrors),
-]);
+const field = createField({ hello: 'world' }, [errorsPlugin(concatMyErrors)]);
 ```
 
 To add an error to field, you can publish
-an [`errorCaught`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.FieldEventType.html)
+an [`errorDetected`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.FieldEventType.html)
 event instead of calling
-the[`addError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_errors.ErrorsMixin.html#adderror) method:
+the[`addError`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_errors.ErrorsMixin.html#adderror)
+method:
 
 ```ts
 field.publish({
-  type: 'errorCaught',
+  type: 'errorDetected',
   target: field,
   relatedTarget: null,
   payload: 'Ooops',
@@ -683,7 +704,8 @@ field.subscribe(event => {
 
 # DOM element reference plugin
 
-[`refPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_ref.html) associates DOM elements with fields.
+[`refPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_ref.html) associates DOM
+elements with fields.
 
 ```ts
 import { createField } from 'roqueform';
@@ -716,7 +738,8 @@ field.at('hello').scrollIntoView({ behavior: 'smooth' });
 
 # Reset plugin
 
-[`resetPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_reset.html) enhances fields with methods that
+[`resetPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_reset.html) enhances fields
+with methods that
 manage the initial value.
 
 ```ts
@@ -745,7 +768,8 @@ field.at('hello').initialValue; // ⮕ 'universe'
 
 The field is considered dirty when its value differs from the initial value. Values are compared using an equality
 checker function passed to
-the [`resetPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/functions/plugin_reset.default.html). By default,
+the [`resetPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/functions/plugin_reset.default.html). By
+default,
 values are compared using [fast-deep-equal&#8239;<sup>↗</sup>](https://github.com/epoberezkin/fast-deep-equal).
 
 ```ts
@@ -767,7 +791,8 @@ field.getDirtyFields();
 
 # Scroll to an error plugin
 
-[`scrollToErrorPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_scroll-to-error.html) enhances the field
+[`scrollToErrorPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_scroll-to-error.html)
+enhances the field
 with methods to scroll to the closest invalid field.
 
 ```ts
@@ -797,10 +822,7 @@ import { createField } from 'roqueform';
 import errorsPlugin from 'roqueform/plugin/errors';
 import scrollToErrorPlugin from 'roqueform/plugin/scroll-to-error';
 
-const field = createField({ hello: 'world' }, [
-  errorsPlugin(),
-  scrollToErrorPlugin(),
-]);
+const field = createField({ hello: 'world' }, [errorsPlugin(), scrollToErrorPlugin()]);
 
 field.at('hello').ref(document.querySelector('input'));
 
@@ -813,10 +835,7 @@ field.scrollToError();
 If there are multiple invalid fields, provide an index to scroll to a particular field:
 
 ```ts
-const field = createField({ name: 'X Æ A-12', age: 5 }, [
-  errorsPlugin(),
-  scrollToErrorPlugin(),
-]);
+const field = createField({ name: 'X Æ A-12', age: 5 }, [errorsPlugin(), scrollToErrorPlugin()]);
 
 // Associate fields with DOM elements
 field.at('name').ref(document.getElementById('#name'));
@@ -835,16 +854,15 @@ field.scrollToError(1);
 
 # Uncontrolled plugin
 
-[`uncontrolledPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_uncontrolled.html) updates fields by
+[`uncontrolledPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_uncontrolled.html)
+updates fields by
 listening to change events of associated DOM elements.
 
 ```ts
 import { createField } from 'roqueform';
 import uncontrolledPlugin from 'roqueform/plugin/uncontrolled';
 
-const field = createField({ hello: 'world' }, [
-  uncontrolledPlugin(),
-]);
+const field = createField({ hello: 'world' }, [uncontrolledPlugin()]);
 
 field.at('hello').ref(document.querySelector('input'));
 ```
@@ -855,9 +873,18 @@ If you have a set of radio buttons, or checkboxes that update a single field, ca
 element. For example, let's use `uncontrolledPlugin` to manage an array of animal species:
 
 ```html
-<input type="checkbox" value="Elephant">
-<input type="checkbox" value="Monkey">
-<input type="checkbox" value="Zebra">
+<input
+  type="checkbox"
+  value="Elephant"
+/>
+<input
+  type="checkbox"
+  value="Monkey"
+/>
+<input
+  type="checkbox"
+  value="Zebra"
+/>
 ```
 
 Create a field:
@@ -869,9 +896,7 @@ const field = createField({ animals: ['Zebra'] }, [uncontrolledPlugin()]);
 Associate all checkboxes with a field:
 
 ```ts
-document
-  .querySelectorAll('input[type="checkbox"]')
-  .forEach(field.at('animals').ref);
+document.querySelectorAll('input[type="checkbox"]').forEach(field.at('animals').ref);
 ```
 
 Right after checkboxes are associated, input with the value "Zebra" becomes checked. This happens because
@@ -888,19 +913,19 @@ field.at('animals').value; // ⮕ ['Zebra', 'Elephant']
 By default, `uncontrolledPlugin` uses the opinionated element value accessor that applies following coercion rules to
 values of form elements:
 
-| Elements                 | Value                                                                                                                                                                                                                                                                                                                           |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Single checkbox          | `boolean`, see [`checkboxFormat`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessorOptions.html#checkboxformat).                                                                                                                                                 |
+| Elements                 | Value                                                                                                                                                                                                                                                                                                                             |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single checkbox          | `boolean`, see [`checkboxFormat`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessorOptions.html#checkboxformat).                                                                                                                                                  |
 | Multiple&nbsp;checkboxes | An array of [`value`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox#value) attributes of checked checkboxes, see [`checkboxFormat`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessorOptions.html#checkboxformat). |
-| Radio buttons            | The [`value`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value) attribute of a radio button that is checked or `null` if no radio buttons are checked.                                                                                                                            |
-| Number input             | `number`, or `null` if empty.                                                                                                                                                                                                                                                                                                   |
-| Range input              | `number`                                                                                                                                                                                                                                                                                                                        |
+| Radio buttons            | The [`value`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio#value) attribute of a radio button that is checked or `null` if no radio buttons are checked.                                                                                                                             |
+| Number input             | `number`, or `null` if empty.                                                                                                                                                                                                                                                                                                     |
+| Range input              | `number`                                                                                                                                                                                                                                                                                                                          |
 | Date input               | The [`value`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/date#value) attribute, or `null` if empty, see [`dateFormat`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessorOptions.html#dateformat).                        |
-| Time input               | A time string, or `null` if empty, see [`timeFormat`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessorOptions.html#timeformat).                                                                                                                                 |
-| Image input              | A string value of the [`value`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src) attribute.                                                                                                                                                                                        |
-| File input               | [`File`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/File) or `null` if no file selected, file inputs are read-only.                                                                                                                                                                                    |
-| Multi-file input         | An array of [`File`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/File).                                                                                                                                                                                                                                 |
-| Other                    | The `value` attribute, or `null` if element doesn't support it.                                                                                                                                                                                                                                                                 |
+| Time input               | A time string, or `null` if empty, see [`timeFormat`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_uncontrolled.ElementsValueAccessorOptions.html#timeformat).                                                                                                                                  |
+| Image input              | A string value of the [`value`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/image#src) attribute.                                                                                                                                                                                         |
+| File input               | [`File`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/File) or `null` if no file selected, file inputs are read-only.                                                                                                                                                                                     |
+| Multi-file input         | An array of [`File`&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/File).                                                                                                                                                                                                                                  |
+| Other                    | The `value` attribute, or `null` if element doesn't support it.                                                                                                                                                                                                                                                                   |
 
 `null`, `undefined`, `NaN` and non-finite numbers are coerced to an empty string and written to `value` attribute.
 
@@ -926,59 +951,259 @@ Read more about available options in
 
 # Validation plugin
 
-[`validationPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_validation.html) enhances fields with
-validation methods.
+[`validationPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_validation.html)
+enhances fields with validation methods.
 
 > [!TIP]\
-> This plugin provides a low-level functionality. Prefer
-> [`constraintValidationPlugin`](#constraint-validation-api-plugin), [`doubterPlugin`](./packages/doubter-plugin),
-> [`zodPlugin`](./packages/zod-plugin) or other high-level validation plugins.
+> This plugin provides the low-level functionality. Have a look at
+> [`constraintValidationPlugin`](#constraint-validation-api-plugin) or [`schemaPlugin`](#schema-plugin) as
+> an alternative.
 
 ```ts
 import { createField } from 'roqueform';
 import validationPlugin from 'roqueform/plugin/validation';
 
 const field = createField({ hello: 'world' }, [
-  validationPlugin({
-    validate(field) {
-      if (field.key === 'hello') {
-        field.isInvalid = field.value === 'world';
-      }
-    },
+  validationPlugin(validation => {
+    // Validate the field value and return some result
+    return { ok: true };
+  }),
+]);
+```
+
+The [`Validator`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.Validator.html)
+callback receives
+a [`Validation`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.Validation.html)
+object that has a reference to a field where
+[`Field.validate()`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.ValidationMixin.html#validate)
+was called.
+
+Any result returned from the validator callback, is returned from the `Field.validate()` method:
+
+```ts
+field.at('hello').validate();
+// ⮕ { ok: boolean }
+```
+
+Validator may receive custom options so its behavior can be altered upon each `Field.validate()` call:
+
+```ts
+const field = createField({ hello: 'world' }, [
+  validationPlugin((validation, options: { coolStuff: string }) => {
+    // 1️⃣ Receive options in a validator
+    return options.coolStuff;
+  }),
+]);
+
+// 2️⃣ Pass options to the validator
+field.validate({ coolStuff: 'okay' });
+// ⮕ 'okay'
+```
+
+For asynchronous validation, provide a validator that returns a `Promise`:
+
+```ts
+const field = createField({ hello: 'world' }, [
+  validationPlugin(async validation => {
+    // Do async validation here
+    await doSomeAsyncCheck(validation.field.value);
+  }),
+]);
+```
+
+Check that async validation is pending:
+
+```ts
+field.isValidating; // ⮕ true
+```
+
+Abort the pending validation:
+
+```ts
+field.abortValidation();
+```
+
+When `Field.validate()` is called, it instantly aborts any pending validation associated with the field. Use
+[`abortController`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.Validation.html#abortcontroller)
+to detect that a validation was cancelled:
+
+```ts
+const field = createField({ hello: 'world' }, [
+  validationPlugin(async validation => {
+    if (validation.abortController.signal.aborted) {
+      // Handle aborted validation here
+    }
+  }),
+]);
+
+field.validate();
+
+// 🟡 Aborts pending validation
+field.at('hello').validate();
+```
+
+`Field.validate()` sets
+[`validation`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.ValidationMixin.html#validation)
+property for a field where it was called and to all of its descendants that hold a [non-transient](#transient-updates)
+value:
+
+```ts
+field.validate();
+
+field.isValidating; // ⮕ true
+
+field.at('hello').isValidating; // ⮕ true
+```
+
+`Field.validate()` doesn't trigger validation of the parent field:
+
+```ts
+field.at('hello').validate();
+
+// 🟡 Parent field isn't validated
+field.isValidating; // ⮕ false
+
+field.at('hello').isValidating; // ⮕ true
+```
+
+Since each field can be validated separately, there can be multiple validations running in parallel. Validator callback
+can check that a particular field participates in a validation process:
+
+```ts
+const field = createField({ hello: 'world' }, [
+  validationPlugin(async validation => {
+    const helloField = validation.field.rootField.at('hello');
+    
+    if (helloField.validation === validation) {
+      // ✅ Yes, helloField must be validated
+    }
+  }),
+]);
+```
+
+The validation plugin doesn't provide a way to associate validation errors with fields since it only tracks validation
+state. Usually, you should [publish an event](#events-and-subscriptions) from a validator, so some other plugin handles
+the field-error association. For example, use `validationPlugin` in conjunction with
+the [`errorsPlugin`](#errors-plugin):
+
+```ts
+import { createField } from 'roqueform';
+import errorsPlugin from 'roqueform/plugin/errors';
+import validationPlugin from 'roqueform/plugin/validation';
+
+const field = createField({ hello: 'world' }, [
+  // 1️⃣ This plugin associates errors with fields
+  errorsPlugin<{ message: string }>(),
+
+  validationPlugin(validation => {
+    const helloField = validation.field.rootField.at('hello');
+    
+    if (helloField.validation === validation && helloField.value.length < 10) {
+      // 2️⃣ This event is handled by the errorsPlugin
+      helloField.publish({
+        type: 'errorDetected',
+        target: helloField,
+        relatedTarget: validation.field,
+        payload: { message: 'Too short' }
+      });
+    }
   }),
 ]);
 
 field.at('hello').validate();
 
-field.at('hello').isInvalid; // ⮕ true
+field.at('hello').errors;
+// ⮕ [{ message: 'Too short' }]
 ```
 
-The plugin takes a [`Validator`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.Validator.html)
-that has `validate` and `validateAsync` methods. Both methods receive a field that must be validated and should update
-the `isInvalid` property of the field or any of its children when needed.
+Validation plugin [publishes events](#events-and-subscriptions) when validation state changes:
 
-Validation plugin works best in conjunction with [the errors plugin](#errors-plugin). The latter would update
-`isInvalid` when an error is added or deleted:
+```ts
+field.subscribe(event => {
+  if (event.type === 'validationStarted') {
+    // Handle the validation state change
+    event.payload; // ⮕ Validation
+  }
+});
+```
+
+# Schema plugin
+
+[`schemaPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_schema.html)
+enhances fields with validation methods that use
+[Standard Schema](https://github.com/standard-schema/standard-schema#readme) instance to detect validation issues.
+`schemaPlugin` uses [`validationPlugin`](#validation-plugin) under-the-hood, so events and validation semantics are
+the exactly same.
+
+Any validation library that supports Standard Schema can be used to create a schema object. Lets use
+[Doubter&#8239;<sup>↗</sup>](https://github.com/smikhalevski/doubter#readme) as an example:
+
+```ts
+import * as d from 'doubter';
+
+const helloSchema = d.object({
+  hello: d.string().max(5),
+});
+```
+
+[`schemaPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_schema.html) publishes
+[_"errorDetected"_](#errors-plugin) event for each field for which a validation issue was detected. Use `schemaPlugin`
+in conjunction with [`errorsPlugin`](#errors-plugin) to enable field-error association:
+
+```ts
+import * as d from 'doubter';
+import { createField } from 'roqueform';
+import errorsPlugin from 'roqueform/plugin/errors';
+import schemaPlugin from 'roqueform/plugin/schema';
+
+const field = createField({ hello: 'world' }, [
+  // 🟡 errorsPlugin handles Doubter issues 
+  errorsPlugin<d.Issue>(),
+  schemaPlugin(helloSchema),
+]);
+```
+
+The type of the field value is inferred from the provided shape, so the field value is statically checked.
+
+When you call the
+[`Field.validate()`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.ValidationMixin.html#validate)
+method, it triggers validation of the field and all of its child fields:
+
+```ts
+// 🟡 Here an invalid value is set to the field
+field.at('hello').setValue('universe');
+
+field.validate();
+// ⮕ { issues: [ … ] }
+
+field.errors;
+// ⮕ []
+
+field.at('hello').errors;
+// ⮕ [{ message: 'Must have the maximum length of 5', … }]
+```
+
+## Custom error messages
+
+You can customize messages for errors raised by Doubter:
 
 ```ts
 import { createField } from 'roqueform';
-import errorsPlugin, { ErrorsMixin } from 'roqueform/plugin/errors';
-import validationPlugin, { Validator } from 'roqueform/plugin/validation';
+import errorsPlugin from 'roqueform/plugin/errors';
+import schemaPlugin from 'roqueform/plugin/schema';
 
-const myValidator: Validator<void, ErrorsMixin> = {
-  validate(field) {
-    if (field.key === 'hello' && field.value === 'world') {
-      field.addError('The world is not enough');
-    }
-  },
-};
+const arraySchema = d.array(d.string(), 'Expected an array').min(3, 'Not enough elements');
 
-const field = createField({ hello: 'world' }, [errorsPlugin(), validationPlugin(myValidator)]);
+const field = createField(['hello', 'world'], [errorsPlugin(), schemaPlugin(arraySchema)]);
 
-field.at('hello').validate();
+field.validate(); // ⮕ false
 
-field.at('hello').isInvalid; // ⮕ true
+field.errors;
+// ⮕ [{ message: 'Not enough elements', … }]
 ```
+
+Read more about [error message localization&#8239;<sup>↗</sup>](https://github.com/smikhalevski/doubter#localization)
+with Doubter.
 
 # React integration
 
@@ -988,8 +1213,10 @@ Roqueform has first-class React integration. To enable it, first install the int
 npm install --save-prod @roqueform/react
 ```
 
-[`useField`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/variables/_roqueform_react.useField.html) hook has the same
-set of signatures as [`createField`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/functions/roqueform.createField.html):
+[`useField`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/variables/_roqueform_react.useField.html) hook
+has the same
+set of signatures
+as [`createField`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/functions/roqueform.createField.html):
 
 ```tsx
 import { FieldRenderer, useField } from '@roqueform/react';
@@ -1011,9 +1238,11 @@ export function App() {
 }
 ```
 
-`useField` hook returns a [`Field`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.Field.html) instance that
+`useField` hook returns
+a [`Field`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.Field.html) instance that
 is preserved between re-renders.
-The [`<FieldRenderer>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/functions/_roqueform_react.FieldRenderer.html) component
+The [`<FieldRenderer>`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/functions/_roqueform_react.FieldRenderer.html)
+component
 subscribes to the given field instance and re-renders children when an event is published by the field.
 
 When a user updates the input value, the `rootField.at('hello')` value is set and `<FieldRenderer>` component

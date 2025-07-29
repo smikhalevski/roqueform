@@ -26,7 +26,7 @@ export declare namespace StandardSchemaV1 {
     /**
      * Validates unknown input values.
      */
-    readonly validate: (value: unknown) => Result<Output> | Promise<Result<Output>>;
+    readonly validate: (value: unknown, options?: any) => Result<Output> | Promise<Result<Output>>;
 
     /**
      * Inferred types associated with the schema.
@@ -103,4 +103,19 @@ export declare namespace StandardSchemaV1 {
      */
     readonly output: Output;
   }
+
+  /**
+   * Infers the input type of a Standard Schema.
+   */
+  export type InferInput<Schema extends StandardSchemaV1> = NonNullable<Schema['~standard']['types']>['input'];
+
+  /**
+   * Infers the output type of a Standard Schema.
+   */
+  export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<Schema['~standard']['types']>['output'];
+
+  /**
+   * Infers the validation options type of a Standard Schema.
+   */
+  export type InferOptions<Schema extends StandardSchemaV1> = Parameters<Schema['~standard']['validate']>[1] | void;
 }

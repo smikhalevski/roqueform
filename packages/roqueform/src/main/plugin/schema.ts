@@ -1,138 +1,136 @@
-import { Field, FieldPlugin } from 'roqueform';
-import validationPlugin, { Validation, ValidationMixin, Validator } from 'roqueform/plugin/validation';
-import { ParseParams } from 'zod';
-import { ErrorsConcatenator } from 'roqueform/plugin/errors';
+/**
+ * Enhances Roqueform fields with validation methods that use
+ * [Standard Schema](https://github.com/standard-schema/standard-schema#readme) instances to detect issues.
+ *
+ * ```ts
+ * import * as d from 'doubter';
+ * import { createField } from 'roqueform';
+ * import errorsPlugin from 'roqueform/plugin/errors';
+ * import schemaPlugin from 'roqueform/plugin/schema';
+ *
+ * const helloSchema = d.object({
+ *   hello: d.string(),
+ * });
+ *
+ * const field = createField({ hello: 'world' }, [
+ *   errorsPlugin<d.Issue>(),
+ *   schemaPlugin(helloSchema),
+ * ]);
+ *
+ * field.at('hello').validate();
+ * ```
+ *
+ * @module plugin/schema
+ */
+
+import validationPlugin, { Validation, ValidationMixin, Validator } from './validation.js';
 import { StandardSchemaV1 } from '../vendor/standard-schema.js';
+import { isPromiseLike, noop } from '../utils.js';
+import { Field, FieldPlugin } from '../FieldImpl.js';
 
 /**
- * The mixin added to fields by the {@link schemaPlugin}.
+ * Enhances the field with validation methods that use
+ * [Standard Schema](https://github.com/standard-schema/standard-schema#readme) instance to detect issues.
+ *
+ * @param schema The schema that validates the root field value.
+ * @template Schema The schema that validates the root field value.
  */
-export interface SchemaMixin extends ValidationMixin<Partial<ParseParams> | void> {}
-
-interface PrivateSchemaMixin extends SchemaMixin {
-  /**
-   * The field validation schema.
-   */
-  _schema?: StandardSchemaV1;
+export default function schemaPlugin<Schema extends StandardSchemaV1>(
+  schema: Schema
+): FieldPlugin<
+  StandardSchemaV1.InferInput<Schema>,
+  ValidationMixin<
+    | StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>
+    | Promise<StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>>,
+    StandardSchemaV1.InferOptions<Schema>
+  >
+> {
+  return field => validationPlugin(createSchemaValidator(schema))(field);
 }
 
 /**
- * Enhances fields with schema validation methods.
+ * Creates a validator that uses
+ * a [Standard Schema](https://github.com/standard-schema/standard-schema#readme) instance to detect issues.
  *
  * @param schema The schema that validates the root field value.
- * @template Value The root field value.
+ * @template Schema The schema that validates the root field value.
  */
-export default function schemaPlugin<Value>(schema: StandardSchemaV1<Value, any>): FieldPlugin<Value, SchemaMixin> {
-  return (field: Field<Value, PrivateSchemaMixin>) => {
-    field._schema = field.parentField === null ? schema : undefined;
+export function createSchemaValidator<Schema extends StandardSchemaV1>(
+  schema: Schema
+): Validator<
+  | StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>
+  | Promise<StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>>,
+  StandardSchemaV1.InferOptions<Schema>
+> {
+  return (validation, options) => {
+    const result = schema['~standard'].validate(getRootValue(validation.field), options);
 
-    validationPlugin(validator)(field);
+    if (isPromiseLike(result)) {
+      // Prevent unhandled rejection
+      result.then(result => publishIssues(validation, result), noop);
+    } else {
+      publishIssues(validation, result);
+    }
+
+    return result;
   };
 }
 
-/**
- * Concatenates unique schema issues.
- */
-export const concatSchemaIssues: ErrorsConcatenator<StandardSchemaV1.Issue> = (prevErrors, error) => {
-  for (const e of prevErrors) {
-    if (e.message === error.message) {
-      return prevErrors;
-    }
-  }
-  return prevErrors.concat(error);
-};
-
-const validator: Validator<Partial<ParseParams> | undefined, PrivateSchemaMixin> = {
-  validate(field, _options) {
-    const { validation, _schema } = field;
-
-    if (validation === null || _schema === undefined) {
-      // No validation
-      return;
-    }
-
-    const result = _schema['~standard'].validate(getValue(field));
-
-    if (result instanceof Promise) {
-      throw new Error("Sync validation isn't supported");
-    }
-
-    applyResult(validation, result);
-  },
-
-  validateAsync(field, _options) {
-    const { validation, _schema } = field;
-
-    if (validation === null || _schema === undefined) {
-      // No validation
-      return Promise.resolve();
-    }
-
-    return Promise.resolve(_schema['~standard'].validate(getValue(field))).then(result => {
-      applyResult(validation, result);
-    });
-  },
-};
-
-function getValue(field: Field<any, PrivateSchemaMixin>): unknown {
-  let value = field.value;
-  let isTransient = false;
-
-  while (field.parentField !== null) {
-    isTransient ||= field.isTransient;
-    value = isTransient ? field.valueAccessor.set(field.parentField.value, field.key, value) : field.parentField.value;
-    field = field.parentField;
-  }
-  return value;
-}
-
-function getPath(field: Field): any[] {
-  const path = [];
-
-  while (field.parentField !== null) {
-    path.unshift(field.key);
-    field = field.parentField;
-  }
-  return path;
-}
-
-function applyResult(validation: Validation, result: StandardSchemaV1.Result<unknown>): void {
+function publishIssues(validation: Validation<unknown>, result: StandardSchemaV1.Result<unknown>): void {
   if (result.issues === undefined) {
+    // No issues to publish
     return;
   }
 
-  const basePath = getPath(validation.rootField);
+  nextIssue: for (const issue of result.issues) {
+    let child = validation.field;
 
-  issues: for (const issue of result.issues) {
-    const { path } = issue;
+    const fieldPath = child.path;
+    const issuePath = issue.path;
 
-    let child = validation.rootField;
+    if (issuePath !== undefined ? issuePath.length < fieldPath.length : fieldPath.length !== 0) {
+      // Insufficient issue path length
+      continue;
+    }
 
-    if (path !== undefined) {
-      if (path.length < basePath.length) {
-        continue;
-      }
-
-      for (let i = 0; i < basePath.length; ++i) {
-        if (path[i] !== basePath[i]) {
-          continue issues;
+    if (issuePath !== undefined) {
+      // Ensure issue path starts with the validated field path
+      for (let i = 0; i < fieldPath.length; ++i) {
+        if (issuePath[i] !== fieldPath[i]) {
+          continue nextIssue;
         }
       }
 
-      for (let i = basePath.length; i < path.length; ++i) {
-        child = child.at(path[i]);
+      // Get a field at the issue path
+      for (let i = fieldPath.length; i < issuePath.length; ++i) {
+        child = child.at(issuePath[i]);
       }
     }
 
     if (child.validation !== validation) {
-      return;
+      // Validation was aborted
+      continue;
     }
 
-    child.publish({
-      type: 'errorCaught',
-      target: child,
-      relatedTarget: validation.rootField,
-      payload: issue,
-    });
+    child.publish({ type: 'errorDetected', target: child, relatedTarget: validation.field, payload: issue });
   }
+}
+
+/**
+ * Returns the root field value that incorporates the current value (potentially transient) of the provided field.
+ */
+function getRootValue(field: Field): unknown {
+  let value = field.value;
+
+  for (let isTransient = false; field.parentField !== null; field = field.parentField) {
+    isTransient ||= field.isTransient;
+
+    if (isTransient) {
+      value = field.parentField.valueAccessor.set(field.parentField.value, field.key, value);
+    } else {
+      value = field.parentField.value;
+    }
+  }
+
+  return value;
 }

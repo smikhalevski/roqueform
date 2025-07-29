@@ -1,8 +1,8 @@
 import { expect, test } from 'vitest';
 import * as d from 'doubter';
-import doubterPlugin from '../main/index.js';
-import { createField } from 'roqueform';
-import errorsPlugin from 'roqueform/plugin/errors';
+import schemaPlugin from '../../main/plugin/schema.js';
+import { createField } from '../../main/index.js';
+import errorsPlugin from '../../main/plugin/errors.js';
 
 const aaaShape = d.object({
   aaa: d.number().gte(3),
@@ -14,7 +14,7 @@ const aaaBbbShape = d.object({
 });
 
 test('enhances the field', () => {
-  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
+  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), schemaPlugin(aaaShape)]);
 
   expect(field.isInvalid).toBe(false);
   expect(field.errors.length).toBe(0);
@@ -24,7 +24,7 @@ test('enhances the field', () => {
 });
 
 test('sets an issue to the root field', () => {
-  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
+  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), schemaPlugin(aaaShape)]);
 
   const issue = { code: 'xxx' };
 
@@ -38,7 +38,7 @@ test('sets an issue to the root field', () => {
 });
 
 test('sets an issue to the child field', () => {
-  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
+  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), schemaPlugin(aaaShape)]);
 
   const issue = { code: 'aaa' };
 
@@ -52,7 +52,7 @@ test('sets an issue to the child field', () => {
 });
 
 test('validates the root field', () => {
-  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
+  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), schemaPlugin(aaaShape)]);
 
   field.validate();
 
@@ -69,11 +69,11 @@ test('validates the root field', () => {
       message: 'Must be greater than or equal to 3',
       meta: undefined,
     },
-  ]);
+  ] satisfies d.Issue[]);
 });
 
 test('validates the child field', () => {
-  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaShape)]);
+  const field = createField({ aaa: 0 }, [errorsPlugin<d.Issue>(), schemaPlugin(aaaShape)]);
 
   field.at('aaa').validate();
 
@@ -90,11 +90,11 @@ test('validates the child field', () => {
       message: 'Must be greater than or equal to 3',
       meta: undefined,
     },
-  ]);
+  ] satisfies d.Issue[]);
 });
 
 test('validates multiple fields', () => {
-  const field = createField({ aaa: 0, bbb: 'ccc' }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaBbbShape)]);
+  const field = createField({ aaa: 0, bbb: 'ccc' }, [errorsPlugin<d.Issue>(), schemaPlugin(aaaBbbShape)]);
 
   field.validate();
 
@@ -111,7 +111,7 @@ test('validates multiple fields', () => {
       message: 'Must be greater than or equal to 3',
       meta: undefined,
     },
-  ]);
+  ] satisfies d.Issue[]);
 
   expect(field.at('bbb').isInvalid).toBe(true);
   expect(field.at('bbb').errors).toEqual([
@@ -123,11 +123,11 @@ test('validates multiple fields', () => {
       message: 'Must have the maximum length of 2',
       meta: undefined,
     },
-  ]);
+  ] satisfies d.Issue[]);
 });
 
 test('validate does not raise issues for transient fields', () => {
-  const field = createField({ aaa: 0, bbb: 'ccc' }, [errorsPlugin<d.Issue>(), doubterPlugin(aaaBbbShape)]);
+  const field = createField({ aaa: 0, bbb: 'ccc' }, [errorsPlugin<d.Issue>(), schemaPlugin(aaaBbbShape)]);
 
   field.at('bbb').setTransientValue('aaabbb');
 
@@ -146,7 +146,7 @@ test('validate does not raise issues for transient fields', () => {
       message: 'Must be greater than or equal to 3',
       meta: undefined,
     },
-  ]);
+  ] satisfies d.Issue[]);
 
   expect(field.at('bbb').isInvalid).toBe(false);
   expect(field.at('bbb').errors.length).toBe(0);
