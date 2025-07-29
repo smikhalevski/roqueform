@@ -721,3 +721,18 @@ test('asynchronously validates the root field and adds errors using errorsPlugin
     payload: { field, abortController: expect.any(AbortController) },
   } satisfies FieldEvent);
 });
+
+test('passes options to a validator', () => {
+  const validatorMock = vi.fn((_validation: Validation<any>, _options: { xxx: string }) => 111);
+
+  const field = createField({ aaa: 111, bbb: 222 }, [validationPlugin(validatorMock)]);
+
+  field.validate({ xxx: 'zzz' });
+
+  expect(validatorMock).toHaveBeenCalledTimes(1);
+  expect(validatorMock).toHaveBeenNthCalledWith(
+    1,
+    { field, abortController: expect.any(AbortController) } satisfies Validation<any>,
+    { xxx: 'zzz' }
+  );
+});

@@ -29,6 +29,17 @@ import { isPromiseLike, noop } from '../utils.js';
 import { Field, FieldPlugin } from '../FieldImpl.js';
 
 /**
+ * The mixin added to fields by the {@link schemaPlugin}.
+ *
+ * @template Schema The schema that validates the root field value.
+ */
+export type SchemaMixin<Schema extends StandardSchemaV1> = ValidationMixin<
+  | StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>
+  | Promise<StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>>,
+  StandardSchemaV1.InferOptions<Schema>
+>;
+
+/**
  * Enhances the field with validation methods that use
  * [Standard Schema](https://github.com/standard-schema/standard-schema#readme) instance to detect issues.
  *
@@ -37,14 +48,7 @@ import { Field, FieldPlugin } from '../FieldImpl.js';
  */
 export default function schemaPlugin<Schema extends StandardSchemaV1>(
   schema: Schema
-): FieldPlugin<
-  StandardSchemaV1.InferInput<Schema>,
-  ValidationMixin<
-    | StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>
-    | Promise<StandardSchemaV1.Result<StandardSchemaV1.InferOutput<Schema>>>,
-    StandardSchemaV1.InferOptions<Schema>
-  >
-> {
+): FieldPlugin<StandardSchemaV1.InferInput<Schema>, SchemaMixin<Schema>> {
   return field => validationPlugin(createSchemaValidator(schema))(field);
 }
 
@@ -117,7 +121,7 @@ function publishIssues(validation: Validation<unknown>, result: StandardSchemaV1
 }
 
 /**
- * Returns the root field value that incorporates the current value (potentially transient) of the provided field.
+ * Returns the root field value that incorporates the current value of the provided field, even if it is transient.
  */
 function getRootValue(field: Field): unknown {
   let value = field.value;

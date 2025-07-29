@@ -4,8 +4,8 @@ import validationPlugin, { ValidationMixin } from '../../main/plugin/validation.
 
 expectType<FieldPlugin<any, ValidationMixin<number, void>>>(validationPlugin(() => 222));
 
-expectType<FieldPlugin<any, ValidationMixin<number, { aaa: number }>>>(
-  validationPlugin<number, { aaa: 111 }>(() => 222)
+expectType<FieldPlugin<any, ValidationMixin<string, { aaa: 111 }>>>(
+  validationPlugin<string, { aaa: 111 }>(() => 'xxx')
 );
 
 expectType<Field<string, ValidationMixin<number, void>>>(createField('xxx', [validationPlugin(() => 222)]));

@@ -126,7 +126,7 @@ planetsField.parent; // ⮕ universeField
 ```
 
 Fields returned by
-the [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#at)
+the [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldAPI.html#at)
 method have a stable identity. This means that you can invoke `at(key)` with the same key multiple times and the same
 field instance is returned:
 
@@ -191,7 +191,7 @@ interface.
 Without plugins, fields publish only
 [`valueChanged`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/types/roqueform.FieldEventType.html)
 event when the field value is changed via
-[`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#setvalue).
+[`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldAPI.html#setvalue).
 
 The root field and its descendants are updated before `valueChanged` event is published, so it's safe to read field
 values in a listener.
@@ -238,7 +238,7 @@ field.addError('Illegal user');
 # Transient updates
 
 When you
-call [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#setvalue)
+call [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldAPI.html#setvalue)
 on a field its value is updates along with values of its ancestors and descendants. To manually control the update
 propagation to fields ancestors, you can use transient updates.
 
@@ -263,7 +263,7 @@ field.at('hello').isTransient; // ⮕ true
 ```
 
 To propagate the transient value contained by the child field to its parent, use the
-[`Field.flushTransient`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#flushtransient)
+[`Field.flushTransient`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldAPI.html#flushtransient)
 method:
 
 ```ts
@@ -273,7 +273,7 @@ field.at('hello').flushTransient();
 field.value; // ⮕ { hello: 'world' }
 ```
 
-[`Field.setTransientValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueforminterfaces/roqueform.FieldCore.html#settransientvalue)
+[`Field.setTransientValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueforminterfaces/roqueform.FieldAPI.html#settransientvalue)
 can be called multiple times, but only the most recent update is propagated to the parent field after
 the `flushTransient` call.
 
@@ -308,14 +308,14 @@ creates, reads and
 updates field values.
 
 - When the child field is accessed via
-  [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#at)
+  [`Field.at`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldAPI.html#at)
   method for the
   first time, its value is read from the value of the parent field using the
   [`ValueAccessor.get`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#get)
   method.
 
 - When a field value is updated via
-  [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#setvalue),
+  [`Field.setValue`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldAPI.html#setvalue),
   then
   the parent field value is updated with the value returned from the
   [`ValueAccessor.set`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.ValueAccessor.html#set)
@@ -460,7 +460,7 @@ const myPlugin: FieldPlugin<MyValue, MyMixin> = field => {
 };
 ```
 
-[`Field.publish`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldCore.html#publish)
+[`Field.publish`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/roqueform.FieldAPI.html#publish)
 invokes
 listeners subscribed to the field and its ancestors, so events bubble up to the root field which effectively enables
 event delegation:
@@ -974,7 +974,7 @@ const field = createField({ hello: 'world' }, [
 The [`Validator`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.Validator.html)
 callback receives
 a [`Validation`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.Validation.html)
-object that has a reference to a field where
+object that references a field where
 [`Field.validate()`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/interfaces/plugin_validation.ValidationMixin.html#validate)
 was called.
 
@@ -1147,8 +1147,8 @@ const helloSchema = d.object({
 ```
 
 [`schemaPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_schema.html) publishes
-[_"errorDetected"_](#errors-plugin) event for each field for which a validation issue was detected. Use `schemaPlugin`
-in conjunction with [`errorsPlugin`](#errors-plugin) to enable field-error association:
+["errorDetected"](#errors-plugin) events for fields that have validation issues. Use `schemaPlugin` in conjunction
+with [`errorsPlugin`](#errors-plugin) to enable field-error association:
 
 ```ts
 import * as d from 'doubter';
@@ -1194,7 +1194,10 @@ import schemaPlugin from 'roqueform/plugin/schema';
 
 const arraySchema = d.array(d.string(), 'Expected an array').min(3, 'Not enough elements');
 
-const field = createField(['hello', 'world'], [errorsPlugin(), schemaPlugin(arraySchema)]);
+const field = createField(['hello', 'world'], [
+  errorsPlugin(),
+  schemaPlugin(arraySchema),
+]);
 
 field.validate(); // ⮕ false
 

@@ -6,7 +6,7 @@
     "test": "vitest run",
     "test:definitions": "tsc --version && npm run test:definitions --if-present --workspaces",
     "docs": "typedoc",
-    "postinstall": "mkdir -p node_modules/@roqueform && ln -nsf ../packages/roqueform/lib node_modules/roqueform && ln -nsf ../../packages/react/lib node_modules/@roqueform/react"
+    "postinstall": "ln -nsf ../packages/roqueform/lib node_modules/roqueform"
   },
   "workspaces": [
     "./packages/roqueform",
@@ -26,6 +26,6 @@
     "typedoc-plugin-mdn-links": "^5.0.6",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",
-    "zod": "^4.0.13"
+    "zod": "^4.0.14"
   }
 }

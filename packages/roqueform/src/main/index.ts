@@ -13,7 +13,7 @@ export {
   type FieldEvent,
   type FieldPlugin,
   type Field,
-  type FieldCore,
+  type FieldAPI,
   type InferMixin,
   type InferValue,
   type ValueAccessor,

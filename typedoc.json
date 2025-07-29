@@ -16,7 +16,11 @@
   "plugin": ["typedoc-plugin-mdn-links"],
   "externalSymbolLinkMappings": {
     "roqueform": {
-      "StandardSchemaV1": "https://github.com/standard-schema/standard-schema#readme"
+      "StandardSchemaV1": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.Result": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.InferInput": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.InferOutput": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.InferOptions": "https://github.com/standard-schema/standard-schema#readme"
     }
   }
 }

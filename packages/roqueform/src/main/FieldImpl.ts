@@ -146,17 +146,17 @@ export type InferMixin<T> = T extends Field ? T[MIXIN] : never;
  * @template Value The field value.
  * @template Mixin The mixin added to the field.
  */
-export type Field<Value = any, Mixin extends object = {}> = FieldCore<Value, Mixin> & Mixin;
+export type Field<Value = any, Mixin extends object = {}> = FieldAPI<Value, Mixin> & Mixin;
 
 /**
- * Core properties of the {@link Field}.
+ * The API exposed by all {@link Field fields}.
  *
- * **Note:** It is recommended to use {@link Field} type whenever possible instead of {@link FieldCore}.
+ * **Note:** It is recommended to use {@link Field} type whenever possible instead of {@link FieldAPI} interface.
  *
  * @template Value The field value.
  * @template Mixin The mixin added to the field.
  */
-export interface FieldCore<Value = any, Mixin extends object = {}> {
+export interface FieldAPI<Value = any, Mixin extends object = {}> {
   /**
    * Holds the mixin type for inference.
    *
@@ -312,7 +312,7 @@ export type ValueAt<T, K> =
  *
  * @internal
  */
-export class FieldImpl implements FieldCore {
+export class FieldImpl implements FieldAPI {
   declare [MIXIN]: {};
 
   value: any;

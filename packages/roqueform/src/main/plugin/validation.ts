@@ -38,7 +38,7 @@ export interface ValidationMixin<Result, Options> {
   readonly isValidating: boolean;
 
   /**
-   * Validates the value of the field and values of its {@link roqueform!FieldCore.isTransient non-transient}
+   * Validates the value of the field and values of its {@link roqueform!FieldAPI.isTransient non-transient}
    * descendants.
    *
    * If the field is already being {@link isValidating validated}, then the associated {@link validation}
