@@ -161,7 +161,6 @@ export interface FieldAPI<Value = any, Mixin extends object = {}> {
    * Holds the mixin type for inference.
    *
    * @internal
-   * @private
    */
   readonly [MIXIN]: Mixin;
 

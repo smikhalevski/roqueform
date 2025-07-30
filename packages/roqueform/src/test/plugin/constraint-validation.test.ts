@@ -61,13 +61,13 @@ test('reports validity of the root field', () => {
 
   field.ref(element);
 
-  expect(field.reportValidity()).toBe(true);
-  expect(field.at('aaa').reportValidity()).toBe(true);
+  expect(field.reportValidity()).toBeNull();
+  expect(field.at('aaa').reportValidity()).toBeNull();
 
   element.value = '';
 
-  expect(field.reportValidity()).toBe(false);
-  expect(field.at('aaa').reportValidity()).toBe(true);
+  expect(field.reportValidity()).toBe(field);
+  expect(field.at('aaa').reportValidity()).toBeNull();
 });
 
 test('reports validity of the child field', () => {
@@ -77,13 +77,13 @@ test('reports validity of the child field', () => {
 
   element.value = '';
 
-  expect(field.reportValidity()).toBe(false);
-  expect(field.at('aaa').reportValidity()).toBe(false);
+  expect(field.reportValidity()).toBe(field.at('aaa'));
+  expect(field.at('aaa').reportValidity()).toBe(field.at('aaa'));
 
   element.value = 'test';
 
-  expect(field.reportValidity()).toBe(true);
-  expect(field.at('aaa').reportValidity()).toBe(true);
+  expect(field.reportValidity()).toBeNull();
+  expect(field.at('aaa').reportValidity()).toBeNull();
 });
 
 test('deletes an error when a ref is changed', () => {

@@ -43,7 +43,6 @@ npm install --save-prod roqueform
 <span class="toc-icon">🔌&ensp;</span>**Built-in plugins**
 
 - [Annotations plugin](#annotations-plugin)
-- [Constraint validation API plugin](#constraint-validation-api-plugin)
 - [Errors plugin](#errors-plugin)
 - [DOM element reference plugin](#dom-element-reference-plugin)
 - [Reset plugin](#reset-plugin)
@@ -51,6 +50,7 @@ npm install --save-prod roqueform
 - [Uncontrolled plugin](#uncontrolled-plugin)
 - [Validation plugin](#validation-plugin)
 - [Schema plugin](#schema-plugin)
+- [Constraint validation API plugin](#constraint-validation-api-plugin)
 
 <span class="toc-icon">⚛️&ensp;</span>[**React integration**](#react-integration)
 
@@ -537,66 +537,6 @@ field.subscribe(event => {
 });
 ```
 
-# Constraint validation API plugin
-
-[`constraintValidationPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_constraint-validation.html)
-integrates fields with the
-[Constraint validation API&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
-
-For example, let's use the plugin to validate text input:
-
-```html
-<input
-  type="text"
-  value=""
-  required
-/>
-```
-
-Create a new field:
-
-```ts
-import { createField } from 'roqueform';
-import constraintValidationPlugin from 'roqueform/plugin/constraint-validation';
-
-const field = createField({ hello: '' }, [constraintValidationPlugin()]);
-
-// Associate the DOM element with the field
-field.at('hello').ref(document.querySelector('input'));
-```
-
-Check if field is invalid:
-
-```ts
-field.at('hello').isInvalid; // ⮕ true
-
-field.at('hello').validity.valueMissing; // ⮕ true
-```
-
-Show an error message balloon for the first invalid element that is associated with this field or any of its child
-fields:
-
-```ts
-field.reportValidity();
-```
-
-Get the array of all invalid fields:
-
-```ts
-field.getInvalidFields();
-// ⮕ [field.at('hello')]
-```
-
-Subscribe to the field validity changes:
-
-```ts
-field.subscribe(event => {
-  if (event.type === 'validityChanged') {
-    event.target.validity; // ⮕ ValidityState
-  }
-});
-```
-
 # Errors plugin
 
 [`errorsPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_errors.html) associates
@@ -1075,7 +1015,7 @@ const field = createField({ hello: 'world' }, [
     const helloField = validation.field.rootField.at('hello');
     
     if (helloField.validation === validation) {
-      // ✅ Yes, helloField must be validated
+      // helloField must be validated
     }
   }),
 ]);
@@ -1207,6 +1147,67 @@ field.errors;
 
 Read more about [error message localization&#8239;<sup>↗</sup>](https://github.com/smikhalevski/doubter#localization)
 with Doubter.
+
+# Constraint validation API plugin
+
+[`constraintValidationPlugin`&#8239;<sup>↗</sup>](https://smikhalevski.github.io/roqueform/modules/plugin_constraint-validation.html)
+integrates fields with the
+[Constraint validation API&#8239;<sup>↗</sup>](https://developer.mozilla.org/en-US/docs/Web/API/Constraint_validation).
+
+For example, let's use the plugin to validate text input:
+
+```html
+<input type="text" required />
+```
+
+Create a new field:
+
+```ts
+import { createField } from 'roqueform';
+import constraintValidationPlugin from 'roqueform/plugin/constraint-validation';
+
+const field = createField({ hello: '' }, [
+  constraintValidationPlugin(),
+]);
+```
+
+Associate the DOM element with the field:
+
+```ts
+field.at('hello').ref(document.querySelector('input'));
+```
+
+Check if field is invalid:
+
+```ts
+field.at('hello').isInvalid; // ⮕ true
+
+field.at('hello').validity.valueMissing; // ⮕ true
+```
+
+Show an error message balloon for the first invalid element and get the field this element associated with:
+
+```ts
+field.reportValidity();
+// ⮕ field.at('hello')
+```
+
+Get the array of all invalid fields:
+
+```ts
+field.getInvalidFields();
+// ⮕ [field.at('hello')]
+```
+
+Subscribe to the field validity changes:
+
+```ts
+field.subscribe(event => {
+  if (event.type === 'validityChanged') {
+    event.target.validity; // ⮕ ValidityState
+  }
+});
+```
 
 # React integration
 
