@@ -6,9 +6,7 @@
  * import { createField } from 'roqueform';
  * import constraintValidationPlugin from 'roqueform/plugin/constraint-validation';
  *
- * const field = createField({ hello: 'world' }, [
- *   constraintValidationPlugin(),
- * ]);
+ * const field = createField({ hello: 'world' }, [constraintValidationPlugin()]);
  *
  * field.at('hello').ref(document.querySelector('input'));
  *
@@ -20,7 +18,7 @@
 
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
-import { overrideGetter } from '../utils.js';
+import { collectFields, overrideGetter } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link constraintValidationPlugin}.
@@ -43,7 +41,7 @@ export interface ConstraintValidationMixin {
   readonly isInvalid: boolean;
 
   /**
-   * Associates the field with the DOM {@link element}.
+   * Associates the field with the DOM element.
    */
   ref(element: Element | null): void;
 
@@ -91,7 +89,7 @@ export default function constraintValidationPlugin(): FieldPlugin<any, Constrain
 
     field.reportValidity = () => reportValidity(field);
 
-    field.getInvalidFields = () => getInvalidFields(field, []);
+    field.getInvalidFields = () => collectFields(field, field => field.isInvalid, []);
 
     field.subscribe(event => {
       if (event.type === 'valueChanged' && event.target === field) {
@@ -124,23 +122,8 @@ function reportValidity(
   return field.children.find(reportValidity) || null;
 }
 
-function getInvalidFields(
-  field: Field<unknown, ConstraintValidationMixin>,
-  batch: Field<unknown, ConstraintValidationMixin>[]
-): Field<unknown, ConstraintValidationMixin>[] {
-  if (field.isInvalid) {
-    batch.push(field);
-  }
-
-  for (const child of field.children) {
-    getInvalidFields(child, batch);
-  }
-
-  return batch;
-}
-
-function isValidatable(element: Element | null | undefined): element is HTMLInputElement {
-  return element !== null && element !== undefined && 'validity' in element;
+function isValidatable(element: Element | null): element is HTMLInputElement {
+  return element !== null && 'validity' in element;
 }
 
 function cloneValidity(validity: ValidityState): ValidityState {

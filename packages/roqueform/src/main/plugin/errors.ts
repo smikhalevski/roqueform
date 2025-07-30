@@ -7,16 +7,16 @@
  *
  * const field = createField({ hello: 'world' }, [errorsPlugin()]);
  *
- * field.addError('The world is not enough!');
+ * field.addError('Invalid value');
  *
- * field.isInvalid // ⮕ true
+ * field.isInvalid; // ⮕ true
  * ```
  *
  * @module plugin/errors
  */
 
 import { Field, FieldEvent, FieldPlugin, InferMixin } from '../FieldImpl.js';
-import { emptyObject, overrideGetter, publishEvents } from '../utils.js';
+import { collectFields, isObjectLike, overrideGetter, publishEvents } from '../utils.js';
 
 /**
  * Options of the {@link ErrorsMixin.clearErrors} method.
@@ -35,7 +35,7 @@ export interface ClearErrorsOptions {
  *
  * @template Error The error associated with the field.
  */
-export interface ErrorsMixin<Error = any> {
+export interface ErrorsMixin<Error> {
   /**
    * The array of errors associated with this field.
    */
@@ -74,25 +74,16 @@ export interface ErrorsMixin<Error = any> {
 }
 
 /**
- * The callback that returns a new array of errors that includes the given error, or returns the `prevErrors` as if
- * there are no changes. By default, only identity-based-unique errors are added.
- *
- * @param prevErrors The array of existing errors.
- * @param error The new error to add.
- * @returns The new array of errors that includes the given error.
- * @template Error The error associated with the field.
- */
-export type ErrorsConcatenator<Error = any> = (prevErrors: readonly Error[], error: Error) => readonly Error[];
-
-/**
  * Enhances fields with error management methods.
  *
- * @param concatErrors The callback that returns the new array of errors that includes the given error, or returns the
- * original errors array if there are no changes. By default, only identity-based-unique errors are added.
+ * @param concatErrors The callback that returns the new array of errors that includes the given error, or returns
+ * the original errors array if there are no changes. By default, if an error is an object that has the `message` field,
+ * it is added only the `message` value is distinct; otherwise, if an error isn't an object or doesn't have the
+ * `message` field, it is added only if it has a unique identity.
  * @template Error The error associated with the field.
  */
-export default function errorsPlugin<Error = any>(
-  concatErrors: ErrorsConcatenator<Error> = concatUniqueErrors
+export default function errorsPlugin<Error = unknown>(
+  concatErrors = fuzzyConcatErrors<Error>
 ): FieldPlugin<any, ErrorsMixin<Error>> {
   return field => {
     field.errors = [];
@@ -127,11 +118,9 @@ export default function errorsPlugin<Error = any>(
       field.publish({ type: 'errorDeleted', target: field, relatedTarget: null, payload: error });
     };
 
-    field.clearErrors = (options = emptyObject) => {
-      publishEvents(clearErrors(field, options, []));
-    };
+    field.clearErrors = options => publishEvents(clearErrors(field, options, []));
 
-    field.getInvalidFields = () => getInvalidFields(field, []);
+    field.getInvalidFields = () => collectFields(field, field => field.isInvalid, []);
 
     field.subscribe(event => {
       if (event.type === 'errorDetected' && event.target === field) {
@@ -141,16 +130,39 @@ export default function errorsPlugin<Error = any>(
   };
 }
 
-function concatUniqueErrors<T>(prevErrors: readonly T[], error: T): readonly T[] {
-  if (!prevErrors.includes(error)) {
-    (prevErrors = prevErrors.slice(0)).push(error);
+/**
+ * The callback that returns a new array of errors that includes the given error, or returns the `prevErrors` as if
+ * there are no changes.
+ *
+ * @param prevErrors The array of existing errors.
+ * @param error The new error to add.
+ * @returns The array of errors that includes the given error.
+ * @template Error The error associated with the field.
+ */
+function fuzzyConcatErrors<T>(prevErrors: readonly T[], error: T): readonly T[] {
+  for (const prevError of prevErrors) {
+    if (Object.is(error, prevError)) {
+      // Not unique
+      return prevErrors;
+    }
+
+    if (
+      isObjectLike(error) &&
+      isObjectLike(prevError) &&
+      error.message !== undefined &&
+      error.message === prevError.message
+    ) {
+      // Not distinct
+      return prevErrors;
+    }
   }
-  return prevErrors;
+
+  return [...prevErrors, error];
 }
 
 function clearErrors(
-  field: Field<unknown, ErrorsMixin>,
-  options: ClearErrorsOptions,
+  field: Field<unknown, ErrorsMixin<unknown>>,
+  options: ClearErrorsOptions | undefined,
   events: FieldEvent[]
 ): FieldEvent[] {
   const prevErrors = field.errors;
@@ -161,26 +173,11 @@ function clearErrors(
     events.push({ type: 'errorsCleared', target: field, relatedTarget: null, payload: prevErrors });
   }
 
-  if (options.isRecursive) {
+  if (options !== undefined && options.isRecursive) {
     for (const child of field.children) {
       clearErrors(child, options, events);
     }
   }
 
   return events;
-}
-
-function getInvalidFields(
-  field: Field<unknown, ErrorsMixin>,
-  batch: Field<unknown, ErrorsMixin>[]
-): Field<unknown, ErrorsMixin>[] {
-  if (field.isInvalid) {
-    batch.push(field);
-  }
-
-  for (const child of field.children) {
-    getInvalidFields(child, batch);
-  }
-
-  return batch;
 }

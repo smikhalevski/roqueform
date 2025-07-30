@@ -9,13 +9,14 @@
  *
  * field.at('hello').ref(document.querySelector('input'));
  *
- * field.at('hello').element // ⮕ Element
+ * field.at('hello').element; // ⮕ Element
  * ```
  *
  * @module plugin/ref
  */
 
 import { FieldPlugin } from '../FieldImpl.js';
+import { overrideGetter } from '../utils.js';
 
 /**
  * The plugin added to fields by the {@link refPlugin}.
@@ -77,11 +78,11 @@ const _refPlugin: FieldPlugin<unknown, RefMixin> = field => {
 
   field.element = null;
 
-  Object.defineProperty(field, 'isFocused', {
-    configurable: true,
-
-    get: () => field.element !== null && field.element === field.element.ownerDocument.activeElement,
-  });
+  overrideGetter(
+    field,
+    'isFocused',
+    () => field.element !== null && field.element === field.element.ownerDocument.activeElement
+  );
 
   field.ref = element => {
     field.element = element;

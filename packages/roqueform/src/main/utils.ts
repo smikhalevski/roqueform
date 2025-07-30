@@ -1,6 +1,4 @@
-import { FieldEvent } from './FieldImpl.js';
-
-export const emptyObject = {};
+import { Field, FieldEvent } from './FieldImpl.js';
 
 export function noop(): void {}
 
@@ -80,5 +78,25 @@ export function overrideGetter<T, K extends keyof T>(obj: T, key: K, get: (value
 }
 
 export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return value !== null && typeof value === 'object' && 'then' in value;
+  return isObjectLike(value) && 'then' in value;
+}
+
+export function isObjectLike(value: unknown): value is Record<any, any> {
+  return value !== null && typeof value === 'object';
+}
+
+export function collectFields<Mixin extends object>(
+  field: Field<unknown, Mixin>,
+  predicate: (field: Field<unknown, Mixin>) => boolean,
+  batch: Field<unknown, Mixin>[]
+): Field<unknown, Mixin>[] {
+  if (predicate(field)) {
+    batch.push(field);
+  }
+
+  for (const child of field.children) {
+    collectFields(child, predicate, batch);
+  }
+
+  return batch;
 }

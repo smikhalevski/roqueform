@@ -11,7 +11,7 @@
  *
  * field.reset();
  *
- * field.value // ⮕ { hello: 'world' }
+ * field.value; // ⮕ { hello: 'world' }
  * ```
  *
  * @module plugin/reset
@@ -19,7 +19,7 @@
 
 import isDeepEqual from 'fast-deep-equal/es6/index.js';
 import { Field, FieldEvent, FieldPlugin, InferMixin, InferValue } from '../FieldImpl.js';
-import { isEqual, overrideGetter, publishEvents } from '../utils.js';
+import { collectFields, isEqual, overrideGetter, publishEvents } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link resetPlugin}.
@@ -63,15 +63,13 @@ export default function resetPlugin(
   return field => {
     overrideGetter(field, 'isDirty', isDirty => isDirty || !equalityChecker(field.initialValue, field.value));
 
-    field.setInitialValue = value => {
-      setInitialValue(field, value);
-    };
+    field.setInitialValue = value => setInitialValue(field, value);
 
     field.reset = () => {
       field.setValue(field.initialValue);
     };
 
-    field.getDirtyFields = () => getDirtyFields(field, []);
+    field.getDirtyFields = () => collectFields(field, field => field.isDirty, []);
   };
 }
 
@@ -111,19 +109,4 @@ function propagateInitialValue(
   }
 
   return events;
-}
-
-function getDirtyFields(
-  field: Field<unknown, ResetMixin>,
-  batch: Field<unknown, ResetMixin>[]
-): Field<unknown, ResetMixin>[] {
-  if (field.isDirty) {
-    batch.push(field);
-  }
-
-  for (const child of field.children) {
-    getDirtyFields(child, batch);
-  }
-
-  return batch;
 }
