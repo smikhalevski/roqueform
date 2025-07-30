@@ -6,6 +6,8 @@
   </picture></a>
 </p>
 
+<!--ARTICLE-->
+
 <!--OVERVIEW-->
 
 The form state management library that can handle hundreds of fields without breaking a sweat.
@@ -14,7 +16,7 @@ The form state management library that can handle hundreds of fields without bre
 - Controlled and [uncontrolled inputs](#uncontrolled-plugin).
 - Unparalleled extensibility with plugins.
 - Compatible with [Standard Schema&#8239;<sup>↗</sup>](https://github.com/standard-schema/standard-schema#readme).
-- [Just 2&#8239;kB gzipped&#8239;<sup>↗</sup>](https://bundlephobia.com/result?p=roqueform).
+- [Just 2&#8239;kB gzipped.&#8239;<sup>↗</sup>](https://bundlephobia.com/result?p=roqueform)
 
 <!--/OVERVIEW-->
 
@@ -25,6 +27,8 @@ npm install --save-prod roqueform
 ```
 
 <br>
+
+<!--/ARTICLE-->
 
 <!--TOC-->
 
