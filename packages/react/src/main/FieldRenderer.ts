@@ -20,7 +20,7 @@ export interface FieldRendererProps<F extends Field> extends FieldSubscriptionOp
 }
 
 /**
- * The component that subscribes to the field instance and re-renders its children when an event is dispatched onto the
+ * The component that subscribes to the field instance and re-renders its children when an event is published by the
  * field.
  *
  * @template F The rendered field.
