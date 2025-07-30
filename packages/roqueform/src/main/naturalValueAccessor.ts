@@ -78,8 +78,8 @@ function isPrimitive(obj: any): boolean {
     obj instanceof String ||
     obj instanceof Number ||
     obj instanceof Boolean ||
-    (typeof BigInt !== 'undefined' && obj instanceof BigInt) ||
-    (typeof Symbol !== 'undefined' && obj instanceof Symbol)
+    obj instanceof Symbol ||
+    (typeof BigInt !== 'undefined' && obj instanceof BigInt)
   );
 }
 
@@ -88,5 +88,5 @@ function isMapLike(obj: any): obj is Map<unknown, unknown> {
 }
 
 function isSetLike(obj: any): obj is Set<unknown> {
-  return typeof obj.add === 'function' && typeof Symbol === 'function' && typeof obj[Symbol.iterator] === 'function';
+  return typeof obj.add === 'function' && typeof obj[Symbol.iterator] === 'function';
 }

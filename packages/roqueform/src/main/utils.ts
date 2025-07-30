@@ -1,6 +1,6 @@
-import { FieldEvent } from './FieldImpl.js';
+import { Field, FieldEvent } from './FieldImpl.js';
 
-export const emptyObject = {};
+export function noop(): void {}
 
 /**
  * [SameValueZero](https://262.ecma-international.org/7.0/#sec-samevaluezero) comparison operation.
@@ -62,19 +62,41 @@ export function publishEvents(events: FieldEvent[]): void {
 /**
  * Defines getter for object property that receives the value returned from the previously defined getter.
  */
-export function overrideReadonlyProperty<T, K extends keyof T>(
-  obj: T,
-  key: K,
-  get: (value: T[K] | undefined) => T[K]
-): void {
+export function overrideGetter<T, K extends keyof T>(obj: T, key: K, get: (value: T[K] | undefined) => T[K]): void {
   const prevDescriptor = Object.getOwnPropertyDescriptor(obj, key);
 
   Object.defineProperty(obj, key, {
     configurable: true,
+
+    ...prevDescriptor,
 
     get:
       prevDescriptor === undefined
         ? () => get(undefined)
         : () => get(prevDescriptor.get === undefined ? prevDescriptor.value : prevDescriptor.get.call(obj)),
   });
+}
+
+export function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return isObjectLike(value) && 'then' in value;
+}
+
+export function isObjectLike(value: unknown): value is Record<any, any> {
+  return value !== null && typeof value === 'object';
+}
+
+export function collectFields<Mixin extends object>(
+  field: Field<unknown, Mixin>,
+  predicate: (field: Field<unknown, Mixin>) => boolean,
+  batch: Field<unknown, Mixin>[]
+): Field<unknown, Mixin>[] {
+  if (predicate(field)) {
+    batch.push(field);
+  }
+
+  for (const child of field.children) {
+    collectFields(child, predicate, batch);
+  }
+
+  return batch;
 }

@@ -92,11 +92,11 @@ test('uses concatErrors to add a new error', () => {
   expect(concatErrorsMock).toHaveBeenNthCalledWith(1, [], 222);
 });
 
-test('adds an error when errorCaught event is published', () => {
+test('adds an error when errorDetected event is published', () => {
   const field = createField({ aaa: 111 }, [errorsPlugin()]);
 
   field.at('aaa').publish({
-    type: 'errorCaught',
+    type: 'errorDetected',
     target: field.at('aaa'),
     relatedTarget: null,
     payload: 222,

@@ -6,10 +6,10 @@
  * import annotationsPlugin from 'roqueform/plugin/annotations';
  *
  * const field = createField({ hello: 'world' }, [
- *   annotationsPlugin({ isDisabled: false })
+ *   annotationsPlugin({ isDisabled: false }),
  * ]);
  *
- * field.at('hello').annotations.isDisabled // ⮕ false
+ * field.at('hello').annotations.isDisabled; // ⮕ false
  * ```
  *
  * @module plugin/annotations

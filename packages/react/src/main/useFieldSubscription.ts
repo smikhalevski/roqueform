@@ -37,25 +37,22 @@ export function useFieldSubscription<F extends Field>(field: F, options: FieldSu
 
   optionsRef.current = options;
 
-  useInsertionEffect(
-    () =>
-      field.subscribe(event => {
-        const { isEagerlyUpdated, onChange } = optionsRef.current;
+  useInsertionEffect(() => {
+    return field.subscribe(event => {
+      const { isEagerlyUpdated, onChange } = optionsRef.current;
 
-        if (
-          isEagerlyUpdated ||
-          event.relatedTarget === field ||
-          (event.target === field && event.relatedTarget === null)
-        ) {
-          rerender();
-        }
+      if (
+        isEagerlyUpdated ||
+        (event.target === field && (event.relatedTarget === null || event.relatedTarget === field))
+      ) {
+        rerender();
+      }
 
-        if (onChange !== undefined && event.type === 'valueChanged' && event.target === field && !field.isTransient) {
-          onChange(field.value);
-        }
-      }),
-    [field]
-  );
+      if (onChange !== undefined && event.type === 'valueChanged' && event.target === field && !field.isTransient) {
+        onChange(field.value);
+      }
+    });
+  }, [field]);
 
   return field;
 }

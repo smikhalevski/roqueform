@@ -1,5 +1,5 @@
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
-import { createField, Field, FieldPlugin } from 'roqueform';
+import { createField, Field, FieldPlugin } from '../main/index.js';
 
 expectAssignable<Field<string, { xxx: 111 } & { yyy: 222 } & { zzz: 333 }>>(
   createField('aaa', [
@@ -22,6 +22,10 @@ expectAssignable<Field<'aaa' | 'bbb', { xxx: 111 } & { yyy: 222 }>>(
     null! as FieldPlugin<'aaa' | 'bbb' | 'ddd', { xxx: 111 }>,
     null! as FieldPlugin<'aaa' | 'bbb' | 'ccc', { yyy: 222 }>,
   ])
+);
+
+expectAssignable<Field<string, { xxx: 111 } & { yyy: 222 }>>(
+  createField('aaa', [null! as FieldPlugin<any, { xxx: 111 }>, null! as FieldPlugin<any, { yyy: 222 }>])
 );
 
 expectType<Field<string>>(createField('aaa'));

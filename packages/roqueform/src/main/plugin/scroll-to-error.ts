@@ -18,6 +18,7 @@
  * @module plugin/scroll-to-error
  */
 import { Field, FieldPlugin, InferMixin } from '../FieldImpl.js';
+import { collectFields } from '../utils.js';
 
 /**
  * The mixin added to fields by the {@link scrollToErrorPlugin}.
@@ -91,7 +92,11 @@ const _scrollToErrorPlugin: FieldPlugin<unknown, ScrollToErrorMixin> = field => 
   };
 
   field.scrollToError = (index = 0, options) => {
-    const targets = getTargetFields(field, []);
+    const targets = collectFields(
+      field,
+      field => field.isInvalid === true && field.element !== null && field.element.isConnected,
+      []
+    );
 
     if (targets.length === 0) {
       return null;
@@ -107,21 +112,6 @@ const _scrollToErrorPlugin: FieldPlugin<unknown, ScrollToErrorMixin> = field => 
     return target;
   };
 };
-
-function getTargetFields(
-  field: Field<unknown, ScrollToErrorMixin>,
-  batch: Field<unknown, ScrollToErrorMixin>[]
-): Field<unknown, ScrollToErrorMixin>[] {
-  if (field.isInvalid && field.element !== null && field.element.isConnected) {
-    batch.push(field);
-  }
-
-  for (const child of field.children) {
-    getTargetFields(child, batch);
-  }
-
-  return batch;
-}
 
 function sortByDocumentOrder(a: Field<unknown, ScrollToErrorMixin>, b: Field<unknown, ScrollToErrorMixin>): number {
   const aElement = a.element;

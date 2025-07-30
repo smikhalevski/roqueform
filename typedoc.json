@@ -15,10 +15,12 @@
   "entryPoints": ["./packages/*/src/main/index.ts", "./packages/roqueform/src/main/plugin/*.ts"],
   "plugin": ["typedoc-plugin-mdn-links"],
   "externalSymbolLinkMappings": {
-    "doubter": {
-      "Issue": "https://smikhalevski.github.io/doubter/latest/interfaces/core.Issue.html",
-      "ParseOptions": "https://smikhalevski.github.io/doubter/latest/interfaces/core.ParseOptions.html",
-      "Shape": "https://smikhalevski.github.io/doubter/latest/classes/core.Shape.html"
+    "roqueform": {
+      "StandardSchemaV1": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.Result": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.InferInput": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.InferOutput": "https://github.com/standard-schema/standard-schema#readme",
+      "StandardSchemaV1.InferOptions": "https://github.com/standard-schema/standard-schema#readme"
     }
   }
 }

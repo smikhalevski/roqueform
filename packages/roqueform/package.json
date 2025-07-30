@@ -10,6 +10,7 @@
     "./plugin/errors": "./plugin/errors.js",
     "./plugin/ref": "./plugin/ref.js",
     "./plugin/reset": "./plugin/reset.js",
+    "./plugin/schema": "./plugin/schema.js",
     "./plugin/scroll-to-error": "./plugin/scroll-to-error.js",
     "./plugin/uncontrolled": "./plugin/uncontrolled.js",
     "./plugin/validation": "./plugin/validation.js",

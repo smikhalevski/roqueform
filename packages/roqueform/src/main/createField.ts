@@ -26,11 +26,25 @@ export function createField<Value>(initialValue: Value | (() => Value)): Field<V
  * @template Value The root field initial value.
  * @template Plugins The array of plugins applied to the field and its children.
  */
-export function createField<Value extends RequiredValue<Plugins>, Plugins extends FieldPlugin[]>(
+export function createField<Value, Plugins extends FieldPlugin<unknown>[]>(
   initialValue: Value | (() => Value),
   plugins: Plugins,
   accessor?: ValueAccessor
 ): Field<Value, InjectedMixin<Plugins>>;
+
+/**
+ * Creates the new field instance.
+ *
+ * @param initialValue The initial value assigned to the field.
+ * @param plugins The array of plugins applied to the field and its children.
+ * @param accessor Resolves values for child fields.
+ * @template Plugins The array of plugins applied to the field and its children.
+ */
+export function createField<Plugins extends FieldPlugin[]>(
+  initialValue: RequiredValue<Plugins> | (() => RequiredValue<Plugins>),
+  plugins: Plugins,
+  accessor?: ValueAccessor
+): Field<RequiredValue<Plugins>, InjectedMixin<Plugins>>;
 
 export function createField(initialValue?: any, plugins: FieldPlugin[] = [], accessor = naturalValueAccessor): Field {
   const field = new FieldImpl(null, null, callOrGet(initialValue), accessor, plugins);

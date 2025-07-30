@@ -9,10 +9,8 @@ on:
         default: roqueform
         required: true
         options:
-          - doubter-plugin
-          - react
           - roqueform
-          - zod-plugin
+          - react
 
       npm_tag:
         type: string

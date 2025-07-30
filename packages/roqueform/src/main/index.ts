@@ -9,11 +9,11 @@
 export { naturalValueAccessor } from './naturalValueAccessor.js';
 export { createField } from './createField.js';
 export {
-  type FieldEventType,
+  type BuiltInFieldEventType,
   type FieldEvent,
   type FieldPlugin,
   type Field,
-  type FieldCore,
+  type FieldAPI,
   type InferMixin,
   type InferValue,
   type ValueAccessor,

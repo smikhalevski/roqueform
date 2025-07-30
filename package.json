@@ -6,26 +6,26 @@
     "test": "vitest run",
     "test:definitions": "tsc --version && npm run test:definitions --if-present --workspaces",
     "docs": "typedoc",
-    "postinstall": "mkdir -p node_modules/@roqueform && ln -nsf ../packages/roqueform/lib node_modules/roqueform && ln -nsf ../../packages/react/lib node_modules/@roqueform/react && ln -nsf ../../packages/doubter-plugin/lib node_modules/@roqueform/doubter-plugin && ln -nsf ../../packages/zod-plugin/lib node_modules/@roqueform/zod-plugin"
+    "postinstall": "ln -nsf ../packages/roqueform/lib node_modules/roqueform"
   },
   "workspaces": [
     "./packages/roqueform",
-    "./packages/react",
-    "./packages/doubter-plugin",
-    "./packages/zod-plugin"
+    "./packages/react"
   ],
   "devDependencies": {
-    "@testing-library/dom": "^10.4.0",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.0",
-    "@types/react": "^18.3.12",
+    "@types/react": "^19.1.8",
+    "doubter": "^5.1.1-next.5f07fb0",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "tsd": "^0.32.0",
     "tslib": "^2.8.1",
-    "typedoc": "^0.28.7",
-    "typedoc-plugin-mdn-links": "^5.0.2",
+    "typedoc": "^0.28.8",
+    "typedoc-plugin-mdn-links": "^5.0.6",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "zod": "^4.0.14"
   }
 }

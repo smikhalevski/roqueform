@@ -21,17 +21,17 @@ type MIXIN = typeof MIXIN;
  * <dt><i>"errorAdded"</i></dt>
  * <dd>An error was added to a field. The event payload contains an error that was added.</dd>
  *
- * <dt><i>"errorCaught"</i></dt>
- * <dd>
- * An event type that notifies the errors plugin that an error must be added to a field. The event payload must contain
- * an error to add.
- * </dd>
- *
  * <dt><i>"errorDeleted"</i></dt>
  * <dd>An error was deleted from a field. The event payload contains an error that was deleted.</dd>
  *
  * <dt><i>"errorsCleared"</i></dt>
  * <dd>All errors were removed from the field. The event payload contains the previous array of errors.</dd>
+ *
+ * <dt><i>"errorDetected"</i></dt>
+ * <dd>
+ * An event type that notifies the errors plugin that an error must be added to a field. The event payload must contain
+ * an error to add.
+ * </dd>
  *
  * <dt><i>"annotationsChanged"</i></dt>
  * <dd>Field annotations were patched. The event payload contains the annotations before the patch was applied.</dd>
@@ -43,14 +43,14 @@ type MIXIN = typeof MIXIN;
  * <dd>The validation of the field has finished. The event payload contains the validation that has finished.</dd>
  * </dl>
  */
-export type FieldEventType =
+export type BuiltInFieldEventType =
   | 'valueChanged'
   | 'initialValueChanged'
   | 'validityChanged'
   | 'errorAdded'
-  | 'errorCaught'
   | 'errorDeleted'
   | 'errorsCleared'
+  | 'errorDetected'
   | 'annotationsChanged'
   | 'validationStarted'
   | 'validationFinished';
@@ -64,7 +64,7 @@ export interface FieldEvent<Mixin extends object = {}> {
   /**
    * The type of the event.
    */
-  type: FieldEventType | (string & {});
+  type: BuiltInFieldEventType | (string & {});
 
   /**
    * The field onto which this event was published.
@@ -86,8 +86,8 @@ export interface FieldEvent<Mixin extends object = {}> {
 }
 
 /**
- * The callback that constrains the value of the field and enhances it with a mixin. Plugin _can mutate_ the provided
- * field instance.
+ * The callback that constrains the value of the field and enhances the field with a mixin. Plugin _should mutate_
+ * the provided field instance.
  *
  * @param field The mutable field that must be enhanced.
  * @template Value The field value required by the plugin.
@@ -146,24 +146,28 @@ export type InferMixin<T> = T extends Field ? T[MIXIN] : never;
  * @template Value The field value.
  * @template Mixin The mixin added to the field.
  */
-export type Field<Value = any, Mixin extends object = {}> = FieldCore<Value, Mixin> & Mixin;
+export type Field<Value = any, Mixin extends object = {}> = FieldAPI<Value, Mixin> & Mixin;
 
 /**
- * Core properties of the {@link Field}.
+ * The API exposed by all {@link Field fields}.
  *
- * **Note:** It is recommended to use {@link Field} type whenever possible instead of {@link FieldCore}.
+ * **Note:** It is recommended to use {@link Field} type whenever possible instead of {@link FieldAPI} interface.
  *
  * @template Value The field value.
  * @template Mixin The mixin added to the field.
  */
-export interface FieldCore<Value = any, Mixin extends object = {}> {
+export interface FieldAPI<Value = any, Mixin extends object = {}> {
   /**
    * Holds the mixin type for inference.
    *
    * @internal
-   * @private
    */
   readonly [MIXIN]: Mixin;
+
+  /**
+   * The root of the field tree (the field that has no parent).
+   */
+  readonly rootField: Field<any, Mixin>;
 
   /**
    * The parent field, or `null` if this is the root field.
@@ -180,6 +184,11 @@ export interface FieldCore<Value = any, Mixin extends object = {}> {
    * no parent.
    */
   readonly key: any;
+
+  /**
+   * The array of keys staring from the root field down to this field.
+   */
+  readonly path: readonly any[];
 
   /**
    * The initial value of the field.
@@ -302,12 +311,13 @@ export type ValueAt<T, K> =
  *
  * @internal
  */
-export class FieldImpl implements FieldCore {
+export class FieldImpl implements FieldAPI {
   declare [MIXIN]: {};
 
   value: any;
   isTransient = false;
   children: Field[] = [];
+  rootField: Field;
   _pubSub = new PubSub<FieldEvent>();
 
   constructor(
@@ -317,7 +327,21 @@ export class FieldImpl implements FieldCore {
     public valueAccessor: ValueAccessor,
     public _plugins: FieldPlugin[]
   ) {
+    this.rootField = parentField !== null ? parentField.rootField : this;
     this.value = initialValue;
+  }
+
+  get path(): any[] {
+    const path = [];
+
+    for (let field: Field = this; field.parentField !== null; field = field.parentField) {
+      path.unshift(field.key);
+    }
+
+    Object.freeze(path);
+    Object.defineProperty(this, 'path', { configurable: true, value: path });
+
+    return path;
   }
 
   setValue = (value: unknown): void => {
