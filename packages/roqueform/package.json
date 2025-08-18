@@ -1,6 +1,6 @@
 {
   "name": "roqueform",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "description": "The form state management library that can handle hundreds of fields without breaking a sweat.",
   "type": "module",
   "exports": {
