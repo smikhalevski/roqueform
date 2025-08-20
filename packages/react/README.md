@@ -1,3 +1,3 @@
 # React integration for Roqueform
 
-Hooks and components to [integrate Roqueform with React](https://github.com/smikhalevski/roqueform#react-integration).
+Hooks and components to [integrate Roqueform with React](https://megastack.dev/roqueform#react-integration).

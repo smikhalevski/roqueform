@@ -1116,7 +1116,7 @@ enhances fields with validation methods that use
 the exactly same.
 
 Any validation library that supports Standard Schema can be used to create a schema object. Lets use
-[Doubter&#8239;<sup>↗</sup>](https://github.com/smikhalevski/doubter#readme) as an example:
+[Doubter&#8239;<sup>↗</sup>](https://megastack.dev/doubter#readme) as an example:
 
 ```ts
 import * as d from 'doubter';
@@ -1185,7 +1185,7 @@ field.errors;
 // ⮕ [{ message: 'Not enough elements', … }]
 ```
 
-Read more about [error message localization&#8239;<sup>↗</sup>](https://github.com/smikhalevski/doubter#localization)
+Read more about [error message localization&#8239;<sup>↗</sup>](https://megastack.dev/doubter#localization)
 with Doubter.
 
 # Constraint validation API plugin

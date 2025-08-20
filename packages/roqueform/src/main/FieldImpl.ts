@@ -203,14 +203,14 @@ export interface FieldAPI<Value = any, Mixin extends object = {}> {
   /**
    * `true` if the value was last updated using {@link setTransientValue}, or `false` otherwise.
    *
-   * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
+   * @see [Transient updates](https://megastack.dev/roqueform#transient-updates)
    */
   readonly isTransient: boolean;
 
   /**
    * The accessor that reads and writes field values.
    *
-   * @see [Accessors](https://github.com/smikhalevski/roqueform#accessors)
+   * @see [Accessors](https://megastack.dev/roqueform#accessors)
    */
   readonly valueAccessor: ValueAccessor;
 
@@ -219,7 +219,7 @@ export interface FieldAPI<Value = any, Mixin extends object = {}> {
    * {@link isTransient a transient value} then it becomes non-transient.
    *
    * @param value The value to set, or a callback that receives a previous value and returns a new one.
-   * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
+   * @see [Transient updates](https://megastack.dev/roqueform#transient-updates)
    */
   setValue(value: Value | ((prevValue: Value) => Value)): void;
 
@@ -228,7 +228,7 @@ export interface FieldAPI<Value = any, Mixin extends object = {}> {
    * {@link isTransient transient}.
    *
    * @param value The value to set, or a callback that receives a previous value and returns a new one.
-   * @see [Transient updates](https://github.com/smikhalevski/roqueform#transient-updates)
+   * @see [Transient updates](https://megastack.dev/roqueform#transient-updates)
    */
   setTransientValue(value: Value | ((prevValue: Value) => Value)): void;
 
